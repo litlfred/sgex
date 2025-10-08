@@ -39,7 +39,9 @@ class PRCommentManager:
         'success', 'failure', 'pages-built'
     }
     
-    def __init__(self, token: str, repo: str, pr_number: int, action_id: Optional[str] = None):
+    def __init__(self, token: str, repo: str, pr_number: int, action_id: Optional[str] = None, 
+                 commit_sha: Optional[str] = None, workflow_name: Optional[str] = None, 
+                 event_name: Optional[str] = None):
         """
         Initialize the PR comment manager.
         
@@ -51,11 +53,17 @@ class PRCommentManager:
                       This ensures exactly one comment per action run, allowing
                       multiple workflows (e.g., deploy-branch and pages-build-deployment)
                       to maintain their own separate status comments.
+            commit_sha: Commit SHA to check for duplicate comments
+            workflow_name: Name of the workflow (for display in comments)
+            event_name: Event that triggered the workflow (e.g., 'push', 'pull_request')
         """
         self.token = token
         self.owner, self.repo_name = repo.split('/')
         self.pr_number = pr_number
         self.action_id = action_id
+        self.commit_sha = commit_sha
+        self.workflow_name = workflow_name or "Unknown Workflow"
+        self.event_name = event_name or "unknown"
         self.api_base = "https://api.github.com"
         self.headers = {
             "Authorization": f"token {token}",
@@ -158,6 +166,44 @@ class PRCommentManager:
             return None
         except requests.exceptions.RequestException as e:
             print(f"Error fetching comments: {e}", file=sys.stderr)
+            return None
+    
+    def check_duplicate_comment_for_commit(self) -> Optional[Dict[str, Any]]:
+        """
+        Check if a comment already exists for the same commit SHA from a different workflow run.
+        This helps prevent duplicate comments when multiple workflows trigger for the same commit.
+        
+        Returns:
+            Comment dict if found, None otherwise
+        """
+        if not self.commit_sha or self.commit_sha == 'unknown':
+            return None
+            
+        url = f"{self.api_base}/repos/{self.owner}/{self.repo_name}/issues/{self.pr_number}/comments"
+        
+        try:
+            response = requests.get(url, headers=self.headers, timeout=30)
+            response.raise_for_status()
+            
+            comments = response.json()
+            print(f"Checking for duplicate comments for commit: {self.commit_sha[:7]}")
+            
+            # Look for any sgex deployment comment for this commit
+            for comment in comments:
+                body = comment.get('body', '')
+                # Check if this is a deployment comment (has our base marker)
+                if self.COMMENT_MARKER_BASE in body:
+                    # Check if it mentions this commit SHA
+                    if self.commit_sha[:7] in body or self.commit_sha in body:
+                        # Don't count our own comment as a duplicate
+                        if self.comment_marker not in body:
+                            print(f"⚠️  Found duplicate comment (ID: {comment['id']}) for commit {self.commit_sha[:7]}")
+                            return comment
+            
+            print(f"No duplicate comment found for commit: {self.commit_sha[:7]}")
+            return None
+        except requests.exceptions.RequestException as e:
+            print(f"Error checking for duplicate comments: {e}", file=sys.stderr)
             return None
     
     def extract_timeline_from_comment(self, comment_body: str) -> str:
@@ -300,9 +346,19 @@ class PRCommentManager:
         repo = f"{self.owner}/{self.repo_name}"
         step_link = self.get_workflow_step_link(stage, commit_sha, repo)
         
+        # Determine workflow display info
+        event_display = {
+            'push': '📤 Push',
+            'pull_request': '🔀 Pull Request',
+            'workflow_dispatch': '🎯 Manual Trigger',
+            'workflow_call': '🔗 Workflow Call',
+            'schedule': '⏰ Scheduled'
+        }.get(self.event_name, f'⚙️ {self.event_name.replace("_", " ").title()}')
+        
         # Build preamble with action ID and commit ID links
         preamble = f"""<h3>📊 Deployment Information</h3>
 
+**Workflow:** {self.workflow_name} ({event_display})  
 **Action ID:** [{action_id_display}]({workflow_url})  
 **Commit:** [`{commit_sha_short}`]({commit_url}) ([view changes]({commit_url.replace('/commit/', '/commits/')}))  
 **Workflow Step:** {step_link}
@@ -502,6 +558,15 @@ class PRCommentManager:
                     print("No existing timeline found in comment")
             else:
                 print(f"No existing comment found for action_id: {self.action_id if self.action_id else 'N/A'}")
+                
+                # Check if there's a duplicate comment for the same commit from another workflow
+                duplicate = self.check_duplicate_comment_for_commit()
+                if duplicate and stage == 'started':
+                    # Only skip on the first stage to avoid issues
+                    print(f"⚠️  Skipping comment creation - duplicate already exists for commit {self.commit_sha[:7]}")
+                    print(f"    Existing comment ID: {duplicate['id']}")
+                    print(f"    This workflow ({self.workflow_name}, event: {self.event_name}) will not create a duplicate comment.")
+                    return True  # Return success to avoid error, but don't create duplicate
             
             # Build comment body with existing timeline
             comment_body = self.build_comment_body(stage, data, existing_timeline)
@@ -574,6 +639,9 @@ Workflow Interaction:
     parser.add_argument('--repo', required=True, help='Repository in format owner/repo')
     parser.add_argument('--pr', type=int, required=True, help='Pull request number')
     parser.add_argument('--action-id', help='Optional action/run ID to ensure one comment per workflow run')
+    parser.add_argument('--commit-sha', help='Commit SHA to check for duplicate comments')
+    parser.add_argument('--workflow-name', help='Name of the workflow (for display)')
+    parser.add_argument('--event-name', help='Event that triggered the workflow (e.g., push, pull_request)')
     parser.add_argument('--stage', required=True, 
                        choices=list(PRCommentManager.ALLOWED_STAGES),
                        help='Current workflow stage')
@@ -588,8 +656,19 @@ Workflow Interaction:
         print(f"Error: Invalid JSON data: {e}", file=sys.stderr)
         sys.exit(1)
     
+    # Extract commit SHA from data if not provided as argument
+    commit_sha = args.commit_sha or data.get('commit_sha')
+    
     # Create manager and update comment
-    manager = PRCommentManager(args.token, args.repo, args.pr, args.action_id)
+    manager = PRCommentManager(
+        args.token, 
+        args.repo, 
+        args.pr, 
+        args.action_id,
+        commit_sha=commit_sha,
+        workflow_name=args.workflow_name,
+        event_name=args.event_name
+    )
     success = manager.update_comment(args.stage, data)
     
     sys.exit(0 if success else 1)

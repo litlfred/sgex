@@ -47,7 +47,16 @@ on:
         required: false
         type: boolean
         default: false
-  # Trigger for pull request events to ensure copilot and external contributions trigger workflows
+  # Automatic trigger for copilot commits and PR updates
+  push:
+    branches-ignore: [gh-pages]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/branch-deployment.yml'
+  # Additional trigger for pull request events to ensure copilot and external contributions trigger workflows
   pull_request:
     types: [opened, synchronize, reopened]
     branches: [main]  # Only for PRs targeting main branch
@@ -132,6 +141,9 @@ jobs:
             --repo "${{ github.repository }}" \
             --pr "${{ steps.find_pr.outputs.result }}" \
             --action-id "${{ github.run_id }}" \
+            --commit-sha "${{ github.sha }}" \
+            --workflow-name "Deploy Feature Branch" \
+            --event-name "${{ github.event_name }}" \
             --stage "started" \
             --data "{\"commit_sha\":\"${{ github.sha }}\",\"branch_name\":\"$branch_name\",\"commit_url\":\"https://github.com/${{ github.repository }}/commit/${{ github.sha }}\",\"workflow_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\",\"branch_url\":\"$branch_url\"}"
 
@@ -200,6 +212,9 @@ jobs:
             --repo "${{ github.repository }}" \
             --pr "${{ steps.find_pr.outputs.result }}" \
             --action-id "${{ github.run_id }}" \
+            --commit-sha "${{ github.sha }}" \
+            --workflow-name "Deploy Feature Branch" \
+            --event-name "${{ github.event_name }}" \
             --stage "setup" \
             --data "{\"commit_sha\":\"${{ github.sha }}\",\"branch_name\":\"${{ steps.branch_info.outputs.branch_name }}\",\"commit_url\":\"https://github.com/${{ github.repository }}/commit/${{ github.sha }}\",\"workflow_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\",\"branch_url\":\"${{ steps.public_url.outputs.branch_url }}\"}"
 
@@ -223,6 +238,9 @@ jobs:
             --repo "${{ github.repository }}" \
             --pr "${{ steps.find_pr.outputs.result }}" \
             --action-id "${{ github.run_id }}" \
+            --commit-sha "${{ github.sha }}" \
+            --workflow-name "Deploy Feature Branch" \
+            --event-name "${{ github.event_name }}" \
             --stage "building" \
             --data "{\"commit_sha\":\"${{ github.sha }}\",\"branch_name\":\"${{ steps.branch_info.outputs.branch_name }}\",\"commit_url\":\"https://github.com/${{ github.repository }}/commit/${{ github.sha }}\",\"workflow_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\",\"branch_url\":\"$branch_url\"}"
 
@@ -358,6 +376,9 @@ jobs:
             --repo "${{ github.repository }}" \
             --pr "${{ steps.find_pr.outputs.result }}" \
             --action-id "${{ github.run_id }}" \
+            --commit-sha "${{ github.sha }}" \
+            --workflow-name "Deploy Feature Branch" \
+            --event-name "${{ github.event_name }}" \
             --stage "deploying" \
             --data "{\"commit_sha\":\"${{ github.sha }}\",\"branch_name\":\"${{ steps.branch_info.outputs.branch_name }}\",\"commit_url\":\"https://github.com/${{ github.repository }}/commit/${{ github.sha }}\",\"workflow_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\",\"branch_url\":\"${{ steps.public_url.outputs.branch_url }}\"}"
 
@@ -672,6 +693,9 @@ jobs:
             --repo "${{ github.repository }}" \
             --pr "${{ steps.find_pr.outputs.result }}" \
             --action-id "${{ github.run_id }}" \
+            --commit-sha "${{ github.sha }}" \
+            --workflow-name "Deploy Feature Branch" \
+            --event-name "${{ github.event_name }}" \
             --stage "verifying" \
             --data "{\"commit_sha\":\"${{ github.sha }}\",\"branch_name\":\"${{ steps.branch_info.outputs.branch_name }}\",\"commit_url\":\"https://github.com/${{ github.repository }}/commit/${{ github.sha }}\",\"workflow_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\",\"branch_url\":\"$branch_url\"}"
 
@@ -769,6 +793,9 @@ jobs:
             --repo "${{ github.repository }}" \
             --pr "${{ steps.find_pr.outputs.result }}" \
             --action-id "${{ github.run_id }}" \
+            --commit-sha "${{ github.sha }}" \
+            --workflow-name "Deploy Feature Branch" \
+            --event-name "${{ github.event_name }}" \
             --stage "success" \
             --data "{\"commit_sha\":\"${{ github.sha }}\",\"branch_name\":\"${{ steps.branch_info.outputs.branch_name }}\",\"commit_url\":\"https://github.com/${{ github.repository }}/commit/${{ github.sha }}\",\"workflow_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\",\"branch_url\":\"$branch_url\"}"
 
@@ -781,5 +808,8 @@ jobs:
             --repo "${{ github.repository }}" \
             --pr "${{ steps.find_pr.outputs.result }}" \
             --action-id "${{ github.run_id }}" \
+            --commit-sha "${{ github.sha }}" \
+            --workflow-name "Deploy Feature Branch" \
+            --event-name "${{ github.event_name }}" \
             --stage "failure" \
             --data "{\"commit_sha\":\"${{ github.sha }}\",\"branch_name\":\"${{ github.event.inputs.branch || github.head_ref || github.ref_name }}\",\"commit_url\":\"https://github.com/${{ github.repository }}/commit/${{ github.sha }}\",\"workflow_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\",\"error_message\":\"Build or deployment failed. Check logs for details.\"}"
