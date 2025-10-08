@@ -891,6 +891,122 @@ class HelpContentService {
             }
           ]
         }
+      ],
+      'user-scenarios': [
+        {
+          id: 'user-scenarios-overview',
+          title: 'User Scenarios Overview',
+          badge: '/sgex/cat-paw-info-icon.svg',
+          type: 'slideshow',
+          content: [
+            {
+              title: 'What are User Scenarios?',
+              content: `
+                <p>User Scenarios are narrative descriptions of how different personas interact with the health system in specific contexts:</p>
+                <h4>Purpose</h4>
+                <ul>
+                  <li><strong>Document User Journeys:</strong> Capture step-by-step interactions</li>
+                  <li><strong>Define Workflows:</strong> Describe clinical and administrative processes</li>
+                  <li><strong>Support Testing:</strong> Provide scenarios for validation</li>
+                  <li><strong>Guide Implementation:</strong> Help developers understand user needs</li>
+                </ul>
+                <div class="help-tip">
+                  <strong>📝 Format:</strong> User scenarios are written in Markdown and can reference personas using variables
+                </div>
+              `
+            },
+            {
+              title: 'Creating User Scenarios',
+              content: `
+                <p>Follow these steps to create effective user scenarios:</p>
+                <h4>ID Requirements</h4>
+                <ul>
+                  <li><strong>Start with capital letter:</strong> e.g., "Anc-registration"</li>
+                  <li><strong>Use hyphens for spaces:</strong> e.g., "Health-check"</li>
+                  <li><strong>No underscores allowed:</strong> ❌ "Health_check"</li>
+                  <li><strong>Must be unique:</strong> Check existing scenarios first</li>
+                </ul>
+                <h4>Content Structure</h4>
+                <ul>
+                  <li><strong>Title:</strong> Clear, descriptive scenario name</li>
+                  <li><strong>Context:</strong> When and where this scenario occurs</li>
+                  <li><strong>Actors:</strong> Which personas are involved</li>
+                  <li><strong>Steps:</strong> Numbered list of actions</li>
+                  <li><strong>Outcomes:</strong> Expected results and next steps</li>
+                </ul>
+                <div class="help-tip">
+                  <strong>💡 Tip:</strong> Use personas variables like {{persona.Healthcare-worker.title}} to reference personas
+                </div>
+              `
+            },
+            {
+              title: 'Using Persona Variables',
+              content: `
+                <p>Persona variables allow you to reference persona data dynamically in your scenarios:</p>
+                <h4>Variable Syntax</h4>
+                <p><code>{{persona.{id}.{property}}}</code></p>
+                <h4>Available Properties</h4>
+                <ul>
+                  <li><strong>title:</strong> Persona's display name/role</li>
+                  <li><strong>description:</strong> Persona's description</li>
+                  <li><strong>id:</strong> Persona's unique identifier</li>
+                </ul>
+                <h4>Example</h4>
+                <pre>The {{persona.Healthcare-worker.title}} reviews the patient record.</pre>
+                <p>Renders as: "The Healthcare Worker reviews the patient record."</p>
+                <div class="help-tip">
+                  <strong>🎯 Quick Insert:</strong> Use the "Insert Variable" dropdown above the editor to automatically insert persona variables
+                </div>
+              `
+            },
+            {
+              title: 'Edit and Preview Modes',
+              content: `
+                <p>The scenario editor supports both editing and previewing your content:</p>
+                <h4>Edit Mode ✏️</h4>
+                <ul>
+                  <li>Full markdown editor with syntax highlighting</li>
+                  <li>Write and edit your scenario text</li>
+                  <li>Use persona variables with {{...}} syntax</li>
+                  <li>Toolbar for formatting assistance</li>
+                </ul>
+                <h4>Preview Mode 👁️</h4>
+                <ul>
+                  <li>See rendered markdown output</li>
+                  <li>Persona variables are substituted with actual values</li>
+                  <li>Verify formatting and layout</li>
+                  <li>Check that variables resolve correctly</li>
+                </ul>
+                <div class="help-tip">
+                  <strong>🔄 Toggle:</strong> Click the Edit/Preview buttons in the modal header to switch between modes
+                </div>
+              `
+            },
+            {
+              title: 'Staging Ground Integration',
+              content: `
+                <p>All changes to user scenarios are saved to the Staging Ground first:</p>
+                <h4>Why Staging Ground?</h4>
+                <ul>
+                  <li><strong>Review Changes:</strong> See all modifications before committing</li>
+                  <li><strong>Batch Updates:</strong> Group multiple changes into one commit</li>
+                  <li><strong>Safe Editing:</strong> Test changes without affecting the repository</li>
+                  <li><strong>Easy Rollback:</strong> Discard changes if needed</li>
+                </ul>
+                <h4>Workflow</h4>
+                <ol>
+                  <li>Edit scenario and click "Stage Changes"</li>
+                  <li>Changes appear in Staging Ground below</li>
+                  <li>Review all staged changes</li>
+                  <li>Commit all changes together when ready</li>
+                </ol>
+                <div class="help-tip">
+                  <strong>💾 Auto-save:</strong> The DAK configuration (dak.json) is automatically updated when you save scenarios
+                </div>
+              `
+            }
+          ]
+        }
       ]
     };
   }
