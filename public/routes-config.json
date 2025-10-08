@@ -58,6 +58,10 @@
     "persona-viewer": {
       "component": "PersonaViewer", 
       "path": "./components/PersonaViewer"
+    },
+    "program-indicators": {
+      "component": "ProgramIndicatorsViewer",
+      "path": "./components/ProgramIndicatorsViewer"
     }
   },
   "standardComponents": {

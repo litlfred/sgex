@@ -506,6 +506,18 @@ const DAKDashboardContent = () => {
       return;
     }
 
+    // For program-indicators, navigate to indicators viewer
+    if (component.id === 'program-indicators') {
+      const owner = repository.owner?.login || repository.full_name.split('/')[0];
+      const repoName = repository.name;
+      const path = selectedBranch 
+        ? `/program-indicators/${owner}/${repoName}/${selectedBranch}`
+        : `/program-indicators/${owner}/${repoName}`;
+      
+      handleNavigationClick(event, path, navigate, navigationState);
+      return;
+    }
+
     // For other components, check permissions before proceeding
     if (!hasWriteAccess) {
       // If command-click, still show permission dialog instead of opening new tab
