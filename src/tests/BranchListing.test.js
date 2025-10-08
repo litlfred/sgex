@@ -79,7 +79,10 @@ describe('BranchListing Component', () => {
         title: 'Test PR',
         state: 'open',
         user: { login: 'testuser' },
-        head: { ref: 'feature/test-pr' },
+        head: { 
+          ref: 'feature/test-pr',
+          sha: 'abc123def456789'
+        },
         html_url: 'https://github.com/litlfred/sgex/pull/123',
         updated_at: '2023-01-01T00:00:00Z',
         created_at: '2023-01-01T00:00:00Z'
@@ -220,5 +223,60 @@ describe('BranchListing Component', () => {
     // Should show the modal
     expect(screen.getByTestId('help-modal')).toBeInTheDocument();
     expect(screen.getByText('How to Contribute to SGEX')).toBeInTheDocument();
+  });
+
+  it('displays commit badge with link for PRs', async () => {
+    const mockPRs = [
+      {
+        id: 1,
+        number: 456,
+        title: 'Feature PR',
+        state: 'open',
+        user: { login: 'developer' },
+        head: { 
+          ref: 'feature/new-feature',
+          sha: 'abc123def456789'
+        },
+        html_url: 'https://github.com/litlfred/sgex/pull/456',
+        updated_at: '2023-01-01T00:00:00Z',
+        created_at: '2023-01-01T00:00:00Z'
+      }
+    ];
+
+    fetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve([])
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockPRs)
+      })
+      .mockResolvedValue({
+        ok: true,
+        status: 200
+      });
+
+    render(
+      <BrowserRouter>
+        <BranchListing />
+      </BrowserRouter>
+    );
+
+    await waitFor(() => {
+      // Check that commit SHA is displayed (first 7 characters)
+      const commitBadge = screen.getByText('abc123d');
+      expect(commitBadge).toBeInTheDocument();
+      
+      // Check that it's a link
+      expect(commitBadge.tagName).toBe('A');
+      
+      // Check that it links to the correct commit
+      expect(commitBadge).toHaveAttribute('href', 'https://github.com/litlfred/sgex/commit/abc123def456789');
+      
+      // Check that it opens in a new tab
+      expect(commitBadge).toHaveAttribute('target', '_blank');
+      expect(commitBadge).toHaveAttribute('rel', 'noopener noreferrer');
+    });
   });
 });

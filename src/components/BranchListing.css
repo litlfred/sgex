@@ -515,6 +515,19 @@
   white-space: nowrap;
 }
 
+/* Make commit badge clickable as a link */
+a.commit-badge {
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+a.commit-badge:hover {
+  background: var(--who-blue, #0366d6);
+  color: white;
+  transform: translateY(-1px);
+}
+
 .status-badge.active {
   background: #dcfce7;
   color: #166534;
