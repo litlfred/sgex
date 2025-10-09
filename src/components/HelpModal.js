@@ -553,7 +553,7 @@ Best regards,
             // Calculate the number of menu items
             const menuItems = [
               'Documentation',
-              'File Bug Report',
+              'Report an issue',
               ...(contextData.repository ? ['Provide DAK Feedback'] : []),
               'GitHub Source',
               'Email Support'
@@ -576,7 +576,7 @@ Best regards,
                 
                 <button onClick={handleBugReport} className="menu-item">
                   <img src="/sgex/bug-report-icon.svg" alt={getAltText(t, ALT_TEXT_KEYS.ICON_BUG_REPORT, 'Bug Report')} className="menu-icon" />
-                  File Bug Report
+                  Report an issue
                 </button>
                 
                 {contextData.repository && (

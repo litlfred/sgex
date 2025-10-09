@@ -1,15 +1,27 @@
 import helpContentService from '../services/helpContentService';
 
-describe('Help Content Service - Blank Bug Report', () => {
-  test('should include blank bug report option in SGEX bug reporting', () => {
+describe('Help Content Service - Simplified Issue Report', () => {
+  test('should have simplified SGEX issue reporting with 3 options', () => {
     const bugReportTopic = helpContentService.universalTopics.bugReport;
     expect(bugReportTopic).toBeDefined();
     expect(bugReportTopic.content).toBeDefined();
     expect(bugReportTopic.content[0]).toBeDefined();
     
     const content = bugReportTopic.content[0].content;
-    expect(content).toContain('Blank Issue - Create an issue without a template');
-    expect(content).toContain("window.helpModalInstance?.openSgexIssue('blank')");
+    // Should have the 3 simplified options
+    expect(content).toContain('Issue with DAK content');
+    expect(content).toContain('SGeX feature request');
+    expect(content).toContain('SGeX bug report');
+    
+    // Should have correct onclick handlers
+    expect(content).toContain("window.helpModalInstance?.openDakIssue('content')");
+    expect(content).toContain("window.helpModalInstance?.openSgexIssue('feature')");
+    expect(content).toContain("window.helpModalInstance?.openSgexIssue('bug')");
+  });
+
+  test('should have title "Report an issue"', () => {
+    const bugReportTopic = helpContentService.universalTopics.bugReport;
+    expect(bugReportTopic.title).toBe('Report an issue');
   });
 
   test('should include blank bug report option in DAK feedback', () => {
