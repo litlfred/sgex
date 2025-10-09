@@ -78,6 +78,24 @@
   color: #856404;
 }
 
+.info-note {
+  background: #e6f3ff;
+  border: 1px solid #b3d9ff;
+  border-radius: 4px;
+  padding: 0.75rem;
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+  color: #004085;
+}
+
+.info-note code {
+  background: rgba(0, 64, 133, 0.1);
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.85em;
+}
+
 .benefits-section,
 .security-note {
   background: white;

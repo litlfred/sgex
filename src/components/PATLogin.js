@@ -63,7 +63,7 @@ const PATLogin = ({ onAuthSuccess }) => {
       if (err.status === 401) {
         setError("Invalid Personal Access Token. Please check your token and try again.");
       } else if (err.status === 403) {
-        setError("Token doesn't have sufficient permissions. Please ensure your token has 'repo' and 'read:org' scopes.");
+        setError("Token doesn't have sufficient permissions. Please ensure your token has 'repo' scope (classic) or 'Contents: Read and Write' + 'Pull requests: Read and Write' (fine-grained).");
       } else {
         setError("Authentication failed. Please check your connection and try again.");
       }
