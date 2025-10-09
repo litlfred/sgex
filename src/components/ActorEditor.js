@@ -3,6 +3,490 @@ import { useNavigate } from 'react-router-dom';
 import actorDefinitionService from '../services/actorDefinitionService';
 import { PageLayout, useDAKParams } from './framework';
 
+// Basic Info Tab Component - MUST BE DEFINED BEFORE ActorEditor
+const BasicInfoTab = ({ actorDefinition, errors, onFieldChange }) => (
+  <div className="form-section">
+    <h3>Basic Information</h3>
+    
+    <div className="form-group">
+      <label htmlFor="id">Actor ID *</label>
+      <input
+        type="text"
+        id="id"
+        value={actorDefinition.id}
+        onChange={(e) => onFieldChange('id', e.target.value)}
+        className={errors.id ? 'error' : ''}
+        placeholder="e.g., primary-care-physician"
+        pattern="[a-zA-Z][a-zA-Z0-9_-]*"
+      />
+      {errors.id && <span className="error-text">{errors.id}</span>}
+      <span className="help-text">Unique identifier (letters, numbers, underscores, hyphens only)</span>
+    </div>
+
+    <div className="form-group">
+      <label htmlFor="name">Display Name *</label>
+      <input
+        type="text"
+        id="name"
+        value={actorDefinition.name}
+        onChange={(e) => onFieldChange('name', e.target.value)}
+        className={errors.name ? 'error' : ''}
+        placeholder="e.g., Primary Care Physician"
+      />
+      {errors.name && <span className="error-text">{errors.name}</span>}
+    </div>
+
+    <div className="form-group">
+      <label htmlFor="description">Description *</label>
+      <textarea
+        id="description"
+        value={actorDefinition.description}
+        onChange={(e) => onFieldChange('description', e.target.value)}
+        className={errors.description ? 'error' : ''}
+        placeholder="Detailed description of the actor's role and responsibilities..."
+        rows={4}
+      />
+      {errors.description && <span className="error-text">{errors.description}</span>}
+    </div>
+
+    <div className="form-group">
+      <label htmlFor="type">Actor Type *</label>
+      <select
+        id="type"
+        value={actorDefinition.type}
+        onChange={(e) => onFieldChange('type', e.target.value)}
+        className={errors.type ? 'error' : ''}
+      >
+        <option value="person">Person</option>
+        <option value="practitioner">Practitioner</option>
+        <option value="patient">Patient</option>
+        <option value="relatedperson">Related Person</option>
+        <option value="organization">Organization</option>
+        <option value="device">Device</option>
+        <option value="system">System</option>
+      </select>
+      {errors.type && <span className="error-text">{errors.type}</span>}
+    </div>
+  </div>
+);
+
+// Roles Tab Component - MUST BE DEFINED BEFORE ActorEditor
+const RolesTab = ({ actorDefinition, errors, onNestedFieldChange, onAddItem, onRemoveItem }) => (
+  <div className="form-section">
+    <h3>Roles & Qualifications</h3>
+    
+    <div className="subsection">
+      <div className="subsection-header">
+        <h4>Roles *</h4>
+        <button 
+          type="button"
+          onClick={() => onAddItem('roles', { code: '', display: '', system: 'http://snomed.info/sct' })}
+          className="add-btn"
+        >
+          + Add Role
+        </button>
+      </div>
+      {errors.roles && <span className="error-text">{errors.roles}</span>}
+      
+      {actorDefinition.roles && actorDefinition.roles.map((role, index) => (
+        <div key={index} className="array-item">
+          <div className="array-item-header">
+            <span>Role {index + 1}</span>
+            <button 
+              type="button"
+              onClick={() => onRemoveItem('roles', index)}
+              className="remove-btn"
+            >
+              Remove
+            </button>
+          </div>
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor={`role-code-${index}`}>Code</label>
+              <input
+                id={`role-code-${index}`}
+                type="text"
+                value={role.code}
+                onChange={(e) => onNestedFieldChange('roles', index, 'code', e.target.value)}
+                placeholder="Role code"
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor={`role-display-${index}`}>Display Name</label>
+              <input
+                id={`role-display-${index}`}
+                type="text"
+                value={role.display}
+                onChange={(e) => onNestedFieldChange('roles', index, 'display', e.target.value)}
+                placeholder="Human-readable role name"
+              />
+            </div>
+          </div>
+          <div className="form-group">
+            <label htmlFor={`role-system-${index}`}>Code System</label>
+            <input
+              id={`role-system-${index}`}
+              type="text"
+              value={role.system || ''}
+              onChange={(e) => onNestedFieldChange('roles', index, 'system', e.target.value)}
+              placeholder="http://snomed.info/sct"
+            />
+          </div>
+        </div>
+      ))}
+    </div>
+
+    <div className="subsection">
+      <div className="subsection-header">
+        <h4>Qualifications</h4>
+        <button 
+          type="button"
+          onClick={() => onAddItem('qualifications', { code: '', display: '', issuer: '' })}
+          className="add-btn"
+        >
+          + Add Qualification
+        </button>
+      </div>
+      
+      {actorDefinition.qualifications && actorDefinition.qualifications.map((qual, index) => (
+        <div key={index} className="array-item">
+          <div className="array-item-header">
+            <span>Qualification {index + 1}</span>
+            <button 
+              type="button"
+              onClick={() => onRemoveItem('qualifications', index)}
+              className="remove-btn"
+            >
+              Remove
+            </button>
+          </div>
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor={`qualification-code-${index}`}>Code</label>
+              <input
+                id={`qualification-code-${index}`}
+                type="text"
+                value={qual.code}
+                onChange={(e) => onNestedFieldChange('qualifications', index, 'code', e.target.value)}
+                placeholder="Qualification code"
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor={`qualification-display-${index}`}>Display Name</label>
+              <input
+                id={`qualification-display-${index}`}
+                type="text"
+                value={qual.display}
+                onChange={(e) => onNestedFieldChange('qualifications', index, 'display', e.target.value)}
+                placeholder="Qualification name"
+              />
+            </div>
+          </div>
+          <div className="form-group">
+            <label htmlFor={`qualification-issuer-${index}`}>Issuing Organization</label>
+            <input
+              id={`qualification-issuer-${index}`}
+              type="text"
+              value={qual.issuer || ''}
+              onChange={(e) => onNestedFieldChange('qualifications', index, 'issuer', e.target.value)}
+              placeholder="Organization that issued this qualification"
+            />
+          </div>
+        </div>
+      ))}
+    </div>
+
+    <div className="subsection">
+      <div className="subsection-header">
+        <h4>Specialties</h4>
+        <button 
+          type="button"
+          onClick={() => onAddItem('specialties', { code: '', display: '', system: 'http://snomed.info/sct' })}
+          className="add-btn"
+        >
+          + Add Specialty
+        </button>
+      </div>
+      
+      {actorDefinition.specialties && actorDefinition.specialties.map((specialty, index) => (
+        <div key={index} className="array-item">
+          <div className="array-item-header">
+            <span>Specialty {index + 1}</span>
+            <button 
+              type="button"
+              onClick={() => onRemoveItem('specialties', index)}
+              className="remove-btn"
+            >
+              Remove
+            </button>
+          </div>
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor={`specialty-code-${index}`}>Code</label>
+              <input
+                id={`specialty-code-${index}`}
+                type="text"
+                value={specialty.code}
+                onChange={(e) => onNestedFieldChange('specialties', index, 'code', e.target.value)}
+                placeholder="Specialty code"
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor={`specialty-display-${index}`}>Display Name</label>
+              <input
+                id={`specialty-display-${index}`}
+                type="text"
+                value={specialty.display}
+                onChange={(e) => onNestedFieldChange('specialties', index, 'display', e.target.value)}
+                placeholder="Specialty name"
+              />
+            </div>
+          </div>
+          <div className="form-group">
+            <label htmlFor={`specialty-system-${index}`}>Code System</label>
+            <input
+              id={`specialty-system-${index}`}
+              type="text"
+              value={specialty.system || ''}
+              onChange={(e) => onNestedFieldChange('specialties', index, 'system', e.target.value)}
+              placeholder="http://snomed.info/sct"
+            />
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+// Context Tab Component - MUST BE DEFINED BEFORE ActorEditor
+const ContextTab = ({ actorDefinition, errors, onFieldChange, onNestedFieldChange, onAddItem, onRemoveItem }) => (
+  <div className="form-section">
+    <h3>Context & Access</h3>
+    
+    <div className="subsection">
+      <h4>Typical Location</h4>
+      <div className="form-row">
+        <div className="form-group">
+          <label htmlFor="location-type">Location Type</label>
+          <select
+            id="location-type"
+            value={actorDefinition.location?.type || ''}
+            onChange={(e) => onFieldChange('location', { ...actorDefinition.location, type: e.target.value })}
+          >
+            <option value="facility">Healthcare Facility</option>
+            <option value="community">Community</option>
+            <option value="home">Home</option>
+            <option value="mobile">Mobile</option>
+            <option value="virtual">Virtual/Remote</option>
+          </select>
+        </div>
+        <div className="form-group">
+          <label htmlFor="location-description">Description</label>
+          <input
+            id="location-description"
+            type="text"
+            value={actorDefinition.location?.description || ''}
+            onChange={(e) => onFieldChange('location', { ...actorDefinition.location, description: e.target.value })}
+            placeholder="Describe the typical location"
+          />
+        </div>
+      </div>
+    </div>
+
+    <div className="subsection">
+      <h4>System Access Level</h4>
+      <div className="form-group">
+        <select
+          value={actorDefinition.accessLevel || 'standard'}
+          onChange={(e) => onFieldChange('accessLevel', e.target.value)}
+        >
+          <option value="read-only">Read-Only</option>
+          <option value="standard">Standard</option>
+          <option value="administrative">Administrative</option>
+          <option value="system">System</option>
+        </select>
+      </div>
+    </div>
+
+    <div className="subsection">
+      <div className="subsection-header">
+        <h4>Key Interactions</h4>
+        <button 
+          type="button"
+          onClick={() => onAddItem('interactions', { type: 'reads', target: '', description: '' })}
+          className="add-btn"
+        >
+          + Add Interaction
+        </button>
+      </div>
+      
+      {actorDefinition.interactions && actorDefinition.interactions.map((interaction, index) => (
+        <div key={index} className="array-item">
+          <div className="array-item-header">
+            <span>Interaction {index + 1}</span>
+            <button 
+              type="button"
+              onClick={() => onRemoveItem('interactions', index)}
+              className="remove-btn"
+            >
+              Remove
+            </button>
+          </div>
+          <div className="form-row">
+            <div className="form-group">
+              <label>Type</label>
+              <select
+                value={interaction.type}
+                onChange={(e) => onNestedFieldChange('interactions', index, 'type', e.target.value)}
+              >
+                <option value="creates">Creates</option>
+                <option value="reads">Reads</option>
+                <option value="updates">Updates</option>
+                <option value="deletes">Deletes</option>
+                <option value="approves">Approves</option>
+                <option value="reviews">Reviews</option>
+                <option value="monitors">Monitors</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Target</label>
+              <input
+                type="text"
+                value={interaction.target}
+                onChange={(e) => onNestedFieldChange('interactions', index, 'target', e.target.value)}
+                placeholder="What the actor interacts with"
+              />
+            </div>
+          </div>
+          <div className="form-group">
+            <label>Description</label>
+            <input
+              type="text"
+              value={interaction.description || ''}
+              onChange={(e) => onNestedFieldChange('interactions', index, 'description', e.target.value)}
+              placeholder="Describe this interaction"
+            />
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+// Metadata Tab Component - MUST BE DEFINED BEFORE ActorEditor
+const MetadataTab = ({ actorDefinition, errors, onFieldChange, onNestedFieldChange, onAddItem, onRemoveItem }) => (
+  <div className="form-section">
+    <h3>Metadata</h3>
+    
+    <div className="form-row">
+      <div className="form-group">
+        <label>Version</label>
+        <input
+          type="text"
+          value={actorDefinition.metadata?.version || ''}
+          onChange={(e) => onFieldChange('metadata', { ...actorDefinition.metadata, version: e.target.value })}
+          placeholder="1.0.0"
+        />
+      </div>
+      <div className="form-group">
+        <label>Status</label>
+        <select
+          value={actorDefinition.metadata?.status || 'draft'}
+          onChange={(e) => onFieldChange('metadata', { ...actorDefinition.metadata, status: e.target.value })}
+        >
+          <option value="draft">Draft</option>
+          <option value="active">Active</option>
+          <option value="retired">Retired</option>
+        </select>
+      </div>
+    </div>
+
+    <div className="form-group">
+      <label>Publisher</label>
+      <input
+        type="text"
+        value={actorDefinition.metadata?.publisher || ''}
+        onChange={(e) => onFieldChange('metadata', { ...actorDefinition.metadata, publisher: e.target.value })}
+        placeholder="Organization or person responsible"
+      />
+    </div>
+
+    <div className="subsection">
+      <div className="subsection-header">
+        <h4>Contact Information</h4>
+        <button 
+          type="button"
+          onClick={() => onAddItem('metadata.contact', { name: '', email: '' })}
+          className="add-btn"
+        >
+          + Add Contact
+        </button>
+      </div>
+      
+      {actorDefinition.metadata?.contact && actorDefinition.metadata.contact.map((contact, index) => (
+        <div key={index} className="array-item">
+          <div className="array-item-header">
+            <span>Contact {index + 1}</span>
+            <button 
+              type="button"
+              onClick={() => {
+                const newContacts = [...(actorDefinition.metadata.contact || [])];
+                newContacts.splice(index, 1);
+                onFieldChange('metadata', { ...actorDefinition.metadata, contact: newContacts });
+              }}
+              className="remove-btn"
+            >
+              Remove
+            </button>
+          </div>
+          <div className="form-row">
+            <div className="form-group">
+              <label>Name</label>
+              <input
+                type="text"
+                value={contact.name || ''}
+                onChange={(e) => {
+                  const newContacts = [...(actorDefinition.metadata.contact || [])];
+                  newContacts[index] = { ...contact, name: e.target.value };
+                  onFieldChange('metadata', { ...actorDefinition.metadata, contact: newContacts });
+                }}
+                placeholder="Contact name"
+              />
+            </div>
+            <div className="form-group">
+              <label>Email</label>
+              <input
+                type="email"
+                value={contact.email || ''}
+                onChange={(e) => {
+                  const newContacts = [...(actorDefinition.metadata.contact || [])];
+                  newContacts[index] = { ...contact, email: e.target.value };
+                  onFieldChange('metadata', { ...actorDefinition.metadata, contact: newContacts });
+                }}
+                placeholder="contact@example.com"
+              />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+
+    <div className="form-group">
+      <label>Tags</label>
+      <input
+        type="text"
+        value={actorDefinition.metadata?.tags?.join(', ') || ''}
+        onChange={(e) => onFieldChange('metadata', { 
+          ...actorDefinition.metadata, 
+          tags: e.target.value.split(',').map(tag => tag.trim()).filter(tag => tag) 
+        })}
+        placeholder="Enter tags separated by commas"
+      />
+      <span className="help-text">Comma-separated tags for categorization</span>
+    </div>
+  </div>
+);
+
 const ActorEditor = () => {
   const navigate = useNavigate();
   const pageParams = useDAKParams();
@@ -499,489 +983,5 @@ const ActorEditor = () => {
     </PageLayout>
   );
 };
-
-// Basic Info Tab Component
-const BasicInfoTab = ({ actorDefinition, errors, onFieldChange }) => (
-  <div className="form-section">
-    <h3>Basic Information</h3>
-    
-    <div className="form-group">
-      <label htmlFor="id">Actor ID *</label>
-      <input
-        type="text"
-        id="id"
-        value={actorDefinition.id}
-        onChange={(e) => onFieldChange('id', e.target.value)}
-        className={errors.id ? 'error' : ''}
-        placeholder="e.g., primary-care-physician"
-        pattern="[a-zA-Z][a-zA-Z0-9_-]*"
-      />
-      {errors.id && <span className="error-text">{errors.id}</span>}
-      <span className="help-text">Unique identifier (letters, numbers, underscores, hyphens only)</span>
-    </div>
-
-    <div className="form-group">
-      <label htmlFor="name">Display Name *</label>
-      <input
-        type="text"
-        id="name"
-        value={actorDefinition.name}
-        onChange={(e) => onFieldChange('name', e.target.value)}
-        className={errors.name ? 'error' : ''}
-        placeholder="e.g., Primary Care Physician"
-      />
-      {errors.name && <span className="error-text">{errors.name}</span>}
-    </div>
-
-    <div className="form-group">
-      <label htmlFor="description">Description *</label>
-      <textarea
-        id="description"
-        value={actorDefinition.description}
-        onChange={(e) => onFieldChange('description', e.target.value)}
-        className={errors.description ? 'error' : ''}
-        placeholder="Detailed description of the actor's role and responsibilities..."
-        rows={4}
-      />
-      {errors.description && <span className="error-text">{errors.description}</span>}
-    </div>
-
-    <div className="form-group">
-      <label htmlFor="type">Actor Type *</label>
-      <select
-        id="type"
-        value={actorDefinition.type}
-        onChange={(e) => onFieldChange('type', e.target.value)}
-        className={errors.type ? 'error' : ''}
-      >
-        <option value="person">Person</option>
-        <option value="practitioner">Practitioner</option>
-        <option value="patient">Patient</option>
-        <option value="relatedperson">Related Person</option>
-        <option value="organization">Organization</option>
-        <option value="device">Device</option>
-        <option value="system">System</option>
-      </select>
-      {errors.type && <span className="error-text">{errors.type}</span>}
-    </div>
-  </div>
-);
-
-// Roles Tab Component
-const RolesTab = ({ actorDefinition, errors, onNestedFieldChange, onAddItem, onRemoveItem }) => (
-  <div className="form-section">
-    <h3>Roles & Qualifications</h3>
-    
-    <div className="subsection">
-      <div className="subsection-header">
-        <h4>Roles *</h4>
-        <button 
-          type="button"
-          onClick={() => onAddItem('roles', { code: '', display: '', system: 'http://snomed.info/sct' })}
-          className="add-btn"
-        >
-          + Add Role
-        </button>
-      </div>
-      {errors.roles && <span className="error-text">{errors.roles}</span>}
-      
-      {actorDefinition.roles && actorDefinition.roles.map((role, index) => (
-        <div key={index} className="array-item">
-          <div className="array-item-header">
-            <span>Role {index + 1}</span>
-            <button 
-              type="button"
-              onClick={() => onRemoveItem('roles', index)}
-              className="remove-btn"
-            >
-              Remove
-            </button>
-          </div>
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor={`role-code-${index}`}>Code</label>
-              <input
-                id={`role-code-${index}`}
-                type="text"
-                value={role.code}
-                onChange={(e) => onNestedFieldChange('roles', index, 'code', e.target.value)}
-                placeholder="Role code"
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor={`role-display-${index}`}>Display Name</label>
-              <input
-                id={`role-display-${index}`}
-                type="text"
-                value={role.display}
-                onChange={(e) => onNestedFieldChange('roles', index, 'display', e.target.value)}
-                placeholder="Human-readable role name"
-              />
-            </div>
-          </div>
-          <div className="form-group">
-            <label htmlFor={`role-system-${index}`}>Code System</label>
-            <input
-              id={`role-system-${index}`}
-              type="text"
-              value={role.system || ''}
-              onChange={(e) => onNestedFieldChange('roles', index, 'system', e.target.value)}
-              placeholder="http://snomed.info/sct"
-            />
-          </div>
-        </div>
-      ))}
-    </div>
-
-    <div className="subsection">
-      <div className="subsection-header">
-        <h4>Qualifications</h4>
-        <button 
-          type="button"
-          onClick={() => onAddItem('qualifications', { code: '', display: '', issuer: '' })}
-          className="add-btn"
-        >
-          + Add Qualification
-        </button>
-      </div>
-      
-      {actorDefinition.qualifications && actorDefinition.qualifications.map((qual, index) => (
-        <div key={index} className="array-item">
-          <div className="array-item-header">
-            <span>Qualification {index + 1}</span>
-            <button 
-              type="button"
-              onClick={() => onRemoveItem('qualifications', index)}
-              className="remove-btn"
-            >
-              Remove
-            </button>
-          </div>
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor={`qualification-code-${index}`}>Code</label>
-              <input
-                id={`qualification-code-${index}`}
-                type="text"
-                value={qual.code}
-                onChange={(e) => onNestedFieldChange('qualifications', index, 'code', e.target.value)}
-                placeholder="Qualification code"
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor={`qualification-display-${index}`}>Display Name</label>
-              <input
-                id={`qualification-display-${index}`}
-                type="text"
-                value={qual.display}
-                onChange={(e) => onNestedFieldChange('qualifications', index, 'display', e.target.value)}
-                placeholder="Qualification name"
-              />
-            </div>
-          </div>
-          <div className="form-group">
-            <label htmlFor={`qualification-issuer-${index}`}>Issuing Organization</label>
-            <input
-              id={`qualification-issuer-${index}`}
-              type="text"
-              value={qual.issuer || ''}
-              onChange={(e) => onNestedFieldChange('qualifications', index, 'issuer', e.target.value)}
-              placeholder="Organization that issued this qualification"
-            />
-          </div>
-        </div>
-      ))}
-    </div>
-
-    <div className="subsection">
-      <div className="subsection-header">
-        <h4>Specialties</h4>
-        <button 
-          type="button"
-          onClick={() => onAddItem('specialties', { code: '', display: '', system: 'http://snomed.info/sct' })}
-          className="add-btn"
-        >
-          + Add Specialty
-        </button>
-      </div>
-      
-      {actorDefinition.specialties && actorDefinition.specialties.map((specialty, index) => (
-        <div key={index} className="array-item">
-          <div className="array-item-header">
-            <span>Specialty {index + 1}</span>
-            <button 
-              type="button"
-              onClick={() => onRemoveItem('specialties', index)}
-              className="remove-btn"
-            >
-              Remove
-            </button>
-          </div>
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor={`specialty-code-${index}`}>Code</label>
-              <input
-                id={`specialty-code-${index}`}
-                type="text"
-                value={specialty.code}
-                onChange={(e) => onNestedFieldChange('specialties', index, 'code', e.target.value)}
-                placeholder="Specialty code"
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor={`specialty-display-${index}`}>Display Name</label>
-              <input
-                id={`specialty-display-${index}`}
-                type="text"
-                value={specialty.display}
-                onChange={(e) => onNestedFieldChange('specialties', index, 'display', e.target.value)}
-                placeholder="Specialty name"
-              />
-            </div>
-          </div>
-          <div className="form-group">
-            <label htmlFor={`specialty-system-${index}`}>Code System</label>
-            <input
-              id={`specialty-system-${index}`}
-              type="text"
-              value={specialty.system || ''}
-              onChange={(e) => onNestedFieldChange('specialties', index, 'system', e.target.value)}
-              placeholder="http://snomed.info/sct"
-            />
-          </div>
-        </div>
-      ))}
-    </div>
-  </div>
-);
-
-// Context Tab Component
-const ContextTab = ({ actorDefinition, errors, onFieldChange, onNestedFieldChange, onAddItem, onRemoveItem }) => (
-  <div className="form-section">
-    <h3>Context & Access</h3>
-    
-    <div className="subsection">
-      <h4>Typical Location</h4>
-      <div className="form-row">
-        <div className="form-group">
-          <label htmlFor="location-type">Location Type</label>
-          <select
-            id="location-type"
-            value={actorDefinition.location?.type || ''}
-            onChange={(e) => onFieldChange('location', { ...actorDefinition.location, type: e.target.value })}
-          >
-            <option value="facility">Healthcare Facility</option>
-            <option value="community">Community</option>
-            <option value="home">Home</option>
-            <option value="mobile">Mobile</option>
-            <option value="virtual">Virtual/Remote</option>
-          </select>
-        </div>
-        <div className="form-group">
-          <label htmlFor="location-description">Description</label>
-          <input
-            id="location-description"
-            type="text"
-            value={actorDefinition.location?.description || ''}
-            onChange={(e) => onFieldChange('location', { ...actorDefinition.location, description: e.target.value })}
-            placeholder="Describe the typical location"
-          />
-        </div>
-      </div>
-    </div>
-
-    <div className="subsection">
-      <h4>System Access Level</h4>
-      <div className="form-group">
-        <select
-          value={actorDefinition.accessLevel || 'standard'}
-          onChange={(e) => onFieldChange('accessLevel', e.target.value)}
-        >
-          <option value="read-only">Read-Only</option>
-          <option value="standard">Standard</option>
-          <option value="administrative">Administrative</option>
-          <option value="system">System</option>
-        </select>
-      </div>
-    </div>
-
-    <div className="subsection">
-      <div className="subsection-header">
-        <h4>Key Interactions</h4>
-        <button 
-          type="button"
-          onClick={() => onAddItem('interactions', { type: 'reads', target: '', description: '' })}
-          className="add-btn"
-        >
-          + Add Interaction
-        </button>
-      </div>
-      
-      {actorDefinition.interactions && actorDefinition.interactions.map((interaction, index) => (
-        <div key={index} className="array-item">
-          <div className="array-item-header">
-            <span>Interaction {index + 1}</span>
-            <button 
-              type="button"
-              onClick={() => onRemoveItem('interactions', index)}
-              className="remove-btn"
-            >
-              Remove
-            </button>
-          </div>
-          <div className="form-row">
-            <div className="form-group">
-              <label>Type</label>
-              <select
-                value={interaction.type}
-                onChange={(e) => onNestedFieldChange('interactions', index, 'type', e.target.value)}
-              >
-                <option value="creates">Creates</option>
-                <option value="reads">Reads</option>
-                <option value="updates">Updates</option>
-                <option value="deletes">Deletes</option>
-                <option value="approves">Approves</option>
-                <option value="reviews">Reviews</option>
-                <option value="monitors">Monitors</option>
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Target</label>
-              <input
-                type="text"
-                value={interaction.target}
-                onChange={(e) => onNestedFieldChange('interactions', index, 'target', e.target.value)}
-                placeholder="What the actor interacts with"
-              />
-            </div>
-          </div>
-          <div className="form-group">
-            <label>Description</label>
-            <input
-              type="text"
-              value={interaction.description || ''}
-              onChange={(e) => onNestedFieldChange('interactions', index, 'description', e.target.value)}
-              placeholder="Describe this interaction"
-            />
-          </div>
-        </div>
-      ))}
-    </div>
-  </div>
-);
-
-// Metadata Tab Component
-const MetadataTab = ({ actorDefinition, errors, onFieldChange, onNestedFieldChange, onAddItem, onRemoveItem }) => (
-  <div className="form-section">
-    <h3>Metadata</h3>
-    
-    <div className="form-row">
-      <div className="form-group">
-        <label>Version</label>
-        <input
-          type="text"
-          value={actorDefinition.metadata?.version || ''}
-          onChange={(e) => onFieldChange('metadata', { ...actorDefinition.metadata, version: e.target.value })}
-          placeholder="1.0.0"
-        />
-      </div>
-      <div className="form-group">
-        <label>Status</label>
-        <select
-          value={actorDefinition.metadata?.status || 'draft'}
-          onChange={(e) => onFieldChange('metadata', { ...actorDefinition.metadata, status: e.target.value })}
-        >
-          <option value="draft">Draft</option>
-          <option value="active">Active</option>
-          <option value="retired">Retired</option>
-        </select>
-      </div>
-    </div>
-
-    <div className="form-group">
-      <label>Publisher</label>
-      <input
-        type="text"
-        value={actorDefinition.metadata?.publisher || ''}
-        onChange={(e) => onFieldChange('metadata', { ...actorDefinition.metadata, publisher: e.target.value })}
-        placeholder="Organization or person responsible"
-      />
-    </div>
-
-    <div className="subsection">
-      <div className="subsection-header">
-        <h4>Contact Information</h4>
-        <button 
-          type="button"
-          onClick={() => onAddItem('metadata.contact', { name: '', email: '' })}
-          className="add-btn"
-        >
-          + Add Contact
-        </button>
-      </div>
-      
-      {actorDefinition.metadata?.contact && actorDefinition.metadata.contact.map((contact, index) => (
-        <div key={index} className="array-item">
-          <div className="array-item-header">
-            <span>Contact {index + 1}</span>
-            <button 
-              type="button"
-              onClick={() => {
-                const newContacts = [...(actorDefinition.metadata.contact || [])];
-                newContacts.splice(index, 1);
-                onFieldChange('metadata', { ...actorDefinition.metadata, contact: newContacts });
-              }}
-              className="remove-btn"
-            >
-              Remove
-            </button>
-          </div>
-          <div className="form-row">
-            <div className="form-group">
-              <label>Name</label>
-              <input
-                type="text"
-                value={contact.name || ''}
-                onChange={(e) => {
-                  const newContacts = [...(actorDefinition.metadata.contact || [])];
-                  newContacts[index] = { ...contact, name: e.target.value };
-                  onFieldChange('metadata', { ...actorDefinition.metadata, contact: newContacts });
-                }}
-                placeholder="Contact name"
-              />
-            </div>
-            <div className="form-group">
-              <label>Email</label>
-              <input
-                type="email"
-                value={contact.email || ''}
-                onChange={(e) => {
-                  const newContacts = [...(actorDefinition.metadata.contact || [])];
-                  newContacts[index] = { ...contact, email: e.target.value };
-                  onFieldChange('metadata', { ...actorDefinition.metadata, contact: newContacts });
-                }}
-                placeholder="contact@example.com"
-              />
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-
-    <div className="form-group">
-      <label>Tags</label>
-      <input
-        type="text"
-        value={actorDefinition.metadata?.tags?.join(', ') || ''}
-        onChange={(e) => onFieldChange('metadata', { 
-          ...actorDefinition.metadata, 
-          tags: e.target.value.split(',').map(tag => tag.trim()).filter(tag => tag) 
-        })}
-        placeholder="Enter tags separated by commas"
-      />
-      <span className="help-text">Comma-separated tags for categorization</span>
-    </div>
-  </div>
-);
 
 export default ActorEditor;
