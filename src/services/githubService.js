@@ -350,6 +350,15 @@ class GitHubService {
       return data;
     } catch (error) {
       console.error('Failed to fetch organizations:', error);
+      
+      // Handle permission errors gracefully
+      if (error.status === 403 || error.status === 401) {
+        console.warn('Token does not have permission to list organizations. This requires the "read:org" scope for classic tokens or "Members: Read" for fine-grained tokens.');
+        // Return empty array instead of throwing - user can still use their personal account
+        return [];
+      }
+      
+      // For other errors (network issues, etc.), throw so the UI can show retry option
       throw error;
     }
   }

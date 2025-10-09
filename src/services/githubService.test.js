@@ -636,4 +636,84 @@ describe('GitHubService', () => {
       expect(result).toBeNull();
     });
   });
+
+  describe('getUserOrganizations', () => {
+    beforeEach(() => {
+      mockOctokit.rest.orgs = {
+        listForAuthenticatedUser: jest.fn()
+      };
+    });
+
+    it('should return organizations when authenticated with proper permissions', async () => {
+      // Manually set authentication state
+      githubService.octokit = mockOctokit;
+      githubService.isAuthenticated = true;
+
+      const mockOrgs = [
+        { id: 1, login: 'my-org', name: 'My Organization' },
+        { id: 2, login: 'another-org', name: 'Another Org' }
+      ];
+
+      mockOctokit.rest.orgs.listForAuthenticatedUser.mockResolvedValue({
+        status: 200,
+        data: mockOrgs
+      });
+
+      const result = await githubService.getUserOrganizations();
+
+      expect(result).toEqual(mockOrgs);
+      expect(mockOctokit.rest.orgs.listForAuthenticatedUser).toHaveBeenCalled();
+    });
+
+    it('should return empty array when token lacks read:org permission (403)', async () => {
+      // Manually set authentication state
+      githubService.octokit = mockOctokit;
+      githubService.isAuthenticated = true;
+
+      const permissionError = new Error('Resource not accessible by personal access token');
+      permissionError.status = 403;
+
+      mockOctokit.rest.orgs.listForAuthenticatedUser.mockRejectedValue(permissionError);
+
+      const result = await githubService.getUserOrganizations();
+
+      expect(result).toEqual([]);
+      expect(mockOctokit.rest.orgs.listForAuthenticatedUser).toHaveBeenCalled();
+    });
+
+    it('should return empty array when token lacks read:org permission (401)', async () => {
+      // Manually set authentication state
+      githubService.octokit = mockOctokit;
+      githubService.isAuthenticated = true;
+
+      const permissionError = new Error('Requires authentication');
+      permissionError.status = 401;
+
+      mockOctokit.rest.orgs.listForAuthenticatedUser.mockRejectedValue(permissionError);
+
+      const result = await githubService.getUserOrganizations();
+
+      expect(result).toEqual([]);
+      expect(mockOctokit.rest.orgs.listForAuthenticatedUser).toHaveBeenCalled();
+    });
+
+    it('should throw error for non-permission errors', async () => {
+      // Manually set authentication state
+      githubService.octokit = mockOctokit;
+      githubService.isAuthenticated = true;
+
+      const networkError = new Error('Network error');
+      networkError.status = 500;
+
+      mockOctokit.rest.orgs.listForAuthenticatedUser.mockRejectedValue(networkError);
+
+      await expect(githubService.getUserOrganizations()).rejects.toThrow('Network error');
+    });
+
+    it('should throw error when not authenticated', async () => {
+      githubService.logout();
+
+      await expect(githubService.getUserOrganizations()).rejects.toThrow('Not authenticated with GitHub');
+    });
+  });
 });

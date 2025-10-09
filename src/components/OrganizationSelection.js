@@ -103,7 +103,17 @@ const OrganizationSelection = () => {
       setOrganizations(orgsData);
     } catch (error) {
       console.error('Error fetching organizations:', error);
-      setError('Failed to fetch organizations. Please check your connection and try again.');
+      
+      // Provide helpful error message based on error type
+      let errorMessage = 'Failed to fetch organizations. ';
+      if (error.status === 403 || error.status === 401) {
+        errorMessage = 'Unable to list your organizations. Your Personal Access Token needs the "read:org" scope (classic tokens) or "Members: Read-only" permission (fine-grained tokens) to list organizations. You can still use your personal account or select WHO.';
+      } else {
+        errorMessage += 'Please check your connection and try again.';
+      }
+      
+      setError(errorMessage);
+      
       // Fallback to mock data for demonstration (which includes WHO)
       try {
         const mockOrgs = await getMockOrganizations();

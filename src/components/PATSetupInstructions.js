@@ -32,12 +32,16 @@ const PATSetupInstructions = () => {
               <li><strong>Contents:</strong> Read and Write</li>
               <li><strong>Metadata:</strong> Read</li>
               <li><strong>Pull requests:</strong> Read and Write</li>
+              <li><strong>Members:</strong> Read-only (optional - only if you want to list organizations)</li>
             </ul>
             <p>For <strong>classic tokens</strong>, select these scopes:</p>
             <ul>
               <li><strong>repo</strong> - Full control of private repositories</li>
-              <li><strong>read:org</strong> - Read org and team membership</li>
+              <li><strong>read:org</strong> - Read org and team membership (optional - only if you want to list organizations)</li>
             </ul>
+            <div className="info-note">
+              <strong>ℹ️ Note:</strong> The organization permission (<code>read:org</code> for classic or <code>Members: Read-only</code> for fine-grained) is only needed if you want to see organizations you're a member of. You can still use your personal account and the WHO organization without it.
+            </div>
           </div>
           
           <div className="step">

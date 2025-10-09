@@ -180,10 +180,13 @@ For **fine-grained tokens**:
 - **Contents**: Read and Write (for editing DAK content)
 - **Metadata**: Read (for repository information)
 - **Pull requests**: Read and Write (for creating pull requests)
+- **Members**: Read-only (optional - only needed if you want to list organizations you're a member of)
 
 For **classic tokens**:
 - **repo**: Full control of private repositories (for editing DAK content)
-- **read:org**: Read org and team membership (for listing organization repositories)
+- **read:org**: Read org and team membership (optional - only needed if you want to list organizations you're a member of)
+
+**Note**: The `read:org` scope (classic) or `Members: Read-only` permission (fine-grained) is only needed if you want to see and select organizations you're a member of. You can still use your personal account and the WHO organization without this permission.
 
 This authentication method is fully compatible with static deployments and requires no backend server.
 
