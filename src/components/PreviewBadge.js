@@ -1625,6 +1625,21 @@ const PreviewBadge = () => {
                 <span className="badge-label">PR:</span>
                 <span className="badge-branch">#{pr.number}</span>
                 <span className="badge-separator">|</span>
+                {pr.head && pr.head.sha && (
+                  <>
+                    <a 
+                      href={`${repositoryConfig.getGitHubUrl()}/commit/${pr.head.sha}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="badge-commit"
+                      title={`View commit ${pr.head.sha}`}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {pr.head.sha.substring(0, 7)}
+                    </a>
+                    <span className="badge-separator">|</span>
+                  </>
+                )}
                 <span className="badge-pr-title">{truncateTitle(pr.title)}</span>
                 <span className="badge-expand-icon">{isExpanded ? '▼' : '▶'}</span>
               </div>

@@ -593,7 +593,6 @@ const BranchListing = () => {
           safeBranchName: safeBranchName,
           url: `./${safeBranchName}/index.html`,
           prUrl: pr.html_url,
-          commitSha: pr.head.sha,
           updatedAt: new Date(pr.updated_at).toLocaleDateString(),
           createdAt: new Date(pr.created_at).toLocaleDateString()
         };
@@ -660,7 +659,6 @@ const BranchListing = () => {
             safeBranchName: 'copilot-fix-459',
             url: './copilot-fix-459/index.html',
             prUrl: '${repositoryConfig.getGitHubUrl()}/pull/123',
-            commitSha: 'abc1234567890',
             updatedAt: new Date().toLocaleDateString(),
             createdAt: new Date(Date.now() - 86400000).toLocaleDateString()
           },
@@ -674,7 +672,6 @@ const BranchListing = () => {
             safeBranchName: 'feature-dark-mode',
             url: './feature-dark-mode/index.html',
             prUrl: '${repositoryConfig.getGitHubUrl()}/pull/122',
-            commitSha: 'def5678901234',
             updatedAt: new Date(Date.now() - 172800000).toLocaleDateString(),
             createdAt: new Date(Date.now() - 345600000).toLocaleDateString()
           },
@@ -688,7 +685,6 @@ const BranchListing = () => {
             safeBranchName: 'fix-auth-flow',
             url: './fix-auth-flow/index.html',
             prUrl: '${repositoryConfig.getGitHubUrl()}/pull/121',
-            commitSha: 'ghi9012345678',
             updatedAt: new Date(Date.now() - 259200000).toLocaleDateString(),
             createdAt: new Date(Date.now() - 432000000).toLocaleDateString()
           }
@@ -1053,17 +1049,6 @@ const BranchListing = () => {
                           <span className={`state-badge ${pr.state}`}>
                             {pr.state === 'open' ? '🟢' : '🔴'} {pr.state}
                           </span>
-                          {pr.commitSha && (
-                            <a 
-                              href={`${repositoryConfig.getGitHubUrl()}/commit/${pr.commitSha}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="commit-badge"
-                              title={`View commit ${pr.commitSha}`}
-                            >
-                              {pr.commitSha.substring(0, 7)}
-                            </a>
-                          )}
                           {deploymentStatus && (
                             <span className={`status-badge ${deploymentStatus}`}>
                               {deploymentStatus === 'active' && '🟢 Active'}
