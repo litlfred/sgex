@@ -3,6 +3,7 @@ import { PageLayout, useDAKParams } from './framework';
 import ContextualHelpMascot from './ContextualHelpMascot';
 import githubService from '../services/githubService';
 import requirementsService from '../services/requirementsService';
+import stagingGroundService from '../services/stagingGroundService';
 import { escapeFSHString, extractFSHMetadata } from '@sgex/dak-core/dist/browser';
 import './RequirementsEditor.css';
 
@@ -82,6 +83,17 @@ const RequirementsEditorContent = () => {
   // Extract user and repo from repository
   const user = repository?.owner?.login || repository?.full_name?.split('/')[0];
   const repo = repository?.name || repository?.full_name?.split('/')[1];
+
+  // Initialize staging ground when repository and branch are available
+  useEffect(() => {
+    if (repository && branch) {
+      try {
+        stagingGroundService.initialize(repository, branch);
+      } catch (error) {
+        console.error('Error initializing staging ground:', error);
+      }
+    }
+  }, [repository, branch]);
 
   // Fetch requirements FSH files from input/fsh/requirements directory
   useEffect(() => {
