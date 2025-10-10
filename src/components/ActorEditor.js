@@ -513,6 +513,7 @@ const ActorEditorContent = () => {
   const [stagedActors, setStagedActors] = useState([]);
   const [showActorList, setShowActorList] = useState(false);
   const [activeTab, setActiveTab] = useState('basic');
+  const [successMessage, setSuccessMessage] = useState('');
 
   // Initialize component
   const initializeEditor = useCallback(async () => {
@@ -658,9 +659,10 @@ const ActorEditorContent = () => {
     try {
       const fsh = actorDefinitionService.generateFSH(actorDefinition);
       setFshPreview(fsh);
+      setShowPreview(true);
     } catch (error) {
       console.error('Error generating FSH preview:', error);
-      setErrors({ general: 'Failed to generate FSH preview' });
+      setErrors({ general: 'Failed to generate FSH preview: ' + error.message });
     }
   }, [actorDefinition]);
 
@@ -671,9 +673,11 @@ const ActorEditorContent = () => {
     }
     
     setSaving(true);
+    setErrors({});
+    setSuccessMessage('');
     
     try {
-      actorDefinitionService.saveToStagingGround(actorDefinition, {
+      const result = await actorDefinitionService.saveToStagingGround(actorDefinition, {
         type: 'actor-definition',
         actorId: actorDefinition.id,
         actorName: actorDefinition.name,
@@ -682,14 +686,22 @@ const ActorEditorContent = () => {
         owner: profile?.login
       });
       
-      // Refresh staged actors list
-      const staged = actorDefinitionService.listStagedActors();
-      setStagedActors(staged);
-      
-      setErrors({});
+      if (result.success) {
+        // Refresh staged actors list
+        const staged = actorDefinitionService.listStagedActors();
+        setStagedActors(staged);
+        
+        // Show success message
+        setSuccessMessage(`✅ Saved "${actorDefinition.name}" to staging ground`);
+        
+        // Clear success message after 3 seconds
+        setTimeout(() => setSuccessMessage(''), 3000);
+      } else {
+        setErrors({ general: result.error || 'Failed to save actor definition' });
+      }
     } catch (error) {
       console.error('Error saving actor definition:', error);
-      setErrors({ general: 'Failed to save actor definition' });
+      setErrors({ general: 'Failed to save actor definition: ' + error.message });
     } finally {
       setSaving(false);
     }
@@ -787,6 +799,19 @@ const ActorEditorContent = () => {
             </button>
           </div>
         </div>
+
+        {successMessage && (
+          <div className="success-message" style={{ 
+            padding: '10px', 
+            marginTop: '10px',
+            backgroundColor: '#d4edda', 
+            color: '#155724', 
+            border: '1px solid #c3e6cb',
+            borderRadius: '4px'
+          }}>
+            {successMessage}
+          </div>
+        )}
 
         {errors.general && (
           <div className="error-message">
