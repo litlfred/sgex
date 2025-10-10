@@ -57,6 +57,19 @@ const DAKDashboardContent = () => {
   const [showFAQModal, setShowFAQModal] = useState(false);
   const [selectedFAQComponent, setSelectedFAQComponent] = useState(null);
 
+  // Handle Escape key for FAQ modal
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape' && showFAQModal) {
+        setShowFAQModal(false);
+      }
+    };
+    if (showFAQModal) {
+      document.addEventListener('keydown', handleEscape);
+      return () => document.removeEventListener('keydown', handleEscape);
+    }
+  }, [showFAQModal]);
+
   // Use the branch from PageProvider
   const selectedBranch = branch;
 
@@ -158,10 +171,12 @@ const DAKDashboardContent = () => {
     
     return (
       <div className={`status-bar ${isExpanded ? 'expanded' : 'collapsed'}`}>
-        <div 
+        <button 
           className="status-bar-header" 
           onClick={() => setIsExpanded(!isExpanded)}
           style={{ backgroundColor: color }}
+          type="button"
+          aria-expanded={isExpanded}
         >
           <div className="status-bar-title">
             <span className="status-bar-icon">{icon}</span>
@@ -895,8 +910,21 @@ const DAKDashboardContent = () => {
 
       {/* FAQ Component Modal */}
       {showFAQModal && selectedFAQComponent && (
-        <div className="faq-modal-overlay" onClick={() => setShowFAQModal(false)}>
-          <div className="faq-modal" onClick={(e) => e.stopPropagation()}>
+        <div 
+          className="faq-modal-overlay" 
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowFAQModal(false);
+            }
+          }}
+          role="presentation"
+        >
+          <div 
+            className="faq-modal"
+            role="dialog"
+            aria-modal="true"
+            tabIndex={-1}
+          >
             <div className="faq-modal-header">
               <h3>❓ FAQ: {selectedFAQComponent.name}</h3>
               <button 
