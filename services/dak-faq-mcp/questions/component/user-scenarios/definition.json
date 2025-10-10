@@ -44,12 +44,24 @@
           "properties": {
             "scenarios": {
               "type": "array",
+              "description": "List of user scenarios",
+              "x-canonical-url": "https://worldhealthorganization.github.io/smart-base/ValueSet-UserScenarioType.schema.json",
+              "x-canonical-note": "User scenarios should align with WHO SMART Guidelines use case patterns",
               "items": {
                 "type": "object",
                 "properties": {
-                  "name": { "type": "string" },
-                  "file": { "type": "string" },
-                  "description": { "type": "string" }
+                  "name": { 
+                    "type": "string",
+                    "description": "User scenario name"
+                  },
+                  "file": { 
+                    "type": "string",
+                    "description": "File path containing the user scenario"
+                  },
+                  "description": { 
+                    "type": "string",
+                    "description": "Description of the user scenario"
+                  }
                 }
               }
             }

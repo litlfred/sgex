@@ -47,9 +47,20 @@
               "items": {
                 "type": "object",
                 "properties": {
-                  "name": { "type": "string" },
-                  "file": { "type": "string" },
-                  "category": { "type": "string" }
+                  "name": { 
+                    "type": "string",
+                    "description": "Requirement name"
+                  },
+                  "file": { 
+                    "type": "string",
+                    "description": "File path containing the requirement"
+                  },
+                  "category": { 
+                    "type": "string",
+                    "description": "Category of requirement (functional, non-functional, etc.)",
+                    "x-canonical-url": "https://worldhealthorganization.github.io/smart-base/ValueSet-RequirementCategory.schema.json",
+                    "x-canonical-note": "Should reference WHO SMART Guidelines requirement categories"
+                  }
                 }
               }
             }
