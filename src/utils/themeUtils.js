@@ -1,7 +1,7 @@
 /**
  * Utility function to get the appropriate image path based on the current theme
  * This can be used outside React components
- * @param {string} baseImagePath - The base image path (e.g., "sgex-mascot.png")
+ * @param {string} baseImagePath - The base image path (e.g., "sgex-mascot.png", "cat-paw-icon.svg")
  * @returns {string} The theme-appropriate image path
  */
 export const getThemeImagePath = (baseImagePath) => {
@@ -17,7 +17,13 @@ export const getThemeImagePath = (baseImagePath) => {
   if (isDarkMode) {
     // Convert base image to dark mode version
     // e.g., "sgex-mascot.png" -> "sgex-mascot_grey_tabby.png"
-    const darkImageName = normalizedPath.replace(/\.png$/, '_grey_tabby.png');
+    // e.g., "cat-paw-icon.svg" -> "cat-paw-icon_dark.svg"
+    let darkImageName;
+    if (normalizedPath.endsWith('.svg')) {
+      darkImageName = normalizedPath.replace(/\.svg$/, '_dark.svg');
+    } else {
+      darkImageName = normalizedPath.replace(/\.png$/, '_grey_tabby.png');
+    }
     finalPath = publicUrl ? `${publicUrl}/${darkImageName}` : `/${darkImageName}`;
   } else {
     // Use original image for light mode

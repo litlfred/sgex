@@ -22,6 +22,16 @@ describe('Image Asset Validity', () => {
     'cat-paw-workflow-icon.svg',
   ];
 
+  // Dark mode SVG icons that must exist for theme support
+  const darkModeSvgIcons = [
+    'cat-paw-icon_dark.svg',
+    'cat-paw-info-icon_dark.svg',
+    'cat-paw-file-icon_dark.svg',
+    'cat-paw-document-icon_dark.svg',
+    'cat-paw-settings-icon_dark.svg',
+    'cat-paw-workflow-icon_dark.svg',
+  ];
+
   // Critical PNG images that must exist
   const criticalPngImages = [
     'sgex-mascot.png',
@@ -127,6 +137,24 @@ describe('Image Asset Validity', () => {
         const variantName = image.replace('.png', '_grey_tabby.png');
         const variantPath = path.join(__dirname, '../../public', variantName);
         expect(fs.existsSync(variantPath)).toBe(true);
+      });
+    });
+
+    // Test dark mode SVG variants
+    darkModeSvgIcons.forEach(icon => {
+      test(`${icon} should exist for dark mode theme`, () => {
+        const iconPath = path.join(__dirname, '../../public', icon);
+        expect(fs.existsSync(iconPath)).toBe(true);
+      });
+
+      test(`${icon} should be valid SVG`, () => {
+        const iconPath = path.join(__dirname, '../../public', icon);
+        if (fs.existsSync(iconPath)) {
+          const content = fs.readFileSync(iconPath, 'utf8');
+          expect(content).toContain('<svg');
+          expect(content).toContain('</svg>');
+          expect(content).toContain('viewBox');
+        }
       });
     });
   });
