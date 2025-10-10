@@ -270,19 +270,23 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
             // This prevents the issue where diagram requires a mouse click to appear
             setTimeout(() => {
               if (viewer && containerRef.current) {
-                const canvas = viewer.get('canvas');
-                // Trigger a canvas update by getting the viewbox
-                canvas.viewbox();
-                // Force a repaint by slightly adjusting zoom and resetting
-                const currentZoom = canvas.zoom();
-                canvas.zoom(currentZoom);
-                
-                // Also force SVG visibility
-                const svgElement = containerRef.current.querySelector('svg');
-                if (svgElement) {
-                  svgElement.style.opacity = '1';
-                  svgElement.style.visibility = 'visible';
-                  console.log('🎨 BPMNPreview: Forced SVG visibility and canvas update');
+                try {
+                  const canvas = viewer.get('canvas');
+                  // Trigger a canvas update by getting the viewbox
+                  canvas.viewbox();
+                  // Force a repaint by slightly adjusting zoom and resetting
+                  const currentZoom = canvas.zoom();
+                  canvas.zoom(currentZoom);
+                  
+                  // Also force SVG visibility
+                  const svgElement = containerRef.current.querySelector('svg');
+                  if (svgElement) {
+                    svgElement.style.opacity = '1';
+                    svgElement.style.visibility = 'visible';
+                    console.log('🎨 BPMNPreview: Forced SVG visibility and canvas update');
+                  }
+                } catch (canvasError) {
+                  console.warn('⚠️ BPMNPreview: Could not force canvas update:', canvasError);
                 }
               }
             }, 50);

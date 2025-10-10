@@ -285,12 +285,16 @@ const BPMNViewerEnhanced = () => {
         // This prevents the issue where diagram requires a mouse click to appear
         setTimeout(() => {
           if (viewerRef.current) {
-            const canvas = viewerRef.current.get('canvas');
-            // Trigger a canvas update by getting the viewbox
-            canvas.viewbox();
-            // Force a repaint by slightly adjusting zoom and resetting
-            const currentZoom = canvas.zoom();
-            canvas.zoom(currentZoom);
+            try {
+              const canvas = viewerRef.current.get('canvas');
+              // Trigger a canvas update by getting the viewbox
+              canvas.viewbox();
+              // Force a repaint by slightly adjusting zoom and resetting
+              const currentZoom = canvas.zoom();
+              canvas.zoom(currentZoom);
+            } catch (canvasError) {
+              console.warn('⚠️ BPMNViewerEnhanced: Could not force canvas update:', canvasError);
+            }
           }
         }, 50);
         
