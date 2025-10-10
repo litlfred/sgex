@@ -4,6 +4,7 @@ import useThemeImage from '../hooks/useThemeImage';
 import BugReportForm from './BugReportForm';
 import EnhancedTutorialModal from './EnhancedTutorialModal';
 import tutorialService from '../services/tutorialService';
+import githubService from '../services/githubService';
 import { ALT_TEXT_KEYS, getAltText } from '../utils/imageAltTextHelper';
 import repositoryConfig from '../config/repositoryConfig';
 
@@ -65,10 +66,16 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose, tutorialId }) => {
 
     window.helpModalInstance = {
       openSgexIssue: (issueType) => {
-        // For bug reports, show the new integrated form
+        // For bug reports, show the new integrated form only if authenticated
         if (issueType === 'bug') {
-          setShowBugReportForm(true);
-          return;
+          // Check if user is authenticated
+          const isAuthenticated = githubService.isAuthenticated;
+          
+          if (isAuthenticated) {
+            setShowBugReportForm(true);
+            return;
+          }
+          // If not authenticated, fall through to open GitHub issue page directly
         }
         
         // For other issue types, continue with existing behavior
@@ -76,6 +83,10 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose, tutorialId }) => {
         let params = {};
 
         switch (issueType) {
+          case 'bug':
+            params.template = 'bug_report.yml';
+            params.labels = 'bug';
+            break;
           case 'feature':
             params.template = 'feature_request.yml';
             params.labels = 'enhancement';
@@ -128,8 +139,52 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose, tutorialId }) => {
 
       openDakIssue: (issueType) => {
         const repository = contextData.repository || contextData.selectedDak;
+        
+        // If no DAK repository is selected, fall back to sgex repository for content issues
         if (!repository) {
-          console.warn('No DAK repository specified for feedback');
+          console.warn('No DAK repository specified, falling back to sgex repository');
+          
+          // Redirect to sgex repository with appropriate labels
+          const baseUrl = `${repositoryConfig.getGitHubUrl()}/issues/new`;
+          let params = {};
+          
+          switch (issueType) {
+            case 'content':
+              params.template = 'bug_report.yml';
+              params.labels = 'bug,dak-content';
+              params.title = '[DAK Content Issue] ';
+              break;
+            case 'bug':
+              params.template = 'bug_report.yml';
+              params.labels = 'bug,dak-issue';
+              break;
+            case 'improvement':
+              params.template = 'feature_request.yml';
+              params.labels = 'enhancement,dak-improvement';
+              break;
+            case 'question':
+              params.template = 'question.yml';
+              params.labels = 'question,dak-question';
+              break;
+            case 'blank':
+              params.labels = 'blank-issue,dak-feedback';
+              break;
+            default:
+              params.labels = 'dak-feedback';
+          }
+          
+          const url = createContextualUrl(baseUrl, params);
+          
+          try {
+            const newWindow = window.open(url, '_blank');
+            if (!newWindow || newWindow.closed) {
+              window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url, `dak-${issueType}`);
+            }
+          } catch (error) {
+            console.warn('Failed to open GitHub issue:', error);
+            window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url, `dak-${issueType}`);
+          }
+          
           return;
         }
 
