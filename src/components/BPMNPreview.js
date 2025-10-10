@@ -267,8 +267,9 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
             console.log(`✅ BPMNPreview: Successfully fitted to viewport in ${zoomTime}ms`);
 
             // Force canvas update to ensure diagram is immediately visible
-            // This prevents the issue where diagram requires a mouse click to appear
-            setTimeout(() => {
+            // This prevents the issue where diagram requires a drag/mouse interaction to appear
+            // Use multiple strategies to ensure rendering
+            const forceCanvasUpdate = () => {
               if (viewer && containerRef.current) {
                 try {
                   const canvas = viewer.get('canvas');
@@ -283,13 +284,24 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
                   if (svgElement) {
                     svgElement.style.opacity = '1';
                     svgElement.style.visibility = 'visible';
-                    console.log('🎨 BPMNPreview: Forced SVG visibility and canvas update');
                   }
+                  
+                  // Trigger a scroll event which can force repaints
+                  if (containerRef.current) {
+                    containerRef.current.scrollTop = containerRef.current.scrollTop;
+                  }
+                  
+                  console.log('🎨 BPMNPreview: Forced SVG visibility and canvas update');
                 } catch (canvasError) {
                   console.warn('⚠️ BPMNPreview: Could not force canvas update:', canvasError);
                 }
               }
-            }, 50);
+            };
+            
+            // Apply multiple times with increasing delays to ensure it works
+            setTimeout(forceCanvasUpdate, 50);
+            setTimeout(forceCanvasUpdate, 150);
+            setTimeout(forceCanvasUpdate, 300);
 
             // Final validation - check if diagram was actually rendered
             const viewbox = canvas.viewbox();

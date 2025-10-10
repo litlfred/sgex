@@ -282,8 +282,9 @@ const BPMNViewerEnhanced = () => {
         canvas.zoom('fit-viewport');
         
         // Force canvas update to ensure diagram is immediately visible
-        // This prevents the issue where diagram requires a mouse click to appear
-        setTimeout(() => {
+        // This prevents the issue where diagram requires a drag/mouse interaction to appear
+        // Use multiple strategies to ensure rendering
+        const forceCanvasUpdate = () => {
           if (viewerRef.current) {
             try {
               const canvas = viewerRef.current.get('canvas');
@@ -292,11 +293,22 @@ const BPMNViewerEnhanced = () => {
               // Force a repaint by slightly adjusting zoom and resetting
               const currentZoom = canvas.zoom();
               canvas.zoom(currentZoom);
+              
+              // Also trigger a scroll event which can force repaints
+              const container = containerRef.current;
+              if (container) {
+                container.scrollTop = container.scrollTop;
+              }
             } catch (canvasError) {
               console.warn('⚠️ BPMNViewerEnhanced: Could not force canvas update:', canvasError);
             }
           }
-        }, 50);
+        };
+        
+        // Apply multiple times with increasing delays to ensure it works
+        setTimeout(forceCanvasUpdate, 50);
+        setTimeout(forceCanvasUpdate, 150);
+        setTimeout(forceCanvasUpdate, 300);
         
         console.log('BPMN diagram loaded successfully');
         setLoading(false);
