@@ -14,6 +14,8 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { FAQExecutionEngineLocal } from "./server/util/FAQExecutionEngineLocal.js";
+import { CanonicalSchemaService } from "./server/util/CanonicalSchemaService.js";
+import { FAQSchemaService } from "./server/util/FAQSchemaService.js";
 
 // Zod schemas for tool validation
 const ExecuteFAQToolSchema = z.object({
@@ -30,6 +32,14 @@ const ListQuestionsSchema = z.object({
   tags: z.array(z.string()).optional().describe("Filter questions by tags")
 });
 
+const AuditCanonicalsSchema = z.object({
+  includeDetails: z.boolean().optional().describe("Include detailed canonical reference information")
+});
+
+const GetCanonicalSchema = z.object({
+  canonicalUrl: z.string().describe("WHO canonical URL to fetch (e.g., ValueSet or Logical Model)")
+});
+
 /**
  * DAK FAQ MCP Server
  * 
@@ -39,6 +49,8 @@ const ListQuestionsSchema = z.object({
 export class DAKFAQMCPServer {
   private server: Server;
   private faqEngine: FAQExecutionEngineLocal;
+  private canonicalService: CanonicalSchemaService;
+  private schemaService: FAQSchemaService;
 
   constructor() {
     // Initialize MCP server with metadata
@@ -64,8 +76,10 @@ export class DAKFAQMCPServer {
       }
     );
 
-    // Initialize FAQ engine
+    // Initialize services
     this.faqEngine = new FAQExecutionEngineLocal();
+    this.canonicalService = CanonicalSchemaService.getInstance();
+    this.schemaService = FAQSchemaService.getInstance();
     
     this.setupMCPHandlers();
   }
@@ -152,6 +166,45 @@ export class DAKFAQMCPServer {
             required: ["questionId"],
             additionalProperties: false
           }
+        },
+        {
+          name: "audit_canonical_references",
+          description: "Audit all FAQ question schemas for WHO SMART Guidelines canonical references (ValueSets, Logical Models)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              includeDetails: {
+                type: "boolean",
+                description: "Include detailed information about each canonical reference",
+                default: false
+              }
+            },
+            additionalProperties: false
+          }
+        },
+        {
+          name: "get_canonical_resource",
+          description: "Fetch a WHO SMART Guidelines canonical resource (ValueSet or Logical Model) by URL",
+          inputSchema: {
+            type: "object",
+            properties: {
+              canonicalUrl: {
+                type: "string",
+                description: "WHO canonical URL (e.g., https://worldhealthorganization.github.io/smart-base/ValueSet-CDHIv1.schema.json)"
+              }
+            },
+            required: ["canonicalUrl"],
+            additionalProperties: false
+          }
+        },
+        {
+          name: "list_cached_canonicals",
+          description: "List all WHO canonical resources currently cached locally",
+          inputSchema: {
+            type: "object",
+            properties: {},
+            additionalProperties: false
+          }
         }
       ];
 
@@ -172,6 +225,15 @@ export class DAKFAQMCPServer {
           
           case "get_question_schema":
             return await this.getQuestionSchema(args);
+          
+          case "audit_canonical_references":
+            return await this.auditCanonicalReferences(args);
+          
+          case "get_canonical_resource":
+            return await this.getCanonicalResource(args);
+          
+          case "list_cached_canonicals":
+            return await this.listCachedCanonicals(args);
           
           default:
             throw new Error(`Unknown tool: ${name}`);
@@ -304,6 +366,114 @@ export class DAKFAQMCPServer {
       }
     ];
 
+    return { content };
+  }
+
+  /**
+   * Audit canonical references in question schemas
+   */
+  private async auditCanonicalReferences(args: any): Promise<CallToolResult> {
+    const parsed = AuditCanonicalsSchema.parse(args);
+    
+    await this.ensureInitialized();
+    await this.schemaService.initialize();
+    
+    const audit = await this.schemaService.auditCanonicalReferences();
+    
+    let text = `# WHO Canonical References Audit\n\n`;
+    text += `## Summary\n\n`;
+    text += `- **Total Questions:** ${audit.questionsWithCanonicals.length + audit.questionsWithoutCanonicals.length}\n`;
+    text += `- **Questions with Canonicals:** ${audit.questionsWithCanonicals.length}\n`;
+    text += `- **Questions without Canonicals:** ${audit.questionsWithoutCanonicals.length}\n`;
+    text += `- **Total Canonical URLs:** ${audit.totalCanonicals}\n\n`;
+    
+    if (audit.questionsWithCanonicals.length > 0) {
+      text += `## ✅ Questions with Canonical References\n\n`;
+      for (const questionId of audit.questionsWithCanonicals) {
+        const canonicals = audit.canonicalsByQuestion[questionId];
+        text += `### ${questionId}\n\n`;
+        for (const url of canonicals) {
+          text += `- ${url}\n`;
+        }
+        text += `\n`;
+      }
+    }
+    
+    if (parsed.includeDetails && audit.questionsWithoutCanonicals.length > 0) {
+      text += `## ⚠️ Questions without Canonical References\n\n`;
+      for (const questionId of audit.questionsWithoutCanonicals) {
+        text += `- ${questionId}\n`;
+      }
+    }
+    
+    const content = [{ type: "text" as const, text }];
+    return { content };
+  }
+
+  /**
+   * Get a canonical resource by URL
+   */
+  private async getCanonicalResource(args: any): Promise<CallToolResult> {
+    const parsed = GetCanonicalSchema.parse(args);
+    
+    await this.canonicalService.initialize();
+    
+    const resource = await this.canonicalService.fetchCanonicalResource(parsed.canonicalUrl);
+    
+    if (!resource) {
+      throw new Error(`Could not fetch canonical resource: ${parsed.canonicalUrl}`);
+    }
+    
+    let text = `# Canonical Resource\n\n`;
+    text += `**URL:** ${resource.url}\n`;
+    text += `**Type:** ${resource.type}\n`;
+    if (resource.version) {
+      text += `**Version:** ${resource.version}\n`;
+    }
+    if (resource.lastFetched) {
+      text += `**Last Fetched:** ${new Date(resource.lastFetched).toISOString()}\n`;
+    }
+    text += `\n## Schema\n\n`;
+    text += `\`\`\`json\n${JSON.stringify(resource.schema, null, 2)}\n\`\`\`\n`;
+    
+    if (resource.type === 'ValueSet') {
+      const enumValues = this.canonicalService.extractValueSetEnum(resource.schema);
+      if (enumValues) {
+        text += `\n## Allowed Values\n\n`;
+        text += enumValues.map(v => `- \`${v}\``).join('\n');
+        text += `\n`;
+      }
+    }
+    
+    const content = [{ type: "text" as const, text }];
+    return { content };
+  }
+
+  /**
+   * List cached canonical resources
+   */
+  private async listCachedCanonicals(args: any): Promise<CallToolResult> {
+    await this.canonicalService.initialize();
+    
+    const cached = this.canonicalService.getCachedResources();
+    
+    let text = `# Cached WHO Canonical Resources\n\n`;
+    text += `Found ${cached.length} cached resource(s).\n\n`;
+    
+    if (cached.length === 0) {
+      text += `No resources cached yet. Use \`get_canonical_resource\` to fetch and cache resources.\n`;
+    } else {
+      for (const resource of cached) {
+        text += `## ${resource.type}\n\n`;
+        text += `- **URL:** ${resource.url}\n`;
+        if (resource.lastFetched) {
+          text += `- **Last Fetched:** ${new Date(resource.lastFetched).toISOString()}\n`;
+        }
+        text += `\n`;
+      }
+    }
+    
+    const content = [{ type: "text" as const, text }];
     return { content };
   }
 

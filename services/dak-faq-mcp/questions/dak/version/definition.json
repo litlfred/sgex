@@ -41,11 +41,29 @@
         "structured": {
           "type": "object",
           "properties": {
-            "version": { "type": "string" },
-            "status": { "type": "string" },
-            "releaseDate": { "type": "string" },
-            "name": { "type": "string" },
-            "id": { "type": "string" }
+            "version": { 
+              "type": "string",
+              "description": "DAK version number"
+            },
+            "status": { 
+              "type": "string",
+              "description": "Publication status of the DAK",
+              "enum": ["draft", "active", "retired", "unknown"],
+              "x-canonical-url": "https://worldhealthorganization.github.io/smart-base/ValueSet-PublicationStatus.schema.json",
+              "x-canonical-note": "Aligns with FHIR PublicationStatus ValueSet"
+            },
+            "releaseDate": { 
+              "type": "string",
+              "description": "Release date in ISO 8601 format"
+            },
+            "name": { 
+              "type": "string",
+              "description": "DAK name"
+            },
+            "id": { 
+              "type": "string",
+              "description": "DAK identifier"
+            }
           }
         },
         "narrative": { "type": "string" },

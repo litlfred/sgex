@@ -70,9 +70,20 @@
               "items": {
                 "type": "object",
                 "properties": {
-                  "id": { "type": "string" },
-                  "name": { "type": "string" },
-                  "hitPolicy": { "type": "string" },
+                  "id": { 
+                    "type": "string",
+                    "description": "Decision table identifier"
+                  },
+                  "name": { 
+                    "type": "string",
+                    "description": "Decision table name"
+                  },
+                  "hitPolicy": { 
+                    "type": "string",
+                    "description": "DMN hit policy (UNIQUE, FIRST, PRIORITY, etc.)",
+                    "x-canonical-url": "https://worldhealthorganization.github.io/smart-base/ValueSet-DMNHitPolicy.schema.json",
+                    "x-canonical-note": "Should reference WHO SMART Guidelines DMN hit policy types"
+                  },
                   "inputs": { "type": "array" },
                   "outputs": { "type": "array" }
                 }

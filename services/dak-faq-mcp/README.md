@@ -18,6 +18,7 @@ This service implements **both MCP and REST protocols** to maximize integration 
 - **📚 FAQ Question Registry**: Extensible system for registering custom questions
 - **⚡ Batch Processing**: Execute multiple FAQ questions in a single request
 - **🔄 Protocol Interoperability**: Same functionality available via both MCP and REST
+- **🌐 WHO Canonical Integration**: Automatic integration with WHO SMART Guidelines ValueSets and Logical Models
 
 ## Quick Start
 
@@ -263,11 +264,32 @@ npm run start-mcp   # Start MCP server
 npm run start       # Start REST API server
 ```
 
+### WHO Canonical Integration
+
+The service integrates with WHO SMART Guidelines canonical resources (ValueSets, Logical Models):
+
+```bash
+# Audit question schemas for canonical references
+npm run audit:canonicals
+
+# Test canonical integration
+npm run test:canonicals
+```
+
+**Key Features:**
+- Automatic fetching and caching of WHO canonical schemas
+- Schema validation against WHO ValueSets
+- Enhanced OpenAPI documentation with canonical references
+- Offline support with local cache fallback
+
+See [`docs/CANONICAL_INTEGRATION.md`](./docs/CANONICAL_INTEGRATION.md) for detailed documentation.
+
 ### Adding New Questions
 1. **Define question metadata** in `questions/{level}/{id}/definition.json`
 2. **Implement execution logic** with proper TypeScript typing
-3. **Register in `FAQExecutionEngineLocal`** (shared by both protocols)
-4. **Test via both MCP and REST** endpoints
+3. **Add canonical references** using `x-canonical-url` for WHO ValueSets/Models
+4. **Register in `FAQExecutionEngineLocal`** (shared by both protocols)
+5. **Test via both MCP and REST** endpoints
 
 ### Protocol-Specific Development
 
@@ -379,5 +401,6 @@ echo '{"method":"tools/call","params":{"name":"execute_faq_question","arguments"
 - **📋 MCP Manifest**: [`mcp-manifest.json`](./mcp-manifest.json)
 - **📊 OpenAPI Spec**: [`docs/openapi.yaml`](./docs/openapi.yaml)  
 - **📖 Documentation Strategy**: [`docs/mcp-documentation-plan.md`](./docs/mcp-documentation-plan.md)
+- **🌐 Canonical Integration**: [`docs/CANONICAL_INTEGRATION.md`](./docs/CANONICAL_INTEGRATION.md)
 - **🏥 WHO SMART Guidelines**: https://smart.who.int/
 - **🔌 MCP Specification**: https://modelcontextprotocol.io/
