@@ -545,11 +545,12 @@ const ActorEditorContent = () => {
   }, [editActorId]);
 
   useEffect(() => {
-    // Only initialize if we have valid page context (not loading, no error, has profile/repository)
-    if (!pageLoading && !pageError && profile && repository) {
+    // Initialize editor once page context is loaded (even without DAK context)
+    // ActorEditor can work standalone to save to staging ground
+    if (!pageLoading && !pageError) {
       initializeEditor();
     }
-  }, [pageLoading, pageError, profile, repository, initializeEditor]);
+  }, [pageLoading, pageError, initializeEditor]);
 
   // Handle form field changes
   const handleFieldChange = useCallback((field, value) => {
@@ -747,12 +748,7 @@ const ActorEditorContent = () => {
 
   return (
     <div className="actor-editor">
-      {!profile || !repository ? (
-        <div className="redirecting-state">
-          <h2>Redirecting...</h2>
-          <p>Missing required context. Redirecting to home page...</p>
-        </div>
-      ) : loading ? (
+      {loading ? (
         <div className="loading-state">
           <div className="loading-content">
             <h2>Loading Actor Editor...</h2>
