@@ -311,14 +311,13 @@ const RequirementsEditorContent = () => {
         ? `Add ${requirementType} requirement: ${currentReq.id}`
         : `Update ${requirementType} requirement: ${currentReq.id}`;
 
-      await githubService.createOrUpdateFile(
+      await githubService.updateFile(
         user,
         repo,
         filePath,
         fshContent,
         commitMessage,
-        branch,
-        showCreateNew ? null : selectedRequirement.sha
+        branch
       );
 
       // Refresh requirements list
