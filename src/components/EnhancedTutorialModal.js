@@ -16,6 +16,17 @@ const EnhancedTutorialModal = ({ tutorialId, onClose, contextData = {} }) => {
   // Theme-aware mascot image
   const mascotImage = useThemeImage('sgex-mascot.png');
 
+  // Handle Escape key
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [onClose]);
+
   // Load tutorial and any saved progress
   useEffect(() => {
     if (tutorialId) {
@@ -187,8 +198,17 @@ const EnhancedTutorialModal = ({ tutorialId, onClose, contextData = {} }) => {
 
   if (isLoading) {
     return (
-      <div className="enhanced-tutorial-overlay" onClick={handleOverlayClick}>
-        <div className="enhanced-tutorial-modal">
+      <div 
+        className="enhanced-tutorial-overlay" 
+        onClick={(e) => e.target === e.currentTarget && handleOverlayClick(e)}
+        role="presentation"
+      >
+        <div 
+          className="enhanced-tutorial-modal"
+          role="dialog"
+          aria-modal="true"
+          tabIndex={-1}
+        >
           <div className="tutorial-loading">
             <img src={mascotImage} alt={getAltText(t, ALT_TEXT_KEYS.MASCOT_HELPER, 'SGEX Helper')} className="loading-mascot" />
             <p>Loading tutorial...</p>
@@ -200,8 +220,17 @@ const EnhancedTutorialModal = ({ tutorialId, onClose, contextData = {} }) => {
 
   if (!tutorial) {
     return (
-      <div className="enhanced-tutorial-overlay" onClick={handleOverlayClick}>
-        <div className="enhanced-tutorial-modal">
+      <div 
+        className="enhanced-tutorial-overlay" 
+        onClick={(e) => e.target === e.currentTarget && handleOverlayClick(e)}
+        role="presentation"
+      >
+        <div 
+          className="enhanced-tutorial-modal"
+          role="dialog"
+          aria-modal="true"
+          tabIndex={-1}
+        >
           <div className="tutorial-error">
             <img src={mascotImage} alt={getAltText(t, ALT_TEXT_KEYS.MASCOT_HELPER, 'SGEX Helper')} className="error-mascot" />
             <h3>Tutorial Not Found</h3>
@@ -214,8 +243,17 @@ const EnhancedTutorialModal = ({ tutorialId, onClose, contextData = {} }) => {
   }
 
   return (
-    <div className="enhanced-tutorial-overlay" onClick={handleOverlayClick}>
-      <div className="enhanced-tutorial-modal">
+    <div 
+      className="enhanced-tutorial-overlay" 
+      onClick={(e) => e.target === e.currentTarget && handleOverlayClick(e)}
+      role="presentation"
+    >
+      <div 
+        className="enhanced-tutorial-modal"
+        role="dialog"
+        aria-modal="true"
+        tabIndex={-1}
+      >
         <div className="tutorial-modal-header">
           <div className="tutorial-title-section">
             {tutorial.badge && (

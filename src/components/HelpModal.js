@@ -16,6 +16,21 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose, tutorialId }) => {
   const [showEnhancedTutorial, setShowEnhancedTutorial] = useState(false);
   const [currentTutorialId, setCurrentTutorialId] = useState(tutorialId);
 
+  // Handle Escape key
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        if (showMenu) {
+          setShowMenu(false);
+        } else {
+          onClose();
+        }
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [onClose, showMenu]);
+
   // Check if we should show enhanced tutorial modal
   useEffect(() => {
     if (tutorialId) {
@@ -512,7 +527,11 @@ Best regards,
   // Show bug report form if requested
   if (showBugReportForm) {
     return (
-      <div className="help-modal-overlay bug-report-overlay" onClick={handleOverlayClick}>
+      <div 
+        className="help-modal-overlay bug-report-overlay" 
+        onClick={(e) => e.target === e.currentTarget && handleOverlayClick(e)}
+        role="presentation"
+      >
         <BugReportForm 
           onClose={() => {
             setShowBugReportForm(false);
@@ -526,8 +545,17 @@ Best regards,
   }
 
   return (
-    <div className="help-modal-overlay" onClick={handleOverlayClick}>
-      <div className="help-modal">
+    <div 
+      className="help-modal-overlay" 
+      onClick={(e) => e.target === e.currentTarget && handleOverlayClick(e)}
+      role="presentation"
+    >
+      <div 
+        className="help-modal"
+        role="dialog"
+        aria-modal="true"
+        tabIndex={-1}
+      >
         <div className="help-modal-header">
           <h2>{title}</h2>
           <div className="help-modal-actions">
