@@ -17,6 +17,11 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose, tutorialId }) => {
   const [showEnhancedTutorial, setShowEnhancedTutorial] = useState(false);
   const [currentTutorialId, setCurrentTutorialId] = useState(tutorialId);
 
+  // Debug logging for bug report form state
+  useEffect(() => {
+    console.log('[HelpModal] showBugReportForm state changed:', showBugReportForm);
+  }, [showBugReportForm]);
+
   // Check if we should show enhanced tutorial modal
   useEffect(() => {
     if (tutorialId) {
@@ -70,11 +75,14 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose, tutorialId }) => {
         if (issueType === 'bug') {
           // Check if user is authenticated
           const isAuthenticated = githubService.isAuthenticated;
+          console.log('[HelpModal] Bug report clicked. Authenticated:', isAuthenticated);
           
           if (isAuthenticated) {
+            console.log('[HelpModal] Showing bug report form');
             setShowBugReportForm(true);
             return;
           }
+          console.log('[HelpModal] Not authenticated, opening GitHub issue page');
           // If not authenticated, fall through to open GitHub issue page directly
         }
         
