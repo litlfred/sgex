@@ -3,6 +3,7 @@ import { processConcurrently } from '../utils/concurrency';
 import repositoryCompatibilityCache from '../utils/repositoryCompatibilityCache';
 import secureTokenStorage from './secureTokenStorage';
 import logger from '../utils/logger';
+import samlAuthService from './samlAuthService';
 
 
 
@@ -452,7 +453,15 @@ class GitHubService {
         isWHO: true
       };
     } catch (error) {
-      console.warn('Could not fetch WHO organization data from API, using fallback:', error);
+      // Check if this is a SAML error and handle it
+      const samlHandled = samlAuthService.handleSAMLError(error, 'WorldHealthOrganization');
+      
+      if (samlHandled) {
+        this.logger.debug('WHO organization SAML error handled by samlAuthService');
+      } else {
+        this.logger.warn('Could not fetch WHO organization data from API', { error: error.message });
+      }
+      
       // Return hardcoded fallback data
       return {
         id: 'who-organization',
@@ -608,12 +617,17 @@ class GitHubService {
         return this.checkSmartGuidelinesCompatibility(owner, repo, retryCount - 1);
       }
       
-      // Special handling for SAML-protected repositories - fallback to public API
+      // Special handling for SAML-protected repositories
       if (error.status === 403 && error.message.includes('SAML enforcement') && this.octokit) {
-        console.log(`SAML-protected repository ${owner}/${repo}, trying public API fallback`);
+        // Use SAML service to handle the error (shows modal, prevents spam)
+        const handled = samlAuthService.handleSAMLError(error, owner, repo);
         
+        if (handled) {
+          this.logger.debug('SAML error handled by samlAuthService', { owner, repo });
+        }
+        
+        // Try public API fallback
         try {
-          // Try with public API (unauthenticated)
           const publicOctokit = await this.createOctokitInstance();
           const { data } = await publicOctokit.rest.repos.getContent({
             owner,
@@ -629,7 +643,7 @@ class GitHubService {
             const isCompatible = content.includes('smart.who.int.base');
             
             if (isCompatible) {
-              console.log(`Repository ${owner}/${repo} is compatible via public API despite SAML protection`);
+              this.logger.info('Repository compatible via public API despite SAML protection', { owner, repo });
               
               // Cache the result
               repositoryCompatibilityCache.set(owner, repo, true);
@@ -645,7 +659,7 @@ class GitHubService {
             }
           }
         } catch (publicApiError) {
-          console.warn(`Public API fallback also failed for ${owner}/${repo}:`, publicApiError.message);
+          this.logger.warn('Public API fallback failed', { owner, repo, error: publicApiError.message });
           // Continue to normal error handling
         }
       }
