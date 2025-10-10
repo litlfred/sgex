@@ -109,28 +109,17 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose, tutorialId }) => {
 
         const url = createContextualUrl(baseUrl, params);
         
-        // Try to open the GitHub issue, but handle cases where external links are blocked
+        // Try to open the GitHub issue
         try {
           const newWindow = window.open(url, '_blank');
           
-          // Check if the window was blocked or failed to open
-          if (!newWindow || newWindow.closed) {
+          // Only show fallback if window.open completely failed (returned null)
+          if (!newWindow) {
             // Fallback: show instructions to manually open the link
             window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url, issueType);
-          } else {
-            // Check if the window actually loaded after a brief delay
-            setTimeout(() => {
-              try {
-                if (newWindow.closed || !newWindow.location || newWindow.location.href === 'about:blank') {
-                  newWindow.close();
-                  window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url, issueType);
-                }
-              } catch (e) {
-                // Cross-origin restriction means it probably loaded successfully
-                // or the check failed due to security - either way, don't show fallback
-              }
-            }, 1000);
           }
+          // If window.open returned a window object, assume it worked
+          // (checking window properties causes cross-origin issues)
         } catch (error) {
           console.warn('Failed to open GitHub issue:', error);
           window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url, issueType);
@@ -177,7 +166,8 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose, tutorialId }) => {
           
           try {
             const newWindow = window.open(url, '_blank');
-            if (!newWindow || newWindow.closed) {
+            // Only show fallback if window.open completely failed (returned null)
+            if (!newWindow) {
               window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url, `dak-${issueType}`);
             }
           } catch (error) {
@@ -223,28 +213,17 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose, tutorialId }) => {
 
         const url = createContextualUrl(baseUrl, params);
         
-        // Try to open the GitHub issue, but handle cases where external links are blocked
+        // Try to open the GitHub issue
         try {
           const newWindow = window.open(url, '_blank');
           
-          // Check if the window was blocked or failed to open
-          if (!newWindow || newWindow.closed) {
+          // Only show fallback if window.open completely failed (returned null)
+          if (!newWindow) {
             // Fallback: show instructions to manually open the link
             window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url, `dak-${issueType}`);
-          } else {
-            // Check if the window actually loaded after a brief delay
-            setTimeout(() => {
-              try {
-                if (newWindow.closed || !newWindow.location || newWindow.location.href === 'about:blank') {
-                  newWindow.close();
-                  window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url, `dak-${issueType}`);
-                }
-              } catch (e) {
-                // Cross-origin restriction means it probably loaded successfully
-                // or the check failed due to security - either way, don't show fallback
-              }
-            }, 1000);
           }
+          // If window.open returned a window object, assume it worked
+          // (checking window properties causes cross-origin issues)
         } catch (error) {
           console.warn('Failed to open DAK issue:', error);
           window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url, `dak-${issueType}`);
