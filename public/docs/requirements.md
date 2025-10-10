@@ -368,6 +368,49 @@ For detailed information about each DAK component, see [DAK Components Documenta
 - CDN compatibility (Netlify, Vercel)
 - Specific GitHub Pages integration for smart-base repo
 
+### 3.7 Component Architecture
+
+**REQ-ARCH-001**: The system SHALL enforce consistent component architecture patterns for PageLayout components
+- All DAK components using `PageLayout` MUST follow the wrapper + content pattern
+- Wrapper component MUST only wrap `PageLayout` with no hooks
+- Content component MUST use page hooks (`usePage()` or `useDAKParams()`) to access context
+- This pattern ensures `PageProvider` context exists before hooks attempt to access it
+
+**REQ-ARCH-002**: The system SHALL provide clear component structure requirements
+- Component exports MUST be the wrapper component (not content)
+- All React hooks MUST be called in the content component (after PageProvider initialization)
+- Loading and error states MUST be handled in the content component
+- Components MUST follow the established pattern from `DAKDashboard`, `ActorEditor`, and `CoreDataDictionaryViewer`
+
+**REQ-ARCH-003**: The system SHALL prevent PageProvider context initialization errors
+- No page hooks (`usePage()`, `useDAKParams()`) SHALL be called before `PageProvider` exists
+- Components SHALL handle the case where page context is loading or contains errors
+- Components SHALL degrade gracefully when required context is unavailable
+
+**Component Pattern Example**:
+```javascript
+// Wrapper component - exports this
+const MyDAKComponent = () => {
+  return (
+    <PageLayout pageName="my-component">
+      <MyDAKComponentContent />
+    </PageLayout>
+  );
+};
+
+// Content component - contains all logic and hooks
+const MyDAKComponentContent = () => {
+  const { profile, repository, branch, loading, error } = usePage();
+  
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
+  
+  return <div>{/* Component implementation */}</div>;
+};
+
+export default MyDAKComponent;
+```
+
 ## 4. User Experience Requirements
 
 ### 4.1 Branding
