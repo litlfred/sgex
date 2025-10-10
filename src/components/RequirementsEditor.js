@@ -280,7 +280,7 @@ const RequirementsEditorContent = () => {
   };
 
   // Save requirement
-  const handleSave = async () => {
+  const handleSave = () => {
     const currentReq = requirementType === 'functional' ? functionalReq : nonFunctionalReq;
     
     if (!currentReq.id) {
@@ -296,41 +296,11 @@ const RequirementsEditorContent = () => {
     }
 
     try {
-      // Save to staging ground first
-      await requirementsService.saveToStagingGround(currentReq, requirementType);
+      // Save to staging ground - this handles FSH generation and staging
+      requirementsService.saveToStagingGround(currentReq, requirementType);
       
-      // Generate FSH content
-      const fshContent = requirementsService.generateFSH(currentReq, requirementType);
-      
-      const fileName = showCreateNew 
-        ? `${requirementType === 'functional' ? 'Functional' : 'NonFunctional'}Requirement-${currentReq.id}.fsh`
-        : selectedRequirement.name;
-
-      const filePath = `input/fsh/requirements/${fileName}`;
-      const commitMessage = showCreateNew
-        ? `Add ${requirementType} requirement: ${currentReq.id}`
-        : `Update ${requirementType} requirement: ${currentReq.id}`;
-
-      await githubService.updateFile(
-        user,
-        repo,
-        filePath,
-        fshContent,
-        commitMessage,
-        branch
-      );
-
-      // Refresh requirements list
-      const updatedRequirements = [...requirements];
-      if (showCreateNew) {
-        updatedRequirements.push({
-          name: fileName,
-          path: filePath,
-          download_url: `https://raw.githubusercontent.com/${user}/${repo}/${branch}/${filePath}`,
-          html_url: `https://github.com/${user}/${repo}/blob/${branch}/${filePath}`
-        });
-      }
-      setRequirements(updatedRequirements);
+      // Show success message
+      alert(`Requirement ${currentReq.id} saved to staging ground successfully! Use the staging ground to commit your changes.`);
 
       // Reset state
       setEditing(false);
@@ -341,7 +311,7 @@ const RequirementsEditorContent = () => {
       
     } catch (err) {
       console.error('Error saving requirement:', err);
-      setError(err.message || 'Failed to save requirement');
+      setError(err.message || 'Failed to save requirement to staging ground');
     }
   };
 

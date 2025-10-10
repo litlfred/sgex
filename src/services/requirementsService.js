@@ -188,7 +188,7 @@ Description: "${escapedDescription}"`;
    * Save requirement to staging ground
    * Integrates with the DAK JSON object for centralized change management
    */
-  async saveToStagingGround(requirement, type) {
+  saveToStagingGround(requirement, type) {
     try {
       // Validate first
       const validation = this.validateRequirement(requirement, type);
@@ -204,6 +204,7 @@ Description: "${escapedDescription}"`;
       const filePath = `input/fsh/requirements/${prefix}Requirement-${requirement.id}.fsh`;
       
       // Save to staging ground with metadata
+      // updateFile is synchronous and returns boolean
       const success = stagingGroundService.updateFile(filePath, fshContent, {
         type: `${type}-requirement`,
         requirementId: requirement.id,
