@@ -668,7 +668,17 @@ const ActorEditorContent = () => {
 
   // Save actor definition to staging ground
   const handleSave = useCallback(async () => {
-    if (!validateForm()) {
+    console.log('handleSave called with actorDefinition:', actorDefinition);
+    
+    const isValid = validateForm();
+    console.log('Form validation result:', isValid, 'Errors:', errors);
+    
+    if (!isValid) {
+      console.log('Form validation failed - showing errors');
+      setErrors(prev => ({
+        ...prev,
+        general: 'Please fix validation errors before saving. Check that all required fields are filled in.'
+      }));
       return;
     }
     
@@ -677,18 +687,14 @@ const ActorEditorContent = () => {
     setSuccessMessage('');
     
     try {
-      const result = await actorDefinitionService.saveToStagingGround(actorDefinition, {
-        type: 'actor-definition',
-        actorId: actorDefinition.id,
-        actorName: actorDefinition.name,
-        branch: branch,
-        repository: repository?.name,
-        owner: profile?.login
-      });
+      console.log('Calling saveToStagingGround...');
+      const result = await actorDefinitionService.saveToStagingGround(actorDefinition);
+      console.log('Save result:', result);
       
       if (result.success) {
         // Refresh staged actors list
         const staged = actorDefinitionService.listStagedActors();
+        console.log('Staged actors after save:', staged);
         setStagedActors(staged);
         
         // Show success message
@@ -697,6 +703,7 @@ const ActorEditorContent = () => {
         // Clear success message after 3 seconds
         setTimeout(() => setSuccessMessage(''), 3000);
       } else {
+        console.error('Save failed:', result.error);
         setErrors({ general: result.error || 'Failed to save actor definition' });
       }
     } catch (error) {
@@ -705,7 +712,7 @@ const ActorEditorContent = () => {
     } finally {
       setSaving(false);
     }
-  }, [actorDefinition, validateForm, branch, repository, profile]);
+  }, [actorDefinition, validateForm, errors]);
 
   // Load template
   const loadTemplate = useCallback((templateId) => {
