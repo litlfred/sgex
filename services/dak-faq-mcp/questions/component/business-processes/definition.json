@@ -47,9 +47,20 @@
               "items": {
                 "type": "object",
                 "properties": {
-                  "name": { "type": "string" },
-                  "file": { "type": "string" },
-                  "type": { "type": "string" }
+                  "name": { 
+                    "type": "string",
+                    "description": "Business process name"
+                  },
+                  "file": { 
+                    "type": "string",
+                    "description": "File path containing the business process"
+                  },
+                  "type": { 
+                    "type": "string",
+                    "description": "Type of business process artifact (BPMN, workflow, etc.)",
+                    "x-canonical-url": "https://worldhealthorganization.github.io/smart-base/ValueSet-BusinessProcessType.schema.json",
+                    "x-canonical-note": "Should reference WHO SMART Guidelines business process types"
+                  }
                 }
               }
             }

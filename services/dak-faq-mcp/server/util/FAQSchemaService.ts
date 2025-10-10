@@ -7,6 +7,7 @@ import { FAQQuestion } from '../../types.js';
 import path from 'path';
 import fs from 'fs/promises';
 import { fileURLToPath } from 'url';
+import { CanonicalSchemaService } from './CanonicalSchemaService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -16,11 +17,13 @@ export class FAQSchemaService {
   private schemas: Map<string, any>;
   private questions: Map<string, FAQQuestion>;
   private initialized: boolean;
+  private canonicalService: CanonicalSchemaService;
 
   private constructor() {
     this.schemas = new Map();
     this.questions = new Map();
     this.initialized = false;
+    this.canonicalService = CanonicalSchemaService.getInstance();
   }
 
   public static getInstance(): FAQSchemaService {
@@ -37,6 +40,7 @@ export class FAQSchemaService {
     if (this.initialized) return;
     
     try {
+      await this.canonicalService.initialize();
       await this.loadSchemas();
       this.initialized = true;
     } catch (error: any) {
@@ -166,47 +170,6 @@ export class FAQSchemaService {
   }
 
   /**
-   * Validate question parameters against schema
-   */
-  async validateQuestionParameters(questionId: string, parameters: any): Promise<{ isValid: boolean; errors: string[] }> {
-    const question = await this.getQuestion(questionId);
-    if (!question) {
-      return {
-        isValid: false,
-        errors: [`Question not found: ${questionId}`]
-      };
-    }
-
-    const errors: string[] = [];
-
-    // Check required parameters
-    for (const param of question.parameters) {
-      if (param.required && !parameters.hasOwnProperty(param.name)) {
-        errors.push(`Missing required parameter: ${param.name}`);
-      }
-    }
-
-    // Basic type validation (could be expanded)
-    for (const param of question.parameters) {
-      if (parameters.hasOwnProperty(param.name)) {
-        const value = parameters[param.name];
-        if (param.type === 'string' && typeof value !== 'string') {
-          errors.push(`Parameter ${param.name} must be a string`);
-        } else if (param.type === 'number' && typeof value !== 'number') {
-          errors.push(`Parameter ${param.name} must be a number`);
-        } else if (param.type === 'boolean' && typeof value !== 'boolean') {
-          errors.push(`Parameter ${param.name} must be a boolean`);
-        }
-      }
-    }
-
-    return {
-      isValid: errors.length === 0,
-      errors
-    };
-  }
-
-  /**
    * Get OpenAPI schema for all questions
    */
   async getOpenAPISchema(): Promise<any> {
@@ -236,8 +199,8 @@ export class FAQSchemaService {
 
     // Add question-specific schemas
     for (const [id, schema] of this.schemas) {
-      schemas[`${id}-input`] = schema.input;
-      schemas[`${id}-output`] = schema.output;
+      schemas[`${id}-input`] = await this.enhanceSchemaWithCanonicals(schema.input);
+      schemas[`${id}-output`] = await this.enhanceSchemaWithCanonicals(schema.output);
     }
 
     return {
@@ -250,6 +213,219 @@ export class FAQSchemaService {
       components: {
         schemas
       }
+    };
+  }
+
+  /**
+   * Enhance a schema by resolving canonical URL references
+   */
+  private async enhanceSchemaWithCanonicals(schema: any): Promise<any> {
+    if (!schema || typeof schema !== 'object') {
+      return schema;
+    }
+
+    const enhanced = { ...schema };
+
+    // Check for x-canonical-url extension
+    if (enhanced['x-canonical-url']) {
+      const canonicalUrl = enhanced['x-canonical-url'];
+      const resource = await this.canonicalService.fetchCanonicalResource(canonicalUrl);
+      
+      if (resource && resource.schema) {
+        // Add description linking to canonical
+        enhanced.description = enhanced.description 
+          ? `${enhanced.description}\n\nCanonical: ${canonicalUrl}`
+          : `Canonical: ${canonicalUrl}`;
+        
+        // If it's a ValueSet, add the enum values
+        if (resource.type === 'ValueSet') {
+          const enumValues = this.canonicalService.extractValueSetEnum(resource.schema);
+          if (enumValues) {
+            enhanced.enum = enumValues;
+          }
+        }
+        
+        // Add metadata
+        enhanced['x-canonical-resource'] = {
+          url: canonicalUrl,
+          type: resource.type,
+          lastFetched: resource.lastFetched
+        };
+      }
+    }
+
+    // Recursively enhance nested schemas
+    if (enhanced.properties) {
+      for (const key in enhanced.properties) {
+        enhanced.properties[key] = await this.enhanceSchemaWithCanonicals(enhanced.properties[key]);
+      }
+    }
+
+    if (enhanced.items) {
+      enhanced.items = await this.enhanceSchemaWithCanonicals(enhanced.items);
+    }
+
+    if (enhanced.additionalProperties && typeof enhanced.additionalProperties === 'object') {
+      enhanced.additionalProperties = await this.enhanceSchemaWithCanonicals(enhanced.additionalProperties);
+    }
+
+    return enhanced;
+  }
+
+  /**
+   * Validate question parameters against schema, including canonical references
+   */
+  async validateQuestionParameters(questionId: string, parameters: any): Promise<{ isValid: boolean; errors: string[] }> {
+    const question = await this.getQuestion(questionId);
+    if (!question) {
+      return {
+        isValid: false,
+        errors: [`Question not found: ${questionId}`]
+      };
+    }
+
+    const errors: string[] = [];
+
+    // Check required parameters
+    for (const param of question.parameters) {
+      if (param.required && !parameters.hasOwnProperty(param.name)) {
+        errors.push(`Missing required parameter: ${param.name}`);
+      }
+    }
+
+    // Get enhanced schema if available
+    const schema = await this.getQuestionSchema(questionId);
+    if (schema && schema.input) {
+      const enhancedSchema = await this.enhanceSchemaWithCanonicals(schema.input);
+      await this.validateAgainstEnhancedSchema(enhancedSchema, parameters, errors);
+    } else {
+      // Fallback to basic type validation
+      for (const param of question.parameters) {
+        if (parameters.hasOwnProperty(param.name)) {
+          const value = parameters[param.name];
+          if (param.type === 'string' && typeof value !== 'string') {
+            errors.push(`Parameter ${param.name} must be a string`);
+          } else if (param.type === 'number' && typeof value !== 'number') {
+            errors.push(`Parameter ${param.name} must be a number`);
+          } else if (param.type === 'boolean' && typeof value !== 'boolean') {
+            errors.push(`Parameter ${param.name} must be a boolean`);
+          }
+        }
+      }
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors
+    };
+  }
+
+  /**
+   * Validate parameters against an enhanced schema
+   */
+  private async validateAgainstEnhancedSchema(
+    schema: any,
+    data: any,
+    errors: string[],
+    path: string = ''
+  ): Promise<void> {
+    if (!schema || !schema.properties) return;
+
+    for (const [key, propSchema] of Object.entries(schema.properties)) {
+      const fullPath = path ? `${path}.${key}` : key;
+      const value = data[key];
+
+      // Check if property has canonical reference
+      if ((propSchema as any)['x-canonical-url']) {
+        const canonicalUrl = (propSchema as any)['x-canonical-url'];
+        
+        // If it's a ValueSet, validate against it
+        if (value !== undefined) {
+          const validation = await this.canonicalService.validateAgainstValueSet(
+            String(value),
+            canonicalUrl
+          );
+          
+          if (!validation.isValid) {
+            errors.push(`${fullPath}: ${validation.error}`);
+          }
+        }
+      }
+
+      // Validate enum values (including those from ValueSets)
+      if ((propSchema as any).enum && value !== undefined) {
+        if (!Array.isArray((propSchema as any).enum) || !(propSchema as any).enum.includes(value)) {
+          errors.push(`${fullPath}: Value '${value}' is not in allowed values`);
+        }
+      }
+
+      // Recursively validate nested objects
+      if ((propSchema as any).type === 'object' && value && typeof value === 'object') {
+        await this.validateAgainstEnhancedSchema(propSchema as any, value, errors, fullPath);
+      }
+    }
+  }
+
+  /**
+   * Get canonical resources referenced in a question schema
+   */
+  async getCanonicalReferences(questionId: string): Promise<string[]> {
+    const schema = await this.getQuestionSchema(questionId);
+    if (!schema) return [];
+
+    const references: string[] = [];
+    
+    const extractCanonicals = (obj: any) => {
+      if (!obj || typeof obj !== 'object') return;
+      
+      if (obj['x-canonical-url']) {
+        references.push(obj['x-canonical-url']);
+      }
+      
+      for (const value of Object.values(obj)) {
+        if (typeof value === 'object') {
+          extractCanonicals(value);
+        }
+      }
+    };
+    
+    extractCanonicals(schema);
+    return [...new Set(references)]; // Remove duplicates
+  }
+
+  /**
+   * Audit all question schemas for canonical references
+   */
+  async auditCanonicalReferences(): Promise<{
+    questionsWithCanonicals: string[];
+    questionsWithoutCanonicals: string[];
+    totalCanonicals: number;
+    canonicalsByQuestion: Record<string, string[]>;
+  }> {
+    await this.initialize();
+    
+    const questionsWithCanonicals: string[] = [];
+    const questionsWithoutCanonicals: string[] = [];
+    const canonicalsByQuestion: Record<string, string[]> = {};
+    let totalCanonicals = 0;
+
+    for (const questionId of this.questions.keys()) {
+      const canonicals = await this.getCanonicalReferences(questionId);
+      
+      if (canonicals.length > 0) {
+        questionsWithCanonicals.push(questionId);
+        canonicalsByQuestion[questionId] = canonicals;
+        totalCanonicals += canonicals.length;
+      } else {
+        questionsWithoutCanonicals.push(questionId);
+      }
+    }
+
+    return {
+      questionsWithCanonicals,
+      questionsWithoutCanonicals,
+      totalCanonicals,
+      canonicalsByQuestion
     };
   }
 }
