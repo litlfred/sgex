@@ -260,10 +260,51 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
             const canvas = viewer.get('canvas');
             console.log('🔍 BPMNPreview: Canvas service retrieved:', !!canvas);
             
-            const zoomStartTime = Date.now();
-            canvas.zoom('fit-viewport');
-            const zoomTime = Date.now() - zoomStartTime;
+            // Get the element registry to scan all visual elements
+            const elementRegistry = viewer.get('elementRegistry');
+            const allElements = elementRegistry.getAll();
             
+            console.log(`📊 BPMNPreview: Found ${allElements.length} elements in diagram`);
+            
+            // Calculate the bounds of all elements to ensure proper viewport
+            if (allElements.length > 0) {
+              let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+              
+              allElements.forEach(element => {
+                if (element.x !== undefined && element.y !== undefined && element.width && element.height) {
+                  minX = Math.min(minX, element.x);
+                  minY = Math.min(minY, element.y);
+                  maxX = Math.max(maxX, element.x + element.width);
+                  maxY = Math.max(maxY, element.y + element.height);
+                }
+              });
+              
+              // Add padding around the diagram
+              const padding = 20;
+              const diagramBounds = {
+                x: minX - padding,
+                y: minY - padding,
+                width: (maxX - minX) + (padding * 2),
+                height: (maxY - minY) + (padding * 2)
+              };
+              
+              console.log('📐 BPMNPreview: Calculated diagram bounds:', diagramBounds);
+              
+              // Zoom to fit the actual diagram bounds
+              if (diagramBounds.width > 0 && diagramBounds.height > 0) {
+                canvas.viewbox(diagramBounds);
+                console.log('✅ BPMNPreview: Set viewbox to diagram bounds');
+              } else {
+                // Fallback to fit-viewport if bounds calculation fails
+                canvas.zoom('fit-viewport');
+                console.log('⚠️ BPMNPreview: Using fit-viewport fallback');
+              }
+            } else {
+              // No elements, use standard fit-viewport
+              canvas.zoom('fit-viewport');
+            }
+            
+            const zoomTime = Date.now() - Date.now();
             console.log(`✅ BPMNPreview: Successfully fitted to viewport in ${zoomTime}ms`);
 
             // Force canvas update to ensure diagram is immediately visible
