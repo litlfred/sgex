@@ -396,25 +396,36 @@ body.theme-light .component {
 
 **Accessibility Audit Results:**
 - **Initial Warnings**: 147 accessibility issues identified
-- **Current Warnings**: 119 (28 fixed - 19% reduction)
+- **Current Warnings**: 85 (62 fixed - 42% reduction)
 - **Issue Breakdown (Remaining)**:
-  - 45 warnings: `jsx-a11y/click-events-have-key-events` - Interactive elements need keyboard support
-  - 42 warnings: `jsx-a11y/no-static-element-interactions` - Non-semantic interactive elements
-  - 22 warnings: `jsx-a11y/label-has-associated-control` - Form labels not properly associated
-  - 5 warnings: `jsx-a11y/no-noninteractive-element-interactions` - Mouse/keyboard events on non-interactive elements
-  - 3 warnings: `jsx-a11y/no-autofocus` - Autofocus accessibility concerns
-  - 2 warnings: Other issues
+  - 32 warnings: `jsx-a11y/click-events-have-key-events` - Interactive elements need keyboard support
+  - 30 warnings: `jsx-a11y/no-static-element-interactions` - Non-semantic interactive elements
+  - 18 warnings: `jsx-a11y/label-has-associated-control` - Form labels not properly associated
+  - 3 warnings: `jsx-a11y/no-noninteractive-element-interactions` - Mouse/keyboard events on non-interactive elements
+  - 2 warnings: `jsx-a11y/no-autofocus` - Autofocus accessibility concerns
 
 **Components Fixed** ✅:
 - ✅ DecisionSupportLogicView.js (8 warnings → 0)
 - ✅ DAKDashboard.js (6 warnings → 0)
 - ✅ BPMNEditor.js (2 warnings → 0)
 - ✅ ActorEditor.js (11 warnings → 0)
+- ✅ BPMNViewerEnhanced.js (10 warnings → 0)
+- ✅ BPMNSource.js (4 warnings → 0)
+- ✅ ForkStatusBar.js (8 warnings → 0)
+- ✅ CollaborationModal.js (2 warnings → 0)
+- ✅ CommitDiffModal.js (4 warnings → 0)
+- ✅ LoginModal.js (2 warnings → 0)
+- ✅ PageEditModal.js (2 warnings → 0)
+- ✅ PageViewModal.js (2 warnings → 0)
+
+**Total: 12 components, 61 warnings fixed**
 
 **Remediation Patterns Established**:
-1. Modal dialogs: Use role="dialog", aria-modal="true", Escape key via useEffect
+1. Modal dialogs: Use role="dialog", aria-modal="true", Escape key via useEffect, overlay click detection
 2. Interactive elements: Convert divs to semantic buttons with proper CSS
-3. Form labels: Use htmlFor with unique IDs, especially in loops
+3. Form labels: Use htmlFor with unique IDs, or use spans for display-only content
+4. Status bar headers: Convert to buttons with aria-expanded
+5. File/item lists: Convert to buttons with aria-pressed for selection state
 
 **3.2 Contrast Ratio Testing**
 - Test: All color combinations in both themes
