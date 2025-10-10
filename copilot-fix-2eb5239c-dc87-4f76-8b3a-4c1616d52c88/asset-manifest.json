@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/sgex/copilot-fix-2eb5239c-dc87-4f76-8b3a-4c1616d52c88/static/css/main.c8f1584d.css",
-    "main.js": "/sgex/copilot-fix-2eb5239c-dc87-4f76-8b3a-4c1616d52c88/static/js/main.f6ce186b.js",
+    "main.js": "/sgex/copilot-fix-2eb5239c-dc87-4f76-8b3a-4c1616d52c88/static/js/main.0edffe0e.js",
     "static/js/228.5d506763.chunk.js": "/sgex/copilot-fix-2eb5239c-dc87-4f76-8b3a-4c1616d52c88/static/js/228.5d506763.chunk.js",
     "static/js/8700.251e24f3.chunk.js": "/sgex/copilot-fix-2eb5239c-dc87-4f76-8b3a-4c1616d52c88/static/js/8700.251e24f3.chunk.js",
     "static/js/984.efd90ee0.chunk.js": "/sgex/copilot-fix-2eb5239c-dc87-4f76-8b3a-4c1616d52c88/static/js/984.efd90ee0.chunk.js",
@@ -33,7 +33,7 @@
     "static/css/5409.ae61ab29.chunk.css": "/sgex/copilot-fix-2eb5239c-dc87-4f76-8b3a-4c1616d52c88/static/css/5409.ae61ab29.chunk.css",
     "static/js/5409.d00eb482.chunk.js": "/sgex/copilot-fix-2eb5239c-dc87-4f76-8b3a-4c1616d52c88/static/js/5409.d00eb482.chunk.js",
     "static/css/904.bccc37cd.chunk.css": "/sgex/copilot-fix-2eb5239c-dc87-4f76-8b3a-4c1616d52c88/static/css/904.bccc37cd.chunk.css",
-    "static/js/904.ea467281.chunk.js": "/sgex/copilot-fix-2eb5239c-dc87-4f76-8b3a-4c1616d52c88/static/js/904.ea467281.chunk.js",
+    "static/js/904.18fba843.chunk.js": "/sgex/copilot-fix-2eb5239c-dc87-4f76-8b3a-4c1616d52c88/static/js/904.18fba843.chunk.js",
     "static/js/1685.cee8e250.chunk.js": "/sgex/copilot-fix-2eb5239c-dc87-4f76-8b3a-4c1616d52c88/static/js/1685.cee8e250.chunk.js",
     "static/js/112.b763af0b.chunk.js": "/sgex/copilot-fix-2eb5239c-dc87-4f76-8b3a-4c1616d52c88/static/js/112.b763af0b.chunk.js",
     "static/js/5426.c136ecae.chunk.js": "/sgex/copilot-fix-2eb5239c-dc87-4f76-8b3a-4c1616d52c88/static/js/5426.c136ecae.chunk.js",
@@ -68,6 +68,6 @@
   },
   "entrypoints": [
     "static/css/main.c8f1584d.css",
-    "static/js/main.f6ce186b.js"
+    "static/js/main.0edffe0e.js"
   ]
 }
