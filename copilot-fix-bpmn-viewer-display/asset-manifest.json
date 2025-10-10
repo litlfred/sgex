@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/sgex/copilot-fix-bpmn-viewer-display/static/css/main.0cd3275b.css",
-    "main.js": "/sgex/copilot-fix-bpmn-viewer-display/static/js/main.bcd980f9.js",
+    "main.css": "/sgex/copilot-fix-bpmn-viewer-display/static/css/main.3e01299c.css",
+    "main.js": "/sgex/copilot-fix-bpmn-viewer-display/static/js/main.23a549e6.js",
     "static/js/228.5d506763.chunk.js": "/sgex/copilot-fix-bpmn-viewer-display/static/js/228.5d506763.chunk.js",
     "static/js/8700.251e24f3.chunk.js": "/sgex/copilot-fix-bpmn-viewer-display/static/js/8700.251e24f3.chunk.js",
     "static/js/984.efd90ee0.chunk.js": "/sgex/copilot-fix-bpmn-viewer-display/static/js/984.efd90ee0.chunk.js",
@@ -24,9 +24,9 @@
     "static/js/6665.b90ac26e.chunk.js": "/sgex/copilot-fix-bpmn-viewer-display/static/js/6665.b90ac26e.chunk.js",
     "static/js/3216.8d5bfb10.chunk.js": "/sgex/copilot-fix-bpmn-viewer-display/static/js/3216.8d5bfb10.chunk.js",
     "static/js/3936.9e683f12.chunk.js": "/sgex/copilot-fix-bpmn-viewer-display/static/js/3936.9e683f12.chunk.js",
-    "static/js/5453.9fb8f57c.chunk.js": "/sgex/copilot-fix-bpmn-viewer-display/static/js/5453.9fb8f57c.chunk.js",
+    "static/js/5453.fe4d5fd1.chunk.js": "/sgex/copilot-fix-bpmn-viewer-display/static/js/5453.fe4d5fd1.chunk.js",
     "static/js/5012.5a3aed51.chunk.js": "/sgex/copilot-fix-bpmn-viewer-display/static/js/5012.5a3aed51.chunk.js",
-    "static/js/115.a78a69dd.chunk.js": "/sgex/copilot-fix-bpmn-viewer-display/static/js/115.a78a69dd.chunk.js",
+    "static/js/115.09310c08.chunk.js": "/sgex/copilot-fix-bpmn-viewer-display/static/js/115.09310c08.chunk.js",
     "static/js/5432.8550e605.chunk.js": "/sgex/copilot-fix-bpmn-viewer-display/static/js/5432.8550e605.chunk.js",
     "static/js/328.c21d8c56.chunk.js": "/sgex/copilot-fix-bpmn-viewer-display/static/js/328.c21d8c56.chunk.js",
     "static/js/2057.525a866f.chunk.js": "/sgex/copilot-fix-bpmn-viewer-display/static/js/2057.525a866f.chunk.js",
@@ -65,7 +65,7 @@
     "index.html": "/sgex/copilot-fix-bpmn-viewer-display/index.html"
   },
   "entrypoints": [
-    "static/css/main.0cd3275b.css",
-    "static/js/main.bcd980f9.js"
+    "static/css/main.3e01299c.css",
+    "static/js/main.23a549e6.js"
   ]
 }
