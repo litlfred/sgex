@@ -1,0 +1,85 @@
+BPMN Viewer Display Issue - Before and After Fix
+================================================
+
+BEFORE FIX (Diagram appears blank until mouse click):
+┌────────────────────────────────────────────────────────────┐
+│ 1. Load BPMN XML                                           │
+│    ├─> viewerRef.current.importXML(bpmnXml)               │
+│    └─> ✓ XML parsed, SVG elements created in DOM          │
+└────────────────────────────────────────────────────────────┘
+                          ↓
+┌────────────────────────────────────────────────────────────┐
+│ 2. Apply Zoom                                              │
+│    ├─> canvas.zoom('fit-viewport')                        │
+│    └─> ✓ Internal state updated, viewport calculated      │
+└────────────────────────────────────────────────────────────┘
+                          ↓
+┌────────────────────────────────────────────────────────────┐
+│ 3. Result: BLANK SCREEN                                    │
+│    ├─> SVG elements exist in DOM but not rendered         │
+│    ├─> Internal rendering pipeline not triggered          │
+│    └─> ❌ User sees blank workspace                       │
+└────────────────────────────────────────────────────────────┘
+                          ↓
+┌────────────────────────────────────────────────────────────┐
+│ 4. User Clicks Mouse                                       │
+│    ├─> Click event fired                                  │
+│    ├─> bpmn-js event handlers triggered                   │
+│    ├─> Canvas marked for redraw                           │
+│    └─> ✓ Rendering pipeline triggered                     │
+└────────────────────────────────────────────────────────────┘
+                          ↓
+┌────────────────────────────────────────────────────────────┐
+│ 5. Diagram Appears                                         │
+│    └─> ✓ User now sees the diagram                        │
+└────────────────────────────────────────────────────────────┘
+
+
+AFTER FIX (Diagram appears immediately):
+┌────────────────────────────────────────────────────────────┐
+│ 1. Load BPMN XML                                           │
+│    ├─> viewerRef.current.importXML(bpmnXml)               │
+│    └─> ✓ XML parsed, SVG elements created in DOM          │
+└────────────────────────────────────────────────────────────┘
+                          ↓
+┌────────────────────────────────────────────────────────────┐
+│ 2. Apply Zoom                                              │
+│    ├─> canvas.zoom('fit-viewport')                        │
+│    └─> ✓ Internal state updated, viewport calculated      │
+└────────────────────────────────────────────────────────────┘
+                          ↓
+┌────────────────────────────────────────────────────────────┐
+│ 3. Force Canvas Redraw (NEW!)                             │
+│    ├─> const viewbox = canvas.viewbox()                   │
+│    │   └─> Triggers internal state recalculation          │
+│    └─> canvas.scroll({ dx: 0, dy: 0 })                    │
+│        └─> Triggers rendering pipeline with zero scroll   │
+└────────────────────────────────────────────────────────────┘
+                          ↓
+┌────────────────────────────────────────────────────────────┐
+│ 4. Diagram Appears Immediately                            │
+│    ├─> ✓ SVG elements properly rendered                   │
+│    ├─> ✓ Diagram visible without user interaction         │
+│    └─> ✓ User sees the diagram right away                 │
+└────────────────────────────────────────────────────────────┘
+
+
+Code Changes:
+═════════════
+
+// BEFORE:
+canvas.zoom('fit-viewport');
+console.log('BPMN diagram loaded successfully');
+setLoading(false);
+
+// AFTER:
+canvas.zoom('fit-viewport');
+
+// Force canvas update by getting viewbox (triggers internal redraw)
+const viewbox = canvas.viewbox();
+console.log('BPMN diagram loaded successfully', { viewbox });
+
+// Explicitly trigger a canvas scroll event to force rendering update
+canvas.scroll({ dx: 0, dy: 0 });
+
+setLoading(false);
