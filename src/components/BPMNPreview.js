@@ -370,30 +370,24 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
     return cleanup;
   }, [file, repository, selectedBranch, profile]);
 
-  if (loading) {
-    return (
-      <div className="bpmn-preview">
+  return (
+    <div className="bpmn-preview">
+      {loading && (
         <div className="preview-loading">
           <div className="preview-spinner"></div>
           <span>Loading preview...</span>
         </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="bpmn-preview">
+      )}
+      {error && (
         <div className="preview-error">
           <span>❌ {error}</span>
         </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="bpmn-preview">
-      <div className="preview-container" ref={containerRef}>
+      )}
+      <div 
+        className="preview-container" 
+        ref={containerRef}
+        style={{ display: loading || error ? 'none' : 'block' }}
+      >
         {/* BPMN viewer will be rendered here */}
       </div>
     </div>
