@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/sgex/copilot-fix-bpmn-viewer-display/static/css/main.0cd3275b.css",
-    "main.js": "/sgex/copilot-fix-bpmn-viewer-display/static/js/main.2aa300c5.js",
+    "main.js": "/sgex/copilot-fix-bpmn-viewer-display/static/js/main.126bbfe0.js",
     "static/js/228.5d506763.chunk.js": "/sgex/copilot-fix-bpmn-viewer-display/static/js/228.5d506763.chunk.js",
     "static/js/8700.251e24f3.chunk.js": "/sgex/copilot-fix-bpmn-viewer-display/static/js/8700.251e24f3.chunk.js",
     "static/js/984.efd90ee0.chunk.js": "/sgex/copilot-fix-bpmn-viewer-display/static/js/984.efd90ee0.chunk.js",
@@ -24,9 +24,9 @@
     "static/js/6665.b90ac26e.chunk.js": "/sgex/copilot-fix-bpmn-viewer-display/static/js/6665.b90ac26e.chunk.js",
     "static/js/3216.8d5bfb10.chunk.js": "/sgex/copilot-fix-bpmn-viewer-display/static/js/3216.8d5bfb10.chunk.js",
     "static/js/3936.9e683f12.chunk.js": "/sgex/copilot-fix-bpmn-viewer-display/static/js/3936.9e683f12.chunk.js",
-    "static/js/5453.f3f5aa06.chunk.js": "/sgex/copilot-fix-bpmn-viewer-display/static/js/5453.f3f5aa06.chunk.js",
+    "static/js/5453.409a571f.chunk.js": "/sgex/copilot-fix-bpmn-viewer-display/static/js/5453.409a571f.chunk.js",
     "static/js/5012.5a3aed51.chunk.js": "/sgex/copilot-fix-bpmn-viewer-display/static/js/5012.5a3aed51.chunk.js",
-    "static/js/115.2b2cde69.chunk.js": "/sgex/copilot-fix-bpmn-viewer-display/static/js/115.2b2cde69.chunk.js",
+    "static/js/115.a78a69dd.chunk.js": "/sgex/copilot-fix-bpmn-viewer-display/static/js/115.a78a69dd.chunk.js",
     "static/js/5432.8550e605.chunk.js": "/sgex/copilot-fix-bpmn-viewer-display/static/js/5432.8550e605.chunk.js",
     "static/js/328.c21d8c56.chunk.js": "/sgex/copilot-fix-bpmn-viewer-display/static/js/328.c21d8c56.chunk.js",
     "static/js/2057.525a866f.chunk.js": "/sgex/copilot-fix-bpmn-viewer-display/static/js/2057.525a866f.chunk.js",
@@ -66,6 +66,6 @@
   },
   "entrypoints": [
     "static/css/main.0cd3275b.css",
-    "static/js/main.2aa300c5.js"
+    "static/js/main.126bbfe0.js"
   ]
 }
