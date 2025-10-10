@@ -102,35 +102,41 @@ const RolesTab = ({ actorDefinition, errors, onNestedFieldChange, onAddItem, onR
           </div>
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor={`role-code-${index}`}>Code</label>
+              <label htmlFor={`role-code-${index}`}>Code *</label>
               <input
                 id={`role-code-${index}`}
                 type="text"
                 value={role.code}
                 onChange={(e) => onNestedFieldChange('roles', index, 'code', e.target.value)}
+                className={errors[`roles.${index}.code`] ? 'error' : ''}
                 placeholder="Role code"
               />
+              {errors[`roles.${index}.code`] && <span className="error-text">{errors[`roles.${index}.code`]}</span>}
             </div>
             <div className="form-group">
-              <label htmlFor={`role-display-${index}`}>Display Name</label>
+              <label htmlFor={`role-display-${index}`}>Display Name *</label>
               <input
                 id={`role-display-${index}`}
                 type="text"
                 value={role.display}
                 onChange={(e) => onNestedFieldChange('roles', index, 'display', e.target.value)}
+                className={errors[`roles.${index}.display`] ? 'error' : ''}
                 placeholder="Human-readable role name"
               />
+              {errors[`roles.${index}.display`] && <span className="error-text">{errors[`roles.${index}.display`]}</span>}
             </div>
           </div>
           <div className="form-group">
-            <label htmlFor={`role-system-${index}`}>Code System</label>
+            <label htmlFor={`role-system-${index}`}>Code System *</label>
             <input
               id={`role-system-${index}`}
               type="text"
               value={role.system || ''}
               onChange={(e) => onNestedFieldChange('roles', index, 'system', e.target.value)}
+              className={errors[`roles.${index}.system`] ? 'error' : ''}
               placeholder="http://snomed.info/sct"
             />
+            {errors[`roles.${index}.system`] && <span className="error-text">{errors[`roles.${index}.system`]}</span>}
           </div>
         </div>
       ))}
@@ -162,24 +168,28 @@ const RolesTab = ({ actorDefinition, errors, onNestedFieldChange, onAddItem, onR
           </div>
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor={`qualification-code-${index}`}>Code</label>
+              <label htmlFor={`qualification-code-${index}`}>Code *</label>
               <input
                 id={`qualification-code-${index}`}
                 type="text"
                 value={qual.code}
                 onChange={(e) => onNestedFieldChange('qualifications', index, 'code', e.target.value)}
+                className={errors[`qualifications.${index}.code`] ? 'error' : ''}
                 placeholder="Qualification code"
               />
+              {errors[`qualifications.${index}.code`] && <span className="error-text">{errors[`qualifications.${index}.code`]}</span>}
             </div>
             <div className="form-group">
-              <label htmlFor={`qualification-display-${index}`}>Display Name</label>
+              <label htmlFor={`qualification-display-${index}`}>Display Name *</label>
               <input
                 id={`qualification-display-${index}`}
                 type="text"
                 value={qual.display}
                 onChange={(e) => onNestedFieldChange('qualifications', index, 'display', e.target.value)}
+                className={errors[`qualifications.${index}.display`] ? 'error' : ''}
                 placeholder="Qualification name"
               />
+              {errors[`qualifications.${index}.display`] && <span className="error-text">{errors[`qualifications.${index}.display`]}</span>}
             </div>
           </div>
           <div className="form-group">
@@ -583,7 +593,17 @@ const ActorEditorContent = () => {
       newDefinition[parentField][index][field] = value;
       return newDefinition;
     });
-  }, []);
+    
+    // Clear field-specific errors for nested fields
+    const errorKey = `${parentField}.${index}.${field}`;
+    if (errors[errorKey]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[errorKey];
+        return newErrors;
+      });
+    }
+  }, [errors]);
 
   // Add new item to array field
   const addArrayItem = useCallback((field, defaultItem = {}) => {
@@ -675,9 +695,41 @@ const ActorEditorContent = () => {
     
     if (!isValid) {
       console.log('Form validation failed - showing errors');
+      
+      // Build a user-friendly error message listing all validation issues
+      const errorFields = Object.keys(errors).filter(key => key !== 'general');
+      const errorCount = errorFields.length;
+      
+      let errorMessage = `Please fix ${errorCount} validation error${errorCount !== 1 ? 's' : ''} before saving:\n`;
+      
+      // Group errors by type for better readability
+      const basicErrors = errorFields.filter(key => !key.includes('.'));
+      const nestedErrors = errorFields.filter(key => key.includes('.'));
+      
+      if (basicErrors.length > 0) {
+        errorMessage += '\n• Basic fields: ' + basicErrors.map(key => {
+          const label = key.charAt(0).toUpperCase() + key.slice(1);
+          return label;
+        }).join(', ');
+      }
+      
+      if (nestedErrors.length > 0) {
+        const roleErrors = nestedErrors.filter(key => key.startsWith('roles.'));
+        const qualErrors = nestedErrors.filter(key => key.startsWith('qualifications.'));
+        
+        if (roleErrors.length > 0) {
+          errorMessage += '\n• Role fields are missing or invalid (check the Roles tab)';
+        }
+        if (qualErrors.length > 0) {
+          errorMessage += '\n• Qualification fields are missing or invalid (check the Roles tab)';
+        }
+      }
+      
+      errorMessage += '\n\nLook for red highlighted fields and error messages below each field.';
+      
       setErrors(prev => ({
         ...prev,
-        general: 'Please fix validation errors before saving. Check that all required fields are filled in.'
+        general: errorMessage
       }));
       return;
     }
