@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/sgex/copilot-simplify-issue-report-menu/static/css/main.c8f1584d.css",
-    "main.js": "/sgex/copilot-simplify-issue-report-menu/static/js/main.7cda8d8d.js",
+    "main.css": "/sgex/copilot-simplify-issue-report-menu/static/css/main.0cd3275b.css",
+    "main.js": "/sgex/copilot-simplify-issue-report-menu/static/js/main.56e1d0b0.js",
     "static/js/228.5d506763.chunk.js": "/sgex/copilot-simplify-issue-report-menu/static/js/228.5d506763.chunk.js",
     "static/js/8700.251e24f3.chunk.js": "/sgex/copilot-simplify-issue-report-menu/static/js/8700.251e24f3.chunk.js",
     "static/js/984.efd90ee0.chunk.js": "/sgex/copilot-simplify-issue-report-menu/static/js/984.efd90ee0.chunk.js",
@@ -55,7 +55,7 @@
     "static/js/3738.cd910bef.chunk.js": "/sgex/copilot-simplify-issue-report-menu/static/js/3738.cd910bef.chunk.js",
     "static/js/7845.8a795cc9.chunk.js": "/sgex/copilot-simplify-issue-report-menu/static/js/7845.8a795cc9.chunk.js",
     "static/js/2383.e1325433.chunk.js": "/sgex/copilot-simplify-issue-report-menu/static/js/2383.e1325433.chunk.js",
-    "static/js/3782.a0c23e0a.chunk.js": "/sgex/copilot-simplify-issue-report-menu/static/js/3782.a0c23e0a.chunk.js",
+    "static/js/3782.e7d14498.chunk.js": "/sgex/copilot-simplify-issue-report-menu/static/js/3782.e7d14498.chunk.js",
     "static/js/6384.8ac3f207.chunk.js": "/sgex/copilot-simplify-issue-report-menu/static/js/6384.8ac3f207.chunk.js",
     "static/js/2675.6545ccc8.chunk.js": "/sgex/copilot-simplify-issue-report-menu/static/js/2675.6545ccc8.chunk.js",
     "static/js/6636.ad5ada2d.chunk.js": "/sgex/copilot-simplify-issue-report-menu/static/js/6636.ad5ada2d.chunk.js",
@@ -65,7 +65,7 @@
     "index.html": "/sgex/copilot-simplify-issue-report-menu/index.html"
   },
   "entrypoints": [
-    "static/css/main.c8f1584d.css",
-    "static/js/main.7cda8d8d.js"
+    "static/css/main.0cd3275b.css",
+    "static/js/main.56e1d0b0.js"
   ]
 }
