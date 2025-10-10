@@ -375,7 +375,7 @@ const BPMNEditor = () => {
                         <div className="file-name">{file.name}</div>
                         <div className="file-size">{(file.size / 1024).toFixed(1)} KB</div>
                       </div>
-                    </div>
+                    </button>
                   ))}
                 </div>
               )}
