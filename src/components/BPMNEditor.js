@@ -363,10 +363,12 @@ const BPMNEditor = () => {
               ) : (
                 <div className="file-list">
                   {bpmnFiles.map((file) => (
-                    <div 
+                    <button 
                       key={file.sha}
                       className={`file-item ${selectedFile?.sha === file.sha ? 'selected' : ''}`}
                       onClick={() => loadBpmnFile(file)}
+                      type="button"
+                      aria-pressed={selectedFile?.sha === file.sha}
                     >
                       <div className="file-icon">📋</div>
                       <div className="file-details">
