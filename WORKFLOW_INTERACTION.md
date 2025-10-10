@@ -38,19 +38,21 @@ Different workflows use different action IDs:
 
 The `branch-deployment.yml` workflow updates its comment at these stages:
 
-1. **started** - Build initiated (immediately after checkout)
-2. **setup** - Dependencies installed and environment ready
-3. **building** - React application being compiled
-4. **deploying** - Pushing built files to gh-pages branch
-5. **verifying** - Checking if deployment is accessible
-6. **success** - Deployment complete and verified
-7. **failure** - Build or deployment failed
+1. **started** - Build initiated (immediately after checkout) - Status: 🟠 (in-progress)
+2. **setup** - Dependencies installed and environment ready - Status: 🟠 (in-progress)
+3. **building** - React application being compiled - Status: 🟠 (in-progress)
+4. **deploying** - Pushing built files to gh-pages branch - Status: 🟠 (in-progress)
+5. **verifying** - Checking if deployment is accessible - Status: 🟠 (in-progress)
+6. **success** - Deployment complete and verified - Status: 🟢 (completed)
+7. **failure** - Build or deployment failed - Status: 🔴 (failed)
+
+**Note:** When a new stage begins, all previous in-progress (🟠) steps are automatically changed to completed (🟢) while preserving their original timestamps.
 
 ### pages-build-deployment Workflow Stage
 
 GitHub's native Pages workflow can update the comment at:
 
-- **pages-built** - Static site built from gh-pages content
+- **pages-built** - Static site built from gh-pages content - Status: 🟢 (completed)
 
 ## Usage Examples
 
@@ -106,35 +108,40 @@ The system works seamlessly with manual workflow triggers:
 1. Developer pushes to `feature/new-widget` branch with open PR #123
 2. deploy-branch workflow starts (run_id: 11111)
    - Comment created: `<!-- sgex-deployment-status-comment:11111 -->`
-   - Status: "Build Started"
+   - Status: "Build Started" 🟠
+   - Preamble shows: Action ID, Commit SHA, and Workflow Step link
 3. Workflow progresses through stages, updating the SAME comment:
-   - "Setting Up Environment"
-   - "Building Application"
-   - "Deploying to GitHub Pages"
-   - "Verifying Deployment"
+   - "Setting Up Environment" 🟠 (previous step "Build Started" changes from 🟠 to 🟢)
+   - "Building Application" 🟠 (previous steps change to 🟢)
+   - "Deploying to GitHub Pages" 🟠 (previous steps change to 🟢)
+   - "Verifying Deployment" 🟠 (previous steps change to 🟢)
 4. Workflow completes
-   - Final status: "Successfully Deployed ✅"
+   - Final status: "Successfully Deployed 🟢" (all previous steps show 🟢)
 5. GitHub pages-build-deployment runs (deployment_id: dep_22222)
    - NEW comment created: `<!-- sgex-deployment-status-comment:dep_22222 -->`
-   - Status: "GitHub Pages Built"
+   - Status: "GitHub Pages Built" 🟢
 
 Result: PR #123 has TWO comments:
-- One from deploy-branch (tracking build/deploy)
+- One from deploy-branch (tracking build/deploy with timeline showing progress)
 - One from pages-build-deployment (tracking Pages build)
 
 ## Benefits
 
 ### For Developers
 - **Real-time visibility**: See deployment progress without checking Actions tab
-- **Clear status**: Each stage clearly labeled with emoji and timestamp
+- **Clear status**: Each stage clearly labeled with consistent circle icons (🟠 in-progress, 🟢 completed, 🔴 failed)
+- **Timeline tracking**: Previous steps automatically marked as completed when advancing to next step
 - **Quick actions**: Direct links to logs, preview URLs, and retry options
 - **Organized feedback**: One comment per workflow, no clutter
+- **Workflow transparency**: Each timeline entry links to the specific workflow step in the GitHub workflow file
+- **Deployment details**: Preamble shows Action ID, Commit SHA, and direct links to workflow run and commit changes
 
 ### For Repository Maintainers
 - **Content injection protection**: All inputs sanitized to prevent attacks
 - **Reliable tracking**: Action IDs ensure no duplicate or lost comments
 - **Flexible**: Works with both automatic and manual workflow triggers
 - **Extensible**: Easy to add new stages or workflows
+- **Consistent iconography**: Circle icons (🟠/🟢/🔴) match across all stages and status indicators
 
 ## Security
 

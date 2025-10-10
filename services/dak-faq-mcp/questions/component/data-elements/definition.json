@@ -47,9 +47,20 @@
               "items": {
                 "type": "object",
                 "properties": {
-                  "name": { "type": "string" },
-                  "file": { "type": "string" },
-                  "type": { "type": "string" }
+                  "name": { 
+                    "type": "string",
+                    "description": "Data element name"
+                  },
+                  "file": { 
+                    "type": "string",
+                    "description": "File path containing the data element"
+                  },
+                  "type": { 
+                    "type": "string",
+                    "description": "Type of data element (Profile, Extension, ValueSet, etc.)",
+                    "x-canonical-url": "https://worldhealthorganization.github.io/smart-base/ValueSet-DataElementType.schema.json",
+                    "x-canonical-note": "Should reference WHO SMART Guidelines data element types"
+                  }
                 }
               }
             }

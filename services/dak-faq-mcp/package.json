@@ -11,7 +11,9 @@
     "dev": "npm run build && node dist/index.js --dev",
     "dev-mcp": "npm run build && node dist/mcp-server.js",
     "watch": "tsc --watch",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "audit:canonicals": "npm run build && node dist/scripts/audit-canonical-refs.js",
+    "test:canonicals": "npm run build && node dist/scripts/test-canonical-integration.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.17.4",

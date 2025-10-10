@@ -39,7 +39,9 @@ class PRCommentManager:
         'success', 'failure', 'pages-built'
     }
     
-    def __init__(self, token: str, repo: str, pr_number: int, action_id: Optional[str] = None):
+    def __init__(self, token: str, repo: str, pr_number: int, action_id: Optional[str] = None, 
+                 commit_sha: Optional[str] = None, workflow_name: Optional[str] = None, 
+                 event_name: Optional[str] = None):
         """
         Initialize the PR comment manager.
         
@@ -51,11 +53,17 @@ class PRCommentManager:
                       This ensures exactly one comment per action run, allowing
                       multiple workflows (e.g., deploy-branch and pages-build-deployment)
                       to maintain their own separate status comments.
+            commit_sha: Commit SHA to check for duplicate comments
+            workflow_name: Name of the workflow (for display in comments)
+            event_name: Event that triggered the workflow (e.g., 'push', 'pull_request')
         """
         self.token = token
         self.owner, self.repo_name = repo.split('/')
         self.pr_number = pr_number
         self.action_id = action_id
+        self.commit_sha = commit_sha
+        self.workflow_name = workflow_name or "Unknown Workflow"
+        self.event_name = event_name or "unknown"
         self.api_base = "https://api.github.com"
         self.headers = {
             "Authorization": f"token {token}",
@@ -160,6 +168,44 @@ class PRCommentManager:
             print(f"Error fetching comments: {e}", file=sys.stderr)
             return None
     
+    def check_duplicate_comment_for_commit(self) -> Optional[Dict[str, Any]]:
+        """
+        Check if a comment already exists for the same commit SHA from a different workflow run.
+        This helps prevent duplicate comments when multiple workflows trigger for the same commit.
+        
+        Returns:
+            Comment dict if found, None otherwise
+        """
+        if not self.commit_sha or self.commit_sha == 'unknown':
+            return None
+            
+        url = f"{self.api_base}/repos/{self.owner}/{self.repo_name}/issues/{self.pr_number}/comments"
+        
+        try:
+            response = requests.get(url, headers=self.headers, timeout=30)
+            response.raise_for_status()
+            
+            comments = response.json()
+            print(f"Checking for duplicate comments for commit: {self.commit_sha[:7]}")
+            
+            # Look for any sgex deployment comment for this commit
+            for comment in comments:
+                body = comment.get('body', '')
+                # Check if this is a deployment comment (has our base marker)
+                if self.COMMENT_MARKER_BASE in body:
+                    # Check if it mentions this commit SHA
+                    if self.commit_sha[:7] in body or self.commit_sha in body:
+                        # Don't count our own comment as a duplicate
+                        if self.comment_marker not in body:
+                            print(f"⚠️  Found duplicate comment (ID: {comment['id']}) for commit {self.commit_sha[:7]}")
+                            return comment
+            
+            print(f"No duplicate comment found for commit: {self.commit_sha[:7]}")
+            return None
+        except requests.exceptions.RequestException as e:
+            print(f"Error checking for duplicate comments: {e}", file=sys.stderr)
+            return None
+    
     def extract_timeline_from_comment(self, comment_body: str) -> str:
         """
         Extract the timeline section from existing comment.
@@ -197,6 +243,73 @@ class PRCommentManager:
         
         return comment_body[timeline_start:timeline_end].strip()
     
+    def update_timeline_status(self, existing_timeline: str, current_stage: str) -> str:
+        """
+        Update previous in-progress (🟠) steps to completed (🟢) when advancing to a new step.
+        
+        Args:
+            existing_timeline: Previous timeline entries
+            current_stage: Current stage being executed
+            
+        Returns:
+            Updated timeline with previous in-progress steps marked as completed
+        """
+        if not existing_timeline:
+            return ""
+        
+        # Replace all in-progress orange circles with completed green circles for previous steps
+        # This happens when we advance to a new stage
+        updated_timeline = existing_timeline.replace(" - 🟠 ", " - 🟢 ")
+        
+        return updated_timeline
+    
+    def get_workflow_step_link(self, stage: str, commit_sha: str, repo: str) -> str:
+        """
+        Generate a link to the specific workflow step in the workflow file at the given commit.
+        
+        Args:
+            stage: Current workflow stage
+            commit_sha: Commit SHA for permalink
+            repo: Repository in format owner/repo
+            
+        Returns:
+            Markdown link to the workflow step
+        """
+        # Map stages to their approximate line numbers in branch-deployment.yml
+        # These are the "Update PR comment" step names in the workflow
+        stage_to_line = {
+            'started': 125,      # "Update PR comment - Build Started"
+            'setup': 203,        # "Update PR comment - Environment Setup Complete"
+            'building': 222,     # "Update PR comment - Building Application"
+            'deploying': 361,    # "Update PR comment - Deploying to GitHub Pages"
+            'verifying': 673,    # "Update PR comment - Verifying Deployment"
+            'success': 770,      # "Comment on associated PR (Success)"
+            'failure': 784,      # "Comment on associated PR (Failure)"
+            'pages-built': None  # Not in branch-deployment.yml
+        }
+        
+        stage_to_name = {
+            'started': 'Build Started',
+            'setup': 'Environment Setup Complete',
+            'building': 'Building Application',
+            'deploying': 'Deploying to GitHub Pages',
+            'verifying': 'Verifying Deployment',
+            'success': 'Successfully Deployed',
+            'failure': 'Deployment Failed',
+            'pages-built': 'GitHub Pages Built'
+        }
+        
+        line = stage_to_line.get(stage)
+        name = stage_to_name.get(stage, stage)
+        
+        if line and commit_sha and commit_sha != 'unknown':
+            # Create permalink to specific line in workflow file at this commit
+            workflow_file = ".github/workflows/branch-deployment.yml"
+            link = f"https://github.com/{repo}/blob/{commit_sha}/{workflow_file}#L{line}"
+            return f"[{name}]({link})"
+        else:
+            return name
+    
     def build_comment_body(self, stage: str, data: Dict[str, Any], existing_timeline: str = "") -> str:
         """
         Build the comment body for the given stage, appending to timeline.
@@ -220,7 +333,36 @@ class PRCommentManager:
         workflow_url = self.sanitize_url(data.get('workflow_url', ''))
         branch_url = self.sanitize_url(data.get('branch_url', ''))
         
+        # Extract action ID from workflow URL if available
+        action_id_display = self.action_id if self.action_id else 'N/A'
+        
+        # Update existing timeline: change previous in-progress steps to completed
+        if existing_timeline:
+            existing_timeline = self.update_timeline_status(existing_timeline, stage)
+        
         timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
+        
+        # Get workflow step link
+        repo = f"{self.owner}/{self.repo_name}"
+        step_link = self.get_workflow_step_link(stage, commit_sha, repo)
+        
+        # Determine workflow display info
+        event_display = {
+            'push': '📤 Push',
+            'pull_request': '🔀 Pull Request',
+            'workflow_dispatch': '🎯 Manual Trigger',
+            'workflow_call': '🔗 Workflow Call',
+            'schedule': '⏰ Scheduled'
+        }.get(self.event_name, f'⚙️ {self.event_name.replace("_", " ").title()}')
+        
+        # Build preamble with action ID and commit ID links
+        preamble = f"""<h3>📊 Deployment Information</h3>
+
+**Workflow:** {self.workflow_name} ({event_display})  
+**Action ID:** [{action_id_display}]({workflow_url})  
+**Commit:** [`{commit_sha_short}`]({commit_url}) ([view changes]({commit_url.replace('/commit/', '/commits/')}))  
+**Workflow Step:** {step_link}
+"""
         
         # Stage-specific content with HTML headers for consistent styling
         if stage == 'started':
@@ -234,7 +376,7 @@ class PRCommentManager:
             if branch_url:
                 actions += f"""
 <a href="{branch_url}"><img src="https://img.shields.io/badge/Preview_URL-orange?style=for-the-badge&logo=github&label=%F0%9F%8C%90&labelColor=gray" alt="Expected Deployment URL"/></a> _(will be live after deployment)_"""
-            timeline_entry = f"- **{timestamp}** - ✅ Build started for commit [`{commit_sha_short}`]({commit_url})"
+            timeline_entry = f"- **{timestamp}** - 🟠 {step_link} - Initializing"
         
         elif stage == 'setup':
             status_line = "<h2>🚀 Deployment Status: Setting Up Environment</h2>"
@@ -247,7 +389,7 @@ class PRCommentManager:
             if branch_url:
                 actions += f"""
 <a href="{branch_url}"><img src="https://img.shields.io/badge/Preview_URL-orange?style=for-the-badge&logo=github&label=%F0%9F%8C%90&labelColor=gray" alt="Expected Deployment URL"/></a> _(will be live after deployment)_"""
-            timeline_entry = f"- **{timestamp}** - 🟠 Setting up environment"
+            timeline_entry = f"- **{timestamp}** - 🟠 {step_link} - In progress"
         
         elif stage == 'building':
             status_line = "<h2>🚀 Deployment Status: Building Application</h2>"
@@ -265,7 +407,7 @@ class PRCommentManager:
                 actions += f"""
 <a href="{branch_url}"><img src="https://img.shields.io/badge/Preview_URL-orange?style=for-the-badge&logo=github&label=%F0%9F%8C%90&labelColor=gray" alt="Expected Deployment URL"/></a> _(will be live after deployment)_"""
             
-            timeline_entry = f"- **{timestamp}** - ✅ Environment setup complete"
+            timeline_entry = f"- **{timestamp}** - 🟠 {step_link} - In progress"
         
         elif stage == 'deploying':
             status_line = "<h2>🚀 Deployment Status: Deploying to GitHub Pages</h2>"
@@ -278,7 +420,7 @@ class PRCommentManager:
             if branch_url:
                 actions += f"""
 <a href="{branch_url}"><img src="https://img.shields.io/badge/Preview_URL-orange?style=for-the-badge&logo=github&label=%F0%9F%8C%90&labelColor=gray" alt="Expected Deployment URL"/></a> _(deploying...)_"""
-            timeline_entry = f"- **{timestamp}** - ✅ Build complete"
+            timeline_entry = f"- **{timestamp}** - 🟠 {step_link} - In progress"
         
         elif stage == 'verifying':
             status_line = "<h2>🚀 Deployment Status: Verifying Deployment</h2>"
@@ -291,7 +433,7 @@ class PRCommentManager:
             if branch_url:
                 actions += f"""
 <a href="{branch_url}"><img src="https://img.shields.io/badge/Preview_URL-orange?style=for-the-badge&logo=github&label=%F0%9F%8C%90&labelColor=gray" alt="Preview URL"/></a> _(verifying...)_"""
-            timeline_entry = f"- **{timestamp}** - ✅ Deployment complete"
+            timeline_entry = f"- **{timestamp}** - 🟠 {step_link} - In progress"
         
         elif stage == 'pages-built':
             status_line = "<h2>🚀 Deployment Status: GitHub Pages Built</h2>"
@@ -302,10 +444,10 @@ class PRCommentManager:
 
 <a href="{branch_url}"><img src="https://img.shields.io/badge/Preview_URL-brightgreen?style=for-the-badge&logo=github&label=%F0%9F%8C%90&labelColor=gray" alt="Open Branch Preview"/></a>
 <a href="{workflow_url}"><img src="https://img.shields.io/badge/Build_Logs-gray?style=for-the-badge&logo=github" alt="Build Logs"/></a>"""
-            timeline_entry = f"- **{timestamp}** - 🟢 GitHub Pages built"
+            timeline_entry = f"- **{timestamp}** - 🟢 {step_link} - Complete"
         
         elif stage == 'success':
-            status_line = "<h2>🚀 Deployment Status: Successfully Deployed ✅</h2>"
+            status_line = "<h2>🚀 Deployment Status: Successfully Deployed 🟢</h2>"
             status_icon = "🟢"
             status_text = "Live and accessible"
             next_step = "**Status:** Deployment complete - site is ready for testing"
@@ -316,20 +458,20 @@ class PRCommentManager:
 <h3>🔗 Quick Actions</h3>
 
 <a href="{workflow_url}"><img src="https://img.shields.io/badge/Build_Logs-gray?style=for-the-badge&logo=github" alt="Build Logs"/></a>"""
-            timeline_entry = f"- **{timestamp}** - ✅ Deployment successful - site is live"
+            timeline_entry = f"- **{timestamp}** - 🟢 {step_link} - Site is live"
         
         elif stage == 'failure':
             error_message = self.sanitize_string(data.get('error_message', 'Unknown error'), max_length=200)
-            status_line = "<h2>🚀 Deployment Status: Failed ❌</h2>"
+            status_line = "<h2>🚀 Deployment Status: Failed 🔴</h2>"
             status_icon = "🔴"
             status_text = "Deployment failed"
             next_step = "**Action Required:** Fix issues and retry deployment"
             actions = f"""<h3>🔗 Quick Actions</h3>
 
-<a href="{workflow_url}"><img src="https://img.shields.io/badge/Error_Logs-red?style=for-the-badge&logo=github&label=📊&labelColor=gray" alt="Error Logs"/></a> _Action ID: `{self.action_id if self.action_id else 'N/A'}`_
+<a href="{workflow_url}"><img src="https://img.shields.io/badge/Error_Logs-red?style=for-the-badge&logo=github&label=📊&labelColor=gray" alt="Error Logs"/></a>
 
 **Error:** {error_message}"""
-            timeline_entry = f"- **{timestamp}** - ❌ Deployment failed: {error_message}"
+            timeline_entry = f"- **{timestamp}** - 🔴 {step_link} - Failed: {error_message}"
         
         else:
             # Fallback (should not reach here due to validation)
@@ -354,13 +496,15 @@ class PRCommentManager:
         comment = f"""{self.comment_marker}
 {status_line}
 
+{preamble}
+
 {actions}
 
 ---
 
 <h3>📊 Overall Progress</h3>
 
-**Branch:** `{branch_name}`  
+**Branch:** [`{branch_name}`]({branch_url})  
 **Status:** {status_icon} {status_text}  
 {next_step}
 """
@@ -414,6 +558,15 @@ class PRCommentManager:
                     print("No existing timeline found in comment")
             else:
                 print(f"No existing comment found for action_id: {self.action_id if self.action_id else 'N/A'}")
+                
+                # Check if there's a duplicate comment for the same commit from another workflow
+                duplicate = self.check_duplicate_comment_for_commit()
+                if duplicate and stage == 'started':
+                    # Only skip on the first stage to avoid issues
+                    print(f"⚠️  Skipping comment creation - duplicate already exists for commit {self.commit_sha[:7]}")
+                    print(f"    Existing comment ID: {duplicate['id']}")
+                    print(f"    This workflow ({self.workflow_name}, event: {self.event_name}) will not create a duplicate comment.")
+                    return True  # Return success to avoid error, but don't create duplicate
             
             # Build comment body with existing timeline
             comment_body = self.build_comment_body(stage, data, existing_timeline)
@@ -486,6 +639,9 @@ Workflow Interaction:
     parser.add_argument('--repo', required=True, help='Repository in format owner/repo')
     parser.add_argument('--pr', type=int, required=True, help='Pull request number')
     parser.add_argument('--action-id', help='Optional action/run ID to ensure one comment per workflow run')
+    parser.add_argument('--commit-sha', help='Commit SHA to check for duplicate comments')
+    parser.add_argument('--workflow-name', help='Name of the workflow (for display)')
+    parser.add_argument('--event-name', help='Event that triggered the workflow (e.g., push, pull_request)')
     parser.add_argument('--stage', required=True, 
                        choices=list(PRCommentManager.ALLOWED_STAGES),
                        help='Current workflow stage')
@@ -500,8 +656,19 @@ Workflow Interaction:
         print(f"Error: Invalid JSON data: {e}", file=sys.stderr)
         sys.exit(1)
     
+    # Extract commit SHA from data if not provided as argument
+    commit_sha = args.commit_sha or data.get('commit_sha')
+    
     # Create manager and update comment
-    manager = PRCommentManager(args.token, args.repo, args.pr, args.action_id)
+    manager = PRCommentManager(
+        args.token, 
+        args.repo, 
+        args.pr, 
+        args.action_id,
+        commit_sha=commit_sha,
+        workflow_name=args.workflow_name,
+        event_name=args.event_name
+    )
     success = manager.update_comment(args.stage, data)
     
     sys.exit(0 if success else 1)

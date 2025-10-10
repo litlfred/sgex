@@ -47,9 +47,20 @@
               "items": {
                 "type": "object",
                 "properties": {
-                  "name": { "type": "string" },
-                  "file": { "type": "string" },
-                  "type": { "type": "string" }
+                  "name": { 
+                    "type": "string",
+                    "description": "Indicator name"
+                  },
+                  "file": { 
+                    "type": "string",
+                    "description": "File path containing the indicator"
+                  },
+                  "type": { 
+                    "type": "string",
+                    "description": "Type of indicator (outcome, process, structure, etc.)",
+                    "x-canonical-url": "https://worldhealthorganization.github.io/smart-base/ValueSet-IndicatorType.schema.json",
+                    "x-canonical-note": "Should reference WHO SMART Guidelines indicator types"
+                  }
                 }
               }
             }
