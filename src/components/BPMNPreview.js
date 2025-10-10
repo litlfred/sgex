@@ -266,14 +266,23 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
             
             console.log(`✅ BPMNPreview: Successfully fitted to viewport in ${zoomTime}ms`);
 
-            // Force immediate visibility for preview
+            // Force canvas update to ensure diagram is immediately visible
+            // This prevents the issue where diagram requires a mouse click to appear
             setTimeout(() => {
-              if (containerRef.current) {
+              if (viewer && containerRef.current) {
+                const canvas = viewer.get('canvas');
+                // Trigger a canvas update by getting the viewbox
+                canvas.viewbox();
+                // Force a repaint by slightly adjusting zoom and resetting
+                const currentZoom = canvas.zoom();
+                canvas.zoom(currentZoom);
+                
+                // Also force SVG visibility
                 const svgElement = containerRef.current.querySelector('svg');
                 if (svgElement) {
                   svgElement.style.opacity = '1';
                   svgElement.style.visibility = 'visible';
-                  console.log('🎨 BPMNPreview: Forced SVG visibility');
+                  console.log('🎨 BPMNPreview: Forced SVG visibility and canvas update');
                 }
               }
             }, 50);
