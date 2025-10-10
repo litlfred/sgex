@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import actorDefinitionService from '../services/actorDefinitionService';
-import { PageLayout, useDAKParams } from './framework';
+import { PageLayout, usePage } from './framework';
 
 // Basic Info Tab Component - MUST BE DEFINED BEFORE ActorEditor
 const BasicInfoTab = ({ actorDefinition, errors, onFieldChange }) => (
@@ -488,8 +488,16 @@ const MetadataTab = ({ actorDefinition, errors, onFieldChange, onNestedFieldChan
 );
 
 const ActorEditor = () => {
+  return (
+    <PageLayout pageName="actor-editor">
+      <ActorEditorContent />
+    </PageLayout>
+  );
+};
+
+const ActorEditorContent = () => {
   const navigate = useNavigate();
-  const pageParams = useDAKParams();
+  const { profile, repository, branch, loading: pageLoading, error: pageError } = usePage();
   
   // For now, we'll set editActorId to null since it's not in URL params
   // This could be enhanced later to support URL-based actor editing
@@ -537,11 +545,11 @@ const ActorEditor = () => {
   }, [editActorId]);
 
   useEffect(() => {
-    // Only initialize if we have valid page parameters
-    if (!pageParams.error && !pageParams.loading) {
+    // Only initialize if we have valid page context (not loading, no error, has profile/repository)
+    if (!pageLoading && !pageError && profile && repository) {
       initializeEditor();
     }
-  }, [pageParams.error, pageParams.loading, initializeEditor]);
+  }, [pageLoading, pageError, profile, repository, initializeEditor]);
 
   // Handle form field changes
   const handleFieldChange = useCallback((field, value) => {
@@ -713,53 +721,46 @@ const ActorEditor = () => {
     }
   }, []);
 
-  // Handle PageProvider initialization issues - AFTER all hooks
-  if (pageParams.error) {
+  // Handle page loading and errors
+  if (pageError) {
     return (
-      <PageLayout pageName="actor-editor">
-        <div className="actor-editor-container">
-          <div className="error-message">
-            <h2>Page Context Error</h2>
-            <p>{pageParams.error}</p>
-            <p>This component requires a DAK repository context to function properly.</p>
-          </div>
+      <div className="actor-editor-container">
+        <div className="error-message">
+          <h2>Page Context Error</h2>
+          <p>{pageError}</p>
+          <p>This component requires a DAK repository context to function properly.</p>
         </div>
-      </PageLayout>
+      </div>
     );
   }
   
-  if (pageParams.loading) {
+  if (pageLoading) {
     return (
-      <PageLayout pageName="actor-editor">
-        <div className="actor-editor-container">
-          <div className="loading-message">
-            <h2>Loading...</h2>
-            <p>Initializing page context...</p>
-          </div>
+      <div className="actor-editor-container">
+        <div className="loading-message">
+          <h2>Loading...</h2>
+          <p>Initializing page context...</p>
         </div>
-      </PageLayout>
+      </div>
     );
   }
-  
-  const { profile, repository, branch } = pageParams;
 
   return (
-    <PageLayout pageName="actor-editor">
-      <div className="actor-editor">
-        {!profile || !repository ? (
-          <div className="redirecting-state">
-            <h2>Redirecting...</h2>
-            <p>Missing required context. Redirecting to home page...</p>
+    <div className="actor-editor">
+      {!profile || !repository ? (
+        <div className="redirecting-state">
+          <h2>Redirecting...</h2>
+          <p>Missing required context. Redirecting to home page...</p>
+        </div>
+      ) : loading ? (
+        <div className="loading-state">
+          <div className="loading-content">
+            <h2>Loading Actor Editor...</h2>
+            <p>Initializing editor and loading data...</p>
           </div>
-        ) : loading ? (
-          <div className="loading-state">
-            <div className="loading-content">
-              <h2>Loading Actor Editor...</h2>
-              <p>Initializing editor and loading data...</p>
-            </div>
-          </div>
-        ) : (
-          <div className="editor-content">
+        </div>
+      ) : (
+        <div className="editor-content">
 
         <div className="editor-toolbar">
           <div className="toolbar-left">
@@ -980,7 +981,6 @@ const ActorEditor = () => {
           </div>
         )}
       </div>
-    </PageLayout>
   );
 };
 
