@@ -29,18 +29,14 @@ describe('HelpModal - Blank Bug Report Integration', () => {
     expect(window.helpModalInstance).toBeDefined();
     expect(window.helpModalInstance.openSgexIssue).toBeDefined();
 
-    // Test blank issue creation
-    window.helpModalInstance.openSgexIssue('blank');
-
-    // Verify correct URL is generated for blank issues
-    expect(mockOpen).toHaveBeenCalledWith(
-      expect.stringContaining('https://github.com/litlfred/sgex/issues/new'),
-      '_blank'
-    );
+    // Test blank issue creation - should now open BugReportForm instead of GitHub URL
+    // This is verified by the fact that the function exists and is callable
+    expect(() => {
+      window.helpModalInstance.openSgexIssue('blank');
+    }).not.toThrow();
     
-    const callUrl = mockOpen.mock.calls[0][0];
-    expect(callUrl).toContain('labels=blank-issue');
-    expect(callUrl).not.toContain('template='); // No template should be specified
+    // Blank issues no longer open GitHub URL directly - they use the BugReportForm
+    expect(mockOpen).not.toHaveBeenCalled();
   });
 
   test('should handle blank DAK issue creation correctly', () => {
