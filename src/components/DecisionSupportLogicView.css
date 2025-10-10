@@ -13,7 +13,7 @@
   bottom: 0;
   z-index: 1000;
   margin: 0;
-  background: #f8f9fa;
+  background: var(--who-hover-bg);
 }
 
 /* Hide everything else when in enhanced fullwidth mode */
@@ -30,7 +30,7 @@ body:has(.decision-support-view.enhanced-fullwidth) .page-breadcrumb {
 
 .decision-support-view {
   height: 100vh; /* Fixed height to display size */
-  background: #f8f9fa;
+  background: var(--who-hover-bg);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   position: relative;
   overflow: hidden;
@@ -50,13 +50,13 @@ body:has(.decision-support-view.enhanced-fullwidth) .page-breadcrumb {
 }
 
 .decision-support-view .view-header {
-  background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+  background: linear-gradient(135deg, var(--who-blue) 0%, var(--who-blue-dark) 100%);
   color: white;
   padding: 1rem 2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px var(--who-shadow-light);
 }
 
 .decision-support-view .header-left {
@@ -75,7 +75,7 @@ body:has(.decision-support-view.enhanced-fullwidth) .page-breadcrumb {
 
 .decision-support-view .artifact-badge {
   background: rgba(255, 255, 255, 0.9);
-  color: #0078d4;
+  color: var(--who-blue);
   padding: 0.2rem 0.6rem;
   border-radius: 12px;
   font-size: 0.75rem;
@@ -302,19 +302,19 @@ body:has(.decision-support-view.enhanced-fullwidth) .page-breadcrumb {
   text-align: center;
   margin-bottom: 0;
   padding: 2rem 2rem 1rem 2rem;
-  border-bottom: 2px solid #e9ecef;
-  background: #f8f9fa;
+  border-bottom: 2px solid var(--who-border-color);
+  background: var(--who-hover-bg);
 }
 
 .decision-support-view .components-section .section-title {
-  color: #24292e;
+  color: var(--who-text-primary);
   font-size: 1.5rem;
   margin: 0 0 0.5rem 0;
   font-weight: 600;
 }
 
 .decision-support-view .components-section .section-description {
-  color: #6a737d;
+  color: var(--who-text-secondary);
   font-size: 1rem;
   margin: 0;
   line-height: 1.5;
@@ -331,7 +331,7 @@ body:has(.decision-support-view.enhanced-fullwidth) .page-breadcrumb {
 .decision-support-view .breadcrumb-link {
   background: none;
   border: none;
-  color: #0078d4;
+  color: var(--who-blue);
   cursor: pointer;
   text-decoration: underline;
   padding: 0;
@@ -339,11 +339,11 @@ body:has(.decision-support-view.enhanced-fullwidth) .page-breadcrumb {
 }
 
 .decision-support-view .breadcrumb-separator {
-  color: #6c757d;
+  color: var(--who-text-secondary);
 }
 
 .decision-support-view .breadcrumb-current {
-  color: #495057;
+  color: var(--who-text-primary);
   font-weight: 500;
 }
 
@@ -351,9 +351,9 @@ body:has(.decision-support-view.enhanced-fullwidth) .page-breadcrumb {
   text-align: center;
   margin-bottom: 3rem;
   padding: 2rem;
-  background: white;
+  background: var(--who-card-bg);
   border-radius: 0.5rem;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px var(--who-shadow-light);
   transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
   position: relative;
   z-index: 20;
@@ -376,13 +376,13 @@ body:has(.decision-support-view.enhanced-fullwidth) .page-breadcrumb {
 
 .decision-support-view .view-intro h2 {
   margin: 0 0 1rem 0;
-  color: #212529;
+  color: var(--who-text-primary);
   font-size: 2rem;
 }
 
 .decision-support-view .view-intro p {
   margin: 0;
-  color: #6c757d;
+  color: var(--who-text-secondary);
   font-size: 1.125rem;
   line-height: 1.6;
 }

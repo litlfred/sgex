@@ -163,11 +163,126 @@ When modifying existing pages:
 2. **If using a different background, document the reason in this file**
 3. **Ensure consistency with other pages in the application**
 
+## Dark/Light Mode Requirements
+
+All components **MUST** support both light and dark themes using CSS variables defined in `src/App.css`.
+
+### Required Implementation Pattern
+
+Components must use CSS variables and theme-specific overrides:
+
+```css
+.component {
+  /* Base styles using CSS variables */
+  background: var(--who-primary-bg);
+  color: var(--who-text-primary);
+  border: 1px solid var(--who-border-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Dark mode specific overrides (optional) */
+body.theme-dark .component {
+  background: linear-gradient(135deg, var(--who-navy) 0%, var(--who-secondary-bg) 100%);
+}
+
+/* Light mode specific overrides (optional) */
+body.theme-light .component {
+  background: linear-gradient(135deg, var(--who-light-blue) 0%, var(--who-blue-light) 100%);
+}
+```
+
+### CSS Variables Reference
+
+**Background Variables:**
+- `--who-primary-bg` - Main page background (light: #ffffff, dark: #040B76)
+- `--who-secondary-bg` - Secondary sections, headers (light: #c0dcf2, dark: #1a2380)
+- `--who-card-bg` - Card and panel backgrounds
+- `--who-hover-bg` - Hover state background
+- `--who-selected-bg` - Selected item background
+
+**Text Variables:**
+- `--who-text-primary` - Primary text color (light: #333333, dark: #ffffff)
+- `--who-text-secondary` - Secondary/muted text (light: #666666, dark: rgba(255,255,255,0.8))
+- `--who-text-muted` - Tertiary/hint text (light: #999999, dark: rgba(255,255,255,0.6))
+- `--who-text-on-primary` - Text on primary color backgrounds (always #ffffff)
+
+**Color Variables:**
+- `--who-blue` - Primary brand color (#006cbe)
+- `--who-blue-light` - Light variant (#338dd6)
+- `--who-blue-dark` - Dark variant (#004a99)
+- `--who-navy` - Dark navy for gradients (#040B76)
+- `--who-light-blue` - Light blue for gradients (#c0dcf2)
+
+**Utility Variables:**
+- `--who-border-color` - Default border color (theme-aware)
+- `--who-shadow-light`, `--who-shadow-medium`, `--who-shadow-heavy` - Shadow effects (theme-aware)
+- `--who-overlay-bg` - Modal overlay background (theme-aware)
+
+**Status Variables:**
+- `--who-error-bg`, `--who-error-text`, `--who-error-border` - Error states (theme-aware)
+
+### Anti-Patterns to Avoid
+
+**❌ DO NOT use hardcoded colors:**
+```css
+/* WRONG - hardcoded colors don't adapt to themes */
+.bad-example {
+  color: #333;
+  background: #f5f5f5;
+  border: 1px solid #e0e0e0;
+}
+```
+
+**✅ DO use CSS variables:**
+```css
+/* CORRECT - theme-aware using variables */
+.good-example {
+  color: var(--who-text-primary);
+  background: var(--who-card-bg);
+  border: 1px solid var(--who-border-color);
+}
+```
+
+**❌ DO NOT use media queries for theme detection:**
+```css
+/* WRONG - deprecated pattern */
+@media (prefers-color-scheme: dark) {
+  .component {
+    background: #1a2380;
+  }
+}
+```
+
+**✅ DO use theme classes:**
+```css
+/* CORRECT - uses body theme classes */
+body.theme-dark .component {
+  background: var(--who-secondary-bg);
+}
+```
+
+### Theme Manager
+
+Theme switching is handled by `src/utils/themeManager.js`:
+- Automatically detects system preference on first visit
+- Persists user selection in localStorage
+- Applies `theme-dark` or `theme-light` class to `<body>` element
+- All CSS variables update automatically based on body class
+
+### Testing Dark/Light Mode
+
+Before submitting changes:
+
+1. **Test both themes** - Verify component appearance in light and dark mode
+2. **Check contrast ratios** - Ensure text meets WCAG 2.1 AA (4.5:1 for normal text)
+3. **Verify transitions** - Theme switching should be smooth with 0.3s ease
+4. **Test interactive states** - Hover, focus, active states work in both themes
+
 ## Color Palette
 
 ### Primary Colors
-- **Primary Blue**: `#0078d4`
-- **Dark Blue**: `#005a9e`
+- **Primary Blue**: `#0078d4` or `var(--who-blue)`
+- **Dark Blue**: `#005a9e` or `var(--who-blue-dark)`
 - **Text on Blue**: `white` or `rgba(255, 255, 255, 0.95)`
 
 ### Accent Colors
@@ -176,6 +291,8 @@ When modifying existing pages:
 - **Error**: `#dc3545`
 - **Info**: `#17a2b8`
 
+**Note:** For theme-aware colors, always prefer CSS variables over hardcoded values.
+
 ## Testing Requirements
 
 Before releasing new pages or modifications:
@@ -183,7 +300,17 @@ Before releasing new pages or modifications:
 1. **Visual Consistency Check**: Compare with LandingPage and DAKDashboard
 2. **Cross-Browser Testing**: Verify gradient renders correctly in Chrome, Firefox, Safari
 3. **Mobile Responsiveness**: Ensure gradient scales properly on mobile devices
-4. **Accessibility**: Verify text contrast ratios meet WCAG guidelines
+4. **Accessibility Testing**: 
+   - Run `npm run lint:a11y` to check for accessibility issues
+   - Verify text contrast ratios meet WCAG 2.1 AA standards (4.5:1 for normal text, 3:1 for large text)
+   - Test keyboard navigation (Tab, Enter, Escape keys work properly)
+   - Verify focus indicators are visible on all interactive elements
+   - Check screen reader compatibility (basic testing)
+5. **Theme Testing**:
+   - Test component in both light and dark mode
+   - Verify smooth transitions when switching themes
+   - Ensure all colors use CSS variables
+   - Check that interactive states (hover, focus, active) work in both themes
 
 ## Issue Resolution
 
@@ -196,5 +323,5 @@ If you discover pages with inconsistent backgrounds:
 
 ---
 
-*Last Updated: January 2024*
-*Related Issues: #96*
+*Last Updated: January 2025*
+*Related Issues: #96, #975 (Dark/Light Mode & Accessibility Review)*

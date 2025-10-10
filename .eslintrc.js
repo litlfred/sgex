@@ -11,7 +11,7 @@ module.exports = {
     {
       files: ['*.ts', '*.tsx'],
       parser: '@typescript-eslint/parser',
-      plugins: ['@typescript-eslint'],
+      // Remove duplicate plugins declaration - already loaded via extends
       extends: [
         'react-app',
         'react-app/jest',
