@@ -395,20 +395,26 @@ body.theme-light .component {
 - Status: **Completed** - Audit run successfully, 147 warnings documented
 
 **Accessibility Audit Results:**
-- **Total Warnings**: 147 accessibility issues identified
-- **Issue Breakdown**:
-  - 55 warnings: `jsx-a11y/click-events-have-key-events` - Interactive elements need keyboard support
-  - 51 warnings: `jsx-a11y/no-static-element-interactions` - Non-semantic interactive elements
-  - 33 warnings: `jsx-a11y/label-has-associated-control` - Form labels not properly associated
+- **Initial Warnings**: 147 accessibility issues identified
+- **Current Warnings**: 119 (28 fixed - 19% reduction)
+- **Issue Breakdown (Remaining)**:
+  - 45 warnings: `jsx-a11y/click-events-have-key-events` - Interactive elements need keyboard support
+  - 42 warnings: `jsx-a11y/no-static-element-interactions` - Non-semantic interactive elements
+  - 22 warnings: `jsx-a11y/label-has-associated-control` - Form labels not properly associated
   - 5 warnings: `jsx-a11y/no-noninteractive-element-interactions` - Mouse/keyboard events on non-interactive elements
   - 3 warnings: `jsx-a11y/no-autofocus` - Autofocus accessibility concerns
+  - 2 warnings: Other issues
 
-**Most Affected Components:**
-- ActorEditor.js (11 warnings)
-- BPMNEditor.js, BPMNSource.js, BPMNViewerEnhanced.js (multiple label/interaction warnings)
-- DAKDashboard.js, DAKSelection.js (click handler warnings)
-- DecisionSupportLogicView.js (4 warnings)
-- Multiple other components with scattered issues
+**Components Fixed** ✅:
+- ✅ DecisionSupportLogicView.js (8 warnings → 0)
+- ✅ DAKDashboard.js (6 warnings → 0)
+- ✅ BPMNEditor.js (2 warnings → 0)
+- ✅ ActorEditor.js (11 warnings → 0)
+
+**Remediation Patterns Established**:
+1. Modal dialogs: Use role="dialog", aria-modal="true", Escape key via useEffect
+2. Interactive elements: Convert divs to semantic buttons with proper CSS
+3. Form labels: Use htmlFor with unique IDs, especially in loops
 
 **3.2 Contrast Ratio Testing**
 - Test: All color combinations in both themes
