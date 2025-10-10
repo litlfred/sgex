@@ -286,6 +286,7 @@ const BPMNViewerEnhanced = () => {
         // Calculate the bounds of all elements to ensure proper viewport
         if (allElements.length > 0) {
           let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+          let validElementCount = 0;
           
           allElements.forEach(element => {
             if (element.x !== undefined && element.y !== undefined && element.width && element.height) {
@@ -293,32 +294,43 @@ const BPMNViewerEnhanced = () => {
               minY = Math.min(minY, element.y);
               maxX = Math.max(maxX, element.x + element.width);
               maxY = Math.max(maxY, element.y + element.height);
+              validElementCount++;
             }
           });
           
-          // Add padding around the diagram
-          const padding = 50;
-          const diagramBounds = {
-            x: minX - padding,
-            y: minY - padding,
-            width: (maxX - minX) + (padding * 2),
-            height: (maxY - minY) + (padding * 2)
-          };
+          console.log(`📐 BPMNViewerEnhanced: Found ${validElementCount} valid positioned elements`);
           
-          console.log('📐 BPMNViewerEnhanced: Calculated diagram bounds:', diagramBounds);
-          
-          // Zoom to fit the actual diagram bounds
-          if (diagramBounds.width > 0 && diagramBounds.height > 0) {
-            canvas.viewbox(diagramBounds);
-            console.log('✅ BPMNViewerEnhanced: Set viewbox to diagram bounds');
+          // Only use calculated bounds if we found valid elements
+          if (validElementCount > 0 && minX !== Infinity && maxX !== -Infinity) {
+            // Add padding around the diagram
+            const padding = 50;
+            const diagramBounds = {
+              x: minX - padding,
+              y: minY - padding,
+              width: (maxX - minX) + (padding * 2),
+              height: (maxY - minY) + (padding * 2)
+            };
+            
+            console.log('📐 BPMNViewerEnhanced: Calculated diagram bounds:', diagramBounds);
+            
+            // Zoom to fit the actual diagram bounds
+            if (diagramBounds.width > 0 && diagramBounds.height > 0) {
+              canvas.viewbox(diagramBounds);
+              console.log('✅ BPMNViewerEnhanced: Set viewbox to diagram bounds');
+            } else {
+              // Fallback to fit-viewport if bounds calculation fails
+              canvas.zoom('fit-viewport');
+              console.log('⚠️ BPMNViewerEnhanced: Using fit-viewport fallback (invalid bounds)');
+            }
           } else {
-            // Fallback to fit-viewport if bounds calculation fails
+            // No valid positioned elements, use standard fit-viewport
             canvas.zoom('fit-viewport');
-            console.log('⚠️ BPMNViewerEnhanced: Using fit-viewport fallback');
+            console.log('⚠️ BPMNViewerEnhanced: Using fit-viewport fallback (no valid elements)');
           }
         } else {
           // No elements, use standard fit-viewport
           canvas.zoom('fit-viewport');
+          console.log('⚠️ BPMNViewerEnhanced: Using fit-viewport fallback (no elements)');
         }
         
         setZoomLevel(canvas.zoom());
