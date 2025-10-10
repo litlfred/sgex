@@ -266,6 +266,13 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
             
             console.log(`✅ BPMNPreview: Successfully fitted to viewport in ${zoomTime}ms`);
 
+            // Get viewbox to force canvas update (triggers internal redraw)
+            const viewbox = canvas.viewbox();
+            
+            // Explicitly trigger a canvas scroll event to force rendering update
+            // This ensures the diagram is visually displayed without requiring user interaction
+            canvas.scroll({ dx: 0, dy: 0 });
+
             // Force immediate visibility for preview
             setTimeout(() => {
               if (containerRef.current) {
@@ -279,7 +286,6 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
             }, 50);
 
             // Final validation - check if diagram was actually rendered
-            const viewbox = canvas.viewbox();
             console.log('🔍 BPMNPreview: Final viewport details:', {
               viewbox,
               hasElements: viewbox.inner?.width > 0 && viewbox.inner?.height > 0,

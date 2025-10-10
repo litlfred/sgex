@@ -206,7 +206,22 @@ const BPMNViewerContent = () => {
       try {
         const canvas = viewerRef.current.get('canvas');
         canvas.zoom('fit-viewport');
-        console.log('✅ BPMNViewer: Successfully loaded and centered BPMN diagram');
+        
+        // Force canvas update by getting viewbox (triggers internal redraw)
+        const viewbox = canvas.viewbox();
+        console.log('✅ BPMNViewer: Successfully loaded and centered BPMN diagram', {
+          viewbox: {
+            x: viewbox.x,
+            y: viewbox.y,
+            width: viewbox.width,
+            height: viewbox.height
+          }
+        });
+        
+        // Explicitly trigger a canvas scroll event to force rendering update
+        // This ensures the diagram is visually displayed without requiring user interaction
+        canvas.scroll({ dx: 0, dy: 0 });
+        
       } catch (centerError) {
         console.warn('⚠️ BPMNViewer: Could not center diagram:', centerError);
       }
