@@ -281,7 +281,21 @@ const BPMNViewerEnhanced = () => {
         // Fit the diagram to viewport
         canvas.zoom('fit-viewport');
         
-        console.log('BPMN diagram loaded successfully');
+        // Force canvas update by getting viewbox (triggers internal redraw)
+        const viewbox = canvas.viewbox();
+        console.log('BPMN diagram loaded successfully', {
+          viewbox: {
+            x: viewbox.x,
+            y: viewbox.y,
+            width: viewbox.width,
+            height: viewbox.height
+          }
+        });
+        
+        // Explicitly trigger a canvas scroll event to force rendering update
+        // This ensures the diagram is visually displayed without requiring user interaction
+        canvas.scroll({ dx: 0, dy: 0 });
+        
         setLoading(false);
       } catch (error) {
         console.error('Failed to initialize BPMN viewer:', error);
