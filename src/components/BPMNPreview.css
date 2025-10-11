@@ -1,6 +1,6 @@
 .bpmn-preview {
   width: 100%;
-  height: 160px;
+  height: 240px;
   border: 1px solid var(--who-border-color);
   border-radius: 4px;
   background: var(--who-card-bg);
@@ -12,7 +12,7 @@
 .preview-container {
   width: 100%;
   height: 100%;
-  min-height: 160px;
+  min-height: 240px;
   background: var(--bpmn-preview-bg);
   position: relative;
 }
