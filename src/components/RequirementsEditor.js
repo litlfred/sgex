@@ -34,12 +34,14 @@ const RequirementsEditorContent = () => {
   const [selectedRequirement, setSelectedRequirement] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
   const [editing, setEditing] = useState(false);
   const [requirementType, setRequirementType] = useState('functional'); // 'functional' or 'nonfunctional'
   const [showCreateNew, setShowCreateNew] = useState(false);
   const [showFSHPreview, setShowFSHPreview] = useState(false);
   const [fshPreview, setFSHPreview] = useState('');
   const [idValidationError, setIdValidationError] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   
   // Form data for functional requirement
   const [functionalReq, setFunctionalReq] = useState({
@@ -297,18 +299,24 @@ const RequirementsEditorContent = () => {
 
     try {
       // Save to staging ground - this handles FSH generation and staging
-      requirementsService.saveToStagingGround(currentReq, requirementType);
+      const result = requirementsService.saveToStagingGround(currentReq, requirementType);
       
-      // Show success message
-      alert(`Requirement ${currentReq.id} saved to staging ground successfully! Use the staging ground to commit your changes.`);
-
-      // Reset state
-      setEditing(false);
-      setShowCreateNew(false);
-      setSelectedRequirement(null);
-      setError(null);
-      setIdValidationError(null);
-      
+      if (result.success) {
+        // Show success message
+        setSuccessMessage(`Requirement ${currentReq.id} saved to staging ground successfully! Use the staging ground to commit your changes.`);
+        
+        // Reset state
+        setEditing(false);
+        setShowCreateNew(false);
+        setSelectedRequirement(null);
+        setError(null);
+        setIdValidationError(null);
+        
+        // Clear success message after 5 seconds
+        setTimeout(() => setSuccessMessage(null), 5000);
+      } else {
+        setError('Failed to save requirement to staging ground');
+      }
     } catch (err) {
       console.error('Error saving requirement:', err);
       setError(err.message || 'Failed to save requirement to staging ground');
@@ -328,12 +336,11 @@ const RequirementsEditorContent = () => {
   // Delete requirement
   const handleDelete = async () => {
     if (!selectedRequirement) return;
-    
-    const confirmDelete = window.confirm(
-      `Are you sure you want to delete ${selectedRequirement.name}?`
-    );
-    
-    if (!confirmDelete) return;
+    setShowDeleteConfirm(true);
+  };
+  
+  const confirmDelete = async () => {
+    if (!selectedRequirement) return;
 
     try {
       await githubService.deleteFile(
@@ -351,6 +358,19 @@ const RequirementsEditorContent = () => {
       // Reset state
       setEditing(false);
       setSelectedRequirement(null);
+      setShowDeleteConfirm(false);
+      setSuccessMessage(`Requirement ${selectedRequirement.name} deleted successfully`);
+      setTimeout(() => setSuccessMessage(null), 5000);
+    } catch (err) {
+      console.error('Error deleting requirement:', err);
+      setError(err.message || 'Failed to delete requirement');
+      setShowDeleteConfirm(false);
+    }
+  };
+  
+  const cancelDelete = () => {
+    setShowDeleteConfirm(false);
+  };
     } catch (err) {
       console.error('Error deleting requirement:', err);
       setError('Failed to delete requirement');
@@ -374,6 +394,13 @@ const RequirementsEditorContent = () => {
         <div className="error-message">
           <span className="error-icon">⚠️</span>
           {error}
+        </div>
+      )}
+
+      {successMessage && (
+        <div className="success-message">
+          <span className="success-icon">✅</span>
+          {successMessage}
         </div>
       )}
 
@@ -712,11 +739,31 @@ const RequirementsEditorContent = () => {
                 <button 
                   onClick={() => {
                     navigator.clipboard.writeText(fshPreview);
-                    alert('FSH copied to clipboard!');
+                    setSuccessMessage('FSH copied to clipboard!');
+                    setTimeout(() => setSuccessMessage(null), 3000);
                   }}
                   className="copy-btn"
                 >
                   📋 Copy to Clipboard
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Delete Confirmation Dialog */}
+        {showDeleteConfirm && selectedRequirement && (
+          <div className="confirm-dialog-overlay">
+            <div className="confirm-dialog">
+              <h3>⚠️ Delete Requirement</h3>
+              <p>Are you sure you want to delete <strong>{selectedRequirement.name}</strong>?</p>
+              <p>This action cannot be undone.</p>
+              <div className="confirm-dialog-buttons">
+                <button className="btn-cancel" onClick={cancelDelete}>
+                  Cancel
+                </button>
+                <button className="btn-delete" onClick={confirmDelete}>
+                  Delete
                 </button>
               </div>
             </div>
