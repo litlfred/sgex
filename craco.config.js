@@ -50,6 +50,16 @@ module.exports = {
     configure: (webpackConfig) => {
       const webpack = require('webpack');
       
+      // Suppress mini-css-extract-plugin CSS ordering warnings
+      // These warnings occur when CSS files are imported in different orders across chunks
+      // but don't actually cause issues in our case since we have a centralized CSS loader
+      const miniCssExtractPlugin = webpackConfig.plugins.find(
+        plugin => plugin.constructor.name === 'MiniCssExtractPlugin'
+      );
+      if (miniCssExtractPlugin) {
+        miniCssExtractPlugin.options.ignoreOrder = true;
+      }
+      
       // Add comprehensive fallbacks for Node.js modules used by fsh-sushi
       // These are required for dynamic imports of fsh-sushi to work in browser
       
