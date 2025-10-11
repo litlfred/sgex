@@ -105,30 +105,24 @@ class HelpContentService {
       },
       bugReport: {
         id: 'report-sgex-bug',
-        title: 'Report a SGeX bug',
+        title: 'Report an issue',
         badge: 'cat-paw-bug-icon.svg',
         type: 'slideshow',
         content: [
           {
-            title: 'Report a Bug or Issue',
+            title: 'Report an Issue',
             content: `
-              <p>Help us improve SGeX by reporting bugs and issues:</p>
-              <h4>What type of issue are you experiencing?</h4>
+              <p>Help us improve SGeX by reporting issues:</p>
+              <h4>What type of issue would you like to report?</h4>
               <div class="bug-report-options">
-                <button class="bug-type-btn" onclick="window.helpModalInstance?.openSgexIssue('bug')">
-                  🐛 Bug Report - Something isn't working correctly
+                <button class="bug-type-btn" onclick="window.helpModalInstance?.openDakIssue('content')">
+                  📝 Issue with DAK content
                 </button>
                 <button class="bug-type-btn" onclick="window.helpModalInstance?.openSgexIssue('feature')">
-                  ✨ Feature Request - Suggest a new feature or improvement
+                  ✨ SGeX feature request
                 </button>
-                <button class="bug-type-btn" onclick="window.helpModalInstance?.openSgexIssue('question')">
-                  ❓ Question - Ask for help or clarification
-                </button>
-                <button class="bug-type-btn" onclick="window.helpModalInstance?.openSgexIssue('documentation')">
-                  📚 Documentation Issue - Report problems with documentation
-                </button>
-                <button class="bug-type-btn" onclick="window.helpModalInstance?.openSgexIssue('blank')">
-                  📝 Blank Issue - Create an issue without a template
+                <button class="bug-type-btn" onclick="window.helpModalInstance?.openSgexIssue('bug')">
+                  🐛 SGeX bug report
                 </button>
               </div>
               <div class="help-tip">
