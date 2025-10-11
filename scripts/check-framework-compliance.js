@@ -496,7 +496,8 @@ class ComplianceChecker {
     const hasIssueTracking = content.includes('issueTrackingService') || 
                              content.includes('useIssueTracking');
     const isWorkflowComponent = /IssueTracker|WorkflowManager|BugTracker/.test(componentName) ||
-                               (content.includes('issue') && content.includes('create') && content.includes('track'));
+                               (content.includes('createIssue') || content.includes('trackIssue') || 
+                                content.includes('issueStatus') || content.includes('workflowState'));
     
     if (isWorkflowComponent && !hasIssueTracking) {
       recordCheck('issueTrackingIntegration', false, 'Workflow component should use issueTrackingService');
@@ -526,15 +527,18 @@ class ComplianceChecker {
 
     // Check 15: Help Content Registration (LOW PRIORITY)
     // Complex pages with forms/editors should register help content with helpContentService
-    // Exclude simple selection pages and viewers - only flag truly complex pages
+    // Only flag pages where users perform complex editing/configuration tasks
     const hasHelpContent = content.includes('helpContentService') ||
                           content.includes('registerHelpContent');
-    const isReallyComplexPage = (content.length > 5000) || // Significantly large component (5000+ chars)
+    // Only flag pages that are actual editors with save functionality or complex forms
+    const isActuallyComplexPage = 
                          (componentName.includes('Editor') && content.includes('save') && content.length > 3000) ||
-                         (componentName.includes('Manager') && content.includes('Form') && content.length > 2000) ||
-                         (content.includes('Form') && content.includes('submit') && content.length > 3000);
+                         (componentName.includes('Manager') && (content.includes('Form') || content.includes('edit')) && content.length > 2000) ||
+                         (content.includes('FormBuilder') && content.length > 3000) ||
+                         (content.includes('QuestionnaireEditor') || content.includes('BPMNEditor') || 
+                          content.includes('DMNEditor') || content.includes('ActorEditor'));
     
-    if (isReallyComplexPage && !hasHelpContent) {
+    if (isActuallyComplexPage && !hasHelpContent) {
       recordCheck('helpContentRegistration', false, 'Complex page should register help content');
       compliance.suggestions.push('Register help topics with helpContentService for user assistance');
     } else {
