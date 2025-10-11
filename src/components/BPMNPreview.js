@@ -283,7 +283,15 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
             });
             
             // Always use fit-viewport for previews - it's reliable and works well for small containers
-            canvas.zoom('fit-viewport');
+            // Wait a tick to ensure container dimensions are available, then zoom
+            setTimeout(() => {
+              try {
+                canvas.zoom('fit-viewport');
+                console.log('✅ BPMNPreview: Zoom to fit-viewport completed');
+              } catch (zoomError) {
+                console.error('❌ BPMNPreview: Zoom failed:', zoomError);
+              }
+            }, 0);
             
             // Log viewport and SVG state after zoom
             const viewboxAfterZoom = canvas.viewbox();
@@ -362,9 +370,10 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
             };
             
             // Apply multiple times with increasing delays to ensure it works
-            setTimeout(forceCanvasUpdate, 50);
-            setTimeout(forceCanvasUpdate, 150);
-            setTimeout(forceCanvasUpdate, 300);
+            // Start after zoom has had time to complete
+            setTimeout(forceCanvasUpdate, 100);
+            setTimeout(forceCanvasUpdate, 200);
+            setTimeout(forceCanvasUpdate, 400);
 
             // Final validation - check if diagram was actually rendered
             setTimeout(() => {
