@@ -24,6 +24,8 @@ describe('Image Asset Validity', () => {
 
   // Dark mode SVG icons that must exist for theme support
   const darkModeSvgIcons = [
+    'cat-paw-bug-icon_dark.svg',
+    'cat-paw-lock-icon_dark.svg',
     'cat-paw-icon_dark.svg',
     'cat-paw-info-icon_dark.svg',
     'cat-paw-file-icon_dark.svg',
