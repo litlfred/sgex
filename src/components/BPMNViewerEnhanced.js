@@ -400,6 +400,7 @@ const BPMNViewerEnhanced = () => {
               
               // Also trigger a scroll event which can force repaints
               if (container) {
+                // eslint-disable-next-line no-self-assign
                 container.scrollTop = container.scrollTop;
               }
               
