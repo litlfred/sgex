@@ -38,9 +38,9 @@ The compliance checker reads `public/routes-config.json` to determine which comp
 - No guessing or pattern matching needed
 - Guaranteed accurate - if it's routed, it's a page
 
-## ✅ IMPLEMENTED: Enhanced Compliance Checks (9 Total)
+## ✅ IMPLEMENTED: Enhanced Compliance Checks (12 Total)
 
-The compliance checker now validates **9 requirements** (up from 6):
+The compliance checker now validates **12 requirements** (up from 6):
 
 ### Original Checks (1-6):
 1. ✅ Uses PageLayout or AssetEditorLayout
@@ -50,7 +50,7 @@ The compliance checker now validates **9 requirements** (up from 6):
 5. ✅ No custom header implementation
 6. ✅ No duplicate/nested PageLayout wrappers
 
-### New Checks (7-9):
+### Requirements-Based Checks (7-9):
 7. ✅ **Profile Creation Compliance** (HIGH PRIORITY)
    - Validates `isDemo` flag only set for `user === 'demo-user'`
    - Detects incorrect patterns like `isDemo: !githubService.isAuth()`
@@ -65,6 +65,22 @@ The compliance checker now validates **9 requirements** (up from 6):
    - Validates WHO blue gradient for Landing/Welcome/Selection pages
    - Checks for `linear-gradient(135deg, #0078d4 0%, #005a9e 100%)`
    - Maintains visual consistency across key pages
+
+### Service Integration Checks (10-12):
+10. ✅ **Staging Ground Service Integration** (HIGH PRIORITY)
+    - Asset editors (using AssetEditorLayout) must integrate with stagingGroundService
+    - Validates proper local change management before commits
+    - Critical for asset editing workflow
+
+11. ✅ **Data Access Layer Integration** (MEDIUM PRIORITY)
+    - Components performing data operations should use dataAccessLayer
+    - Checks for dataAccessLayer instead of direct githubService calls
+    - Ensures proper data access abstraction and caching
+
+12. ✅ **Branch Context Awareness** (MEDIUM PRIORITY)
+    - DAK components should use branchContextService
+    - Validates proper branch context management
+    - Important for multi-branch DAK editing
 
 ### Removed Components
 

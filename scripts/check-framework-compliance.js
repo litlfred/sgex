@@ -25,7 +25,10 @@ const COMPLIANCE_RULES = {
   NO_DUPLICATE_LAYOUT: 'Components must not have multiple nested PageLayout wrappers',
   PROFILE_CREATION: 'Profile creation must follow compliance rules (isDemo only for demo-user)',
   USER_ACCESS_INTEGRATION: 'Components should integrate with userAccessService for access control',
-  BACKGROUND_STYLING: 'Pages should use consistent WHO blue gradient background'
+  BACKGROUND_STYLING: 'Pages should use consistent WHO blue gradient background',
+  STAGING_GROUND_INTEGRATION: 'Asset editors must integrate with stagingGroundService for local changes',
+  DATA_ACCESS_LAYER: 'Components with data operations should use dataAccessLayer',
+  BRANCH_CONTEXT_AWARENESS: 'DAK components should use branchContextService for branch awareness'
 };
 
 // Legacy manual exclusion list - kept for reference but now uses automatic detection
@@ -299,7 +302,7 @@ class ComplianceChecker {
     const compliance = {
       name: componentName,
       score: 0,
-      maxScore: 9, // Increased from 6 to 9 for new checks
+      maxScore: 12, // Increased from 9 to 12 for new service integration checks
       checks: {},
       issues: [],
       suggestions: []
@@ -313,6 +316,7 @@ class ComplianceChecker {
                          (content.includes('AssetEditorLayout') &&
                           (content.includes('import { AssetEditorLayout }') ||
                            content.includes('from \'./framework\'')));
+    const hasAssetEditorLayout = content.includes('AssetEditorLayout');
     compliance.checks.pageLayout = hasPageLayout;
     if (hasPageLayout) compliance.score++;
     else compliance.issues.push('Missing PageLayout wrapper');
@@ -435,6 +439,55 @@ class ComplianceChecker {
     } else {
       compliance.issues.push('Landing/selection page should use WHO blue gradient background');
       compliance.suggestions.push('Add background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%)');
+    }
+
+    // Check 10: Staging Ground Service Integration (HIGH PRIORITY)
+    // Asset editors (using AssetEditorLayout) should integrate with stagingGroundService
+    const hasStagingGroundImport = content.includes('stagingGroundService') || 
+                                   content.includes('useStagingGround');
+    const needsStagingGround = hasAssetEditorLayout;
+    
+    compliance.checks.stagingGroundIntegration = !needsStagingGround || hasStagingGroundImport;
+    if (!needsStagingGround || hasStagingGroundImport) {
+      compliance.score++;
+    } else {
+      compliance.issues.push('Asset editor missing stagingGroundService integration');
+      compliance.suggestions.push('Import and use stagingGroundService for local change management');
+    }
+
+    // Check 11: Data Access Layer Integration (MEDIUM PRIORITY)
+    // Components performing data operations should use dataAccessLayer
+    const hasDataAccessLayer = content.includes('dataAccessLayer') || 
+                               content.includes('useDataAccess');
+    const hasDirectGitHubCalls = (content.includes('githubService.get') || 
+                                 content.includes('githubService.save') ||
+                                 content.includes('githubService.create')) &&
+                                !content.includes('githubService.isAuth');
+    const needsDataAccessLayer = hasDirectGitHubCalls || 
+                                (content.includes('getAsset') || content.includes('saveAsset'));
+    
+    compliance.checks.dataAccessLayer = !needsDataAccessLayer || hasDataAccessLayer;
+    if (!needsDataAccessLayer || hasDataAccessLayer) {
+      compliance.score++;
+    } else {
+      compliance.issues.push('Component should use dataAccessLayer for data operations');
+      compliance.suggestions.push('Import dataAccessLayer instead of direct githubService calls');
+    }
+
+    // Check 12: Branch Context Awareness (MEDIUM PRIORITY)
+    // DAK components should use branchContextService for branch awareness
+    const hasBranchContext = content.includes('branchContextService') || 
+                            content.includes('useBranchContext');
+    const isDakComponent = content.includes('{ user') && 
+                          content.includes('{ repo') && 
+                          content.includes('{ branch');
+    
+    compliance.checks.branchContextAwareness = !isDakComponent || hasBranchContext;
+    if (!isDakComponent || hasBranchContext) {
+      compliance.score++;
+    } else {
+      compliance.issues.push('DAK component should use branchContextService');
+      compliance.suggestions.push('Import and use branchContextService for branch context awareness');
     }
 
     // Generate suggestions
