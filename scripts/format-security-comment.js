@@ -207,4 +207,10 @@ if (require.main === module) {
   main();
 }
 
-module.exports = { formatSecurityComment, generateCondensedStatus };
+module.exports = { 
+  formatSecurityComment, 
+  generateCondensedStatus,
+  getStatusDisplay,
+  generateBadgeUrl,
+  main
+};

@@ -527,4 +527,15 @@ if (require.main === module) {
   main();
 }
 
-module.exports = { main };
+module.exports = { 
+  main,
+  execCommand,
+  runNpmAudit,
+  checkOutdatedDependencies,
+  runEslintSecurityCheck,
+  checkSecurityHeaders,
+  checkLicenseCompliance,
+  scanForSecrets,
+  checkFrameworkCompliance,
+  generateSecuritySummary
+};
