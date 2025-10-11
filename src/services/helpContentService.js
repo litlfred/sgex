@@ -107,6 +107,7 @@ class HelpContentService {
         id: 'report-sgex-bug',
         title: 'Report an issue',
         badge: 'cat-paw-bug-icon.svg',
+
         type: 'slideshow',
         content: [
           {
