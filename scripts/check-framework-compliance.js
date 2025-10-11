@@ -5,6 +5,16 @@
  * 
  * This script validates that all pages in the SGEX Workbench comply with
  * the Page Framework requirements.
+ * 
+ * DESIGN PRINCIPLE: NO HEURISTICS
+ * ================================
+ * This checker uses EXPLICIT EXCLUSIONS ONLY. No heuristics, pattern matching,
+ * or content analysis to determine which pages should be checked.
+ * 
+ * Only pages that handle browser routing errors (404, redirects) are excluded
+ * from LOW PRIORITY checks. All other pages are checked uniformly.
+ * 
+ * See COMPLIANCE_CHECKER_DESIGN.md for detailed design principles.
  */
 
 const fs = require('fs');
@@ -52,6 +62,13 @@ const LEGACY_UTILITY_COMPONENTS = [
 const FRAMEWORK_COMPONENTS = [
   'PageLayout.js', 'PageHeader.js', 'PageProvider.js', 
   'ErrorHandler.js', 'usePageParams.js', 'index.js'
+];
+
+// Explicit exclusion list for LOW PRIORITY checks
+// These pages handle browser routing errors and should not be flagged for optional service integrations
+const ROUTING_ERROR_PAGES = [
+  'NotFound',        // 404 error page
+  'DashboardRedirect' // Redirect utility page
 ];
 
 /**
@@ -491,61 +508,53 @@ class ComplianceChecker {
     }
 
     // Check 13: Issue Tracking Service Integration (LOW PRIORITY)
-    // Workflow components should integrate with issueTrackingService
+    // All pages should integrate with issueTrackingService except routing error pages
     const hasIssueTracking = content.includes('issueTrackingService') || 
                              content.includes('useIssueTracking');
-    const isWorkflowComponent = /Workflow|Issue|Bug|Tracking/.test(componentName) ||
-                               content.includes('workflow') ||
-                               content.includes('issue tracking');
+    const isExcludedFromIssueTracking = ROUTING_ERROR_PAGES.includes(componentName);
     
-    if (isWorkflowComponent && !hasIssueTracking) {
-      recordCheck('issueTrackingIntegration', false, 'Workflow component should use issueTrackingService');
+    if (!isExcludedFromIssueTracking && hasPageLayout && !hasIssueTracking) {
+      recordCheck('issueTrackingIntegration', false, 'Page should integrate with issueTrackingService');
       compliance.suggestions.push('Import and use issueTrackingService for issue tracking features');
     } else {
       recordCheck('issueTrackingIntegration', true);
     }
 
     // Check 14: Bookmark Service Integration (LOW PRIORITY)
-    // Navigation components should support bookmarkService for bookmarking
+    // All pages should support bookmarkService except routing error pages
     const hasBookmarkService = content.includes('bookmarkService') || 
                                content.includes('useBookmark');
-    const isNavigationComponent = /Navigation|Selection|Dashboard|Manager/.test(componentName) ||
-                                 content.includes('navigation') ||
-                                 (content.includes('useNavigate') && content.length > 500);
+    const isExcludedFromBookmark = ROUTING_ERROR_PAGES.includes(componentName);
     
-    if (isNavigationComponent && !hasBookmarkService) {
-      recordCheck('bookmarkIntegration', false, 'Navigation component should support bookmarkService');
+    if (!isExcludedFromBookmark && hasPageLayout && !hasBookmarkService) {
+      recordCheck('bookmarkIntegration', false, 'Page should support bookmarkService');
       compliance.suggestions.push('Import and use bookmarkService to enable page bookmarking');
     } else {
       recordCheck('bookmarkIntegration', true);
     }
 
     // Check 15: Help Content Registration (LOW PRIORITY)
-    // Complex pages should register help content with helpContentService
+    // All pages should register help content except routing error pages
     const hasHelpContent = content.includes('helpContentService') ||
                           content.includes('registerHelpContent');
-    const isComplexPage = content.length > 800 || // Large component
-                         content.includes('Form') ||
-                         content.includes('Editor') ||
-                         content.includes('Manager');
+    const isExcludedFromHelpContent = ROUTING_ERROR_PAGES.includes(componentName);
     
-    if (isComplexPage && !hasHelpContent) {
-      recordCheck('helpContentRegistration', false, 'Complex page should register help content');
+    if (!isExcludedFromHelpContent && hasPageLayout && !hasHelpContent) {
+      recordCheck('helpContentRegistration', false, 'Page should register help content');
       compliance.suggestions.push('Register help topics with helpContentService for user assistance');
     } else {
       recordCheck('helpContentRegistration', true);
     }
 
     // Check 16: Tutorial Integration (LOW PRIORITY)
-    // Feature-rich pages should integrate tutorials for user onboarding
+    // All pages should integrate tutorials except routing error pages
     const hasTutorialIntegration = content.includes('tutorialService') ||
                                    content.includes('useTutorial') ||
                                    content.includes('TutorialManager');
-    const isFeatureRichPage = /Editor|Manager|Configuration|Selection/.test(componentName) ||
-                             (content.includes('save') && content.includes('edit'));
+    const isExcludedFromTutorial = ROUTING_ERROR_PAGES.includes(componentName);
     
-    if (isFeatureRichPage && !hasTutorialIntegration) {
-      recordCheck('tutorialIntegration', false, 'Feature-rich page should integrate tutorials');
+    if (!isExcludedFromTutorial && hasPageLayout && !hasTutorialIntegration) {
+      recordCheck('tutorialIntegration', false, 'Page should integrate tutorials');
       compliance.suggestions.push('Add tutorial integration with tutorialService for user onboarding');
     } else {
       recordCheck('tutorialIntegration', true);
