@@ -724,6 +724,317 @@ The page framework includes several built-in tutorials:
 
 For complete tutorial framework documentation, see [Tutorial Framework](tutorial-framework.md).
 
+## Component Architecture Patterns
+
+### Wrapper + Content Pattern for PageLayout Components
+
+**CRITICAL REQUIREMENT**: All DAK components that use `PageLayout` MUST follow the wrapper + content component pattern to ensure proper PageProvider context initialization.
+
+#### The Problem
+
+When a component uses `PageLayout` and calls page context hooks (like `usePage()` or `useDAKParams()`) at the top level, it creates a chicken-and-egg problem:
+
+```javascript
+// ❌ ANTI-PATTERN - DO NOT USE
+const MyComponent = () => {
+  const { profile, repository } = usePage();  // ← ERROR: Context doesn't exist yet!
+  
+  return (
+    <PageLayout pageName="my-component">  // ← PageProvider created here
+      <div>Content</div>
+    </PageLayout>
+  );
+};
+```
+
+**Why this fails**:
+1. React components execute from top to bottom
+2. `usePage()` tries to access PageProvider context during component initialization
+3. But `PageLayout` (which provides `PageProvider`) is in the return statement
+4. The context doesn't exist when the hook is called
+5. Result: `PageContext is null - component not wrapped in PageProvider`
+
+#### The Solution: Wrapper + Content Pattern
+
+Split your component into two parts:
+
+```javascript
+// ✅ CORRECT PATTERN - ALWAYS USE THIS
+const MyComponent = () => {
+  return (
+    <PageLayout pageName="my-component">
+      <MyComponentContent />
+    </PageLayout>
+  );
+};
+
+const MyComponentContent = () => {
+  const { profile, repository, branch, loading, error } = usePage();
+  
+  // All component logic and state here
+  const [data, setData] = useState(null);
+  
+  useEffect(() => {
+    // Effects can safely use page context
+    if (profile && repository) {
+      // Load data...
+    }
+  }, [profile, repository]);
+  
+  return (
+    <div>
+      {/* Component UI */}
+    </div>
+  );
+};
+
+export default MyComponent;
+```
+
+**Why this works**:
+1. `MyComponent` renders and returns `<PageLayout>`
+2. `PageLayout` renders and provides `PageProvider`
+3. `MyComponentContent` starts rendering (now inside PageProvider)
+4. `usePage()` is called, context exists ✅
+
+### Required Pattern for Different Page Types
+
+#### DAK/Asset Pages (using PageLayout)
+
+**REQUIRED**: Use wrapper + content pattern
+
+```javascript
+import { PageLayout, usePage } from './framework';
+
+const DAKComponent = () => {
+  return (
+    <PageLayout pageName="dak-component">
+      <DAKComponentContent />
+    </PageLayout>
+  );
+};
+
+const DAKComponentContent = () => {
+  const { profile, repository, branch, loading, error } = usePage();
+  
+  // Handle loading state
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+  
+  // Handle error state
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
+  
+  // Main content
+  return (
+    <div>
+      <h1>{repository?.name}</h1>
+      {/* Component implementation */}
+    </div>
+  );
+};
+
+export default DAKComponent;
+```
+
+#### Asset Editor Pages (using AssetEditorLayout)
+
+**NOT REQUIRED**: AssetEditorLayout handles context internally
+
+```javascript
+import { AssetEditorLayout, usePage } from './framework';
+
+const AssetEditor = () => {
+  // ✅ OK: AssetEditorLayout provides context internally
+  const { profile, repository, branch } = usePage();
+  
+  return (
+    <AssetEditorLayout
+      pageName="asset-editor"
+      file={file}
+      repository={repository}
+      branch={branch}
+      content={content}
+      onSave={handleSave}
+    >
+      {/* Editor content */}
+    </AssetEditorLayout>
+  );
+};
+
+export default AssetEditor;
+```
+
+### Hook Usage Guidelines
+
+#### usePage() vs useDAKParams()
+
+**usePage()**: 
+- Returns page context regardless of page type
+- More flexible, suitable for most components
+- **RECOMMENDED** for components using wrapper + content pattern
+
+**useDAKParams()**:
+- Validates page type is DAK or ASSET
+- Returns error if used on wrong page type
+- Less flexible but provides validation
+- Can be used in content component after PageProvider exists
+
+```javascript
+// ✅ Recommended approach
+const MyComponentContent = () => {
+  const { profile, repository, branch } = usePage();
+  // ...
+};
+
+// ✅ Also acceptable (if validation needed)
+const MyComponentContent = () => {
+  const { profile, repository, branch } = useDAKParams();
+  // Note: This will show warnings if used on non-DAK pages
+  // ...
+};
+```
+
+### Component Checklist
+
+Before deploying a new DAK component, verify:
+
+- [ ] Component uses wrapper + content pattern
+- [ ] Wrapper component only wraps `PageLayout` (no hooks)
+- [ ] Content component uses `usePage()` or `useDAKParams()`
+- [ ] All hooks are called in content component (after PageProvider)
+- [ ] Loading and error states are handled
+- [ ] Component exports the wrapper (not content)
+
+### Examples from Codebase
+
+#### Correct Implementations ✅
+
+1. **ActorEditor** (src/components/ActorEditor.js)
+```javascript
+const ActorEditor = () => {
+  return (
+    <PageLayout pageName="actor-editor">
+      <ActorEditorContent />
+    </PageLayout>
+  );
+};
+
+const ActorEditorContent = () => {
+  const { profile, repository, branch } = usePage();
+  // ... component logic
+};
+```
+
+2. **CoreDataDictionaryViewer** (src/components/CoreDataDictionaryViewer.js)
+```javascript
+const CoreDataDictionaryViewer = () => {
+  return (
+    <PageLayout pageName="core-data-dictionary-viewer">
+      <CoreDataDictionaryViewerContent />
+    </PageLayout>
+  );
+};
+
+const CoreDataDictionaryViewerContent = () => {
+  const { profile, repository, branch } = usePage();
+  // ... component logic
+};
+```
+
+3. **ComponentEditor** (src/components/ComponentEditor.js)
+```javascript
+const ComponentEditor = () => {
+  return (
+    <PageLayout pageName="component-editor">
+      <ComponentEditorContent />
+    </PageLayout>
+  );
+};
+```
+
+4. **PersonaViewer** (src/components/PersonaViewer.js)
+```javascript
+const PersonaViewer = () => {
+  return (
+    <PageLayout pageName="persona-viewer">
+      <PersonaViewerContent />
+    </PageLayout>
+  );
+};
+```
+
+5. **DAKDashboard** (src/components/DAKDashboard.js)
+```javascript
+const DAKDashboard = () => {
+  return (
+    <PageLayout pageName="dak-dashboard">
+      <DAKDashboardContent />
+    </PageLayout>
+  );
+};
+```
+
+#### Components Needing Attention ⚠️
+
+The following components may need review or updates:
+
+1. **BusinessProcessSelection** - Uses `useDAKUrlParams` instead of page framework hooks
+2. **DecisionSupportLogicView** - Uses `useDAKParams` in content (should use `usePage`)
+
+### Common Mistakes to Avoid
+
+1. **❌ Calling hooks before PageProvider**
+```javascript
+const MyComponent = () => {
+  const { profile } = usePage();  // ERROR!
+  return <PageLayout>...</PageLayout>;
+};
+```
+
+2. **❌ Not handling loading/error states**
+```javascript
+const MyComponentContent = () => {
+  const { profile, repository } = usePage();
+  // Missing: if (!profile || !repository) return loading...
+  return <div>{repository.name}</div>;  // Can crash!
+};
+```
+
+3. **❌ Using useDAKParams without wrapper pattern**
+```javascript
+const MyComponent = () => {
+  const params = useDAKParams();  // ERROR!
+  return <PageLayout>...</PageLayout>;
+};
+```
+
+4. **❌ Mixing patterns**
+```javascript
+const MyComponent = () => {
+  return (
+    <PageLayout>
+      <div>
+        {/* Direct content instead of separate component */}
+      </div>
+    </PageLayout>
+  );
+};
+// Missing: MyComponentContent that uses hooks
+```
+
+### Testing Your Component
+
+Verify your component works correctly:
+
+1. **URL Pattern Test**: Navigate to `/{component}/{user}/{repo}/{branch}`
+2. **Console Check**: No "PageContext is null" errors
+3. **Loading States**: Component handles loading gracefully
+4. **Error States**: Component handles missing context
+5. **Branch Switching**: Component updates when branch changes
+
 ## Migration Guide
 
 To migrate existing pages to the enhanced framework:
@@ -732,6 +1043,7 @@ To migrate existing pages to the enhanced framework:
 2. **Replace authentication checks**: Use access services instead of direct GitHub checks
 3. **Update save operations**: Use data access layer for consistent behavior
 4. **Add user type handling**: Ensure pages work for all user types
-5. **Test thoroughly**: Verify functionality across user types and permission levels
+5. **Apply wrapper + content pattern**: Split components that use PageLayout and page hooks
+6. **Test thoroughly**: Verify functionality across user types and permission levels
 
 The framework is designed to minimize changes to existing page logic while providing comprehensive user access management and consistent behavior across the application.
