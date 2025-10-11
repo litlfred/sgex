@@ -440,6 +440,26 @@ const BPMNViewerEnhanced = () => {
           }
         });
         
+        // Apply force updates at intervals using RAF to ensure diagram stays visible
+        // This addresses the issue where diagram disappears until a drag event
+        const scheduleForceUpdate = (delay) => {
+          let rafCount = Math.ceil(delay / 16); // Approximate RAF cycles for the delay
+          const countdown = () => {
+            if (rafCount > 0) {
+              rafCount--;
+              requestAnimationFrame(countdown);
+            } else {
+              forceCanvasUpdate();
+            }
+          };
+          requestAnimationFrame(countdown);
+        };
+        
+        // Schedule multiple force updates at increasing intervals
+        scheduleForceUpdate(50);   // ~3 RAF cycles
+        scheduleForceUpdate(150);  // ~9 RAF cycles
+        scheduleForceUpdate(300);  // ~18 RAF cycles
+        
         console.log('BPMN diagram loaded successfully');
         setLoading(false);
       } catch (error) {

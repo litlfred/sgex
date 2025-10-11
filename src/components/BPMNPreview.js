@@ -416,6 +416,37 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
               }
             };
             
+            // Force canvas update to ensure diagram stays visible
+            // This prevents the issue where diagram requires a drag/mouse interaction to appear
+            const forceCanvasUpdate = () => {
+              if (viewer && containerRef.current) {
+                try {
+                  const canvas = viewer.get('canvas');
+                  // Trigger a canvas update by getting the viewbox
+                  canvas.viewbox();
+                  // Force a repaint by resetting zoom to current value
+                  const currentZoom = canvas.zoom();
+                  canvas.zoom(currentZoom);
+                  
+                  // Also force SVG visibility
+                  const svgElement = containerRef.current.querySelector('svg');
+                  if (svgElement) {
+                    svgElement.style.opacity = '1';
+                    svgElement.style.visibility = 'visible';
+                    svgElement.style.display = 'block';
+                  }
+                  
+                  console.log('🎨 BPMNPreview: Forced canvas update', {
+                    zoom: currentZoom,
+                    svgVisible: svgElement?.style.visibility,
+                    svgOpacity: svgElement?.style.opacity
+                  });
+                } catch (canvasError) {
+                  console.warn('⚠️ BPMNPreview: Could not force canvas update:', canvasError);
+                }
+              }
+            };
+            
             // Always use fit-viewport for previews - it's reliable and works well for small containers
             // Use nested requestAnimationFrame to ensure browser has painted
             requestAnimationFrame(() => {
@@ -438,6 +469,26 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
                 });
               }
             });
+            
+            // Apply force updates at intervals using RAF to ensure diagram stays visible
+            // This addresses the issue where diagram disappears until a drag event
+            const scheduleForceUpdate = (delay) => {
+              let rafCount = Math.ceil(delay / 16); // Approximate RAF cycles for the delay
+              const countdown = () => {
+                if (rafCount > 0) {
+                  rafCount--;
+                  requestAnimationFrame(countdown);
+                } else {
+                  forceCanvasUpdate();
+                }
+              };
+              requestAnimationFrame(countdown);
+            };
+            
+            // Schedule multiple force updates at increasing intervals
+            scheduleForceUpdate(100);  // ~6 RAF cycles
+            scheduleForceUpdate(200);  // ~12 RAF cycles
+            scheduleForceUpdate(400);  // ~25 RAF cycles
             
             console.log(`✅ BPMNPreview: Initiated viewport fitting sequence`);
 

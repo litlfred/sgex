@@ -306,6 +306,32 @@ const BPMNViewerContent = () => {
           }
         };
         
+        // Force canvas update to ensure diagram stays visible
+        // This prevents the issue where diagram requires a drag/mouse interaction to appear
+        const forceCanvasUpdate = () => {
+          if (viewerRef.current) {
+            try {
+              const canvas = viewerRef.current.get('canvas');
+              // Trigger a canvas update by getting the viewbox
+              canvas.viewbox();
+              // Force a repaint by resetting zoom to current value
+              const currentZoom = canvas.zoom();
+              canvas.zoom(currentZoom);
+              
+              // Also trigger a scroll event which can force repaints
+              const container = containerRef.current;
+              if (container) {
+                // eslint-disable-next-line no-self-assign
+                container.scrollTop = container.scrollTop;
+              }
+              
+              console.log('🎨 BPMNViewer: Forced canvas update', { zoom: currentZoom });
+            } catch (canvasError) {
+              console.warn('⚠️ BPMNViewer: Could not force canvas update:', canvasError);
+            }
+          }
+        };
+        
         // Use nested requestAnimationFrame to ensure browser has painted
         requestAnimationFrame(() => {
           console.log('[BPMN Viewer] First RAF callback: layout should be painted');
@@ -327,6 +353,26 @@ const BPMNViewerContent = () => {
             });
           }
         });
+        
+        // Apply force updates at intervals using RAF to ensure diagram stays visible
+        // This addresses the issue where diagram disappears until a drag event
+        const scheduleForceUpdate = (delay) => {
+          let rafCount = Math.ceil(delay / 16); // Approximate RAF cycles for the delay
+          const countdown = () => {
+            if (rafCount > 0) {
+              rafCount--;
+              requestAnimationFrame(countdown);
+            } else {
+              forceCanvasUpdate();
+            }
+          };
+          requestAnimationFrame(countdown);
+        };
+        
+        // Schedule multiple force updates at increasing intervals
+        scheduleForceUpdate(50);   // ~3 RAF cycles
+        scheduleForceUpdate(150);  // ~9 RAF cycles
+        scheduleForceUpdate(300);  // ~18 RAF cycles
         
         console.log('✅ BPMNViewer: Initiated viewport fitting sequence');
       } catch (centerError) {
