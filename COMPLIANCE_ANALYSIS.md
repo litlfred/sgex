@@ -4,32 +4,39 @@
 
 This document provides a comprehensive analysis of the compliance report issues and an implementation plan for improving the compliance framework tooling (not fixing the compliance violations themselves).
 
-## ✅ IMPLEMENTED: Automatic Component Detection
+## ✅ IMPLEMENTED: Deterministic Component Detection
 
-**Update:** The compliance framework now uses **automatic detection** instead of manual exclusion lists!
+**Latest Update:** The compliance framework now uses **deterministic routing-based detection** instead of heuristics!
 
 ### How It Works
 
-The `isUtilityComponent()` function automatically identifies non-page components based on:
+The compliance checker reads `public/routes-config.json` to determine which components are actually routed as pages:
 
-1. **Naming Patterns**:
-   - Ends with `Modal`, `Dialog`, `Button`, `Badge`, `Bar`, `Box`, `Card`, `Selector`, `Slider`, `Enhanced`, `Preview`
-   - Contains `_old`, `Demo`, or `Example` (deprecated/demo code)
-
-2. **Code Structure Analysis**:
-   - **Modal characteristics**: Has `onClose` and `isOpen`/`open` props
-   - **Embedded components**: Takes props like `file`, `repository`, `profile` but no `usePage()`
-   - **No routing**: Missing `useNavigate`, `PageLayout`, or `AssetEditorLayout`
-   - **Small size**: < 200 lines (typical utility components)
-
-3. **Framework Utilities**: Hardcoded list for core framework components
+1. **DAK Components**: All components listed in `dakComponents` section
+2. **Standard Components**: All components listed in `standardComponents` section
 
 ### Benefits
 
-- ✅ No manual maintenance of exclusion lists
-- ✅ Automatically adapts to new components
-- ✅ Uses component metadata and structure
-- ✅ Clear detection criteria based on actual usage patterns
+- ✅ **Deterministic**: Uses actual routing configuration, not guesses
+- ✅ **No heuristics**: No need for naming patterns or code analysis
+- ✅ **Accurate**: Only checks components that are actually pages
+- ✅ **Maintainable**: Single source of truth (routes-config.json)
+- ✅ **Example exclusion**: Example components automatically excluded (not in routing)
+
+### Previous Approach vs New Approach
+
+**OLD (Heuristic-based):**
+- Scanned component directory
+- Used naming patterns (Modal, Dialog, Badge, etc.)
+- Analyzed code structure (props, size, routing)
+- Prone to false positives/negatives
+- Required maintenance of detection rules
+
+**NEW (Deterministic):**
+- Reads routes-config.json
+- Only checks components explicitly registered in routing
+- No guessing or pattern matching needed
+- Guaranteed accurate - if it's routed, it's a page
 
 ## ✅ IMPLEMENTED: Enhanced Compliance Checks (9 Total)
 
@@ -67,11 +74,11 @@ The following old/demo components have been **removed** from the codebase:
 - `DAKFAQDemo.js` - ❌ Deleted (demo code)
 - `WorkflowDashboardDemo.js` - ❌ Deleted (unused demo)
 
-### Example Components Kept
+### Example Components
 
-These remain as they're part of the tools framework example system:
-- `ExampleStatsDashboard.js` - ✅ Kept (tools framework example)
-- `ExampleValueSetEditor.js` - ✅ Kept (tools framework example)
+Example components are automatically excluded because they are **not registered in routes-config.json**:
+- `ExampleStatsDashboard.js` - Not in routing configuration
+- `ExampleValueSetEditor.js` - Not in routing configuration
 
 ---
 

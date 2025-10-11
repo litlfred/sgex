@@ -43,6 +43,43 @@ const FRAMEWORK_COMPONENTS = [
 ];
 
 /**
+ * Get list of routed page components from routes-config.json
+ * This is a deterministic approach - only components explicitly registered in routing are checked
+ * @returns {Array} Array of component names that are actually routed as pages
+ */
+function getRoutedComponents() {
+  const ROUTES_CONFIG_PATH = path.join(__dirname, '../public/routes-config.json');
+  
+  try {
+    const configContent = fs.readFileSync(ROUTES_CONFIG_PATH, 'utf8');
+    const config = JSON.parse(configContent);
+    
+    const routedComponents = [];
+    
+    // Add DAK components (these are all routed pages)
+    if (config.dakComponents) {
+      Object.values(config.dakComponents).forEach(dakComp => {
+        if (dakComp.component) {
+          routedComponents.push(dakComp.component);
+        }
+      });
+    }
+    
+    // Add standard components (these are all routed pages)
+    if (config.standardComponents) {
+      Object.keys(config.standardComponents).forEach(componentName => {
+        routedComponents.push(componentName);
+      });
+    }
+    
+    return routedComponents;
+  } catch (error) {
+    console.error('Error reading routes-config.json:', error.message);
+    return [];
+  }
+}
+
+/**
  * Automatically detect if a component is a utility component based on its code structure
  * This eliminates the need to maintain a manual exclusion list
  * @param {string} componentName - Name of the component
@@ -50,7 +87,12 @@ const FRAMEWORK_COMPONENTS = [
  * @returns {boolean} True if component should be excluded from compliance checks
  */
 function isUtilityComponent(componentName, content) {
-  // 1. Check naming conventions
+  // 1. Check for Example/Demo components that should be excluded
+  if (/Example|Demo/i.test(componentName)) {
+    return true;
+  }
+  
+  // 2. Check naming conventions for common utility patterns
   const namingPatterns = [
     /Modal$/,          // LoginModal, CollaborationModal, etc.
     /Dialog$/,         // SaveDialog, etc.
@@ -64,8 +106,6 @@ function isUtilityComponent(componentName, content) {
     /Enhanced$/,       // BPMNViewerEnhanced, etc.
     /Preview$/,        // BPMNPreview - embedded viewer component
     /_old$/i,          // Old/deprecated components
-    /Demo$/i,          // Demo components
-    /Example/i,        // Example components
   ];
   
   for (const pattern of namingPatterns) {
@@ -74,25 +114,25 @@ function isUtilityComponent(componentName, content) {
     }
   }
   
-  // 2. Check for modal/dialog characteristics (takes onClose, isOpen props)
+  // 3. Check for modal/dialog characteristics (takes onClose, isOpen props)
   const hasModalProps = content.includes('onClose') && 
                        (content.includes('isOpen') || content.includes('open'));
   
-  // 3. Check for embedded component characteristics (takes props like file, repository, etc.)
+  // 4. Check for embedded component characteristics (takes props like file, repository, etc.)
   const hasEmbeddedProps = (content.includes('{ file') || content.includes('{ repository')) &&
                            content.includes('profile') &&
                            !content.includes('usePage()');
   
-  // 4. Check for widget/embedded characteristics (no routing, exported but not a page)
+  // 5. Check for widget/embedded characteristics (no routing, exported but not a page)
   const hasNoRouting = !content.includes('useNavigate') && 
                        !content.includes('Navigate') &&
                        !content.includes('PageLayout') &&
                        !content.includes('AssetEditorLayout');
   
-  // 5. Check if it's a small utility component (< 200 lines typically)
+  // 6. Check if it's a small utility component (< 200 lines typically)
   const isSmallComponent = content.split('\n').length < 200;
   
-  // 6. Framework components (ContextualHelpMascot, etc.)
+  // 7. Framework components (ContextualHelpMascot, etc.)
   const frameworkUtilities = ['ContextualHelpMascot', 'HelpButton', 'HelpModal'];
   if (frameworkUtilities.includes(componentName)) {
     return true;
@@ -154,24 +194,36 @@ class ComplianceChecker {
   }
 
   /**
-   * Extract route components from App.js and lazyRouteUtils.js
+   * Extract route components from routes-config.json (deterministic approach)
+   * This is the primary method - only components explicitly registered in routing are checked
    */
   async getRouteComponents() {
+    // Use deterministic approach: read from routes-config.json
+    const routedComponents = getRoutedComponents();
+    
+    if (routedComponents.length > 0) {
+      return routedComponents;
+    }
+    
+    // Fallback only if routes-config.json is not available
+    if (this.options.format !== 'json') {
+      console.warn('⚠️  Could not read routes-config.json, falling back to heuristic detection');
+    }
+    
     const components = [];
 
-    // Method 1: Extract from lazyRouteUtils.js (primary method)
+    // Fallback Method 1: Extract from componentRouteService.js
     try {
-      const lazyRouteUtilsPath = path.join(SRC_DIR, 'utils', 'lazyRouteUtils.js');
-      if (fs.existsSync(lazyRouteUtilsPath)) {
-        const lazyContent = fs.readFileSync(lazyRouteUtilsPath, 'utf8');
+      const componentRouteServicePath = path.join(SRC_DIR, 'services', 'componentRouteService.js');
+      if (fs.existsSync(componentRouteServicePath)) {
+        const serviceContent = fs.readFileSync(componentRouteServicePath, 'utf8');
         
         // Find component names in switch statement
-        const switchMatches = lazyContent.match(/case\s+'([^']+)':\s*LazyComponent\s*=\s*React\.lazy\(\(\)\s*=>\s*import\('([^']+)'\)\);/g);
+        const switchMatches = serviceContent.match(/case\s+'([^']+)':\s*LazyComponent\s*=\s*React\.lazy\(\(\)\s*=>\s*import\('([^']+)'\)\);/g);
         if (switchMatches) {
           switchMatches.forEach(match => {
             const componentMatch = match.match(/case\s+'([^']+)'/);
             if (componentMatch) {
-              // Automatic detection will filter utilities later
               components.push(componentMatch[1]);
             }
           });
@@ -179,11 +231,11 @@ class ComplianceChecker {
       }
     } catch (error) {
       if (this.options.format !== 'json') {
-        console.warn('Could not parse lazyRouteUtils.js:', error.message);
+        console.warn('Could not parse componentRouteService.js:', error.message);
       }
     }
 
-    // Method 2: Extract from App.js as fallback
+    // Fallback Method 2: Extract from App.js
     if (components.length === 0) {
       try {
         const appContent = fs.readFileSync(APP_JS, 'utf8');
@@ -194,46 +246,11 @@ class ComplianceChecker {
 
         while ((match = routeRegex.exec(appContent)) !== null) {
           const componentName = match[1].trim();
-          // Automatic detection will filter utilities later
           components.push(componentName);
         }
       } catch (error) {
         if (this.options.format !== 'json') {
           console.warn('Could not parse App.js:', error.message);
-        }
-      }
-    }
-
-    // Method 3: Scan components directory for React components
-    if (components.length === 0) {
-      if (this.options.format !== 'json') {
-        console.log('Falling back to directory scan...');
-      }
-      try {
-        const componentFiles = fs.readdirSync(COMPONENTS_DIR)
-          .filter(file => file.endsWith('.js') && !file.endsWith('.test.js'))
-          .filter(file => !FRAMEWORK_COMPONENTS.includes(file))
-          .map(file => file.replace('.js', ''));
-        
-        // Filter to components that likely are page components (contain JSX and PageLayout or return statements)
-        for (const componentName of componentFiles) {
-          const componentPath = path.join(COMPONENTS_DIR, `${componentName}.js`);
-          const content = fs.readFileSync(componentPath, 'utf8');
-          
-          // Use automatic detection to skip utility components
-          if (isUtilityComponent(componentName, content)) {
-            continue;
-          }
-          
-          // Check if it looks like a page component
-          if (content.includes('return') && 
-              (content.includes('PageLayout') || content.includes('<div') || content.includes('function') || content.includes('const'))) {
-            components.push(componentName);
-          }
-        }
-      } catch (error) {
-        if (this.options.format !== 'json') {
-          console.warn('Could not scan components directory:', error.message);
         }
       }
     }
@@ -254,13 +271,9 @@ class ComplianceChecker {
 
     const content = fs.readFileSync(componentPath, 'utf8');
     
-    // Use automatic detection to skip utility components
-    if (isUtilityComponent(componentName, content)) {
-      if (this.options.format === 'standard') {
-        console.log(`⚪ ${componentName}: UTILITY (auto-detected, skipped)`);
-      }
-      return;
-    }
+    // Note: We don't apply utility detection here because components are already
+    // filtered by deterministic routing (routes-config.json). If a component is
+    // in the routing configuration, it IS a page component by definition.
     
     const compliance = this.analyzeComponent(componentName, content);
     
