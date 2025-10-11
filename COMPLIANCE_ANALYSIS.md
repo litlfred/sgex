@@ -38,9 +38,44 @@ The compliance checker reads `public/routes-config.json` to determine which comp
 - No guessing or pattern matching needed
 - Guaranteed accurate - if it's routed, it's a page
 
+## ✅ IMPLEMENTED: Programmatic Check Calculation
+
+**Latest Update:** The compliance framework now **automatically calculates** the number of checks programmatically!
+
+### How It Works
+
+Instead of manually maintaining a `maxScore` constant, the checker:
+
+1. **Defines checks declaratively**: `COMPLIANCE_RULES` object documents all rules
+2. **Counts programmatically**: `TOTAL_COMPLIANCE_CHECKS = Object.keys(COMPLIANCE_RULES).length`
+3. **Records dynamically**: `recordCheck()` helper increments `maxScore` for each check performed
+4. **Validates automatically**: Warns if implemented checks don't match documented rules
+
+### Benefits
+
+- ✅ **Self-maintaining**: Adding a new check automatically updates the count
+- ✅ **No manual updates**: No need to remember to update maxScore constant
+- ✅ **Validation built-in**: Warns if implementation drifts from documentation
+- ✅ **Single source of truth**: COMPLIANCE_RULES defines all checks
+
+### Example
+
+```javascript
+// Define a new check in COMPLIANCE_RULES
+const COMPLIANCE_RULES = {
+  // ... existing rules ...
+  NEW_CHECK: 'Description of new validation rule'
+};
+
+// In analyzeComponent(), use recordCheck() helper
+recordCheck('newCheck', passed, 'Failure message');
+
+// maxScore automatically increments - no manual update needed!
+```
+
 ## ✅ IMPLEMENTED: Enhanced Compliance Checks (16 Total)
 
-The compliance checker now validates **16 requirements** (up from 6):
+The compliance checker now validates **16 requirements** (up from 6), all calculated programmatically:
 
 ### Original Checks (1-6):
 1. ✅ Uses PageLayout or AssetEditorLayout

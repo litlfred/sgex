@@ -16,6 +16,8 @@ const COMPONENTS_DIR = path.join(SRC_DIR, 'components');
 const APP_JS = path.join(SRC_DIR, 'App.js');
 
 // Framework compliance rules
+// NOTE: This object is used for documentation. The actual number of checks is calculated
+// programmatically in analyzeComponent() using the recordCheck() helper function.
 const COMPLIANCE_RULES = {
   PAGE_LAYOUT: 'All page components must be wrapped with PageLayout',
   PAGE_NAME: 'All PageLayout components must have a unique pageName prop',
@@ -34,6 +36,9 @@ const COMPLIANCE_RULES = {
   HELP_CONTENT_REGISTRATION: 'Complex pages should register help content with helpContentService',
   TUTORIAL_INTEGRATION: 'Feature-rich pages should integrate tutorials for user onboarding'
 };
+
+// Calculate total number of compliance rules programmatically
+const TOTAL_COMPLIANCE_CHECKS = Object.keys(COMPLIANCE_RULES).length;
 
 // Legacy manual exclusion list - kept for reference but now uses automatic detection
 // based on component naming patterns and code structure (see isUtilityComponent function)
@@ -306,10 +311,21 @@ class ComplianceChecker {
     const compliance = {
       name: componentName,
       score: 0,
-      maxScore: 16, // Increased from 12 to 16 for additional service integration checks
+      maxScore: 0, // Calculated programmatically based on checks performed
       checks: {},
       issues: [],
       suggestions: []
+    };
+
+    // Helper function to record a check result
+    const recordCheck = (checkName, passed, failureMessage = null) => {
+      compliance.maxScore++; // Every check increments maxScore
+      compliance.checks[checkName] = passed;
+      if (passed) {
+        compliance.score++;
+      } else if (failureMessage) {
+        compliance.issues.push(failureMessage);
+      }
     };
 
     // Check 1: Uses PageLayout (directly or through AssetEditorLayout)
@@ -321,16 +337,13 @@ class ComplianceChecker {
                           (content.includes('import { AssetEditorLayout }') ||
                            content.includes('from \'./framework\'')));
     const hasAssetEditorLayout = content.includes('AssetEditorLayout');
-    compliance.checks.pageLayout = hasPageLayout;
-    if (hasPageLayout) compliance.score++;
-    else compliance.issues.push('Missing PageLayout wrapper');
+    recordCheck('pageLayout', hasPageLayout, 'Missing PageLayout wrapper');
 
     // Check 2: Has pageName prop (PageLayout or AssetEditorLayout)
     const hasPageName = /<PageLayout[^>]+pageName=["']([^"']+)["']/.test(content) ||
                        /<AssetEditorLayout[^>]+pageName=["']([^"']+)["']/.test(content);
-    compliance.checks.pageName = hasPageName;
-    if (hasPageName) compliance.score++;
-    else if (hasPageLayout) compliance.issues.push('PageLayout missing pageName prop');
+    recordCheck('pageName', hasPageName || !hasPageLayout, 
+      hasPageLayout ? 'PageLayout missing pageName prop' : null);
 
     // Check 3: Uses framework hooks instead of useParams
     const usesFrameworkHooks = content.includes('usePageParams') || 
@@ -339,42 +352,31 @@ class ComplianceChecker {
     const usesDirectParams = content.includes('useParams') && !content.includes('//') && 
                            !content.includes('framework');
     
-    if (usesFrameworkHooks && !usesDirectParams) {
-      compliance.checks.frameworkHooks = true;
-      compliance.score++;
-    } else if (!usesDirectParams) {
-      compliance.checks.frameworkHooks = true; // No params used, OK
-      compliance.score++;
-    } else {
-      compliance.checks.frameworkHooks = false;
-      compliance.issues.push('Uses direct useParams() instead of framework hooks');
-    }
+    recordCheck('frameworkHooks', usesFrameworkHooks || !usesDirectParams,
+      usesDirectParams ? 'Uses direct useParams() instead of framework hooks' : null);
 
     // Check 4: No manual ContextualHelpMascot import
     const hasManualHelpMascot = content.includes('import') && 
                                content.includes('ContextualHelpMascot') &&
                                !content.includes('framework');
-    compliance.checks.noManualHelp = !hasManualHelpMascot;
-    if (!hasManualHelpMascot) compliance.score++;
-    else compliance.issues.push('Has manual ContextualHelpMascot import (PageLayout provides it)');
+    recordCheck('noManualHelp', !hasManualHelpMascot,
+      hasManualHelpMascot ? 'Has manual ContextualHelpMascot import (PageLayout provides it)' : null);
 
     // Check 5: No custom header implementation (basic check)
     const hasCustomHeader = content.includes('header') && 
                            (content.includes('className="header"') || 
                             content.includes('className=\'header\'') ||
                             content.includes('<header'));
-    compliance.checks.noCustomHeader = !hasCustomHeader;
-    if (!hasCustomHeader) compliance.score++;
-    else compliance.issues.push('May have custom header implementation');
+    recordCheck('noCustomHeader', !hasCustomHeader,
+      hasCustomHeader ? 'May have custom header implementation' : null);
 
     // Check 6: No duplicate PageLayout wrappers
     const pageLayoutMatches = (content.match(/<PageLayout/g) || []).length;
     const assetEditorLayoutMatches = (content.match(/<AssetEditorLayout/g) || []).length;
     const totalLayoutMatches = pageLayoutMatches + assetEditorLayoutMatches;
     const isNested = totalLayoutMatches > 1;
-    compliance.checks.noDuplicateLayout = !isNested;
-    if (!isNested) compliance.score++;
-    else compliance.issues.push(`Found ${totalLayoutMatches} layout components - should only have one`);
+    recordCheck('noDuplicateLayout', !isNested,
+      isNested ? `Found ${totalLayoutMatches} layout components - should only have one` : null);
 
     // Check 7: Profile creation compliance (HIGH PRIORITY)
     // Check for incorrect isDemo flag usage
@@ -392,12 +394,11 @@ class ComplianceChecker {
                           content.includes('demo-user') && 
                           content.includes('isDemo: true');
     
-    compliance.checks.profileCreation = !hasIncorrectDemo || hasCorrectDemo;
-    if (!hasIncorrectDemo) {
-      compliance.score++;
-    } else {
-      compliance.issues.push('Incorrect profile creation: isDemo flag misused');
+    if (hasIncorrectDemo && !hasCorrectDemo) {
+      recordCheck('profileCreation', false, 'Incorrect profile creation: isDemo flag misused');
       compliance.suggestions.push('Set isDemo: true ONLY for user === \'demo-user\'');
+    } else {
+      recordCheck('profileCreation', true);
     }
 
     // Check 8: User access integration (MEDIUM PRIORITY)
@@ -409,12 +410,11 @@ class ComplianceChecker {
                                content.includes('edit') || 
                                content.includes('onSave'));
     
-    compliance.checks.userAccessIntegration = !needsAccessControl || hasUserAccessImport;
-    if (!needsAccessControl || hasUserAccessImport) {
-      compliance.score++;
-    } else {
-      compliance.issues.push('Missing userAccessService integration for access control');
+    if (needsAccessControl && !hasUserAccessImport) {
+      recordCheck('userAccessIntegration', false, 'Missing userAccessService integration for access control');
       compliance.suggestions.push('Import and use userAccessService to check user permissions');
+    } else {
+      recordCheck('userAccessIntegration', true);
     }
 
     // Check 9: Background styling (MEDIUM PRIORITY)
@@ -437,12 +437,11 @@ class ComplianceChecker {
     // Only recommend background for Landing/Welcome/Selection pages
     const needsBackground = /Landing|Welcome|Selection/.test(componentName);
     
-    compliance.checks.backgroundStyling = !needsBackground || hasBackgroundStyling;
-    if (!needsBackground || hasBackgroundStyling) {
-      compliance.score++;
-    } else {
-      compliance.issues.push('Landing/selection page should use WHO blue gradient background');
+    if (needsBackground && !hasBackgroundStyling) {
+      recordCheck('backgroundStyling', false, 'Landing/selection page should use WHO blue gradient background');
       compliance.suggestions.push('Add background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%)');
+    } else {
+      recordCheck('backgroundStyling', true);
     }
 
     // Check 10: Staging Ground Service Integration (HIGH PRIORITY)
@@ -451,12 +450,11 @@ class ComplianceChecker {
                                    content.includes('useStagingGround');
     const needsStagingGround = hasAssetEditorLayout;
     
-    compliance.checks.stagingGroundIntegration = !needsStagingGround || hasStagingGroundImport;
-    if (!needsStagingGround || hasStagingGroundImport) {
-      compliance.score++;
-    } else {
-      compliance.issues.push('Asset editor missing stagingGroundService integration');
+    if (needsStagingGround && !hasStagingGroundImport) {
+      recordCheck('stagingGroundIntegration', false, 'Asset editor missing stagingGroundService integration');
       compliance.suggestions.push('Import and use stagingGroundService for local change management');
+    } else {
+      recordCheck('stagingGroundIntegration', true);
     }
 
     // Check 11: Data Access Layer Integration (MEDIUM PRIORITY)
@@ -470,12 +468,11 @@ class ComplianceChecker {
     const needsDataAccessLayer = hasDirectGitHubCalls || 
                                 (content.includes('getAsset') || content.includes('saveAsset'));
     
-    compliance.checks.dataAccessLayer = !needsDataAccessLayer || hasDataAccessLayer;
-    if (!needsDataAccessLayer || hasDataAccessLayer) {
-      compliance.score++;
-    } else {
-      compliance.issues.push('Component should use dataAccessLayer for data operations');
+    if (needsDataAccessLayer && !hasDataAccessLayer) {
+      recordCheck('dataAccessLayer', false, 'Component should use dataAccessLayer for data operations');
       compliance.suggestions.push('Import dataAccessLayer instead of direct githubService calls');
+    } else {
+      recordCheck('dataAccessLayer', true);
     }
 
     // Check 12: Branch Context Awareness (MEDIUM PRIORITY)
@@ -486,12 +483,11 @@ class ComplianceChecker {
                           content.includes('{ repo') && 
                           content.includes('{ branch');
     
-    compliance.checks.branchContextAwareness = !isDakComponent || hasBranchContext;
-    if (!isDakComponent || hasBranchContext) {
-      compliance.score++;
-    } else {
-      compliance.issues.push('DAK component should use branchContextService');
+    if (isDakComponent && !hasBranchContext) {
+      recordCheck('branchContextAwareness', false, 'DAK component should use branchContextService');
       compliance.suggestions.push('Import and use branchContextService for branch context awareness');
+    } else {
+      recordCheck('branchContextAwareness', true);
     }
 
     // Check 13: Issue Tracking Service Integration (LOW PRIORITY)
@@ -502,12 +498,11 @@ class ComplianceChecker {
                                content.includes('workflow') ||
                                content.includes('issue tracking');
     
-    compliance.checks.issueTrackingIntegration = !isWorkflowComponent || hasIssueTracking;
-    if (!isWorkflowComponent || hasIssueTracking) {
-      compliance.score++;
-    } else {
-      compliance.issues.push('Workflow component should use issueTrackingService');
+    if (isWorkflowComponent && !hasIssueTracking) {
+      recordCheck('issueTrackingIntegration', false, 'Workflow component should use issueTrackingService');
       compliance.suggestions.push('Import and use issueTrackingService for issue tracking features');
+    } else {
+      recordCheck('issueTrackingIntegration', true);
     }
 
     // Check 14: Bookmark Service Integration (LOW PRIORITY)
@@ -518,12 +513,11 @@ class ComplianceChecker {
                                  content.includes('navigation') ||
                                  (content.includes('useNavigate') && content.length > 500);
     
-    compliance.checks.bookmarkIntegration = !isNavigationComponent || hasBookmarkService;
-    if (!isNavigationComponent || hasBookmarkService) {
-      compliance.score++;
-    } else {
-      compliance.issues.push('Navigation component should support bookmarkService');
+    if (isNavigationComponent && !hasBookmarkService) {
+      recordCheck('bookmarkIntegration', false, 'Navigation component should support bookmarkService');
       compliance.suggestions.push('Import and use bookmarkService to enable page bookmarking');
+    } else {
+      recordCheck('bookmarkIntegration', true);
     }
 
     // Check 15: Help Content Registration (LOW PRIORITY)
@@ -535,12 +529,11 @@ class ComplianceChecker {
                          content.includes('Editor') ||
                          content.includes('Manager');
     
-    compliance.checks.helpContentRegistration = !isComplexPage || hasHelpContent;
-    if (!isComplexPage || hasHelpContent) {
-      compliance.score++;
-    } else {
-      compliance.issues.push('Complex page should register help content');
+    if (isComplexPage && !hasHelpContent) {
+      recordCheck('helpContentRegistration', false, 'Complex page should register help content');
       compliance.suggestions.push('Register help topics with helpContentService for user assistance');
+    } else {
+      recordCheck('helpContentRegistration', true);
     }
 
     // Check 16: Tutorial Integration (LOW PRIORITY)
@@ -551,15 +544,14 @@ class ComplianceChecker {
     const isFeatureRichPage = /Editor|Manager|Configuration|Selection/.test(componentName) ||
                              (content.includes('save') && content.includes('edit'));
     
-    compliance.checks.tutorialIntegration = !isFeatureRichPage || hasTutorialIntegration;
-    if (!isFeatureRichPage || hasTutorialIntegration) {
-      compliance.score++;
-    } else {
-      compliance.issues.push('Feature-rich page should integrate tutorials');
+    if (isFeatureRichPage && !hasTutorialIntegration) {
+      recordCheck('tutorialIntegration', false, 'Feature-rich page should integrate tutorials');
       compliance.suggestions.push('Add tutorial integration with tutorialService for user onboarding');
+    } else {
+      recordCheck('tutorialIntegration', true);
     }
 
-    // Generate suggestions
+    // Add suggestion generation
     if (!hasPageLayout) {
       compliance.suggestions.push('Wrap component with PageLayout or AssetEditorLayout from ./framework');
     }
@@ -574,6 +566,13 @@ class ComplianceChecker {
     }
     if (isNested) {
       compliance.suggestions.push('Remove nested PageLayout components - only use one per page');
+    }
+
+    // Validation: Ensure maxScore matches TOTAL_COMPLIANCE_CHECKS
+    // This ensures the code and documentation stay in sync
+    if (compliance.maxScore !== TOTAL_COMPLIANCE_CHECKS) {
+      console.warn(`⚠️  WARNING: Component ${componentName} has ${compliance.maxScore} checks but COMPLIANCE_RULES defines ${TOTAL_COMPLIANCE_CHECKS} rules.`);
+      console.warn('   This may indicate a mismatch between checks implemented and documented rules.');
     }
 
     return compliance;
