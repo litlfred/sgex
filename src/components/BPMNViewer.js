@@ -206,61 +206,15 @@ const BPMNViewerContent = () => {
       try {
         const canvas = viewerRef.current.get('canvas');
         
-        // Get the element registry to scan all visual elements
-        const elementRegistry = viewerRef.current.get('elementRegistry');
-        const allElements = elementRegistry.getAll();
-        
-        console.log(`📊 BPMNViewer: Found ${allElements.length} elements in diagram`);
-        
-        // Calculate the bounds of all elements to ensure proper viewport
-        if (allElements.length > 0) {
-          let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-          let validElementCount = 0;
-          
-          allElements.forEach(element => {
-            if (element.x !== undefined && element.y !== undefined && element.width && element.height) {
-              minX = Math.min(minX, element.x);
-              minY = Math.min(minY, element.y);
-              maxX = Math.max(maxX, element.x + element.width);
-              maxY = Math.max(maxY, element.y + element.height);
-              validElementCount++;
-            }
-          });
-          
-          console.log(`📐 BPMNViewer: Found ${validElementCount} valid positioned elements`);
-          
-          // Only use calculated bounds if we found valid elements
-          if (validElementCount > 0 && minX !== Infinity && maxX !== -Infinity) {
-            // Add padding around the diagram
-            const padding = 50;
-            const diagramBounds = {
-              x: minX - padding,
-              y: minY - padding,
-              width: (maxX - minX) + (padding * 2),
-              height: (maxY - minY) + (padding * 2)
-            };
-            
-            console.log('📐 BPMNViewer: Calculated diagram bounds:', diagramBounds);
-            
-            // Zoom to fit the actual diagram bounds
-            if (diagramBounds.width > 0 && diagramBounds.height > 0) {
-              canvas.viewbox(diagramBounds);
-              console.log('✅ BPMNViewer: Set viewbox to diagram bounds');
-            } else {
-              // Fallback to fit-viewport if bounds calculation fails
-              canvas.zoom('fit-viewport');
-              console.log('⚠️ BPMNViewer: Using fit-viewport fallback (invalid bounds)');
-            }
-          } else {
-            // No valid positioned elements, use standard fit-viewport
+        // Defer zoom to ensure container dimensions are available
+        setTimeout(() => {
+          try {
             canvas.zoom('fit-viewport');
-            console.log('⚠️ BPMNViewer: Using fit-viewport fallback (no valid elements)');
+            console.log('✅ BPMNViewer: Applied fit-viewport zoom');
+          } catch (error) {
+            console.error('❌ BPMNViewer: Error applying zoom:', error);
           }
-        } else {
-          // No elements, use standard fit-viewport
-          canvas.zoom('fit-viewport');
-          console.log('⚠️ BPMNViewer: Using fit-viewport fallback (no elements)');
-        }
+        }, 0);
         
         // Force canvas update to ensure diagram is immediately visible
         // This prevents the issue where diagram requires a drag/mouse interaction to appear
