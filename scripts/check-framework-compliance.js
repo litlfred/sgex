@@ -492,11 +492,11 @@ class ComplianceChecker {
 
     // Check 13: Issue Tracking Service Integration (LOW PRIORITY)
     // Workflow components should integrate with issueTrackingService
+    // Only flag components that explicitly deal with issue/workflow management
     const hasIssueTracking = content.includes('issueTrackingService') || 
                              content.includes('useIssueTracking');
-    const isWorkflowComponent = /Workflow|Issue|Bug|Tracking/.test(componentName) ||
-                               content.includes('workflow') ||
-                               content.includes('issue tracking');
+    const isWorkflowComponent = /IssueTracker|WorkflowManager|BugTracker/.test(componentName) ||
+                               (content.includes('issue') && content.includes('create') && content.includes('track'));
     
     if (isWorkflowComponent && !hasIssueTracking) {
       recordCheck('issueTrackingIntegration', false, 'Workflow component should use issueTrackingService');
@@ -506,14 +506,18 @@ class ComplianceChecker {
     }
 
     // Check 14: Bookmark Service Integration (LOW PRIORITY)
-    // Navigation components should support bookmarkService for bookmarking
+    // Main content pages should support bookmarkService for bookmarking
+    // Exclude simple redirects, error pages, and selection pages
     const hasBookmarkService = content.includes('bookmarkService') || 
                                content.includes('useBookmark');
-    const isNavigationComponent = /Navigation|Selection|Dashboard|Manager/.test(componentName) ||
-                                 content.includes('navigation') ||
-                                 (content.includes('useNavigate') && content.length > 500);
+    const isSimpleUtility = /Redirect|NotFound|Welcome/.test(componentName) ||
+                           content.length < 150;
+    const isMainContentPage = (content.includes('useNavigate') && content.length > 500) &&
+                             !isSimpleUtility &&
+                             (content.includes('Editor') || content.includes('Viewer') || 
+                              content.includes('Dashboard') || content.includes('Manager'));
     
-    if (isNavigationComponent && !hasBookmarkService) {
+    if (isMainContentPage && !hasBookmarkService) {
       recordCheck('bookmarkIntegration', false, 'Navigation component should support bookmarkService');
       compliance.suggestions.push('Import and use bookmarkService to enable page bookmarking');
     } else {
@@ -521,15 +525,16 @@ class ComplianceChecker {
     }
 
     // Check 15: Help Content Registration (LOW PRIORITY)
-    // Complex pages should register help content with helpContentService
+    // Complex pages with forms/editors should register help content with helpContentService
+    // Exclude simple selection pages and viewers - only flag truly complex pages
     const hasHelpContent = content.includes('helpContentService') ||
                           content.includes('registerHelpContent');
-    const isComplexPage = content.length > 800 || // Large component
-                         content.includes('Form') ||
-                         content.includes('Editor') ||
-                         content.includes('Manager');
+    const isReallyComplexPage = (content.length > 5000) || // Significantly large component (5000+ chars)
+                         (componentName.includes('Editor') && content.includes('save') && content.length > 3000) ||
+                         (componentName.includes('Manager') && content.includes('Form') && content.length > 2000) ||
+                         (content.includes('Form') && content.includes('submit') && content.length > 3000);
     
-    if (isComplexPage && !hasHelpContent) {
+    if (isReallyComplexPage && !hasHelpContent) {
       recordCheck('helpContentRegistration', false, 'Complex page should register help content');
       compliance.suggestions.push('Register help topics with helpContentService for user assistance');
     } else {
@@ -537,12 +542,18 @@ class ComplianceChecker {
     }
 
     // Check 16: Tutorial Integration (LOW PRIORITY)
-    // Feature-rich pages should integrate tutorials for user onboarding
+    // Feature-rich pages with actual editing/configuration functionality should integrate tutorials
+    // Focus on pages where users perform complex actions
     const hasTutorialIntegration = content.includes('tutorialService') ||
                                    content.includes('useTutorial') ||
                                    content.includes('TutorialManager');
-    const isFeatureRichPage = /Editor|Manager|Configuration|Selection/.test(componentName) ||
-                             (content.includes('save') && content.includes('edit'));
+    const isActualEditor = (componentName.includes('Editor') || componentName.includes('Manager')) &&
+                          content.includes('save') &&
+                          content.length > 800;
+    const isComplexConfiguration = componentName.includes('Configuration') &&
+                                   content.includes('Form') &&
+                                   content.includes('submit');
+    const isFeatureRichPage = isActualEditor || isComplexConfiguration;
     
     if (isFeatureRichPage && !hasTutorialIntegration) {
       recordCheck('tutorialIntegration', false, 'Feature-rich page should integrate tutorials');
