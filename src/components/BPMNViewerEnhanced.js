@@ -335,13 +335,63 @@ const BPMNViewerEnhanced = () => {
         
         setZoomLevel(canvas.zoom());
         
-        // Force canvas update to ensure diagram is immediately visible
-        // This prevents the issue where diagram requires a drag/mouse interaction to appear
-        // Use multiple strategies to ensure rendering
+        // Helper function to check if container has valid dimensions
+        const hasValidDimensions = (container) => {
+          if (!container) return false;
+          const rect = container.getBoundingClientRect();
+          const width = rect.width || container.offsetWidth;
+          const height = rect.height || container.offsetHeight;
+          
+          // Comprehensive diagnostic logging
+          const computed = window.getComputedStyle(container);
+          console.log('[BPMN ViewerEnhanced] Container dimensions check:', {
+            offsetWidth: container.offsetWidth,
+            offsetHeight: container.offsetHeight,
+            clientWidth: container.clientWidth,
+            clientHeight: container.clientHeight,
+            'boundingRect.width': rect.width,
+            'boundingRect.height': rect.height,
+            'computedStyle.width': computed.width,
+            'computedStyle.height': computed.height,
+            hasValidDimensions: width > 0 && height > 0
+          });
+          
+          return width > 0 && height > 0;
+        };
+        
+        // Helper function to wait for valid container dimensions
+        const waitForValidDimensions = (container, callback, maxAttempts = 50) => {
+          let attempts = 0;
+          const checkDimensions = () => {
+            if (hasValidDimensions(container)) {
+              console.log(`[BPMN ViewerEnhanced] Valid dimensions found after ${attempts} RAF cycles`);
+              callback();
+            } else if (attempts < maxAttempts) {
+              attempts++;
+              requestAnimationFrame(checkDimensions);
+            } else {
+              console.warn('[BPMN ViewerEnhanced] WARNING: Gave up waiting for valid container dimensions after', maxAttempts, 'attempts');
+              // Try anyway as a last resort
+              callback();
+            }
+          };
+          requestAnimationFrame(checkDimensions);
+        };
+        
+        // Execute force canvas update with proper diagnostic logging
         const forceCanvasUpdate = () => {
           if (viewerRef.current) {
             try {
               const canvas = viewerRef.current.get('canvas');
+              const container = containerRef.current;
+              
+              // Log viewport transform before update
+              const svg = container?.querySelector('svg');
+              const viewportGroup = svg?.querySelector('.viewport');
+              const transformBefore = viewportGroup?.getAttribute('transform');
+              
+              console.log('[BPMN ViewerEnhanced] Viewport transform before force update:', transformBefore || 'none');
+              
               // Trigger a canvas update by getting the viewbox
               canvas.viewbox();
               // Force a repaint by slightly adjusting zoom and resetting
@@ -349,9 +399,17 @@ const BPMNViewerEnhanced = () => {
               canvas.zoom(currentZoom);
               
               // Also trigger a scroll event which can force repaints
-              const container = containerRef.current;
               if (container) {
                 container.scrollTop = container.scrollTop;
+              }
+              
+              // Log viewport transform after update
+              const transformAfter = viewportGroup?.getAttribute('transform');
+              console.log('[BPMN ViewerEnhanced] Viewport transform after force update:', transformAfter || 'none');
+              
+              // Check for all-zeros transform (failure indicator)
+              if (transformAfter && transformAfter.includes('matrix(0 0 0 0 0 0)')) {
+                console.log('[BPMN ViewerEnhanced] WARNING: Viewport transform is all zeros after force update!');
               }
             } catch (canvasError) {
               console.warn('⚠️ BPMNViewerEnhanced: Could not force canvas update:', canvasError);
@@ -359,10 +417,27 @@ const BPMNViewerEnhanced = () => {
           }
         };
         
-        // Apply multiple times with increasing delays to ensure it works
-        setTimeout(forceCanvasUpdate, 50);
-        setTimeout(forceCanvasUpdate, 150);
-        setTimeout(forceCanvasUpdate, 300);
+        // Use nested requestAnimationFrame to ensure browser has painted
+        requestAnimationFrame(() => {
+          console.log('[BPMN ViewerEnhanced] First RAF callback: layout should be painted');
+          const container = containerRef.current;
+          
+          // Check if container has valid dimensions
+          if (!hasValidDimensions(container)) {
+            console.log('[BPMN ViewerEnhanced] Container dimensions not ready, waiting...');
+            waitForValidDimensions(container, () => {
+              console.log('[BPMN ViewerEnhanced] Container ready, proceeding with force update');
+              requestAnimationFrame(forceCanvasUpdate);
+            });
+          } else {
+            // Second RAF to ensure dynamic content is ready
+            console.log('[BPMN ViewerEnhanced] Container dimensions valid, proceeding with callback');
+            requestAnimationFrame(() => {
+              console.log('[BPMN ViewerEnhanced] Second RAF callback: executing force update');
+              forceCanvasUpdate();
+            });
+          }
+        });
         
         console.log('BPMN diagram loaded successfully');
         setLoading(false);
