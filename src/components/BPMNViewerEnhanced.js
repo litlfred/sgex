@@ -274,12 +274,95 @@ const BPMNViewerEnhanced = () => {
           setSelectedElement(event.element);
         });
         
-        // Initialize zoom level
+        // Initialize zoom level and fit diagram to viewport with element scanning
         const canvas = viewerRef.current.get('canvas');
+        
+        // Get the element registry to scan all visual elements
+        const elementRegistry = viewerRef.current.get('elementRegistry');
+        const allElements = elementRegistry.getAll();
+        
+        console.log(`📊 BPMNViewerEnhanced: Found ${allElements.length} elements in diagram`);
+        
+        // Calculate the bounds of all elements to ensure proper viewport
+        if (allElements.length > 0) {
+          let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+          let validElementCount = 0;
+          
+          allElements.forEach(element => {
+            if (element.x !== undefined && element.y !== undefined && element.width && element.height) {
+              minX = Math.min(minX, element.x);
+              minY = Math.min(minY, element.y);
+              maxX = Math.max(maxX, element.x + element.width);
+              maxY = Math.max(maxY, element.y + element.height);
+              validElementCount++;
+            }
+          });
+          
+          console.log(`📐 BPMNViewerEnhanced: Found ${validElementCount} valid positioned elements`);
+          
+          // Only use calculated bounds if we found valid elements
+          if (validElementCount > 0 && minX !== Infinity && maxX !== -Infinity) {
+            // Add padding around the diagram
+            const padding = 50;
+            const diagramBounds = {
+              x: minX - padding,
+              y: minY - padding,
+              width: (maxX - minX) + (padding * 2),
+              height: (maxY - minY) + (padding * 2)
+            };
+            
+            console.log('📐 BPMNViewerEnhanced: Calculated diagram bounds:', diagramBounds);
+            
+            // Zoom to fit the actual diagram bounds
+            if (diagramBounds.width > 0 && diagramBounds.height > 0) {
+              canvas.viewbox(diagramBounds);
+              console.log('✅ BPMNViewerEnhanced: Set viewbox to diagram bounds');
+            } else {
+              // Fallback to fit-viewport if bounds calculation fails
+              canvas.zoom('fit-viewport');
+              console.log('⚠️ BPMNViewerEnhanced: Using fit-viewport fallback (invalid bounds)');
+            }
+          } else {
+            // No valid positioned elements, use standard fit-viewport
+            canvas.zoom('fit-viewport');
+            console.log('⚠️ BPMNViewerEnhanced: Using fit-viewport fallback (no valid elements)');
+          }
+        } else {
+          // No elements, use standard fit-viewport
+          canvas.zoom('fit-viewport');
+          console.log('⚠️ BPMNViewerEnhanced: Using fit-viewport fallback (no elements)');
+        }
+        
         setZoomLevel(canvas.zoom());
         
-        // Fit the diagram to viewport
-        canvas.zoom('fit-viewport');
+        // Force canvas update to ensure diagram is immediately visible
+        // This prevents the issue where diagram requires a drag/mouse interaction to appear
+        // Use multiple strategies to ensure rendering
+        const forceCanvasUpdate = () => {
+          if (viewerRef.current) {
+            try {
+              const canvas = viewerRef.current.get('canvas');
+              // Trigger a canvas update by getting the viewbox
+              canvas.viewbox();
+              // Force a repaint by slightly adjusting zoom and resetting
+              const currentZoom = canvas.zoom();
+              canvas.zoom(currentZoom);
+              
+              // Also trigger a scroll event which can force repaints
+              const container = containerRef.current;
+              if (container) {
+                container.scrollTop = container.scrollTop;
+              }
+            } catch (canvasError) {
+              console.warn('⚠️ BPMNViewerEnhanced: Could not force canvas update:', canvasError);
+            }
+          }
+        };
+        
+        // Apply multiple times with increasing delays to ensure it works
+        setTimeout(forceCanvasUpdate, 50);
+        setTimeout(forceCanvasUpdate, 150);
+        setTimeout(forceCanvasUpdate, 300);
         
         console.log('BPMN diagram loaded successfully');
         setLoading(false);

@@ -260,36 +260,189 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
             const canvas = viewer.get('canvas');
             console.log('🔍 BPMNPreview: Canvas service retrieved:', !!canvas);
             
-            const zoomStartTime = Date.now();
-            canvas.zoom('fit-viewport');
-            const zoomTime = Date.now() - zoomStartTime;
-            
-            console.log(`✅ BPMNPreview: Successfully fitted to viewport in ${zoomTime}ms`);
-
-            // Force immediate visibility for preview
-            setTimeout(() => {
-              if (containerRef.current) {
-                const svgElement = containerRef.current.querySelector('svg');
-                if (svgElement) {
-                  svgElement.style.opacity = '1';
-                  svgElement.style.visibility = 'visible';
-                  console.log('🎨 BPMNPreview: Forced SVG visibility');
-                }
-              }
-            }, 50);
-
-            // Final validation - check if diagram was actually rendered
-            const viewbox = canvas.viewbox();
-            console.log('🔍 BPMNPreview: Final viewport details:', {
-              viewbox,
-              hasElements: viewbox.inner?.width > 0 && viewbox.inner?.height > 0,
-              containerHasContent: containerRef.current?.children?.length > 0
+            // Log SVG state before zoom
+            const svgBefore = containerRef.current?.querySelector('svg');
+            console.log('📐 BPMNPreview: SVG state BEFORE zoom:', {
+              exists: !!svgBefore,
+              width: svgBefore?.getAttribute('width'),
+              height: svgBefore?.getAttribute('height'),
+              viewBox: svgBefore?.getAttribute('viewBox'),
+              style: {
+                display: svgBefore?.style.display,
+                visibility: svgBefore?.style.visibility,
+                opacity: svgBefore?.style.opacity,
+                width: svgBefore?.style.width,
+                height: svgBefore?.style.height
+              },
+              computedStyle: svgBefore ? {
+                display: window.getComputedStyle(svgBefore).display,
+                visibility: window.getComputedStyle(svgBefore).visibility,
+                opacity: window.getComputedStyle(svgBefore).opacity
+              } : null,
+              childCount: svgBefore?.children?.length || 0
             });
             
-            // Check if container actually has content
-            if (containerRef.current?.children?.length === 0) {
-              console.warn('⚠️ BPMNPreview: Container is empty after rendering - potential issue');
-            }
+            // Always use fit-viewport for previews - it's reliable and works well for small containers
+            // Wait a tick to ensure container dimensions are available, then zoom
+            setTimeout(() => {
+              try {
+                canvas.zoom('fit-viewport');
+                console.log('✅ BPMNPreview: Zoom to fit-viewport completed');
+              } catch (zoomError) {
+                console.error('❌ BPMNPreview: Zoom failed:', zoomError);
+              }
+            }, 0);
+            
+            // Log viewport and SVG state after zoom
+            const viewboxAfterZoom = canvas.viewbox();
+            const svgAfter = containerRef.current?.querySelector('svg');
+            console.log('📐 BPMNPreview: Viewport state AFTER zoom:', {
+              viewbox: viewboxAfterZoom,
+              outer: viewboxAfterZoom?.outer,
+              inner: viewboxAfterZoom?.inner,
+              scale: viewboxAfterZoom?.scale,
+              containerDimensions: {
+                width: containerRef.current?.offsetWidth,
+                height: containerRef.current?.offsetHeight,
+                clientWidth: containerRef.current?.clientWidth,
+                clientHeight: containerRef.current?.clientHeight
+              },
+              svgAttributes: {
+                width: svgAfter?.getAttribute('width'),
+                height: svgAfter?.getAttribute('height'),
+                viewBox: svgAfter?.getAttribute('viewBox'),
+                transform: svgAfter?.getAttribute('transform')
+              },
+              svgStyles: {
+                display: svgAfter?.style.display,
+                visibility: svgAfter?.style.visibility,
+                opacity: svgAfter?.style.opacity,
+                backgroundColor: svgAfter?.style.backgroundColor
+              },
+              svgComputedStyles: svgAfter ? {
+                display: window.getComputedStyle(svgAfter).display,
+                visibility: window.getComputedStyle(svgAfter).visibility,
+                opacity: window.getComputedStyle(svgAfter).opacity,
+                backgroundColor: window.getComputedStyle(svgAfter).backgroundColor
+              } : null
+            });
+            
+            console.log(`✅ BPMNPreview: Successfully fitted to viewport`);
+
+
+            // Force canvas update to ensure diagram is immediately visible
+            // This prevents the issue where diagram requires a drag/mouse interaction to appear
+            // Use multiple strategies to ensure rendering
+            const forceCanvasUpdate = () => {
+              if (viewer && containerRef.current) {
+                try {
+                  const canvas = viewer.get('canvas');
+                  // Trigger a canvas update by getting the viewbox
+                  const currentViewbox = canvas.viewbox();
+                  // Force a repaint by slightly adjusting zoom and resetting
+                  const currentZoom = canvas.zoom();
+                  canvas.zoom(currentZoom);
+                  
+                  // Also force SVG visibility
+                  const svgElement = containerRef.current.querySelector('svg');
+                  if (svgElement) {
+                    svgElement.style.opacity = '1';
+                    svgElement.style.visibility = 'visible';
+                    svgElement.style.display = 'block';
+                  }
+                  
+                  // Trigger a scroll event which can force repaints
+                  if (containerRef.current) {
+                    containerRef.current.scrollTop = containerRef.current.scrollTop;
+                  }
+                  
+                  console.log('🎨 BPMNPreview: Forced SVG visibility and canvas update', {
+                    viewbox: currentViewbox,
+                    zoom: currentZoom,
+                    svgVisible: svgElement?.style.visibility,
+                    svgOpacity: svgElement?.style.opacity,
+                    svgDisplay: svgElement?.style.display
+                  });
+                } catch (canvasError) {
+                  console.warn('⚠️ BPMNPreview: Could not force canvas update:', canvasError);
+                }
+              }
+            };
+            
+            // Apply multiple times with increasing delays to ensure it works
+            // Start after zoom has had time to complete
+            setTimeout(forceCanvasUpdate, 100);
+            setTimeout(forceCanvasUpdate, 200);
+            setTimeout(forceCanvasUpdate, 400);
+
+            // Final validation - check if diagram was actually rendered
+            setTimeout(() => {
+              const viewbox = canvas.viewbox();
+              const svgFinal = containerRef.current?.querySelector('svg');
+              const gElements = svgFinal?.querySelectorAll('g') || [];
+              const shapeElements = svgFinal?.querySelectorAll('[data-element-id]') || [];
+              
+              console.log('🔍 BPMNPreview: Final rendering state:', {
+                viewbox: {
+                  outer: viewbox?.outer,
+                  inner: viewbox?.inner,
+                  scale: viewbox?.scale
+                },
+                svg: {
+                  exists: !!svgFinal,
+                  width: svgFinal?.getAttribute('width'),
+                  height: svgFinal?.getAttribute('height'),
+                  viewBox: svgFinal?.getAttribute('viewBox'),
+                  childCount: svgFinal?.children?.length || 0,
+                  gElementCount: gElements.length,
+                  shapeElementCount: shapeElements.length,
+                  style: {
+                    display: svgFinal?.style.display,
+                    visibility: svgFinal?.style.visibility,
+                    opacity: svgFinal?.style.opacity
+                  },
+                  computedStyle: svgFinal ? {
+                    display: window.getComputedStyle(svgFinal).display,
+                    visibility: window.getComputedStyle(svgFinal).visibility,
+                    opacity: window.getComputedStyle(svgFinal).opacity,
+                    backgroundColor: window.getComputedStyle(svgFinal).backgroundColor,
+                    fill: window.getComputedStyle(svgFinal).fill
+                  } : null
+                },
+                container: {
+                  hasChildren: containerRef.current?.children?.length || 0,
+                  dimensions: {
+                    offsetWidth: containerRef.current?.offsetWidth,
+                    offsetHeight: containerRef.current?.offsetHeight,
+                    scrollWidth: containerRef.current?.scrollWidth,
+                    scrollHeight: containerRef.current?.scrollHeight
+                  },
+                  style: {
+                    display: containerRef.current?.style.display,
+                    visibility: containerRef.current?.style.visibility,
+                    backgroundColor: containerRef.current?.style.backgroundColor
+                  },
+                  computedStyle: containerRef.current ? {
+                    display: window.getComputedStyle(containerRef.current).display,
+                    visibility: window.getComputedStyle(containerRef.current).visibility,
+                    backgroundColor: window.getComputedStyle(containerRef.current).backgroundColor
+                  } : null
+                },
+                hasElements: viewbox?.inner?.width > 0 && viewbox?.inner?.height > 0,
+                containerHasContent: containerRef.current?.children?.length > 0
+              });
+              
+              // Check if container actually has content
+              if (containerRef.current?.children?.length === 0) {
+                console.error('❌ BPMNPreview: Container is EMPTY after rendering - CRITICAL ISSUE');
+              } else if (!svgFinal) {
+                console.error('❌ BPMNPreview: No SVG element found after rendering - CRITICAL ISSUE');
+              } else if (shapeElements.length === 0) {
+                console.warn('⚠️ BPMNPreview: SVG exists but has no BPMN shape elements - possible rendering issue');
+              } else {
+                console.log(`✅ BPMNPreview: Diagram appears to be properly rendered with ${shapeElements.length} shapes`);
+              }
+            }, 500);
 
             console.log(`🎉 BPMNPreview: Successfully rendered preview for: ${file.name}`);
             setLoading(false);
@@ -357,30 +510,24 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
     return cleanup;
   }, [file, repository, selectedBranch, profile]);
 
-  if (loading) {
-    return (
-      <div className="bpmn-preview">
+  return (
+    <div className="bpmn-preview">
+      {loading && (
         <div className="preview-loading">
           <div className="preview-spinner"></div>
           <span>Loading preview...</span>
         </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="bpmn-preview">
+      )}
+      {error && (
         <div className="preview-error">
           <span>❌ {error}</span>
         </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="bpmn-preview">
-      <div className="preview-container" ref={containerRef}>
+      )}
+      <div 
+        className="preview-container" 
+        ref={containerRef}
+        style={{ display: loading || error ? 'none' : 'block' }}
+      >
         {/* BPMN viewer will be rendered here */}
       </div>
     </div>

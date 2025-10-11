@@ -348,11 +348,7 @@ const BusinessProcessSelection = () => {
                   <div className="file-header">
                     <div className="file-icon">🔄</div>
                     <div className="file-details">
-                      <h3 className="file-name">{file.name}</h3>
-                      <div className="file-info-compact">
-                        <span className="file-path">{file.path}</span>
-                        <span className="file-size">{(file.size / 1024).toFixed(1)} KB</span>
-                      </div>
+                      <h3 className="file-name">{file.name} · {(file.size / 1024).toFixed(1)} KB</h3>
                     </div>
                   </div>
 
