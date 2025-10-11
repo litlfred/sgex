@@ -36,7 +36,7 @@ class PRCommentManager:
     # Allowed stages to prevent injection
     ALLOWED_STAGES = {
         'started', 'setup', 'building', 'deploying', 'verifying', 
-        'success', 'failure', 'pages-built'
+        'success', 'failure', 'pages-built', 'security-check'
     }
     
     def __init__(self, token: str, repo: str, pr_number: int, action_id: Optional[str] = None, 
@@ -445,6 +445,45 @@ class PRCommentManager:
 <a href="{branch_url}"><img src="https://img.shields.io/badge/Preview_URL-brightgreen?style=for-the-badge&logo=github&label=%F0%9F%8C%90&labelColor=gray" alt="Open Branch Preview"/></a>
 <a href="{workflow_url}"><img src="https://img.shields.io/badge/Build_Logs-gray?style=for-the-badge&logo=github" alt="Build Logs"/></a>"""
             timeline_entry = f"- **{timestamp}** - 🟢 {step_link} - Complete"
+        
+        elif stage == 'security-check':
+            # Security check stage - read the security comment from file
+            security_comment_path = data.get('security_comment_path', 'security-comment.md')
+            security_comment = ""
+            
+            try:
+                import os
+                if os.path.exists(security_comment_path):
+                    with open(security_comment_path, 'r') as f:
+                        security_comment = f.read()
+                else:
+                    security_comment = "Security check results not available"
+            except Exception as e:
+                security_comment = f"Error reading security check results: {str(e)}"
+            
+            # Extract summary from security comment
+            status_icon = "🟢"
+            status_text = "Security checks passed"
+            if "ISSUES FOUND" in security_comment or "ACTION REQUIRED" in security_comment:
+                status_icon = "🔴"
+                status_text = "Security issues detected"
+            elif "WARNINGS" in security_comment:
+                status_icon = "🟡"
+                status_text = "Security warnings"
+            
+            status_line = f"<h2>🔒 Security Check Status: {status_text.title()} {status_icon}</h2>"
+            next_step = f"**Status:** Security scan completed"
+            
+            # Include the full security report in the actions section
+            actions = f"""<h3>🔒 Security Report</h3>
+
+{security_comment}
+
+<h3>🔗 Quick Actions</h3>
+
+<a href="{workflow_url}"><img src="https://img.shields.io/badge/Build_Logs-gray?style=for-the-badge&logo=github" alt="Build Logs"/></a>"""
+            
+            timeline_entry = f"- **{timestamp}** - {status_icon} Security Check - {status_text}"
         
         elif stage == 'success':
             status_line = "<h2>🚀 Deployment Status: Successfully Deployed 🟢</h2>"

@@ -1,0 +1,99 @@
+{
+  "timestamp": "2025-10-11T12:23:11.528Z",
+  "summary": {
+    "overallStatus": "warn",
+    "overallSeverity": "moderate",
+    "passed": 5,
+    "warned": 1,
+    "failed": 0,
+    "skipped": 0,
+    "info": 1,
+    "total": 7
+  },
+  "checks": [
+    {
+      "name": "NPM Audit",
+      "id": "npm-audit",
+      "status": "pass",
+      "severity": "none",
+      "summary": "No vulnerabilities found",
+      "details": {
+        "total": 0,
+        "critical": 0,
+        "high": 0,
+        "moderate": 0,
+        "low": 0
+      },
+      "recommendation": null
+    },
+    {
+      "name": "Outdated Dependencies",
+      "id": "outdated-deps",
+      "status": "info",
+      "severity": "low",
+      "summary": "9 outdated packages (0 major versions behind)",
+      "details": {
+        "total": 9,
+        "criticalPackages": []
+      },
+      "recommendation": "Review outdated packages and update where possible"
+    },
+    {
+      "name": "ESLint Security",
+      "id": "eslint-security",
+      "status": "pass",
+      "severity": "high",
+      "summary": "No security-related linting issues",
+      "details": {
+        "securityIssues": 0,
+        "errors": 249,
+        "warnings": 368
+      },
+      "recommendation": null
+    },
+    {
+      "name": "Security Headers",
+      "id": "security-headers",
+      "status": "warn",
+      "severity": "moderate",
+      "summary": "Some security headers missing in source",
+      "details": {
+        "hasCSP": true,
+        "hasXFrame": false,
+        "sourceOnly": true
+      },
+      "recommendation": "Ensure all security headers are properly defined"
+    },
+    {
+      "name": "License Compliance",
+      "id": "license-check",
+      "status": "pass",
+      "severity": "none",
+      "summary": "No problematic licenses detected",
+      "details": {
+        "issues": []
+      },
+      "recommendation": null
+    },
+    {
+      "name": "Secret Scanning",
+      "id": "secret-scan",
+      "status": "pass",
+      "severity": "none",
+      "summary": "No potential secrets detected in code",
+      "details": {
+        "findings": []
+      },
+      "recommendation": null
+    },
+    {
+      "name": "Framework Compliance",
+      "id": "framework-compliance",
+      "status": "pass",
+      "severity": "none",
+      "summary": "Framework compliance checks passed",
+      "details": {},
+      "recommendation": null
+    }
+  ]
+}

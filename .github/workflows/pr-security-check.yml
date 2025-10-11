@@ -1,0 +1,171 @@
+name: PR Security Check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'scripts/**'
+      - '.github/workflows/**'
+  # Also run on pushes to feature branches
+  push:
+    branches-ignore:
+      - main
+      - develop
+      - gh-pages
+      - deploy
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'scripts/**'
+      - '.github/workflows/**'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  security-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Get PR information
+        id: pr_info
+        uses: actions/github-script@v8
+        with:
+          script: |
+            let prNumber = null;
+            
+            if (context.payload.pull_request) {
+              // Direct PR event
+              prNumber = context.payload.pull_request.number;
+            } else if (context.eventName === 'push') {
+              // Push event - find associated PR
+              const branchName = context.ref.replace('refs/heads/', '');
+              const { data: prs } = await github.rest.pulls.list({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                head: `${context.repo.owner}:${branchName}`
+              });
+              
+              if (prs.length > 0) {
+                prNumber = prs[0].number;
+              }
+            }
+            
+            console.log(`PR Number: ${prNumber}`);
+            core.setOutput('pr_number', prNumber || '');
+            
+            return prNumber;
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+        continue-on-error: false
+
+      - name: Run security checks
+        id: security_check
+        continue-on-error: true
+        run: |
+          echo "🔒 Running comprehensive security checks..."
+          
+          # Run the security check script
+          node scripts/run-security-checks.js
+          
+          # Capture exit code
+          exit_code=$?
+          echo "security_exit_code=$exit_code" >> $GITHUB_OUTPUT
+          
+          # Always continue to format the comment even if checks fail
+          exit 0
+
+      - name: Format security comment
+        id: format_comment
+        if: always()
+        run: |
+          echo "📝 Formatting security check results..."
+          
+          # Check if results file exists
+          if [ -f "security-check-results.json" ]; then
+            node scripts/format-security-comment.js
+            echo "comment_available=true" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️ Security check results not found"
+            echo "comment_available=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update PR comment
+        if: always() && steps.pr_info.outputs.pr_number != '' && steps.format_comment.outputs.comment_available == 'true'
+        continue-on-error: true
+        run: |
+          python3 scripts/manage-security-comment.py \
+            --token "${{ secrets.GITHUB_TOKEN }}" \
+            --repo "${{ github.repository }}" \
+            --pr "${{ steps.pr_info.outputs.pr_number }}" \
+            --comment-file "security-comment.md"
+
+      - name: Set status check
+        if: always() && steps.pr_info.outputs.pr_number != ''
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const exitCode = '${{ steps.security_check.outputs.security_exit_code }}';
+            const prNumber = '${{ steps.pr_info.outputs.pr_number }}';
+            
+            // Read results to get more details
+            const fs = require('fs');
+            let summary = 'Security checks completed';
+            let conclusion = 'success';
+            
+            try {
+              if (fs.existsSync('security-check-results.json')) {
+                const results = JSON.parse(fs.readFileSync('security-check-results.json', 'utf8'));
+                const s = results.summary;
+                
+                if (s.failed > 0) {
+                  conclusion = 'failure';
+                  summary = `Security issues found: ${s.failed} failed, ${s.warned} warnings`;
+                } else if (s.warned > 0) {
+                  conclusion = 'neutral';
+                  summary = `Security warnings: ${s.warned} warnings, ${s.passed} passed`;
+                } else {
+                  conclusion = 'success';
+                  summary = `All security checks passed: ${s.passed} checks`;
+                }
+              }
+            } catch (e) {
+              console.error('Error reading results:', e);
+            }
+            
+            console.log(`Security check conclusion: ${conclusion}`);
+            console.log(`Summary: ${summary}`);
+            
+            // Don't fail the workflow for warnings
+            if (conclusion === 'failure') {
+              core.setFailed(summary);
+            }
+
+      - name: Upload security results as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-check-results
+          path: |
+            security-check-results.json
+            security-comment.md
+          retention-days: 30
