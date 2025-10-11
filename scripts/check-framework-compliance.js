@@ -28,7 +28,11 @@ const COMPLIANCE_RULES = {
   BACKGROUND_STYLING: 'Pages should use consistent WHO blue gradient background',
   STAGING_GROUND_INTEGRATION: 'Asset editors must integrate with stagingGroundService for local changes',
   DATA_ACCESS_LAYER: 'Components with data operations should use dataAccessLayer',
-  BRANCH_CONTEXT_AWARENESS: 'DAK components should use branchContextService for branch awareness'
+  BRANCH_CONTEXT_AWARENESS: 'DAK components should use branchContextService for branch awareness',
+  ISSUE_TRACKING_INTEGRATION: 'Workflow components should integrate with issueTrackingService',
+  BOOKMARK_INTEGRATION: 'Navigation components should support bookmarkService for bookmarking',
+  HELP_CONTENT_REGISTRATION: 'Complex pages should register help content with helpContentService',
+  TUTORIAL_INTEGRATION: 'Feature-rich pages should integrate tutorials for user onboarding'
 };
 
 // Legacy manual exclusion list - kept for reference but now uses automatic detection
@@ -302,7 +306,7 @@ class ComplianceChecker {
     const compliance = {
       name: componentName,
       score: 0,
-      maxScore: 12, // Increased from 9 to 12 for new service integration checks
+      maxScore: 16, // Increased from 12 to 16 for additional service integration checks
       checks: {},
       issues: [],
       suggestions: []
@@ -488,6 +492,71 @@ class ComplianceChecker {
     } else {
       compliance.issues.push('DAK component should use branchContextService');
       compliance.suggestions.push('Import and use branchContextService for branch context awareness');
+    }
+
+    // Check 13: Issue Tracking Service Integration (LOW PRIORITY)
+    // Workflow components should integrate with issueTrackingService
+    const hasIssueTracking = content.includes('issueTrackingService') || 
+                             content.includes('useIssueTracking');
+    const isWorkflowComponent = /Workflow|Issue|Bug|Tracking/.test(componentName) ||
+                               content.includes('workflow') ||
+                               content.includes('issue tracking');
+    
+    compliance.checks.issueTrackingIntegration = !isWorkflowComponent || hasIssueTracking;
+    if (!isWorkflowComponent || hasIssueTracking) {
+      compliance.score++;
+    } else {
+      compliance.issues.push('Workflow component should use issueTrackingService');
+      compliance.suggestions.push('Import and use issueTrackingService for issue tracking features');
+    }
+
+    // Check 14: Bookmark Service Integration (LOW PRIORITY)
+    // Navigation components should support bookmarkService for bookmarking
+    const hasBookmarkService = content.includes('bookmarkService') || 
+                               content.includes('useBookmark');
+    const isNavigationComponent = /Navigation|Selection|Dashboard|Manager/.test(componentName) ||
+                                 content.includes('navigation') ||
+                                 (content.includes('useNavigate') && content.length > 500);
+    
+    compliance.checks.bookmarkIntegration = !isNavigationComponent || hasBookmarkService;
+    if (!isNavigationComponent || hasBookmarkService) {
+      compliance.score++;
+    } else {
+      compliance.issues.push('Navigation component should support bookmarkService');
+      compliance.suggestions.push('Import and use bookmarkService to enable page bookmarking');
+    }
+
+    // Check 15: Help Content Registration (LOW PRIORITY)
+    // Complex pages should register help content with helpContentService
+    const hasHelpContent = content.includes('helpContentService') ||
+                          content.includes('registerHelpContent');
+    const isComplexPage = content.length > 800 || // Large component
+                         content.includes('Form') ||
+                         content.includes('Editor') ||
+                         content.includes('Manager');
+    
+    compliance.checks.helpContentRegistration = !isComplexPage || hasHelpContent;
+    if (!isComplexPage || hasHelpContent) {
+      compliance.score++;
+    } else {
+      compliance.issues.push('Complex page should register help content');
+      compliance.suggestions.push('Register help topics with helpContentService for user assistance');
+    }
+
+    // Check 16: Tutorial Integration (LOW PRIORITY)
+    // Feature-rich pages should integrate tutorials for user onboarding
+    const hasTutorialIntegration = content.includes('tutorialService') ||
+                                   content.includes('useTutorial') ||
+                                   content.includes('TutorialManager');
+    const isFeatureRichPage = /Editor|Manager|Configuration|Selection/.test(componentName) ||
+                             (content.includes('save') && content.includes('edit'));
+    
+    compliance.checks.tutorialIntegration = !isFeatureRichPage || hasTutorialIntegration;
+    if (!isFeatureRichPage || hasTutorialIntegration) {
+      compliance.score++;
+    } else {
+      compliance.issues.push('Feature-rich page should integrate tutorials');
+      compliance.suggestions.push('Add tutorial integration with tutorialService for user onboarding');
     }
 
     // Generate suggestions
