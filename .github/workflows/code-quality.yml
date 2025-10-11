@@ -296,9 +296,13 @@ jobs:
       id: compliance
       run: |
         # Run compliance check and save JSON output
-        node scripts/check-framework-compliance.js --json > compliance-report.json
+        node scripts/check-framework-compliance.js \
+          --json \
+          --commit-sha ${{ github.sha }} \
+          --workflow-url ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} \
+          > compliance-report.json
         
-        # Also show condensed output for workflow logs
+        # Show condensed output for workflow logs
         echo "=== Condensed Compliance Report ==="
         node scripts/check-framework-compliance.js --condensed
       continue-on-error: true

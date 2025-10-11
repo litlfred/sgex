@@ -134,7 +134,9 @@ class ComplianceChecker {
         }
       }
     } catch (error) {
-      console.warn('Could not parse lazyRouteUtils.js:', error.message);
+      if (this.options.format !== 'json') {
+        console.warn('Could not parse lazyRouteUtils.js:', error.message);
+      }
     }
 
     // Method 2: Extract from App.js as fallback
@@ -154,13 +156,17 @@ class ComplianceChecker {
           }
         }
       } catch (error) {
-        console.warn('Could not parse App.js:', error.message);
+        if (this.options.format !== 'json') {
+          console.warn('Could not parse App.js:', error.message);
+        }
       }
     }
 
     // Method 3: Scan components directory for React components
     if (components.length === 0) {
-      console.log('Falling back to directory scan...');
+      if (this.options.format !== 'json') {
+        console.log('Falling back to directory scan...');
+      }
       try {
         const componentFiles = fs.readdirSync(COMPONENTS_DIR)
           .filter(file => file.endsWith('.js') && !file.endsWith('.test.js'))
@@ -180,7 +186,9 @@ class ComplianceChecker {
           }
         }
       } catch (error) {
-        console.warn('Could not scan components directory:', error.message);
+        if (this.options.format !== 'json') {
+          console.warn('Could not scan components directory:', error.message);
+        }
       }
     }
 
