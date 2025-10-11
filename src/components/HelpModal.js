@@ -74,7 +74,7 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose, tutorialId }) => {
         // For bug reports, show the new integrated form only if authenticated
         if (issueType === 'bug') {
           // Check if user is authenticated
-          const isAuthenticated = githubService.isAuthenticated;
+          const isAuthenticated = githubService.isAuth();
           console.log('[HelpModal] Bug report clicked. Authenticated:', isAuthenticated);
           
           if (isAuthenticated) {

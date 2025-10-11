@@ -160,7 +160,7 @@ const BugReportForm = ({ onClose, contextData = {} }) => {
       const currentScreenshot = includeScreenshot ? screenshotBlob : null;
       
       // Check if user is authenticated and can submit via API
-      if (githubService.isAuthenticated) {
+      if (githubService.isAuth()) {
         const result = await bugReportService.submitIssue(
           repositoryConfig.getOwner(),
           repositoryConfig.getName(),
@@ -625,7 +625,7 @@ const BugReportForm = ({ onClose, contextData = {} }) => {
                 <ul>
                   <li><strong>Current Page:</strong> {contextData.pageId || 'Unknown'}</li>
                   <li><strong>URL:</strong> {window.location.href}</li>
-                  <li><strong>Authentication:</strong> {githubService.isAuthenticated ? 'Authenticated' : 'Demo Mode'}</li>
+                  <li><strong>Authentication:</strong> {githubService.isAuth() ? 'Authenticated' : 'Demo Mode'}</li>
                 </ul>
               </div>
               
@@ -681,7 +681,7 @@ const BugReportForm = ({ onClose, contextData = {} }) => {
             disabled={submitting || !selectedTemplate}
           >
             {submitting ? 'Opening...' : 
-             githubService.isAuthenticated ? 'Submit Issue' : 'Open in GitHub'}
+             githubService.isAuth() ? 'Submit Issue' : 'Open in GitHub'}
           </button>
           
           <button
@@ -706,7 +706,7 @@ const BugReportForm = ({ onClose, contextData = {} }) => {
 
         {/* Authentication Status */}
         <div className="auth-status">
-          {githubService.isAuthenticated ? (
+          {githubService.isAuth() ? (
             <p className="auth-info authenticated">
               ✅ Authenticated - Issues will be submitted directly to GitHub
             </p>
