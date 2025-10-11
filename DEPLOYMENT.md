@@ -212,6 +212,7 @@ The following additional workflows provide build quality, security, and feedback
 ### Code Quality & Compliance Workflows  
 - **Framework Compliance Check**: [`.github/workflows/framework-compliance.yml`](.github/workflows/framework-compliance.yml) - Validates page framework standards and TypeScript compliance
 - **Dependency Security Check**: [`.github/workflows/dependency-security.yml`](.github/workflows/dependency-security.yml) - Scans for security vulnerabilities in dependencies
+- **PR Security Check**: [`.github/workflows/pr-security-check.yml`](.github/workflows/pr-security-check.yml) - Comprehensive security checks on every PR build (npm audit, outdated dependencies, ESLint security, security headers, license compliance, secret scanning, framework compliance)
 
 ### Workflow Configuration Details
 All workflows include:
