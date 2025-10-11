@@ -342,7 +342,7 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
               });
               
               try {
-                canvas.zoom('fit-viewport', 'auto');
+                canvas.zoom('fit-viewport');
                 console.log('✅ BPMNPreview: Zoom to fit-viewport completed');
                 
                 // Log viewport transform after zoom

@@ -266,7 +266,7 @@ const BPMNViewerContent = () => {
           });
           
           try {
-            canvas.zoom('fit-viewport', 'auto');
+            canvas.zoom('fit-viewport');
             console.log('✅ BPMNViewer: Applied fit-viewport zoom');
             
             // Log viewport transform after zoom
