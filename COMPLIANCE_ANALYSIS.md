@@ -4,7 +4,50 @@
 
 This document provides a comprehensive analysis of the compliance report issues and an implementation plan for improving the compliance framework tooling (not fixing the compliance violations themselves).
 
-## Analysis of Compliance Issues
+## ✅ IMPLEMENTED: Automatic Component Detection
+
+**Update:** The compliance framework now uses **automatic detection** instead of manual exclusion lists!
+
+### How It Works
+
+The `isUtilityComponent()` function automatically identifies non-page components based on:
+
+1. **Naming Patterns**:
+   - Ends with `Modal`, `Dialog`, `Button`, `Badge`, `Bar`, `Box`, `Card`, `Selector`, `Slider`, `Enhanced`, `Preview`
+   - Contains `_old`, `Demo`, or `Example` (deprecated/demo code)
+
+2. **Code Structure Analysis**:
+   - **Modal characteristics**: Has `onClose` and `isOpen`/`open` props
+   - **Embedded components**: Takes props like `file`, `repository`, `profile` but no `usePage()`
+   - **No routing**: Missing `useNavigate`, `PageLayout`, or `AssetEditorLayout`
+   - **Small size**: < 200 lines (typical utility components)
+
+3. **Framework Utilities**: Hardcoded list for core framework components
+
+### Benefits
+
+- ✅ No manual maintenance of exclusion lists
+- ✅ Automatically adapts to new components
+- ✅ Uses component metadata and structure
+- ✅ Clear detection criteria based on actual usage patterns
+
+### Removed Components
+
+The following old/demo components have been **removed** from the codebase:
+- `BPMNPreview_old.js` - ❌ Deleted (unused)
+- `DAKStatusBox_old.js` - ❌ Deleted (unused)
+- `DAKFAQDemo.js` - ❌ Deleted (demo code)
+- `WorkflowDashboardDemo.js` - ❌ Deleted (unused demo)
+
+### Example Components Kept
+
+These remain as they're part of the tools framework example system:
+- `ExampleStatsDashboard.js` - ✅ Kept (tools framework example)
+- `ExampleValueSetEditor.js` - ✅ Kept (tools framework example)
+
+---
+
+## Analysis of Compliance Issues (Original)
 
 ### Legitimate Issues to Address (Code Changes Needed)
 

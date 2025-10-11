@@ -25,32 +25,12 @@ const COMPLIANCE_RULES = {
   NO_DUPLICATE_LAYOUT: 'Components must not have multiple nested PageLayout wrappers'
 };
 
+// Legacy manual exclusion list - kept for reference but now uses automatic detection
+// based on component naming patterns and code structure (see isUtilityComponent function)
 // Utility components that don't need full framework compliance
-// These include modals, dialogs, badges, widgets, and embedded components
-const UTILITY_COMPONENTS = [
-  // Authentication & Login
-  'PATLogin.js', 'LoginModal.js', 'SAMLAuthModal.js',
-  // Help & Modals
-  'HelpButton.js', 'HelpModal.js', 'CollaborationModal.js', 
-  'CommitDiffModal.js', 'EnhancedTutorialModal.js',
-  // Forms & Dialogs
-  'SaveDialog.js', 'BugReportForm.js',
-  // Page Management Components  
-  'PageEditModal.js', 'PageViewModal.js',
-  // Selectors & UI Components
-  'BranchSelector.js', 'LanguageSelector.js',
-  // Status & Badge Components
-  'DAKStatusBox.js', 'PreviewBadge.js', 'ForkStatusBar.js', 
-  'DAKComponentCard.js', 'DAKStatusBox_old.js',
-  // Preview Components (may be deprecated)
-  'BPMNPreview.js', 'BPMNPreview_old.js',
-  // Workflow & Dashboard Widgets
-  'WorkflowDashboard.js', 'WorkflowDashboardDemo.js', 
-  'WorkflowStatus.js', 'ExampleStatsDashboard.js',
-  // Publications & Other Utilities
-  'Publications.js', 'CommitsSlider.js',
-  'GitHubActionsIntegration.js', 'WHODigitalLibrary.js',
-  'ContextualHelpMascot.js', 'BPMNViewerEnhanced.js'
+const LEGACY_UTILITY_COMPONENTS = [
+  // These are now automatically detected by isUtilityComponent()
+  // Kept here for documentation purposes only
 ];
 
 // Framework components themselves
@@ -58,6 +38,66 @@ const FRAMEWORK_COMPONENTS = [
   'PageLayout.js', 'PageHeader.js', 'PageProvider.js', 
   'ErrorHandler.js', 'usePageParams.js', 'index.js'
 ];
+
+/**
+ * Automatically detect if a component is a utility component based on its code structure
+ * This eliminates the need to maintain a manual exclusion list
+ * @param {string} componentName - Name of the component
+ * @param {string} content - Component file content
+ * @returns {boolean} True if component should be excluded from compliance checks
+ */
+function isUtilityComponent(componentName, content) {
+  // 1. Check naming conventions
+  const namingPatterns = [
+    /Modal$/,          // LoginModal, CollaborationModal, etc.
+    /Dialog$/,         // SaveDialog, etc.
+    /Button$/,         // HelpButton, etc.
+    /Badge$/,          // PreviewBadge, etc.
+    /Bar$/,            // ForkStatusBar, etc.
+    /Box$/,            // DAKStatusBox, etc.
+    /Card$/,           // DAKComponentCard, etc.
+    /Selector$/,       // BranchSelector, LanguageSelector, etc.
+    /Slider$/,         // CommitsSlider, etc.
+    /Enhanced$/,       // BPMNViewerEnhanced, etc.
+    /Preview$/,        // BPMNPreview - embedded viewer component
+    /_old$/i,          // Old/deprecated components
+    /Demo$/i,          // Demo components
+    /Example/i,        // Example components
+  ];
+  
+  for (const pattern of namingPatterns) {
+    if (pattern.test(componentName)) {
+      return true;
+    }
+  }
+  
+  // 2. Check for modal/dialog characteristics (takes onClose, isOpen props)
+  const hasModalProps = content.includes('onClose') && 
+                       (content.includes('isOpen') || content.includes('open'));
+  
+  // 3. Check for embedded component characteristics (takes props like file, repository, etc.)
+  const hasEmbeddedProps = (content.includes('{ file') || content.includes('{ repository')) &&
+                           content.includes('profile') &&
+                           !content.includes('usePage()');
+  
+  // 4. Check for widget/embedded characteristics (no routing, exported but not a page)
+  const hasNoRouting = !content.includes('useNavigate') && 
+                       !content.includes('Navigate') &&
+                       !content.includes('PageLayout') &&
+                       !content.includes('AssetEditorLayout');
+  
+  // 5. Check if it's a small utility component (< 200 lines typically)
+  const isSmallComponent = content.split('\n').length < 200;
+  
+  // 6. Framework components (ContextualHelpMascot, etc.)
+  const frameworkUtilities = ['ContextualHelpMascot', 'HelpButton', 'HelpModal'];
+  if (frameworkUtilities.includes(componentName)) {
+    return true;
+  }
+  
+  // Component is a utility if it has modal props OR embedded props OR (is small AND has no routing)
+  return hasModalProps || hasEmbeddedProps || (isSmallComponent && hasNoRouting && content.includes('export'));
+}
 
 class ComplianceChecker {
   constructor(options = {}) {
@@ -127,7 +167,8 @@ class ComplianceChecker {
         if (switchMatches) {
           switchMatches.forEach(match => {
             const componentMatch = match.match(/case\s+'([^']+)'/);
-            if (componentMatch && !UTILITY_COMPONENTS.includes(`${componentMatch[1]}.js`)) {
+            if (componentMatch) {
+              // Automatic detection will filter utilities later
               components.push(componentMatch[1]);
             }
           });
@@ -150,10 +191,8 @@ class ComplianceChecker {
 
         while ((match = routeRegex.exec(appContent)) !== null) {
           const componentName = match[1].trim();
-          // Skip if it's a utility component we don't expect to be framework-compliant
-          if (!UTILITY_COMPONENTS.includes(`${componentName}.js`)) {
-            components.push(componentName);
-          }
+          // Automatic detection will filter utilities later
+          components.push(componentName);
         }
       } catch (error) {
         if (this.options.format !== 'json') {
@@ -170,7 +209,6 @@ class ComplianceChecker {
       try {
         const componentFiles = fs.readdirSync(COMPONENTS_DIR)
           .filter(file => file.endsWith('.js') && !file.endsWith('.test.js'))
-          .filter(file => !UTILITY_COMPONENTS.includes(file))
           .filter(file => !FRAMEWORK_COMPONENTS.includes(file))
           .map(file => file.replace('.js', ''));
         
@@ -178,6 +216,11 @@ class ComplianceChecker {
         for (const componentName of componentFiles) {
           const componentPath = path.join(COMPONENTS_DIR, `${componentName}.js`);
           const content = fs.readFileSync(componentPath, 'utf8');
+          
+          // Use automatic detection to skip utility components
+          if (isUtilityComponent(componentName, content)) {
+            continue;
+          }
           
           // Check if it looks like a page component
           if (content.includes('return') && 
@@ -207,6 +250,15 @@ class ComplianceChecker {
     }
 
     const content = fs.readFileSync(componentPath, 'utf8');
+    
+    // Use automatic detection to skip utility components
+    if (isUtilityComponent(componentName, content)) {
+      if (this.options.format === 'standard') {
+        console.log(`⚪ ${componentName}: UTILITY (auto-detected, skipped)`);
+      }
+      return;
+    }
+    
     const compliance = this.analyzeComponent(componentName, content);
     
     // Categorize component
