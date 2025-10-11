@@ -120,6 +120,9 @@ export const PageProvider = ({ children, pageName }) => {
         let profile = location.state?.profile;
         let repository = location.state?.repository;
         let selectedBranch = location.state?.selectedBranch || params.branch || urlContext.branch;
+        
+        // Track if we have repository from navigation state to skip re-fetching
+        const hasRepositoryFromState = Boolean(repository && repository.name && repository.owner);
 
         // For DAK and Asset pages, validate and fetch data
         if (pageState.type === PAGE_TYPES.DAK || pageState.type === PAGE_TYPES.ASSET) {
@@ -160,7 +163,8 @@ export const PageProvider = ({ children, pageName }) => {
             }
           }
 
-          if (!repository && effectiveUser && effectiveRepo) {
+          // Only fetch repository if not provided via navigation state
+          if (!hasRepositoryFromState && !repository && effectiveUser && effectiveRepo) {
             if (githubService.isAuth()) {
               try {
                 repository = await githubService.getRepository(effectiveUser, effectiveRepo);
