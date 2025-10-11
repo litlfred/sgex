@@ -1,30 +1,25 @@
 /**
  * Utility function to get the appropriate image path based on the current theme
  * This can be used outside React components
- * @param {string} baseImagePath - The base image path (e.g., "sgex-mascot.png")
+ * @param {string} baseImagePath - The base image path (e.g., "sgex-mascot.png", "/sgex/cat-paw-icon.svg")
  * @returns {string} The theme-appropriate image path
  */
 export const getThemeImagePath = (baseImagePath) => {
   const isDarkMode = document.body.classList.contains('theme-dark');
   
-  // Get the correct base path for the deployment environment
-  const publicUrl = process.env.PUBLIC_URL || '';
-  
-  // Normalize the base image path (remove leading slash if present)
-  const normalizedPath = baseImagePath.startsWith('/') ? baseImagePath.slice(1) : baseImagePath;
-  
-  let finalPath;
   if (isDarkMode) {
     // Convert base image to dark mode version
     // e.g., "sgex-mascot.png" -> "sgex-mascot_grey_tabby.png"
-    const darkImageName = normalizedPath.replace(/\.png$/, '_grey_tabby.png');
-    finalPath = publicUrl ? `${publicUrl}/${darkImageName}` : `/${darkImageName}`;
-  } else {
-    // Use original image for light mode
-    finalPath = publicUrl ? `${publicUrl}/${normalizedPath}` : `/${normalizedPath}`;
+    // e.g., "/sgex/cat-paw-icon.svg" -> "/sgex/cat-paw-icon_dark.svg"
+    if (baseImagePath.endsWith('.svg')) {
+      return baseImagePath.replace(/\.svg$/, '_dark.svg');
+    } else if (baseImagePath.endsWith('.png')) {
+      return baseImagePath.replace(/\.png$/, '_grey_tabby.png');
+    }
   }
   
-  return finalPath;
+  // Return original path for light mode or unsupported file types
+  return baseImagePath;
 };
 
 export default getThemeImagePath;

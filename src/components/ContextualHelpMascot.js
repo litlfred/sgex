@@ -10,6 +10,7 @@ import HelpModal from './HelpModal';
 import TrackedItemsViewer from './TrackedItemsViewer';
 import LanguageSelector from './LanguageSelector';
 import useThemeImage from '../hooks/useThemeImage';
+import { getThemeImagePath } from '../utils/themeUtils';
 import { getSavedTheme, toggleTheme } from '../utils/themeManager';
 import { ALT_TEXT_KEYS, getAltText } from '../utils/imageAltTextHelper';
 
@@ -340,7 +341,7 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
                         >
                           {topic.badge && (
                             <img 
-                              src={topic.badge} 
+                              src={getThemeImagePath(topic.badge)} 
                               alt="" 
                               className="help-topic-badge"
                             />
