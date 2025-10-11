@@ -32,8 +32,11 @@ class DAKValidationService {
           console.log(`Repository ${owner}/${repo} exists on GitHub - allowing access even without sushi-config.yaml`);
           return true;
         }
-        console.log(`No sushi-config.yaml found in ${owner}/${repo} and repository doesn't exist`);
-        return false;
+        
+        // Be permissive when we can't verify repository existence - users should be able to browse
+        // to any repository they're given (e.g., shared via email) as it could be documentation
+        console.log(`Repository ${owner}/${repo} cannot be verified - allowing access as it may be documentation or shared content`);
+        return true;
       }
 
       // Parse the YAML content
@@ -74,13 +77,16 @@ class DAKValidationService {
           console.log(`Repository ${owner}/${repo} has sushi-config.yaml but missing smart.who.int.base dependency - allowing access since repository exists`);
           return true;
         }
-        console.log(`Repository ${owner}/${repo} has sushi-config.yaml but missing smart.who.int.base dependency`);
-        return false;
+        // Be permissive when repository cannot be verified - allow access as it may be documentation
+        console.log(`Repository ${owner}/${repo} has sushi-config.yaml but missing smart.who.int.base dependency - allowing access as it may be documentation`);
+        return true;
       }
 
     } catch (error) {
       console.log(`Error validating DAK repository ${owner}/${repo}:`, error.message);
-      return false;
+      // Be permissive when errors occur - allow access as repository might be documentation or shared content
+      console.log(`Allowing access to ${owner}/${repo} despite validation error - may be documentation or shared content`);
+      return true;
     }
   }
 
@@ -92,19 +98,9 @@ class DAKValidationService {
    */
   async checkRepositoryExists(owner, repo) {
     try {
-      // Use the same approach as githubService - get the octokit instance
-      const octokit = githubService.isAuth() ? githubService.octokit : null;
-      
-      if (!octokit) {
-        // In unauthenticated mode, we can't reliably check repository existence
-        console.log(`Cannot check repository existence for ${owner}/${repo} - not authenticated`);
-        return false;
-      }
-
-      await octokit.rest.repos.get({
-        owner,
-        repo
-      });
+      // Use the same approach as githubService.getRepository method for consistency
+      // This handles both authenticated and unauthenticated scenarios
+      await githubService.getRepository(owner, repo);
       
       console.log(`Repository ${owner}/${repo} exists on GitHub`);
       return true;
@@ -129,30 +125,15 @@ class DAKValidationService {
    */
   async fetchSushiConfig(owner, repo, branch = 'main') {
     try {
-      // Use the same approach as githubService - get the octokit instance
-      const octokit = githubService.isAuth() ? githubService.octokit : null;
-      
-      if (!octokit) {
-        // In unauthenticated mode, we can't fetch file contents reliably
-        console.log(`Cannot fetch sushi-config.yaml for ${owner}/${repo} - not authenticated`);
-        return null;
-      }
-
       // Try main branch first if no branch specified
       const branchesToTry = branch === 'main' ? ['main', 'master'] : [branch];
       
       for (const branchName of branchesToTry) {
         try {
-          const { data } = await octokit.rest.repos.getContent({
-            owner,
-            repo,
-            path: 'sushi-config.yaml',
-            ref: branchName
-          });
+          // Use githubService.getFileContent which handles both authenticated and unauthenticated cases
+          const content = await githubService.getFileContent(owner, repo, 'sushi-config.yaml', branchName);
           
-          if (data.type === 'file' && data.content) {
-            // Decode base64 content
-            const content = decodeURIComponent(escape(atob(data.content)));
+          if (content) {
             console.log(`Found sushi-config.yaml in ${owner}/${repo} on branch ${branchName}`);
             return content;
           }
