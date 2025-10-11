@@ -293,8 +293,15 @@ jobs:
       continue-on-error: false
 
     - name: Run Framework Compliance Check
-      run: npm run check-framework-compliance
-      continue-on-error: false
+      id: compliance
+      run: |
+        # Run compliance check and save JSON output
+        node scripts/check-framework-compliance.js --json > compliance-report.json
+        
+        # Also show condensed output for workflow logs
+        echo "=== Condensed Compliance Report ==="
+        node scripts/check-framework-compliance.js --condensed
+      continue-on-error: true
 
     - name: Run Profile Creation Compliance Check
       run: npm run compliance:profile
@@ -302,124 +309,18 @@ jobs:
 
     - name: Comment PR with compliance results
       if: always() && github.event_name == 'pull_request'
-      uses: actions/github-script@v8
-      with:
-        script: |
-          const { execSync } = require('child_process');
-          
-          try {
-            // Run framework compliance check and capture output
-            const frameworkOutput = execSync('npm run check-framework-compliance', { 
-              encoding: 'utf8',
-              cwd: process.cwd()
-            });
-            
-            // Run profile creation compliance check and capture output
-            let profileOutput = '';
-            let profileStatus = 'PASSED';
-            try {
-              profileOutput = execSync('npm run compliance:profile', { 
-                encoding: 'utf8',
-                cwd: process.cwd()
-              });
-            } catch (error) {
-              profileOutput = error.stdout || error.stderr || error.message;
-              profileStatus = 'FAILED';
-            }
-            
-            // Create comment body
-            const commentBody = `## 🔍 Page Framework Compliance Check Results
-            
-            ### Framework Structure Compliance
-            ${frameworkOutput}
-            
-            ### Profile Creation Compliance
-            Status: ${profileStatus === 'PASSED' ? '✅ PASSED' : '❌ FAILED'}
-            
-            ${profileOutput}
-            
-            ---
-            
-            ### Next Steps
-            ${frameworkOutput.includes('NON-COMPLIANT') || profileStatus === 'FAILED' ? 
-              '❌ **Action Required**: Fix compliance violations before merging.' :
-              frameworkOutput.includes('PARTIAL') ?
-                '⚠️ **Recommended**: Consider addressing partial compliance issues.' :
-                '✅ **All Good**: All framework compliance checks passed!'
-            }
-            
-            For guidance, see:
-            - [Page Framework Documentation](../docs/page-framework.md)  
-            - [Profile Creation Compliance Requirements](../docs/page-framework.md#profile-creation-compliance-requirements)
-            `;
-            
-            // Get pull request number
-            const prNumber = context.payload.pull_request?.number;
-            
-            if (!prNumber) {
-              console.log('No pull request number found, skipping comment');
-              return;
-            }
-            
-            // Find existing compliance comment
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: prNumber,
-            });
-            
-            const existingComment = comments.find(comment => 
-              comment.body.includes('Page Framework Compliance Check Results')
-            );
-            
-            if (existingComment) {
-              // Update existing comment
-              console.log('Updating existing compliance comment');
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: existingComment.id,
-                body: commentBody
-              });
-            } else {
-              // Create new comment
-              console.log('Creating new compliance comment');
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: prNumber,
-                body: commentBody
-              });
-            }
-            
-          } catch (error) {
-            console.error('Error running compliance check:', error);
-            
-            // Get pull request number for error reporting
-            const prNumber = context.payload.pull_request?.number;
-            
-            if (prNumber) {
-              try {
-                await github.rest.issues.createComment({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  issue_number: prNumber,
-                  body: `## ❌ Page Framework Compliance Check Failed
-                  
-                  The compliance check encountered an error:
-                  \`\`\`
-                  ${error.message}
-                  \`\`\`
-                  
-                  Please check the action logs for more details.`
-                });
-              } catch (commentError) {
-                console.error('Failed to create error comment:', commentError);
-              }
-            }
-            
-            // Don't exit with error code here - let the next step handle compliance failures
-          }
+      run: |
+        # Install Python dependencies
+        pip install requests
+        
+        # Update PR comment with compliance report
+        python3 scripts/manage-compliance-comment.py \
+          --token ${{ secrets.GITHUB_TOKEN }} \
+          --repo ${{ github.repository }} \
+          --pr ${{ github.event.pull_request.number }} \
+          --commit-sha ${{ github.sha }} \
+          --workflow-url ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} \
+          --report-file compliance-report.json
 
     - name: Fail on non-compliance
       run: |

@@ -26,10 +26,29 @@ const COMPLIANCE_RULES = {
 };
 
 // Utility components that don't need full framework compliance
+// These include modals, dialogs, badges, widgets, and embedded components
 const UTILITY_COMPONENTS = [
-  'PATLogin.js', 'HelpButton.js', 'HelpModal.js', 'SaveDialog.js',
-  'PageEditModal.js', 'PageViewModal.js', 'BranchSelector.js',
-  'DAKStatusBox.js', 'Publications.js', 'CommitsSlider.js',
+  // Authentication & Login
+  'PATLogin.js', 'LoginModal.js', 'SAMLAuthModal.js',
+  // Help & Modals
+  'HelpButton.js', 'HelpModal.js', 'CollaborationModal.js', 
+  'CommitDiffModal.js', 'EnhancedTutorialModal.js',
+  // Forms & Dialogs
+  'SaveDialog.js', 'BugReportForm.js',
+  // Page Management Components  
+  'PageEditModal.js', 'PageViewModal.js',
+  // Selectors & UI Components
+  'BranchSelector.js', 'LanguageSelector.js',
+  // Status & Badge Components
+  'DAKStatusBox.js', 'PreviewBadge.js', 'ForkStatusBar.js', 
+  'DAKComponentCard.js', 'DAKStatusBox_old.js',
+  // Preview Components (may be deprecated)
+  'BPMNPreview.js', 'BPMNPreview_old.js',
+  // Workflow & Dashboard Widgets
+  'WorkflowDashboard.js', 'WorkflowDashboardDemo.js', 
+  'WorkflowStatus.js', 'ExampleStatsDashboard.js',
+  // Publications & Other Utilities
+  'Publications.js', 'CommitsSlider.js',
   'GitHubActionsIntegration.js', 'WHODigitalLibrary.js',
   'ContextualHelpMascot.js', 'BPMNViewerEnhanced.js'
 ];
@@ -41,12 +60,18 @@ const FRAMEWORK_COMPONENTS = [
 ];
 
 class ComplianceChecker {
-  constructor() {
+  constructor(options = {}) {
     this.results = {
       compliant: [],
       partiallyCompliant: [],
       nonCompliant: [],
       errors: []
+    };
+    this.options = {
+      format: options.format || 'standard', // 'standard', 'condensed', 'pr-comment', 'json'
+      commitSha: options.commitSha || null,
+      workflowUrl: options.workflowUrl || null,
+      timestamp: options.timestamp || new Date().toISOString()
     };
   }
 
@@ -54,13 +79,19 @@ class ComplianceChecker {
    * Main entry point for compliance checking
    */
   async check() {
-    console.log('🔍 SGEX Page Framework Compliance Checker');
-    console.log('=========================================\n');
+    // Only show header for non-JSON formats
+    if (this.options.format !== 'json') {
+      console.log('🔍 SGEX Page Framework Compliance Checker');
+      console.log('=========================================\n');
+    }
 
     try {
       // Get all page components from routes
       const routeComponents = await this.getRouteComponents();
-      console.log(`Found ${routeComponents.length} routed page components\n`);
+      
+      if (this.options.format !== 'json') {
+        console.log(`Found ${routeComponents.length} routed page components\n`);
+      }
 
       // Check each component
       for (const component of routeComponents) {
@@ -179,7 +210,10 @@ class ComplianceChecker {
       this.results.nonCompliant.push(compliance);
     }
     
-    console.log(this.formatComponentResult(compliance));
+    // Only print individual results for non-JSON formats
+    if (this.options.format !== 'json') {
+      console.log(this.formatComponentResult(compliance));
+    }
   }
 
   /**
@@ -313,6 +347,143 @@ class ComplianceChecker {
    * Print overall results summary
    */
   printResults() {
+    // Choose format based on options
+    if (this.options.format === 'condensed' || this.options.format === 'pr-comment') {
+      this.printCondensedResults();
+    } else if (this.options.format === 'json') {
+      this.printJsonResults();
+    } else {
+      this.printStandardResults();
+    }
+  }
+
+  /**
+   * Print results in condensed format for better readability
+   */
+  printCondensedResults() {
+    const total = this.results.compliant.length + 
+                  this.results.partiallyCompliant.length + 
+                  this.results.nonCompliant.length;
+
+    const overallCompliance = Math.round(
+      (this.results.compliant.length / total) * 100
+    );
+
+    // Group issues by category
+    const issueCategories = {
+      nestedLayouts: [],
+      missingLayout: [],
+      customHeader: [],
+      manualHelp: [],
+      directParams: []
+    };
+
+    this.results.partiallyCompliant.forEach(comp => {
+      if (comp.issues.some(i => i.includes('layout components'))) {
+        issueCategories.nestedLayouts.push(comp);
+      }
+      if (comp.issues.some(i => i.includes('Missing PageLayout'))) {
+        issueCategories.missingLayout.push(comp);
+      }
+      if (comp.issues.some(i => i.includes('custom header'))) {
+        issueCategories.customHeader.push(comp);
+      }
+      if (comp.issues.some(i => i.includes('ContextualHelpMascot'))) {
+        issueCategories.manualHelp.push(comp);
+      }
+      if (comp.issues.some(i => i.includes('useParams'))) {
+        issueCategories.directParams.push(comp);
+      }
+    });
+
+    console.log('\n📊 COMPLIANCE SUMMARY');
+    console.log('====================');
+    console.log(`🟢 Compliant: ${this.results.compliant.length}/${total} (${overallCompliance}%)`);
+    console.log(`🟠 Partial: ${this.results.partiallyCompliant.length}/${total}`);
+    console.log(`🔴 Non-compliant: ${this.results.nonCompliant.length}/${total}`);
+
+    if (issueCategories.nestedLayouts.length > 0) {
+      console.log('\n📦 Nested Layouts (' + issueCategories.nestedLayouts.length + ' components):');
+      issueCategories.nestedLayouts
+        .sort((a, b) => {
+          const aCount = parseInt(a.issues[0].match(/\d+/)?.[0] || '0');
+          const bCount = parseInt(b.issues[0].match(/\d+/)?.[0] || '0');
+          return bCount - aCount;
+        })
+        .forEach(comp => {
+          const layoutCount = comp.issues[0].match(/Found (\d+)/)?.[1] || '?';
+          console.log(`  🟠 ${comp.name} (${layoutCount} layouts)`);
+        });
+    }
+
+    if (issueCategories.missingLayout.length > 0) {
+      console.log('\n📄 Missing PageLayout (' + issueCategories.missingLayout.length + ' components):');
+      issueCategories.missingLayout.slice(0, 10).forEach(comp => {
+        console.log(`  🟠 ${comp.name}`);
+      });
+      if (issueCategories.missingLayout.length > 10) {
+        console.log(`  ... and ${issueCategories.missingLayout.length - 10} more`);
+      }
+    }
+
+    if (issueCategories.customHeader.length > 0) {
+      console.log('\n🎨 Custom Headers (' + issueCategories.customHeader.length + ' components):');
+      issueCategories.customHeader.forEach(comp => {
+        console.log(`  🟠 ${comp.name}`);
+      });
+    }
+
+    if (this.results.nonCompliant.length > 0) {
+      console.log('\n🔴 NON-COMPLIANT COMPONENTS:');
+      this.results.nonCompliant.forEach(comp => {
+        console.log(`  ${comp.name}: ${comp.issues.join(', ')}`);
+      });
+    }
+
+    // Exit code guidance
+    if (this.results.nonCompliant.length > 0) {
+      console.log('\n❌ COMPLIANCE CHECK FAILED');
+      console.log('Fix non-compliant pages before merging.');
+    } else {
+      console.log('\n✅ COMPLIANCE CHECK PASSED');
+      if (this.results.partiallyCompliant.length > 0) {
+        console.log('Consider addressing partial compliance issues.');
+      }
+    }
+  }
+
+  /**
+   * Print results in JSON format
+   */
+  printJsonResults() {
+    const output = {
+      timestamp: this.options.timestamp,
+      commitSha: this.options.commitSha,
+      workflowUrl: this.options.workflowUrl,
+      summary: {
+        total: this.results.compliant.length + this.results.partiallyCompliant.length + this.results.nonCompliant.length,
+        compliant: this.results.compliant.length,
+        partiallyCompliant: this.results.partiallyCompliant.length,
+        nonCompliant: this.results.nonCompliant.length,
+        overallCompliance: Math.round(
+          (this.results.compliant.length / 
+           (this.results.compliant.length + this.results.partiallyCompliant.length + this.results.nonCompliant.length)) * 100
+        )
+      },
+      results: {
+        compliant: this.results.compliant,
+        partiallyCompliant: this.results.partiallyCompliant,
+        nonCompliant: this.results.nonCompliant,
+        errors: this.results.errors
+      }
+    };
+    console.log(JSON.stringify(output, null, 2));
+  }
+
+  /**
+   * Print results in standard format (original verbose output)
+   */
+  printStandardResults() {
     const total = this.results.compliant.length + 
                   this.results.partiallyCompliant.length + 
                   this.results.nonCompliant.length;
@@ -366,7 +537,53 @@ class ComplianceChecker {
 
 // Run the compliance check if called directly
 if (require.main === module) {
-  const checker = new ComplianceChecker();
+  // Parse command line arguments
+  const args = process.argv.slice(2);
+  const options = {
+    format: 'standard',
+    commitSha: null,
+    workflowUrl: null
+  };
+
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--format' && args[i + 1]) {
+      options.format = args[i + 1];
+      i++;
+    } else if (args[i] === '--commit-sha' && args[i + 1]) {
+      options.commitSha = args[i + 1];
+      i++;
+    } else if (args[i] === '--workflow-url' && args[i + 1]) {
+      options.workflowUrl = args[i + 1];
+      i++;
+    } else if (args[i] === '--condensed') {
+      options.format = 'condensed';
+    } else if (args[i] === '--json') {
+      options.format = 'json';
+    } else if (args[i] === '--help' || args[i] === '-h') {
+      console.log(`
+SGEX Framework Compliance Checker
+
+Usage: node check-framework-compliance.js [options]
+
+Options:
+  --format <type>       Output format: standard, condensed, pr-comment, json (default: standard)
+  --condensed           Shortcut for --format condensed
+  --json                Shortcut for --format json
+  --commit-sha <sha>    Git commit SHA for linking
+  --workflow-url <url>  Workflow run URL for linking
+  --help, -h            Show this help message
+
+Examples:
+  node check-framework-compliance.js
+  node check-framework-compliance.js --condensed
+  node check-framework-compliance.js --format pr-comment --commit-sha abc123
+  node check-framework-compliance.js --json > compliance-report.json
+`);
+      process.exit(0);
+    }
+  }
+
+  const checker = new ComplianceChecker(options);
   checker.check().then(exitCode => {
     process.exit(exitCode);
   }).catch(error => {
