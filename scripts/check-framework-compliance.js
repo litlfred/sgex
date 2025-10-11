@@ -22,7 +22,10 @@ const COMPLIANCE_RULES = {
   FRAMEWORK_HOOKS: 'Use framework hooks instead of direct useParams()',
   NO_MANUAL_HELP: 'No direct ContextualHelpMascot imports in page components',
   NO_CUSTOM_HEADERS: 'Let PageLayout handle headers instead of custom implementations',
-  NO_DUPLICATE_LAYOUT: 'Components must not have multiple nested PageLayout wrappers'
+  NO_DUPLICATE_LAYOUT: 'Components must not have multiple nested PageLayout wrappers',
+  PROFILE_CREATION: 'Profile creation must follow compliance rules (isDemo only for demo-user)',
+  USER_ACCESS_INTEGRATION: 'Components should integrate with userAccessService for access control',
+  BACKGROUND_STYLING: 'Pages should use consistent WHO blue gradient background'
 };
 
 // Legacy manual exclusion list - kept for reference but now uses automatic detection
@@ -283,7 +286,7 @@ class ComplianceChecker {
     const compliance = {
       name: componentName,
       score: 0,
-      maxScore: 6, // Increased from 5 to 6 for new duplicate layout check
+      maxScore: 9, // Increased from 6 to 9 for new checks
       checks: {},
       issues: [],
       suggestions: []
@@ -343,7 +346,7 @@ class ComplianceChecker {
     if (!hasCustomHeader) compliance.score++;
     else compliance.issues.push('May have custom header implementation');
 
-    // Check 6: No duplicate PageLayout wrappers (NEW CHECK)
+    // Check 6: No duplicate PageLayout wrappers
     const pageLayoutMatches = (content.match(/<PageLayout/g) || []).length;
     const assetEditorLayoutMatches = (content.match(/<AssetEditorLayout/g) || []).length;
     const totalLayoutMatches = pageLayoutMatches + assetEditorLayoutMatches;
@@ -351,6 +354,75 @@ class ComplianceChecker {
     compliance.checks.noDuplicateLayout = !isNested;
     if (!isNested) compliance.score++;
     else compliance.issues.push(`Found ${totalLayoutMatches} layout components - should only have one`);
+
+    // Check 7: Profile creation compliance (HIGH PRIORITY)
+    // Check for incorrect isDemo flag usage
+    const hasProfileCreation = content.includes('setProfile') || content.includes('profile =');
+    const hasIncorrectDemo = hasProfileCreation && (
+      // Pattern 1: isDemo set for all unauthenticated users
+      (content.includes('isDemo') && content.includes('!githubService.isAuth()') && 
+       !content.includes('demo-user')) ||
+      // Pattern 2: isDemo based on authentication alone
+      /isDemo:\s*!githubService\.isAuth\(\)/.test(content) ||
+      // Pattern 3: isDemo for non-demo-user
+      (content.includes('isDemo: true') && !content.includes('demo-user'))
+    );
+    const hasCorrectDemo = hasProfileCreation && 
+                          content.includes('demo-user') && 
+                          content.includes('isDemo: true');
+    
+    compliance.checks.profileCreation = !hasIncorrectDemo || hasCorrectDemo;
+    if (!hasIncorrectDemo) {
+      compliance.score++;
+    } else {
+      compliance.issues.push('Incorrect profile creation: isDemo flag misused');
+      compliance.suggestions.push('Set isDemo: true ONLY for user === \'demo-user\'');
+    }
+
+    // Check 8: User access integration (MEDIUM PRIORITY)
+    // Check if component imports and uses userAccessService for access control
+    const hasUserAccessImport = content.includes('userAccessService') || 
+                               content.includes('useUserAccess');
+    const needsAccessControl = hasPageLayout && 
+                              (content.includes('save') || 
+                               content.includes('edit') || 
+                               content.includes('onSave'));
+    
+    compliance.checks.userAccessIntegration = !needsAccessControl || hasUserAccessImport;
+    if (!needsAccessControl || hasUserAccessImport) {
+      compliance.score++;
+    } else {
+      compliance.issues.push('Missing userAccessService integration for access control');
+      compliance.suggestions.push('Import and use userAccessService to check user permissions');
+    }
+
+    // Check 9: Background styling (MEDIUM PRIORITY)
+    // Check for WHO blue gradient background in CSS or component
+    // Only check for top-level landing/welcome pages, not DAK or asset pages
+    const componentCssPath = path.join(COMPONENTS_DIR, `${componentName}.css`);
+    let hasBackgroundStyling = false;
+    
+    if (fs.existsSync(componentCssPath)) {
+      const cssContent = fs.readFileSync(componentCssPath, 'utf8');
+      hasBackgroundStyling = cssContent.includes('linear-gradient') && 
+                            (cssContent.includes('#0078d4') || cssContent.includes('#005a9e'));
+    }
+    
+    // Also check inline styles
+    hasBackgroundStyling = hasBackgroundStyling || 
+                          (content.includes('linear-gradient') && 
+                           content.includes('#0078d4'));
+    
+    // Only recommend background for Landing/Welcome/Selection pages
+    const needsBackground = /Landing|Welcome|Selection/.test(componentName);
+    
+    compliance.checks.backgroundStyling = !needsBackground || hasBackgroundStyling;
+    if (!needsBackground || hasBackgroundStyling) {
+      compliance.score++;
+    } else {
+      compliance.issues.push('Landing/selection page should use WHO blue gradient background');
+      compliance.suggestions.push('Add background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%)');
+    }
 
     // Generate suggestions
     if (!hasPageLayout) {

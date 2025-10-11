@@ -31,6 +31,34 @@ The `isUtilityComponent()` function automatically identifies non-page components
 - ✅ Uses component metadata and structure
 - ✅ Clear detection criteria based on actual usage patterns
 
+## ✅ IMPLEMENTED: Enhanced Compliance Checks (9 Total)
+
+The compliance checker now validates **9 requirements** (up from 6):
+
+### Original Checks (1-6):
+1. ✅ Uses PageLayout or AssetEditorLayout
+2. ✅ Has pageName prop
+3. ✅ Uses framework hooks (usePageParams, useDAKParams) instead of direct useParams
+4. ✅ No manual ContextualHelpMascot import
+5. ✅ No custom header implementation
+6. ✅ No duplicate/nested PageLayout wrappers
+
+### New Checks (7-9):
+7. ✅ **Profile Creation Compliance** (HIGH PRIORITY)
+   - Validates `isDemo` flag only set for `user === 'demo-user'`
+   - Detects incorrect patterns like `isDemo: !githubService.isAuth()`
+   - Prevents unauthenticated users being treated as demo users
+
+8. ✅ **User Access Integration** (MEDIUM PRIORITY)
+   - Checks for `userAccessService` import and usage
+   - Required for components with save/edit functionality
+   - Ensures proper access control implementation
+
+9. ✅ **Background Styling** (MEDIUM PRIORITY)
+   - Validates WHO blue gradient for Landing/Welcome/Selection pages
+   - Checks for `linear-gradient(135deg, #0078d4 0%, #005a9e 100%)`
+   - Maintains visual consistency across key pages
+
 ### Removed Components
 
 The following old/demo components have been **removed** from the codebase:
