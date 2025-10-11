@@ -141,6 +141,19 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose, tutorialId }) => {
         if (!repository) {
           console.warn('No DAK repository specified, falling back to sgex repository');
           
+          // Check if user is authenticated and should see the fancy bug report form
+          const isAuthenticated = githubService.isAuth();
+          console.log('[HelpModal] DAK issue clicked without repository. Authenticated:', isAuthenticated);
+          
+          if (isAuthenticated) {
+            console.log('[HelpModal] Showing bug report form for DAK issue');
+            setShowBugReportForm(true);
+            return;
+          }
+          
+          // If not authenticated, fall through to open GitHub issue page directly
+          console.log('[HelpModal] Not authenticated, opening GitHub issue page for DAK issue');
+          
           // Redirect to sgex repository with appropriate labels
           const baseUrl = `${repositoryConfig.getGitHubUrl()}/issues/new`;
           let params = {};

@@ -197,4 +197,50 @@ describe('Authenticated Bug Report UI', () => {
     expect(githubService.isAuth).toHaveBeenCalled();
     // The form should show because isAuth() returns true, not because property is false
   });
+
+  test('openDakIssue shows bug report form when authenticated and no repository', () => {
+    // Mock authenticated state
+    githubService.isAuth.mockReturnValue(true);
+    
+    const contextData = { pageId: 'test-page' }; // No repository
+    
+    render(
+      <HelpModal
+        topic="dak-feedback"
+        contextData={contextData}
+        onClose={jest.fn()}
+      />
+    );
+    
+    // Trigger DAK issue without repository
+    window.helpModalInstance.openDakIssue('content');
+    
+    // Should check authentication
+    expect(githubService.isAuth).toHaveBeenCalled();
+    // Should not open GitHub
+    expect(window.open).not.toHaveBeenCalled();
+  });
+
+  test('openDakIssue redirects to GitHub when not authenticated and no repository', () => {
+    // Mock unauthenticated state
+    githubService.isAuth.mockReturnValue(false);
+    
+    const contextData = { pageId: 'test-page' }; // No repository
+    
+    render(
+      <HelpModal
+        topic="dak-feedback"
+        contextData={contextData}
+        onClose={jest.fn()}
+      />
+    );
+    
+    // Trigger DAK issue without repository
+    window.helpModalInstance.openDakIssue('content');
+    
+    // Should check authentication
+    expect(githubService.isAuth).toHaveBeenCalled();
+    // Should open GitHub for unauthenticated users
+    expect(window.open).toHaveBeenCalled();
+  });
 });
