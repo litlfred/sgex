@@ -381,7 +381,55 @@ class GitHubActionsService {
   }
 
   /**
-   * Trigger a workflow run for a specific branch
+   * Trigger a specific workflow by workflow ID for a given branch
+   * @param {number} workflowId - The specific workflow ID to trigger
+   * @param {string} branch - Branch name to trigger workflow for
+   * @returns {Promise<boolean>} Success status
+   */
+  async triggerSpecificWorkflow(workflowId, branch) {
+    try {
+      if (!this.token) {
+        throw new Error('Authentication required to trigger workflows');
+      }
+
+      console.debug(`Triggering specific workflow ID: ${workflowId} for branch: ${branch}`);
+
+      const triggerResponse = await fetch(
+        `${this.baseURL}/repos/${this.owner}/${this.repo}/actions/workflows/${workflowId}/dispatches`,
+        {
+          method: 'POST',
+          headers: this.getHeaders(),
+          body: JSON.stringify({
+            ref: branch,
+            inputs: {
+              branch: branch
+            }
+          })
+        }
+      );
+
+      if (!triggerResponse.ok) {
+        const errorText = await triggerResponse.text();
+        console.error(`Specific workflow trigger failed:`, {
+          status: triggerResponse.status,
+          statusText: triggerResponse.statusText,
+          error: errorText,
+          branch,
+          workflowId
+        });
+        throw new Error(`Failed to trigger workflow: ${triggerResponse.status} ${triggerResponse.statusText} - ${errorText}`);
+      }
+
+      console.debug(`Successfully triggered specific workflow ${workflowId} for branch ${branch}`);
+      return true;
+    } catch (error) {
+      console.error(`Error triggering specific workflow ${workflowId} for branch ${branch}:`, error);
+      return false;
+    }
+  }
+
+  /**
+   * Trigger a workflow run for a specific branch (legacy method - now calls specific deployment workflows)
    * @param {string} branch - Branch name to trigger workflow for
    * @returns {Promise<boolean>} Success status
    */
@@ -544,6 +592,173 @@ class GitHubActionsService {
       console.debug('Cannot check workflow approval permissions:', error);
       return false;
     }
+  }
+
+  /**
+   * Get jobs for a specific workflow run
+   * @param {number} runId - The workflow run ID
+   * @returns {Promise<Array|null>} Array of job objects or null if error
+   */
+  async getWorkflowRunJobs(runId) {
+    try {
+      if (!runId) {
+        return null;
+      }
+
+      console.debug(`Getting jobs for workflow run: ${runId}`);
+      
+      const response = await fetch(
+        `${this.baseURL}/repos/${this.owner}/${this.repo}/actions/runs/${runId}/jobs`,
+        {
+          headers: this.getHeaders()
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch jobs for run ${runId}: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.debug(`Found ${data.jobs.length} jobs for run ${runId}`);
+      
+      // Parse job data into normalized objects
+      return data.jobs.map(job => this.parseJobStatus(job));
+    } catch (error) {
+      console.error(`Error fetching jobs for run ${runId}:`, error);
+      return null;
+    }
+  }
+
+  /**
+   * Parse job data into a normalized status object
+   * @param {Object} job - Job data from GitHub API
+   * @returns {Object} Normalized job status object
+   */
+  parseJobStatus(job) {
+    const status = job.status;
+    const conclusion = job.conclusion;
+    
+    let displayStatus, badgeClass, icon;
+
+    if (status === 'in_progress' || status === 'queued' || status === 'pending') {
+      displayStatus = 'In Progress';
+      badgeClass = 'in-progress';
+      icon = '🟡';
+    } else if (status === 'waiting') {
+      displayStatus = 'Waiting';
+      badgeClass = 'waiting';
+      icon = '🟠';
+    } else if (status === 'completed') {
+      if (conclusion === 'success') {
+        displayStatus = 'Succeeded';
+        badgeClass = 'succeeded';
+        icon = '🟢';
+      } else if (conclusion === 'failure') {
+        displayStatus = 'Failed';
+        badgeClass = 'failed';
+        icon = '🔴';
+      } else if (conclusion === 'cancelled') {
+        displayStatus = 'Cancelled';
+        badgeClass = 'cancelled';
+        icon = '🟡';
+      } else if (conclusion === 'timed_out') {
+        displayStatus = 'Timed Out';
+        badgeClass = 'failed';
+        icon = '🔴';
+      } else if (conclusion === 'action_required') {
+        displayStatus = 'Action Required';
+        badgeClass = 'action-required';
+        icon = '🟠';
+      } else if (conclusion === 'skipped') {
+        displayStatus = 'Skipped';
+        badgeClass = 'skipped';
+        icon = '⚪';
+      } else {
+        displayStatus = 'Completed';
+        badgeClass = 'completed';
+        icon = '🟦';
+      }
+    } else {
+      displayStatus = 'Unknown';
+      badgeClass = 'unknown';
+      icon = '⚫';
+    }
+
+    return {
+      id: job.id,
+      name: job.name,
+      status,
+      conclusion,
+      startedAt: job.started_at ? new Date(job.started_at) : null,
+      completedAt: job.completed_at ? new Date(job.completed_at) : null,
+      duration: job.started_at && job.completed_at ? 
+        Math.round((new Date(job.completed_at) - new Date(job.started_at)) / 1000) : null,
+      url: job.html_url,
+      runnerName: job.runner_name,
+      runnerGroupName: job.runner_group_name,
+      displayStatus,
+      badgeClass,
+      icon,
+      steps: job.steps ? job.steps.map(step => this.parseStepStatus(step)) : []
+    };
+  }
+
+  /**
+   * Parse step data into a normalized status object
+   * @param {Object} step - Step data from GitHub API
+   * @returns {Object} Normalized step status object
+   */
+  parseStepStatus(step) {
+    const status = step.status;
+    const conclusion = step.conclusion;
+    
+    let displayStatus, badgeClass, icon;
+
+    if (status === 'in_progress' || status === 'queued' || status === 'pending') {
+      displayStatus = 'In Progress';
+      badgeClass = 'in-progress';
+      icon = '🟡';
+    } else if (status === 'completed') {
+      if (conclusion === 'success') {
+        displayStatus = 'Succeeded';
+        badgeClass = 'succeeded';
+        icon = '🟢';
+      } else if (conclusion === 'failure') {
+        displayStatus = 'Failed';
+        badgeClass = 'failed';
+        icon = '🔴';
+      } else if (conclusion === 'cancelled') {
+        displayStatus = 'Cancelled';
+        badgeClass = 'cancelled';
+        icon = '🟡';
+      } else if (conclusion === 'skipped') {
+        displayStatus = 'Skipped';
+        badgeClass = 'skipped';
+        icon = '⚪';
+      } else {
+        displayStatus = 'Completed';
+        badgeClass = 'completed';
+        icon = '🟦';
+      }
+    } else {
+      displayStatus = 'Unknown';
+      badgeClass = 'unknown';
+      icon = '⚫';
+    }
+
+    return {
+      name: step.name,
+      status,
+      conclusion,
+      number: step.number,
+      startedAt: step.started_at ? new Date(step.started_at) : null,
+      completedAt: step.completed_at ? new Date(step.completed_at) : null,
+      duration: step.started_at && step.completed_at ? 
+        Math.round((new Date(step.completed_at) - new Date(step.started_at)) / 1000) : null,
+      displayStatus,
+      badgeClass,
+      icon
+    };
   }
 
   /**
