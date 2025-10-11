@@ -58,6 +58,10 @@
     "persona-viewer": {
       "component": "PersonaViewer", 
       "path": "./components/PersonaViewer"
+    },
+    "user-scenarios": {
+      "component": "UserScenariosManager",
+      "path": "./components/UserScenariosManager"
     }
   },
   "standardComponents": {
