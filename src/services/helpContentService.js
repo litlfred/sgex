@@ -8,7 +8,7 @@ class HelpContentService {
       documentation: {
         id: 'sgex-documentation',
         title: 'View Documentation',
-        badge: '/sgex/cat-paw-info-icon.svg',
+        badge: 'cat-paw-info-icon.svg',
         type: 'action',
         action: () => {
           // Navigate to documentation viewer in the same window
@@ -56,7 +56,7 @@ class HelpContentService {
       workflows: {
         id: 'sgex-workflows',
         title: 'View Deployment Workflows',
-        badge: '/sgex/cat-paw-workflow-icon.svg',
+        badge: 'cat-paw-workflow-icon.svg',
         type: 'action',
         action: () => {
           // Open workflows in GitHub Actions tab
@@ -90,7 +90,7 @@ class HelpContentService {
       githubSource: {
         id: 'sgex-github-source',
         title: 'GitHub Source',
-        badge: '/sgex/cat-paw-lock-icon.svg', // Using lock icon temporarily until we add a proper GitHub icon
+        badge: 'cat-paw-lock-icon.svg', // Using lock icon temporarily until we add a proper GitHub icon
         type: 'action',
         action: () => {
           // Open the SGEX GitHub repository
@@ -106,7 +106,7 @@ class HelpContentService {
       bugReport: {
         id: 'report-sgex-bug',
         title: 'Report a SGeX bug',
-        badge: '/sgex/cat-paw-bug-icon.svg',
+        badge: 'cat-paw-bug-icon.svg',
         type: 'slideshow',
         content: [
           {
@@ -186,7 +186,7 @@ class HelpContentService {
         {
           id: 'github-pat-setup',
           title: 'How to Create a GitHub Personal Access Token',
-          badge: '/sgex/cat-paw-lock-icon.svg',
+          badge: 'cat-paw-lock-icon.svg',
           type: 'slideshow',
           content: [
             {
@@ -425,7 +425,7 @@ class HelpContentService {
         {
           id: 'using-questionnaire-editor',
           title: 'Using the FHIR Questionnaire Editor',
-          badge: '/sgex/cat-paw-icon.svg',
+          badge: 'cat-paw-icon.svg',
           type: 'slideshow',
           content: [
             {
@@ -495,7 +495,7 @@ class HelpContentService {
         {
           id: 'questionnaire-management',
           title: 'Managing Questionnaire Assets',
-          badge: '/sgex/cat-paw-file-icon.svg',
+          badge: 'cat-paw-file-icon.svg',
           type: 'slideshow',
           content: [
             {
@@ -562,7 +562,7 @@ class HelpContentService {
         {
           id: 'pat-authentication-help',
           title: 'Using Personal Access Tokens',
-          badge: '/sgex/cat-paw-lock-icon.svg',
+          badge: 'cat-paw-lock-icon.svg',
           type: 'slideshow',
           content: [
             {
@@ -587,7 +587,7 @@ class HelpContentService {
         {
           id: 'detailed-pat-setup',
           title: 'Detailed PAT Setup Guide',
-          badge: '/sgex/cat-paw-lock-icon.svg',
+          badge: 'cat-paw-lock-icon.svg',
           type: 'slideshow',
           content: [
             {
@@ -617,7 +617,7 @@ class HelpContentService {
         {
           id: 'github-pat-setup',
           title: 'How to Create a GitHub Personal Access Token',
-          badge: '/sgex/cat-paw-lock-icon.svg',
+          badge: 'cat-paw-lock-icon.svg',
           type: 'slideshow',
           content: [
             {
@@ -716,7 +716,7 @@ class HelpContentService {
         {
           id: 'core-data-dictionary-help',
           title: 'Understanding Core Data Dictionary',
-          badge: '/sgex/cat-paw-info-icon.svg',
+          badge: 'cat-paw-info-icon.svg',
           type: 'slideshow',
           content: [
             {
@@ -758,7 +758,7 @@ class HelpContentService {
         {
           id: 'github-pages-setup',
           title: 'Setting Up GitHub Pages',
-          badge: '/sgex/cat-paw-settings-icon.svg',
+          badge: 'cat-paw-settings-icon.svg',
           type: 'slideshow',
           content: [
             {
@@ -806,7 +806,7 @@ class HelpContentService {
         {
           id: 'business-process-help',
           title: 'Understanding Business Processes',
-          badge: '/sgex/cat-paw-workflow-icon.svg',
+          badge: 'cat-paw-workflow-icon.svg',
           type: 'slideshow',
           content: [
             {
@@ -848,7 +848,7 @@ class HelpContentService {
         {
           id: 'page-content-help',
           title: 'Managing Page Content',
-          badge: '/sgex/cat-paw-document-icon.svg',
+          badge: 'cat-paw-document-icon.svg',
           type: 'slideshow',
           content: [
             {

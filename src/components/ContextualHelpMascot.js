@@ -168,7 +168,7 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
     ...(isAuthenticated ? [{
       id: 'tracked-items',
       title: trackedItemsCount > 0 ? `Tracked Items (${trackedItemsCount})` : 'Tracked Items',
-      badge: '/sgex/cat-paw-icon.svg',
+      badge: 'cat-paw-icon.svg',
       type: 'action',
       action: () => setShowTrackedItems(true)
     }] : [])
