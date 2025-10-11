@@ -243,3 +243,5 @@ Potential additions to the security check system:
 - [ ] Supply chain security checks
 - [ ] Automated dependency updates via Dependabot
 - [ ] Security scorecard integration
+
+For a comprehensive guide to additional security scanning tools (OWASP, Snyk, CodeQL, Semgrep, TruffleHog, and more), see [Additional Security Tools Guide](additional-security-tools.md).
