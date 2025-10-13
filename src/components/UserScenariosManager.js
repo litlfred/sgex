@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
 import stagingGroundService from '../services/stagingGroundService';
+import dakFrameworkService from '../services/dakFrameworkService';
 import PageEditModal from './PageEditModal';
 import DAKStatusBox from './DAKStatusBox';
 import './UserScenariosManager.css';
@@ -77,9 +78,9 @@ const UserScenariosManager = () => {
         const scenarios = await loadUserScenarios(owner, repoName, currentBranch);
         setScenarios(scenarios);
 
-        // Load personas for variable substitution
-        const personas = await loadPersonas(owner, repoName, currentBranch);
-        setPersonas(personas);
+        // Load personas/actors for variable substitution using DAK framework service
+        const actors = await dakFrameworkService.getActors(owner, repoName, currentBranch);
+        setPersonas(actors);
 
       } catch (error) {
         console.error('Error loading scenarios:', error);
@@ -149,94 +150,8 @@ const UserScenariosManager = () => {
     }
   };
 
-  const loadPersonas = async (owner, repo, branch) => {
-    const personas = [];
-
-    // Try loading from input/fsh/actors
-    try {
-      const response = await githubService.octokit.rest.repos.getContent({
-        owner,
-        repo,
-        path: 'input/fsh/actors',
-        ref: branch
-      });
-
-      const files = Array.isArray(response.data) ? response.data : [response.data];
-      const fshFiles = files.filter(file => file.name.endsWith('.fsh'));
-
-      for (const file of fshFiles) {
-        try {
-          const contentResponse = await githubService.octokit.rest.repos.getContent({
-            owner,
-            repo,
-            path: file.path,
-            ref: branch
-          });
-
-          const content = atob(contentResponse.data.content);
-          const personaMatches = [...content.matchAll(/Profile:\s+([A-Za-z0-9-]+)/g)];
-          
-          personaMatches.forEach(match => {
-            const id = match[1];
-            const titleMatch = content.match(new RegExp(`Title:\\s*"([^"]+)"`, 'i'));
-            const descMatch = content.match(new RegExp(`Description:\\s*"([^"]+)"`, 'i'));
-            
-            personas.push({
-              id,
-              title: titleMatch ? titleMatch[1] : id,
-              description: descMatch ? descMatch[1] : '',
-              source: 'fsh'
-            });
-          });
-        } catch (error) {
-          console.warn(`Failed to load persona from ${file.name}:`, error);
-        }
-      }
-    } catch (error) {
-      // FSH directory doesn't exist, try FHIR JSON
-    }
-
-    // Try loading from input/actors (FHIR JSON)
-    try {
-      const response = await githubService.octokit.rest.repos.getContent({
-        owner,
-        repo,
-        path: 'input/actors',
-        ref: branch
-      });
-
-      const files = Array.isArray(response.data) ? response.data : [response.data];
-      const jsonFiles = files.filter(file => file.name.endsWith('.json'));
-
-      for (const file of jsonFiles) {
-        try {
-          const contentResponse = await githubService.octokit.rest.repos.getContent({
-            owner,
-            repo,
-            path: file.path,
-            ref: branch
-          });
-
-          const content = JSON.parse(atob(contentResponse.data.content));
-          if (content.resourceType === 'Person' || content.resourceType === 'Practitioner') {
-            personas.push({
-              id: content.id || file.name.replace('.json', ''),
-              title: content.name?.[0]?.text || content.id || file.name.replace('.json', ''),
-              description: content.text?.div || '',
-              type: content.resourceType,
-              source: 'fhir'
-            });
-          }
-        } catch (error) {
-          console.warn(`Failed to load persona from ${file.name}:`, error);
-        }
-      }
-    } catch (error) {
-      // FHIR directory doesn't exist
-    }
-
-    return personas;
-  };
+  // Note: loadPersonas has been removed and replaced with dakFrameworkService.getActors()
+  // This provides centralized actor loading with staging ground integration
 
   const validateScenarioId = (id) => {
     if (!id) {
@@ -403,7 +318,7 @@ const UserScenariosManager = () => {
         >
           <option value="">Select persona property...</option>
           {personas.map(persona => (
-            <optgroup key={persona.id} label={persona.title}>
+            <optgroup key={persona.id} label={`${persona.title}${persona.staged ? ' 📝' : ''}`}>
               <option value={`{{persona.${persona.id}.title}}`}>
                 Insert {persona.title} - title
               </option>
@@ -417,7 +332,7 @@ const UserScenariosManager = () => {
           ))}
         </select>
         <span className="variable-helper-hint">
-          (Select a variable to copy to clipboard)
+          (Select a variable to copy to clipboard. 📝 = staged changes)
         </span>
       </div>
     );
