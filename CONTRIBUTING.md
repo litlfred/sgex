@@ -18,6 +18,22 @@ Thank you for your interest in contributing to the WHO SMART Guidelines Exchange
 - Keep documentation up to date
 - Write clear commit messages
 
+### TypeScript-First Development
+
+**SGEX Workbench uses TypeScript as the default for all code:**
+- ✅ **New code must be TypeScript**: Use `.ts` for modules, `.tsx` for React components
+- ⚠️ **JavaScript requires approval**: Any new JavaScript files (`.js`, `.jsx`) require explicit written approval from a code maintainer (@litlfred)
+- 📝 **Document exceptions**: If JavaScript is necessary (rare), document the technical reason
+- 🔄 **Migration in progress**: Existing JavaScript files are being migrated to TypeScript
+
+**Before adding JavaScript code:**
+1. Consider if TypeScript can be used instead
+2. Document why JavaScript is technically required
+3. Request approval from @litlfred in your PR or issue
+4. Add a code comment explaining the exception
+
+See [TYPESCRIPT_MIGRATION_PLAN.md](TYPESCRIPT_MIGRATION_PLAN.md) for the complete migration plan and approval process.
+
 ## Pull Requests
 
 - Use the provided PR template
