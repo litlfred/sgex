@@ -10,7 +10,7 @@ We are friends that like to code together woth out collaborators.
 
 ## 🚨 CRITICAL: NO HEURISTICS POLICY 🚨
 
-**MANDATORY FOR ALL COPILOT AGENTS**: The SGeX Workbench operates under a strict **NO HEURISTICS** policy that applies to ALL code, including routing, business logic, component detection, and any system behavior.
+**MANDATORY FOR ALL COPILOT AGENTS**: The SGeX Workbench operates under a strict **NO HEURISTICS** policy that applies to ALL code, including routing, business logic, component detection, and any system behavior, **unless explicit approval from code owner or maintainer**.
 
 ### What Are Heuristics?
 - Pattern matching on names, paths, or code structure to infer behavior
@@ -57,8 +57,9 @@ If you find yourself writing code that:
 **STOP** and redesign using explicit configuration instead.
 
 ### Enforcement
-- Pull requests with heuristics will be REJECTED
+- Pull requests with heuristics will be REJECTED unless explicit approval from code owner or maintainer
 - This applies to ALL business logic, not just routing
+- Exception requests must be clearly documented with justification
 - See `public/docs/requirements.md` REQ-PRINCIPLE-001 through REQ-PRINCIPLE-003
 - See `COMPLIANCE_CHECKER_DESIGN.md` and `HEURISTICS_ANALYSIS_REPORT.md` for details
 
