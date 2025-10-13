@@ -241,9 +241,9 @@ const BPMNViewerContent = () => {
               attempts++;
               requestAnimationFrame(checkDimensions);
             } else {
-              console.warn('[BPMN Viewer] WARNING: Gave up waiting for valid container dimensions after', maxAttempts, 'attempts');
-              // Try anyway as a last resort
-              callback();
+              console.warn('[BPMN Viewer] WARNING: Container dimensions never became valid after', maxAttempts, 'attempts');
+              console.warn('[BPMN Viewer] Skipping zoom to prevent Infinity/NaN transform. Container may be hidden or have CSS issues.');
+              // DO NOT call callback - calling zoom with 0x0 dimensions produces Infinity/NaN transform
             }
           };
           requestAnimationFrame(checkDimensions);
