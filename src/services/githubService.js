@@ -304,14 +304,19 @@ class GitHubService {
       this.logger.apiError('GET', `/repos/${owner}/${repo}/issues`, error);
       this.logger.performance('Comment permission check (failed)', duration);
       
+      // Check if this is a SAML error and handle it
+      const samlHandled = samlAuthService.handleSAMLError(error, owner, repo);
+      
       // Check if it's a permissions error
       if (error.status === 403 || error.status === 401) {
-        this.logger.warn('Token does not have permission to access issues/comments', { 
-          owner, 
-          repo, 
-          error: error.message,
-          status: error.status 
-        });
+        if (!samlHandled) {
+          this.logger.warn('Token does not have permission to access issues/comments', { 
+            owner, 
+            repo, 
+            error: error.message,
+            status: error.status 
+          });
+        }
         return false;
       }
       
@@ -371,6 +376,9 @@ class GitHubService {
       });
       return data;
     } catch (error) {
+      // Check if this is a SAML error and handle it
+      samlAuthService.handleSAMLError(error, orgLogin);
+      
       console.error(`Failed to fetch organization ${orgLogin}:`, error);
       throw error;
     }
@@ -983,6 +991,9 @@ class GitHubService {
       });
       return data;
     } catch (error) {
+      // Check if this is a SAML error and handle it
+      samlAuthService.handleSAMLError(error, owner, repo);
+      
       console.error('Failed to fetch repository:', error);
       throw error;
     }  
@@ -1007,6 +1018,9 @@ class GitHubService {
       console.log(`githubService.getBranches: Successfully fetched ${data.length} branches`);
       return data;
     } catch (error) {
+      // Check if this is a SAML error and handle it
+      samlAuthService.handleSAMLError(error, owner, repo);
+      
       console.error('githubService.getBranches: Failed to fetch branches:', error);
       console.error('githubService.getBranches: Error details:', {
         status: error.status,
@@ -1493,7 +1507,13 @@ class GitHubService {
         throw new Error(`GitHub API request timed out after ${timeoutMs / 1000} seconds. Please try again.`);
       } else if (error.status === 403) {
         console.error('🔒 githubService.getFileContent: 403 Forbidden error detected');
-        throw new Error('Access denied. This repository may be private or you may have hit rate limits.');
+        // Check if this is a SAML error and handle it
+        const samlHandled = samlAuthService.handleSAMLError(error, owner, repo);
+        if (!samlHandled) {
+          throw new Error('Access denied. This repository may be private or you may have hit rate limits.');
+        } else {
+          throw new Error('SAML SSO authorization required. Please authorize your token and try again.');
+        }
       } else if (error.status === 404) {
         console.error('🔍 githubService.getFileContent: 404 Not Found error detected');
         throw new Error('File not found in the repository.');
