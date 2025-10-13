@@ -241,13 +241,18 @@ class GitHubService {
       this.logger.apiError('GET', `/repos/${owner}/${repo}/collaborators/*/permission`, error);
       this.logger.performance('Repository write permission check (failed)', duration);
       
-      // Better error logging to help debug permission issues
-      console.warn(`Could not check repository write permissions for ${owner}/${repo}:`, {
-        error: error.message,
-        status: error.status,
-        statusText: error.response?.statusText,
-        headers: error.response?.headers
-      });
+      // Check if this is a SAML error and handle it
+      const samlHandled = samlAuthService.handleSAMLError(error, owner, repo);
+      
+      if (!samlHandled) {
+        // Better error logging to help debug permission issues (only if not SAML)
+        console.warn(`Could not check repository write permissions for ${owner}/${repo}:`, {
+          error: error.message,
+          status: error.status,
+          statusText: error.response?.statusText,
+          headers: error.response?.headers
+        });
+      }
       
       this.logger.warn('Assuming no write access due to permission check failure', { 
         owner, 
