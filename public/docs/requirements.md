@@ -1,5 +1,60 @@
 # SGEX Workbench Requirements
 
+## 0. Core Design Principles
+
+### 0.1 NO HEURISTICS Policy
+
+**CRITICAL DESIGN PRINCIPLE**: The SGeX Workbench operates on a strict **NO HEURISTICS** policy for all business logic, routing, and system behavior, **unless explicit approval from code owner or maintainer**.
+
+**REQ-PRINCIPLE-001**: The system SHALL NOT use heuristics, pattern matching, or guessing for ANY business logic (unless explicitly approved)
+- All system behavior MUST be deterministic and explicit
+- NO pattern matching on names, file paths, or code structure to infer behavior
+- NO "auto-detection" based on naming conventions or content analysis
+- NO fallback mechanisms that attempt to guess correct behavior
+- Failure MUST be explicit with clear error messages, not silent fallbacks
+- Exceptions require explicit approval from code owner or maintainer with documented justification
+
+**REQ-PRINCIPLE-002**: When configuration or explicit information is unavailable, the system SHALL fail clearly
+- Provide explicit error messages indicating what is missing
+- Explain how to fix the issue
+- DO NOT attempt to guess or use heuristics as fallbacks
+- Make failures visible to users/developers immediately
+
+**REQ-PRINCIPLE-003**: All component, route, and behavior detection SHALL use explicit configuration
+- Use configuration files (e.g., `routes-config.json`) for routing
+- Use explicit registration for components and behaviors
+- Require explicit declarations in configuration rather than inferring from code
+- Validate configuration at startup and fail fast if invalid
+
+**Rationale**: Heuristics make systems unpredictable, difficult to debug, and brittle to changes. They create maintenance burden and hide problems until runtime. Explicit configuration makes behavior clear, testable, and maintainable. In rare cases where heuristics may provide value, explicit approval from code owner or maintainer is required with clear documentation of the rationale and limitations.
+
+**Examples of PROHIBITED heuristics**:
+- ❌ Inferring component type from naming patterns (e.g., "Modal" suffix = modal component)
+- ❌ Using file size to determine component classification (e.g., < 200 lines = utility)
+- ❌ Pattern matching on code content to detect component behavior
+- ❌ Fallback mechanisms that try alternative detection methods
+- ❌ Auto-detection based on directory structure or file organization
+- ❌ Guessing configuration paths or values
+
+**Examples of REQUIRED deterministic approaches**:
+- ✅ Explicit component registration in configuration files
+- ✅ Clear error messages when configuration is missing
+- ✅ Validation of configuration at application startup
+- ✅ Required parameters with no default guessing
+- ✅ Explicit routing declarations in `routes-config.json`
+
+This principle applies to:
+- Routing and navigation logic
+- Component detection and classification
+- Business logic and workflows
+- DAK repository detection
+- Feature detection and capability checking
+- Any system behavior that affects functionality
+
+**See Also**: `COMPLIANCE_CHECKER_DESIGN.md`, `HEURISTICS_ANALYSIS_REPORT.md` for detailed implementation guidance.
+
+---
+
 ## 1. Overview
 
 The SMART Guidelines Exchange (SGEX) Workbench is a browser-based, static web application designed for collaborative editing of WHO SMART Guidelines Digital Adaptation Kits (DAKs) content stored in GitHub repositories.

@@ -8,6 +8,63 @@ Your collaborators like cats, math, puns and writing software requirements.
 
 We are friends that like to code together woth out collaborators.  
 
+## 🚨 CRITICAL: NO HEURISTICS POLICY 🚨
+
+**MANDATORY FOR ALL COPILOT AGENTS**: The SGeX Workbench operates under a strict **NO HEURISTICS** policy that applies to ALL code, including routing, business logic, component detection, and any system behavior, **unless explicit approval from code owner or maintainer**.
+
+### What Are Heuristics?
+- Pattern matching on names, paths, or code structure to infer behavior
+- "Auto-detection" based on naming conventions or content analysis
+- Guessing or inferring behavior from code patterns
+- Fallback mechanisms that attempt alternative detection methods
+- Any logic that tries to "figure out" what something is or does
+
+### Absolute Prohibitions
+**YOU MUST NOT**:
+- ❌ Use pattern matching to detect component types (e.g., names ending in "Modal")
+- ❌ Analyze code content to infer component behavior or classification
+- ❌ Use file size, line count, or code complexity to make decisions
+- ❌ Implement fallback mechanisms that try alternative detection methods
+- ❌ Auto-detect features, capabilities, or configurations
+- ❌ Guess paths, values, or behaviors when explicit configuration is missing
+- ❌ Use "smart" detection algorithms that analyze naming or structure
+- ❌ Create any logic that says "if X looks like Y, treat it as Y"
+
+### Required Approach
+**YOU MUST**:
+- ✅ Use explicit configuration files for ALL routing and detection
+- ✅ Require explicit registration of components, routes, and behaviors
+- ✅ Fail clearly with detailed error messages when configuration is missing
+- ✅ Validate configuration at startup and fail fast if invalid
+- ✅ Make all system behavior deterministic and predictable
+- ✅ Document ALL required configuration explicitly
+
+### When Configuration is Missing
+**DO NOT** implement fallbacks or try to guess. Instead:
+1. Throw a clear, detailed error message
+2. Explain exactly what is missing
+3. Provide instructions on how to fix it
+4. Make the failure visible immediately
+
+### Code Review Red Flags
+If you find yourself writing code that:
+- Checks naming patterns or conventions
+- Analyzes code structure or content
+- Has multiple fallback attempts
+- Uses terms like "auto-detect", "infer", "guess", "probably"
+- Makes decisions based on file characteristics
+
+**STOP** and redesign using explicit configuration instead.
+
+### Enforcement
+- Pull requests with heuristics will be REJECTED unless explicit approval from code owner or maintainer
+- This applies to ALL business logic, not just routing
+- Exception requests must be clearly documented with justification
+- See `public/docs/requirements.md` REQ-PRINCIPLE-001 through REQ-PRINCIPLE-003
+- See `COMPLIANCE_CHECKER_DESIGN.md` and `HEURISTICS_ANALYSIS_REPORT.md` for details
+
+---
+
 Following these guidelines will help us code together better:
 * If a branch is mentioned in a request, issue or bug report, then please update the context to refer to the branch mentioned. If no branch is mentioned, then assume it is main.
 * If there is no issue mentioned in a prompt or already in context, then propose to create an issue with an appropriate summary and title.   
