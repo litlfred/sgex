@@ -170,67 +170,33 @@ class ComplianceChecker {
 
   /**
    * Extract route components from routes-config.json (deterministic approach)
-   * This is the primary method - only components explicitly registered in routing are checked
+   * This is the ONLY method - only components explicitly registered in routing are checked
+   * NO FALLBACKS - failure should be clear and explicit
    */
   async getRouteComponents() {
     // Use deterministic approach: read from routes-config.json
     const routedComponents = getRoutedComponents();
     
-    if (routedComponents.length > 0) {
-      return routedComponents;
+    if (routedComponents.length === 0) {
+      // NO FALLBACKS - If routes-config.json is not available or empty, this is a FAILURE
+      const configPath = getRoutesConfigPath();
+      throw new Error(
+        `❌ FATAL: Failed to load route components from routes-config.json\n\n` +
+        `Configuration file: ${configPath}\n` +
+        `This is a critical failure - the compliance checker requires a valid routes-config.json file.\n\n` +
+        `Possible causes:\n` +
+        `  1. The routes-config.json file does not exist at: ${configPath}\n` +
+        `  2. The file exists but has no dakComponents or standardComponents defined\n` +
+        `  3. The file cannot be read due to permissions or syntax errors\n\n` +
+        `To fix:\n` +
+        `  1. Ensure routes-config.json exists in the correct location\n` +
+        `  2. Verify the file has valid JSON syntax\n` +
+        `  3. Check that dakComponents and/or standardComponents are defined\n` +
+        `  4. Use --routes-config=/path/to/file to specify a custom location\n`
+      );
     }
     
-    // Fallback only if routes-config.json is not available
-    if (this.options.format !== 'json') {
-      console.warn('⚠️  Could not read routes-config.json, falling back to heuristic detection');
-    }
-    
-    const components = [];
-
-    // Fallback Method 1: Extract from componentRouteService.js
-    try {
-      const componentRouteServicePath = path.join(SRC_DIR, 'services', 'componentRouteService.js');
-      if (fs.existsSync(componentRouteServicePath)) {
-        const serviceContent = fs.readFileSync(componentRouteServicePath, 'utf8');
-        
-        // Find component names in switch statement
-        const switchMatches = serviceContent.match(/case\s+'([^']+)':\s*LazyComponent\s*=\s*React\.lazy\(\(\)\s*=>\s*import\('([^']+)'\)\);/g);
-        if (switchMatches) {
-          switchMatches.forEach(match => {
-            const componentMatch = match.match(/case\s+'([^']+)'/);
-            if (componentMatch) {
-              components.push(componentMatch[1]);
-            }
-          });
-        }
-      }
-    } catch (error) {
-      if (this.options.format !== 'json') {
-        console.warn('Could not parse componentRouteService.js:', error.message);
-      }
-    }
-
-    // Fallback Method 2: Extract from App.js
-    if (components.length === 0) {
-      try {
-        const appContent = fs.readFileSync(APP_JS, 'utf8');
-        
-        // Find all Route elements and extract component names
-        const routeRegex = /<Route[^>]+element=\{<([A-Za-z0-9_]+)/g;
-        let match;
-
-        while ((match = routeRegex.exec(appContent)) !== null) {
-          const componentName = match[1].trim();
-          components.push(componentName);
-        }
-      } catch (error) {
-        if (this.options.format !== 'json') {
-          console.warn('Could not parse App.js:', error.message);
-        }
-      }
-    }
-
-    return [...new Set(components)]; // Remove duplicates
+    return routedComponents;
   }
 
   /**
