@@ -50,14 +50,6 @@ const COMPLIANCE_RULES = {
 // Calculate total number of compliance rules programmatically
 const TOTAL_COMPLIANCE_CHECKS = Object.keys(COMPLIANCE_RULES).length;
 
-// Legacy manual exclusion list - kept for reference but now uses automatic detection
-// based on component naming patterns and code structure (see isUtilityComponent function)
-// Utility components that don't need full framework compliance
-const LEGACY_UTILITY_COMPONENTS = [
-  // These are now automatically detected by isUtilityComponent()
-  // Kept here for documentation purposes only
-];
-
 // Framework components themselves
 const FRAMEWORK_COMPONENTS = [
   'PageLayout.js', 'PageHeader.js', 'PageProvider.js', 
@@ -72,12 +64,29 @@ const ROUTING_ERROR_PAGES = [
 ];
 
 /**
+ * Get the path to routes-config.json with support for overrides
+ * @returns {string} Path to routes-config.json
+ */
+function getRoutesConfigPath() {
+  // Allow overriding the path via env var or command-line argument
+  const defaultPath = path.join(__dirname, '../public/routes-config.json');
+  const envPath = process.env.ROUTES_CONFIG_PATH;
+  
+  // Command-line argument: --routes-config=/path/to/routes-config.json
+  const argPath = process.argv.find(arg => arg.startsWith('--routes-config=')) 
+    ? process.argv.find(arg => arg.startsWith('--routes-config=')).split('=')[1]
+    : undefined;
+  
+  return argPath || envPath || defaultPath;
+}
+
+/**
  * Get list of routed page components from routes-config.json
  * This is a deterministic approach - only components explicitly registered in routing are checked
  * @returns {Array} Array of component names that are actually routed as pages
  */
 function getRoutedComponents() {
-  const ROUTES_CONFIG_PATH = path.join(__dirname, '../public/routes-config.json');
+  const ROUTES_CONFIG_PATH = getRoutesConfigPath();
   
   try {
     const configContent = fs.readFileSync(ROUTES_CONFIG_PATH, 'utf8');
@@ -106,69 +115,6 @@ function getRoutedComponents() {
     console.error('Error reading routes-config.json:', error.message);
     return [];
   }
-}
-
-/**
- * Automatically detect if a component is a utility component based on its code structure
- * This eliminates the need to maintain a manual exclusion list
- * @param {string} componentName - Name of the component
- * @param {string} content - Component file content
- * @returns {boolean} True if component should be excluded from compliance checks
- */
-function isUtilityComponent(componentName, content) {
-  // 1. Check for Example/Demo components that should be excluded
-  if (/Example|Demo/i.test(componentName)) {
-    return true;
-  }
-  
-  // 2. Check naming conventions for common utility patterns
-  const namingPatterns = [
-    /Modal$/,          // LoginModal, CollaborationModal, etc.
-    /Dialog$/,         // SaveDialog, etc.
-    /Button$/,         // HelpButton, etc.
-    /Badge$/,          // PreviewBadge, etc.
-    /Bar$/,            // ForkStatusBar, etc.
-    /Box$/,            // DAKStatusBox, etc.
-    /Card$/,           // DAKComponentCard, etc.
-    /Selector$/,       // BranchSelector, LanguageSelector, etc.
-    /Slider$/,         // CommitsSlider, etc.
-    /Enhanced$/,       // BPMNViewerEnhanced, etc.
-    /Preview$/,        // BPMNPreview - embedded viewer component
-    /_old$/i,          // Old/deprecated components
-  ];
-  
-  for (const pattern of namingPatterns) {
-    if (pattern.test(componentName)) {
-      return true;
-    }
-  }
-  
-  // 3. Check for modal/dialog characteristics (takes onClose, isOpen props)
-  const hasModalProps = content.includes('onClose') && 
-                       (content.includes('isOpen') || content.includes('open'));
-  
-  // 4. Check for embedded component characteristics (takes props like file, repository, etc.)
-  const hasEmbeddedProps = (content.includes('{ file') || content.includes('{ repository')) &&
-                           content.includes('profile') &&
-                           !content.includes('usePage()');
-  
-  // 5. Check for widget/embedded characteristics (no routing, exported but not a page)
-  const hasNoRouting = !content.includes('useNavigate') && 
-                       !content.includes('Navigate') &&
-                       !content.includes('PageLayout') &&
-                       !content.includes('AssetEditorLayout');
-  
-  // 6. Check if it's a small utility component (< 200 lines typically)
-  const isSmallComponent = content.split('\n').length < 200;
-  
-  // 7. Framework components (ContextualHelpMascot, etc.)
-  const frameworkUtilities = ['ContextualHelpMascot', 'HelpButton', 'HelpModal'];
-  if (frameworkUtilities.includes(componentName)) {
-    return true;
-  }
-  
-  // Component is a utility if it has modal props OR embedded props OR (is small AND has no routing)
-  return hasModalProps || hasEmbeddedProps || (isSmallComponent && hasNoRouting && content.includes('export'));
 }
 
 class ComplianceChecker {
@@ -300,9 +246,8 @@ class ComplianceChecker {
 
     const content = fs.readFileSync(componentPath, 'utf8');
     
-    // Note: We don't apply utility detection here because components are already
-    // filtered by deterministic routing (routes-config.json). If a component is
-    // in the routing configuration, it IS a page component by definition.
+    // Components are filtered by deterministic routing (routes-config.json).
+    // If a component is in the routing configuration, it IS a page component by definition.
     
     const compliance = this.analyzeComponent(componentName, content);
     
@@ -841,18 +786,24 @@ SGEX Framework Compliance Checker
 Usage: node check-framework-compliance.js [options]
 
 Options:
-  --format <type>       Output format: standard, condensed, pr-comment, json (default: standard)
-  --condensed           Shortcut for --format condensed
-  --json                Shortcut for --format json
-  --commit-sha <sha>    Git commit SHA for linking
-  --workflow-url <url>  Workflow run URL for linking
-  --help, -h            Show this help message
+  --format <type>           Output format: standard, condensed, pr-comment, json (default: standard)
+  --condensed               Shortcut for --format condensed
+  --json                    Shortcut for --format json
+  --commit-sha <sha>        Git commit SHA for linking
+  --workflow-url <url>      Workflow run URL for linking
+  --routes-config <path>    Path to routes-config.json (default: ../public/routes-config.json)
+  --help, -h                Show this help message
+
+Environment Variables:
+  ROUTES_CONFIG_PATH        Path to routes-config.json (overridden by --routes-config)
 
 Examples:
   node check-framework-compliance.js
   node check-framework-compliance.js --condensed
   node check-framework-compliance.js --format pr-comment --commit-sha abc123
   node check-framework-compliance.js --json > compliance-report.json
+  node check-framework-compliance.js --routes-config=/custom/path/routes-config.json
+  ROUTES_CONFIG_PATH=/custom/path/routes-config.json node check-framework-compliance.js
 `);
       process.exit(0);
     }
