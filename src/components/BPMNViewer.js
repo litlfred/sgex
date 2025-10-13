@@ -206,6 +206,53 @@ const BPMNViewerContent = () => {
       try {
         const canvas = viewerRef.current.get('canvas');
         
+        // CRITICAL: Wait for diagram to have valid bounds before attempting zoom
+        // bpmn-js may not have laid out elements immediately after import
+        const waitForDiagramBounds = () => {
+          return new Promise((resolve, reject) => {
+            let attempts = 0;
+            const maxAttempts = 50; // About 833ms at 60fps
+            
+            const checkBounds = () => {
+              const viewbox = canvas.viewbox();
+              const outer = viewbox?.outer;
+              
+              console.log(`[BPMN Viewer] Checking diagram bounds (attempt ${attempts + 1}):`, {
+                outer: outer,
+                'outer.width': outer?.width,
+                'outer.height': outer?.height,
+                'outer.x': outer?.x,
+                'outer.y': outer?.y
+              });
+              
+              // Check if diagram has valid bounds (non-zero dimensions)
+              if (outer && outer.width > 0 && outer.height > 0) {
+                console.log(`[BPMN Viewer] Valid diagram bounds found after ${attempts} RAF cycles`);
+                resolve();
+              } else if (attempts < maxAttempts) {
+                attempts++;
+                requestAnimationFrame(checkBounds);
+              } else {
+                const error = 'Diagram bounds never became valid - diagram may be empty or malformed';
+                console.error('[BPMN Viewer] ERROR:', error);
+                reject(new Error(error));
+              }
+            };
+            
+            requestAnimationFrame(checkBounds);
+          });
+        };
+        
+        try {
+          await waitForDiagramBounds();
+          console.log('✅ BPMNViewer: Diagram bounds are valid, proceeding with zoom');
+        } catch (boundsError) {
+          console.error('❌ BPMNViewer: Failed to get valid diagram bounds:', boundsError);
+          setError('Diagram has no valid content to display');
+          setLoading(false);
+          return;
+        }
+        
         // Helper function to check if container has valid dimensions
         const hasValidDimensions = (container) => {
           if (!container) return false;
