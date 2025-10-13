@@ -3,6 +3,7 @@ import { processConcurrently } from '../utils/concurrency';
 import repositoryCompatibilityCache from '../utils/repositoryCompatibilityCache';
 import secureTokenStorage from './secureTokenStorage';
 import logger from '../utils/logger';
+import samlAuthService from './samlAuthService';
 
 
 
@@ -240,13 +241,18 @@ class GitHubService {
       this.logger.apiError('GET', `/repos/${owner}/${repo}/collaborators/*/permission`, error);
       this.logger.performance('Repository write permission check (failed)', duration);
       
-      // Better error logging to help debug permission issues
-      console.warn(`Could not check repository write permissions for ${owner}/${repo}:`, {
-        error: error.message,
-        status: error.status,
-        statusText: error.response?.statusText,
-        headers: error.response?.headers
-      });
+      // Check if this is a SAML error and handle it
+      const samlHandled = samlAuthService.handleSAMLError(error, owner, repo);
+      
+      if (!samlHandled) {
+        // Better error logging to help debug permission issues (only if not SAML)
+        console.warn(`Could not check repository write permissions for ${owner}/${repo}:`, {
+          error: error.message,
+          status: error.status,
+          statusText: error.response?.statusText,
+          headers: error.response?.headers
+        });
+      }
       
       this.logger.warn('Assuming no write access due to permission check failure', { 
         owner, 
@@ -298,14 +304,19 @@ class GitHubService {
       this.logger.apiError('GET', `/repos/${owner}/${repo}/issues`, error);
       this.logger.performance('Comment permission check (failed)', duration);
       
+      // Check if this is a SAML error and handle it
+      const samlHandled = samlAuthService.handleSAMLError(error, owner, repo);
+      
       // Check if it's a permissions error
       if (error.status === 403 || error.status === 401) {
-        this.logger.warn('Token does not have permission to access issues/comments', { 
-          owner, 
-          repo, 
-          error: error.message,
-          status: error.status 
-        });
+        if (!samlHandled) {
+          this.logger.warn('Token does not have permission to access issues/comments', { 
+            owner, 
+            repo, 
+            error: error.message,
+            status: error.status 
+          });
+        }
         return false;
       }
       
@@ -365,6 +376,9 @@ class GitHubService {
       });
       return data;
     } catch (error) {
+      // Check if this is a SAML error and handle it
+      samlAuthService.handleSAMLError(error, orgLogin);
+      
       console.error(`Failed to fetch organization ${orgLogin}:`, error);
       throw error;
     }
@@ -452,7 +466,15 @@ class GitHubService {
         isWHO: true
       };
     } catch (error) {
-      console.warn('Could not fetch WHO organization data from API, using fallback:', error);
+      // Check if this is a SAML error and handle it
+      const samlHandled = samlAuthService.handleSAMLError(error, 'WorldHealthOrganization');
+      
+      if (samlHandled) {
+        this.logger.debug('WHO organization SAML error handled by samlAuthService');
+      } else {
+        this.logger.warn('Could not fetch WHO organization data from API', { error: error.message });
+      }
+      
       // Return hardcoded fallback data
       return {
         id: 'who-organization',
@@ -608,12 +630,17 @@ class GitHubService {
         return this.checkSmartGuidelinesCompatibility(owner, repo, retryCount - 1);
       }
       
-      // Special handling for SAML-protected repositories - fallback to public API
+      // Special handling for SAML-protected repositories
       if (error.status === 403 && error.message.includes('SAML enforcement') && this.octokit) {
-        console.log(`SAML-protected repository ${owner}/${repo}, trying public API fallback`);
+        // Use SAML service to handle the error (shows modal, prevents spam)
+        const handled = samlAuthService.handleSAMLError(error, owner, repo);
         
+        if (handled) {
+          this.logger.debug('SAML error handled by samlAuthService', { owner, repo });
+        }
+        
+        // Try public API fallback
         try {
-          // Try with public API (unauthenticated)
           const publicOctokit = await this.createOctokitInstance();
           const { data } = await publicOctokit.rest.repos.getContent({
             owner,
@@ -629,7 +656,7 @@ class GitHubService {
             const isCompatible = content.includes('smart.who.int.base');
             
             if (isCompatible) {
-              console.log(`Repository ${owner}/${repo} is compatible via public API despite SAML protection`);
+              this.logger.info('Repository compatible via public API despite SAML protection', { owner, repo });
               
               // Cache the result
               repositoryCompatibilityCache.set(owner, repo, true);
@@ -645,7 +672,7 @@ class GitHubService {
             }
           }
         } catch (publicApiError) {
-          console.warn(`Public API fallback also failed for ${owner}/${repo}:`, publicApiError.message);
+          this.logger.warn('Public API fallback failed', { owner, repo, error: publicApiError.message });
           // Continue to normal error handling
         }
       }
@@ -964,6 +991,9 @@ class GitHubService {
       });
       return data;
     } catch (error) {
+      // Check if this is a SAML error and handle it
+      samlAuthService.handleSAMLError(error, owner, repo);
+      
       console.error('Failed to fetch repository:', error);
       throw error;
     }  
@@ -988,6 +1018,9 @@ class GitHubService {
       console.log(`githubService.getBranches: Successfully fetched ${data.length} branches`);
       return data;
     } catch (error) {
+      // Check if this is a SAML error and handle it
+      samlAuthService.handleSAMLError(error, owner, repo);
+      
       console.error('githubService.getBranches: Failed to fetch branches:', error);
       console.error('githubService.getBranches: Error details:', {
         status: error.status,
@@ -1474,7 +1507,13 @@ class GitHubService {
         throw new Error(`GitHub API request timed out after ${timeoutMs / 1000} seconds. Please try again.`);
       } else if (error.status === 403) {
         console.error('🔒 githubService.getFileContent: 403 Forbidden error detected');
-        throw new Error('Access denied. This repository may be private or you may have hit rate limits.');
+        // Check if this is a SAML error and handle it
+        const samlHandled = samlAuthService.handleSAMLError(error, owner, repo);
+        if (!samlHandled) {
+          throw new Error('Access denied. This repository may be private or you may have hit rate limits.');
+        } else {
+          throw new Error('SAML SSO authorization required. Please authorize your token and try again.');
+        }
       } else if (error.status === 404) {
         console.error('🔍 githubService.getFileContent: 404 Not Found error detected');
         throw new Error('File not found in the repository.');

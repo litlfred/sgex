@@ -3,10 +3,12 @@ import { useTranslation } from 'react-i18next';
 import githubService from '../services/githubService';
 import dakValidationService from '../services/dakValidationService';
 import branchContextService from '../services/branchContextService';
+import samlAuthService from '../services/samlAuthService';
 import HelpButton from './HelpButton';
 import DAKStatusBox from './DAKStatusBox';
 import Publications from './Publications';
 import ForkStatusBar from './ForkStatusBar';
+import SAMLAuthModal from './SAMLAuthModal';
 import { PageLayout, usePage } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
 import useThemeImage from '../hooks/useThemeImage';
@@ -56,6 +58,8 @@ const DAKDashboardContent = () => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showFAQModal, setShowFAQModal] = useState(false);
   const [selectedFAQComponent, setSelectedFAQComponent] = useState(null);
+  const [samlModalOpen, setSamlModalOpen] = useState(false);
+  const [samlModalInfo, setSamlModalInfo] = useState(null);
 
   // Handle Escape key for FAQ modal
   useEffect(() => {
@@ -206,6 +210,14 @@ const DAKDashboardContent = () => {
       }
     }
   }, [repository]);
+
+  // Register SAML modal callback on mount
+  useEffect(() => {
+    samlAuthService.registerModalCallback((samlInfo) => {
+      setSamlModalInfo(samlInfo);
+      setSamlModalOpen(true);
+    });
+  }, []);
 
   // Load issue counts for repository
   const loadIssueCounts = async () => {
@@ -951,6 +963,16 @@ const DAKDashboardContent = () => {
           </div>
         </div>
       )}
+      
+      {/* SAML Authorization Modal */}
+      <SAMLAuthModal
+        isOpen={samlModalOpen}
+        onClose={() => {
+          setSamlModalOpen(false);
+          setSamlModalInfo(null);
+        }}
+        samlInfo={samlModalInfo}
+      />
     </div>
   );
 };
