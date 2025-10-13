@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/sgex/copilot-add-user-scenario-functionality/static/css/main.f347e983.css",
-    "main.js": "/sgex/copilot-add-user-scenario-functionality/static/js/main.380be058.js",
+    "main.js": "/sgex/copilot-add-user-scenario-functionality/static/js/main.5f7b0953.js",
     "static/js/228.5d506763.chunk.js": "/sgex/copilot-add-user-scenario-functionality/static/js/228.5d506763.chunk.js",
     "static/js/8700.251e24f3.chunk.js": "/sgex/copilot-add-user-scenario-functionality/static/js/8700.251e24f3.chunk.js",
     "static/js/984.efd90ee0.chunk.js": "/sgex/copilot-add-user-scenario-functionality/static/js/984.efd90ee0.chunk.js",
@@ -32,8 +32,8 @@
     "static/js/2057.525a866f.chunk.js": "/sgex/copilot-add-user-scenario-functionality/static/js/2057.525a866f.chunk.js",
     "static/css/5409.ae61ab29.chunk.css": "/sgex/copilot-add-user-scenario-functionality/static/css/5409.ae61ab29.chunk.css",
     "static/js/5409.d00eb482.chunk.js": "/sgex/copilot-add-user-scenario-functionality/static/js/5409.d00eb482.chunk.js",
-    "static/css/7381.14d207de.chunk.css": "/sgex/copilot-add-user-scenario-functionality/static/css/7381.14d207de.chunk.css",
-    "static/js/7381.ca13e768.chunk.js": "/sgex/copilot-add-user-scenario-functionality/static/js/7381.ca13e768.chunk.js",
+    "static/css/8470.14d207de.chunk.css": "/sgex/copilot-add-user-scenario-functionality/static/css/8470.14d207de.chunk.css",
+    "static/js/8470.4d0735fb.chunk.js": "/sgex/copilot-add-user-scenario-functionality/static/js/8470.4d0735fb.chunk.js",
     "static/js/1685.cee8e250.chunk.js": "/sgex/copilot-add-user-scenario-functionality/static/js/1685.cee8e250.chunk.js",
     "static/js/112.b763af0b.chunk.js": "/sgex/copilot-add-user-scenario-functionality/static/js/112.b763af0b.chunk.js",
     "static/js/5426.c136ecae.chunk.js": "/sgex/copilot-add-user-scenario-functionality/static/js/5426.c136ecae.chunk.js",
@@ -69,6 +69,6 @@
   },
   "entrypoints": [
     "static/css/main.f347e983.css",
-    "static/js/main.380be058.js"
+    "static/js/main.5f7b0953.js"
   ]
 }
