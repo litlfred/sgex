@@ -260,48 +260,46 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
             const canvas = viewer.get('canvas');
             console.log('🔍 BPMNPreview: Canvas service retrieved:', !!canvas);
             
-            // CRITICAL: Wait for diagram to have valid bounds before attempting zoom
-            // bpmn-js may not have laid out elements immediately after import
-            const waitForDiagramBounds = () => {
+            // CRITICAL: Check if diagram has any elements before attempting zoom
+            // Wait a bit for bpmn-js to finish initial layout
+            const elementRegistry = viewer.get('elementRegistry');
+            const checkDiagramHasElements = () => {
               return new Promise((resolve, reject) => {
                 let attempts = 0;
-                const maxAttempts = 50; // About 833ms at 60fps
+                const maxAttempts = 30; // About 500ms at 60fps
                 
-                const checkBounds = () => {
-                  const viewbox = canvas.viewbox();
-                  const outer = viewbox?.outer;
+                const checkElements = () => {
+                  const allElements = elementRegistry.getAll();
+                  const shapeElements = allElements.filter(el => el.type !== 'label' && el.type !== 'root');
                   
-                  console.log(`[BPMN Preview] Checking diagram bounds (attempt ${attempts + 1}):`, {
-                    outer: outer,
-                    'outer.width': outer?.width,
-                    'outer.height': outer?.height,
-                    'outer.x': outer?.x,
-                    'outer.y': outer?.y
+                  console.log(`[BPMN Preview] Checking diagram elements (attempt ${attempts + 1}):`, {
+                    totalElements: allElements.length,
+                    shapeElements: shapeElements.length,
+                    hasElements: shapeElements.length > 0
                   });
                   
-                  // Check if diagram has valid bounds (non-zero dimensions)
-                  if (outer && outer.width > 0 && outer.height > 0) {
-                    console.log(`[BPMN Preview] Valid diagram bounds found after ${attempts} RAF cycles`);
+                  if (shapeElements.length > 0) {
+                    console.log(`[BPMN Preview] Found ${shapeElements.length} diagram elements after ${attempts + 1} RAF cycles`);
                     resolve();
                   } else if (attempts < maxAttempts) {
                     attempts++;
-                    requestAnimationFrame(checkBounds);
+                    requestAnimationFrame(checkElements);
                   } else {
-                    const error = 'Diagram bounds never became valid - diagram may be empty or malformed';
+                    const error = 'Diagram has no elements - may be empty or malformed';
                     console.error('[BPMN Preview] ERROR:', error);
                     reject(new Error(error));
                   }
                 };
                 
-                requestAnimationFrame(checkBounds);
+                requestAnimationFrame(checkElements);
               });
             };
             
             try {
-              await waitForDiagramBounds();
-              console.log('✅ BPMNPreview: Diagram bounds are valid, proceeding with zoom');
-            } catch (boundsError) {
-              console.error('❌ BPMNPreview: Failed to get valid diagram bounds:', boundsError);
+              await checkDiagramHasElements();
+              console.log('✅ BPMNPreview: Diagram has elements, proceeding with zoom');
+            } catch (elementsError) {
+              console.error('❌ BPMNPreview: Failed to find diagram elements:', elementsError);
               setError('Diagram has no valid content to display');
               setLoading(false);
               return;
