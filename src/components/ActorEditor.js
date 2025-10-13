@@ -22,6 +22,19 @@ const ActorEditor = () => {
   const [showActorList, setShowActorList] = useState(false);
   const [activeTab, setActiveTab] = useState('basic');
 
+  // Handle Escape key for preview modal
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape' && showPreview) {
+        setShowPreview(false);
+      }
+    };
+    if (showPreview) {
+      document.addEventListener('keydown', handleEscape);
+      return () => document.removeEventListener('keydown', handleEscape);
+    }
+  }, [showPreview]);
+
   // Initialize component
   const initializeEditor = useCallback(async () => {
     setLoading(true);
@@ -459,12 +472,15 @@ const ActorEditor = () => {
         {showPreview && (
           <div 
             className="modal-overlay" 
-            onClick={() => setShowPreview(false)}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setShowPreview(false);
+              }
+            }}
             role="presentation"
           >
             <div 
               className="modal-content" 
-              onClick={e => e.stopPropagation()}
               role="dialog"
               aria-labelledby="fsh-preview-title"
               aria-modal="true"
@@ -831,8 +847,9 @@ const ContextTab = ({ actorDefinition, errors, onFieldChange, onNestedFieldChang
           </div>
           <div className="form-row">
             <div className="form-group">
-              <label>Type</label>
+              <label htmlFor={`interaction-type-${index}`}>Type</label>
               <select
+                id={`interaction-type-${index}`}
                 value={interaction.type}
                 onChange={(e) => onNestedFieldChange('interactions', index, 'type', e.target.value)}
               >
@@ -846,8 +863,9 @@ const ContextTab = ({ actorDefinition, errors, onFieldChange, onNestedFieldChang
               </select>
             </div>
             <div className="form-group">
-              <label>Target</label>
+              <label htmlFor={`interaction-target-${index}`}>Target</label>
               <input
+                id={`interaction-target-${index}`}
                 type="text"
                 value={interaction.target}
                 onChange={(e) => onNestedFieldChange('interactions', index, 'target', e.target.value)}
@@ -856,8 +874,9 @@ const ContextTab = ({ actorDefinition, errors, onFieldChange, onNestedFieldChang
             </div>
           </div>
           <div className="form-group">
-            <label>Description</label>
+            <label htmlFor={`interaction-description-${index}`}>Description</label>
             <input
+              id={`interaction-description-${index}`}
               type="text"
               value={interaction.description || ''}
               onChange={(e) => onNestedFieldChange('interactions', index, 'description', e.target.value)}
@@ -877,8 +896,9 @@ const MetadataTab = ({ actorDefinition, errors, onFieldChange, onNestedFieldChan
     
     <div className="form-row">
       <div className="form-group">
-        <label>Version</label>
+        <label htmlFor="metadata-version">Version</label>
         <input
+          id="metadata-version"
           type="text"
           value={actorDefinition.metadata?.version || ''}
           onChange={(e) => onFieldChange('metadata', { ...actorDefinition.metadata, version: e.target.value })}
@@ -886,8 +906,9 @@ const MetadataTab = ({ actorDefinition, errors, onFieldChange, onNestedFieldChan
         />
       </div>
       <div className="form-group">
-        <label>Status</label>
+        <label htmlFor="metadata-status">Status</label>
         <select
+          id="metadata-status"
           value={actorDefinition.metadata?.status || 'draft'}
           onChange={(e) => onFieldChange('metadata', { ...actorDefinition.metadata, status: e.target.value })}
         >
@@ -899,8 +920,9 @@ const MetadataTab = ({ actorDefinition, errors, onFieldChange, onNestedFieldChan
     </div>
 
     <div className="form-group">
-      <label>Publisher</label>
+      <label htmlFor="metadata-publisher">Publisher</label>
       <input
+        id="metadata-publisher"
         type="text"
         value={actorDefinition.metadata?.publisher || ''}
         onChange={(e) => onFieldChange('metadata', { ...actorDefinition.metadata, publisher: e.target.value })}
@@ -938,8 +960,9 @@ const MetadataTab = ({ actorDefinition, errors, onFieldChange, onNestedFieldChan
           </div>
           <div className="form-row">
             <div className="form-group">
-              <label>Name</label>
+              <label htmlFor={`contact-name-${index}`}>Name</label>
               <input
+                id={`contact-name-${index}`}
                 type="text"
                 value={contact.name || ''}
                 onChange={(e) => {
@@ -951,8 +974,9 @@ const MetadataTab = ({ actorDefinition, errors, onFieldChange, onNestedFieldChan
               />
             </div>
             <div className="form-group">
-              <label>Email</label>
+              <label htmlFor={`contact-email-${index}`}>Email</label>
               <input
+                id={`contact-email-${index}`}
                 type="email"
                 value={contact.email || ''}
                 onChange={(e) => {
@@ -969,8 +993,9 @@ const MetadataTab = ({ actorDefinition, errors, onFieldChange, onNestedFieldChan
     </div>
 
     <div className="form-group">
-      <label>Tags</label>
+      <label htmlFor="metadata-tags">Tags</label>
       <input
+        id="metadata-tags"
         type="text"
         value={actorDefinition.metadata?.tags?.join(', ') || ''}
         onChange={(e) => onFieldChange('metadata', { 
