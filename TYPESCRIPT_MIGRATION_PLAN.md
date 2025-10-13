@@ -20,6 +20,8 @@ This document provides a comprehensive, phased migration plan for transitioning 
 - 📝 **Documentation required** - All JavaScript usage must be documented with a clear justification
 - 🔄 **Legacy code exception** - Existing JavaScript files are tracked for migration but do not block development
 - 🚫 **No new JavaScript** - Pull requests introducing new JavaScript files will require maintainer justification
+- 📊 **JSON Schema required** - All TypeScript types MUST have corresponding JSON Schema validation (auto-generated via `npm run generate-schemas`)
+- 📋 **OpenAPI documentation** - All API endpoints and services MUST be documented with OpenAPI specifications
 
 ### Approval Process for JavaScript Files
 
@@ -28,6 +30,70 @@ If JavaScript is required (rare cases):
 2. Request explicit approval from @litlfred or designated code maintainer
 3. Add comment in the file explaining why TypeScript cannot be used
 4. Track the file for future TypeScript conversion when possible
+
+### JSON Schema and OpenAPI Requirements
+
+All TypeScript code must include proper schema validation and documentation:
+
+**JSON Schema Requirements:**
+- All TypeScript types and interfaces MUST be exported for schema generation
+- Run `npm run generate-schemas` after adding or modifying types
+- Schemas are automatically generated to `public/docs/schemas/`
+- Use `RuntimeValidationService` for runtime validation of data
+- Add JSDoc comments to types for better schema documentation
+
+**OpenAPI Documentation Requirements:**
+- All API endpoints MUST be documented with OpenAPI 3.0 specifications
+- Service interfaces should include OpenAPI-compatible JSDoc annotations
+- Use standard HTTP status codes and response types
+- Document authentication requirements and security schemes
+- Include examples for request/response payloads
+
+**Example with JSON Schema:**
+```typescript
+/**
+ * User profile information
+ * @example { "id": "123", "login": "user", "email": "user@example.com" }
+ */
+export interface GitHubUser {
+  /** Unique user identifier */
+  id: string;
+  /** GitHub username */
+  login: string;
+  /** User email address */
+  email: string;
+}
+
+// Runtime validation
+import { validateAndCast } from './services/runtimeValidationService';
+const user = validateAndCast<GitHubUser>('GitHubUser', userData);
+```
+
+**Example with OpenAPI:**
+```typescript
+/**
+ * @openapi
+ * /api/users/{id}:
+ *   get:
+ *     summary: Get user by ID
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: User found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/GitHubUser'
+ */
+export async function getUser(id: string): Promise<GitHubUser> {
+  // implementation
+}
+```
 
 ---
 
@@ -583,20 +649,36 @@ All documentation must include:
    - Use type aliases for unions and complex types
    - Prefer type inference where clear
 
-3. **Import Updates**
+3. **JSON Schema Integration**
+   - Export all types and interfaces for schema generation
+   - Run `npm run generate-schemas` after type changes
+   - Use `RuntimeValidationService` for data validation
+   - Add JSDoc comments for better schema documentation
+   - Test generated schemas with sample data
+
+4. **OpenAPI Documentation**
+   - Document all service methods with OpenAPI JSDoc annotations
+   - Include request/response examples
+   - Document error responses and status codes
+   - Use standard HTTP semantics
+   - Keep API documentation in sync with implementation
+
+5. **Import Updates**
    - Update imports to use `.ts`/`.tsx` extensions in type definitions
    - Ensure backward compatibility during migration
    - Use named imports for better tree-shaking
 
-4. **Testing**
+6. **Testing**
    - Test each migrated file thoroughly
    - Maintain or improve test coverage
    - Add type-specific tests where valuable
+   - Validate JSON schemas with test data
 
-5. **Documentation**
+7. **Documentation**
    - Update JSDoc comments to TypeScript style
    - Document complex types
    - Add examples for type usage
+   - Include OpenAPI annotations for APIs
 
 ### Common Migration Patterns
 

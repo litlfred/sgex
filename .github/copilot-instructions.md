@@ -545,6 +545,11 @@ npm test -- --coverage     # Generate coverage report
 - Add proper TypeScript type definitions and interfaces
 - Import types from `src/types/core.ts` or create new type definitions as needed
 - Use TypeScript best practices (type inference, strict types, no `any` unless necessary)
+- **Export all types and interfaces** for JSON Schema generation
+- **Add JSDoc comments** to types for better schema documentation
+- **Run `npm run generate-schemas`** after creating or modifying types
+- **Use `RuntimeValidationService`** for validating data at runtime
+- **Document APIs with OpenAPI annotations** using JSDoc comments
 
 **❌ NEVER DO (without explicit approval):**
 - Create new `.js` or `.jsx` files
@@ -595,6 +600,55 @@ If you believe JavaScript is technically required (very rare):
 3. **Be explicit**: Add return types and parameter types
 4. **Avoid `any`**: Use proper types or `unknown` if type is truly unknown
 5. **Document types**: Add JSDoc comments for complex type definitions
+6. **Export types**: Always export types/interfaces for JSON Schema generation
+7. **Validate data**: Use `RuntimeValidationService` for runtime validation
+8. **Generate schemas**: Run `npm run generate-schemas` after type changes
+9. **Document APIs**: Add OpenAPI JSDoc annotations for service methods
+10. **Include examples**: Add `@example` tags in JSDoc for better documentation
+
+**JSON Schema Example:**
+```typescript
+/**
+ * Represents a DAK repository
+ * @example { "name": "anc-dak", "owner": "who", "branch": "main" }
+ */
+export interface DAKRepository {
+  /** Repository name */
+  name: string;
+  /** Repository owner/organization */
+  owner: string;
+  /** Default branch name */
+  branch: string;
+}
+```
+
+**OpenAPI Documentation Example:**
+```typescript
+/**
+ * Fetch repository information
+ * @openapi
+ * /api/repositories/{owner}/{repo}:
+ *   get:
+ *     summary: Get repository details
+ *     parameters:
+ *       - name: owner
+ *         in: path
+ *         required: true
+ *       - name: repo
+ *         in: path
+ *         required: true
+ *     responses:
+ *       200:
+ *         description: Repository found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/DAKRepository'
+ */
+export async function getRepository(owner: string, repo: string): Promise<DAKRepository> {
+  // implementation
+}
+```
 
 **Remember**: TypeScript is not optional. It's the project standard. Always default to TypeScript unless you have explicit approval for a JavaScript exception.
 

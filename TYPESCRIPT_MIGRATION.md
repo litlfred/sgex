@@ -8,6 +8,8 @@ This document outlines the phased TypeScript migration strategy for the SGEX Wor
 
 **🔒 TypeScript Policy**: TypeScript is the default for all new and migrated code. Future use of JavaScript files requires explicit approval from a code maintainer (@litlfred).
 
+**📊 JSON Schema & OpenAPI Required**: All TypeScript types must be exported for JSON Schema generation, and all APIs must be documented with OpenAPI specifications.
+
 <!-- Build retry test: 2025-01-12 -->
 
 ## Migration Strategy
