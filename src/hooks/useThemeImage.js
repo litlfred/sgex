@@ -22,7 +22,13 @@ const useThemeImage = (baseImagePath) => {
       if (isDarkMode) {
         // Convert base image to dark mode version
         // e.g., "sgex-mascot.png" -> "sgex-mascot_grey_tabby.png"
-        const darkImageName = normalizedPath.replace(/\.png$/, '_grey_tabby.png');
+        // e.g., "cat-paw-icon.svg" -> "cat-paw-icon_dark.svg"
+        let darkImageName;
+        if (normalizedPath.endsWith('.svg')) {
+          darkImageName = normalizedPath.replace(/\.svg$/, '_dark.svg');
+        } else {
+          darkImageName = normalizedPath.replace(/\.png$/, '_grey_tabby.png');
+        }
         finalPath = publicUrl ? `${publicUrl}/${darkImageName}` : `/${darkImageName}`;
       } else {
         // Use original image for light mode

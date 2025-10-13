@@ -38,7 +38,7 @@ jest.mock('../services/helpContentService', () => ({
   default: {
     getHelpTopicsForPage: jest.fn(() => [
       { id: 'pat-token', title: 'How to Create a GitHub Personal Access Token' },
-      { id: 'bug-report', title: 'Report a SGeX bug' }
+      { id: 'bug-report', title: 'Report an issue' }
     ])
   }
 }));

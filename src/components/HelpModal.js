@@ -4,6 +4,7 @@ import useThemeImage from '../hooks/useThemeImage';
 import BugReportForm from './BugReportForm';
 import EnhancedTutorialModal from './EnhancedTutorialModal';
 import tutorialService from '../services/tutorialService';
+import githubService from '../services/githubService';
 import { ALT_TEXT_KEYS, getAltText } from '../utils/imageAltTextHelper';
 import repositoryConfig from '../config/repositoryConfig';
 
@@ -15,6 +16,7 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose, tutorialId }) => {
   const [showBugReportForm, setShowBugReportForm] = useState(false);
   const [showEnhancedTutorial, setShowEnhancedTutorial] = useState(false);
   const [currentTutorialId, setCurrentTutorialId] = useState(tutorialId);
+
 
   // Handle Escape key
   useEffect(() => {
@@ -30,6 +32,12 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose, tutorialId }) => {
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
   }, [onClose, showMenu]);
+
+  // Debug logging for bug report form state
+  useEffect(() => {
+    console.log('[HelpModal] showBugReportForm state changed:', showBugReportForm);
+  }, [showBugReportForm]);
+
 
   // Check if we should show enhanced tutorial modal
   useEffect(() => {
@@ -80,10 +88,19 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose, tutorialId }) => {
 
     window.helpModalInstance = {
       openSgexIssue: (issueType) => {
-        // For bug reports, show the new integrated form
+        // For bug reports, show the new integrated form only if authenticated
         if (issueType === 'bug') {
-          setShowBugReportForm(true);
-          return;
+          // Check if user is authenticated
+          const isAuthenticated = githubService.isAuthenticated;
+          console.log('[HelpModal] Bug report clicked. Authenticated:', isAuthenticated);
+          
+          if (isAuthenticated) {
+            console.log('[HelpModal] Showing bug report form');
+            setShowBugReportForm(true);
+            return;
+          }
+          console.log('[HelpModal] Not authenticated, opening GitHub issue page');
+          // If not authenticated, fall through to open GitHub issue page directly
         }
         
         // For other issue types, continue with existing behavior
@@ -91,6 +108,10 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose, tutorialId }) => {
         let params = {};
 
         switch (issueType) {
+          case 'bug':
+            params.template = 'bug_report.yml';
+            params.labels = 'bug';
+            break;
           case 'feature':
             params.template = 'feature_request.yml';
             params.labels = 'enhancement';
@@ -113,28 +134,17 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose, tutorialId }) => {
 
         const url = createContextualUrl(baseUrl, params);
         
-        // Try to open the GitHub issue, but handle cases where external links are blocked
+        // Try to open the GitHub issue
         try {
           const newWindow = window.open(url, '_blank');
           
-          // Check if the window was blocked or failed to open
-          if (!newWindow || newWindow.closed) {
+          // Only show fallback if window.open completely failed (returned null)
+          if (!newWindow) {
             // Fallback: show instructions to manually open the link
             window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url, issueType);
-          } else {
-            // Check if the window actually loaded after a brief delay
-            setTimeout(() => {
-              try {
-                if (newWindow.closed || !newWindow.location || newWindow.location.href === 'about:blank') {
-                  newWindow.close();
-                  window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url, issueType);
-                }
-              } catch (e) {
-                // Cross-origin restriction means it probably loaded successfully
-                // or the check failed due to security - either way, don't show fallback
-              }
-            }, 1000);
           }
+          // If window.open returned a window object, assume it worked
+          // (checking window properties causes cross-origin issues)
         } catch (error) {
           console.warn('Failed to open GitHub issue:', error);
           window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url, issueType);
@@ -143,8 +153,53 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose, tutorialId }) => {
 
       openDakIssue: (issueType) => {
         const repository = contextData.repository || contextData.selectedDak;
+        
+        // If no DAK repository is selected, fall back to sgex repository for content issues
         if (!repository) {
-          console.warn('No DAK repository specified for feedback');
+          console.warn('No DAK repository specified, falling back to sgex repository');
+          
+          // Redirect to sgex repository with appropriate labels
+          const baseUrl = `${repositoryConfig.getGitHubUrl()}/issues/new`;
+          let params = {};
+          
+          switch (issueType) {
+            case 'content':
+              params.template = 'bug_report.yml';
+              params.labels = 'bug,dak-content';
+              params.title = '[DAK Content Issue] ';
+              break;
+            case 'bug':
+              params.template = 'bug_report.yml';
+              params.labels = 'bug,dak-issue';
+              break;
+            case 'improvement':
+              params.template = 'feature_request.yml';
+              params.labels = 'enhancement,dak-improvement';
+              break;
+            case 'question':
+              params.template = 'question.yml';
+              params.labels = 'question,dak-question';
+              break;
+            case 'blank':
+              params.labels = 'blank-issue,dak-feedback';
+              break;
+            default:
+              params.labels = 'dak-feedback';
+          }
+          
+          const url = createContextualUrl(baseUrl, params);
+          
+          try {
+            const newWindow = window.open(url, '_blank');
+            // Only show fallback if window.open completely failed (returned null)
+            if (!newWindow) {
+              window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url, `dak-${issueType}`);
+            }
+          } catch (error) {
+            console.warn('Failed to open GitHub issue:', error);
+            window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url, `dak-${issueType}`);
+          }
+          
           return;
         }
 
@@ -183,28 +238,17 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose, tutorialId }) => {
 
         const url = createContextualUrl(baseUrl, params);
         
-        // Try to open the GitHub issue, but handle cases where external links are blocked
+        // Try to open the GitHub issue
         try {
           const newWindow = window.open(url, '_blank');
           
-          // Check if the window was blocked or failed to open
-          if (!newWindow || newWindow.closed) {
+          // Only show fallback if window.open completely failed (returned null)
+          if (!newWindow) {
             // Fallback: show instructions to manually open the link
             window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url, `dak-${issueType}`);
-          } else {
-            // Check if the window actually loaded after a brief delay
-            setTimeout(() => {
-              try {
-                if (newWindow.closed || !newWindow.location || newWindow.location.href === 'about:blank') {
-                  newWindow.close();
-                  window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url, `dak-${issueType}`);
-                }
-              } catch (e) {
-                // Cross-origin restriction means it probably loaded successfully
-                // or the check failed due to security - either way, don't show fallback
-              }
-            }, 1000);
           }
+          // If window.open returned a window object, assume it worked
+          // (checking window properties causes cross-origin issues)
         } catch (error) {
           console.warn('Failed to open DAK issue:', error);
           window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url, `dak-${issueType}`);
@@ -581,7 +625,7 @@ Best regards,
             // Calculate the number of menu items
             const menuItems = [
               'Documentation',
-              'File Bug Report',
+              'Report an issue',
               ...(contextData.repository ? ['Provide DAK Feedback'] : []),
               'GitHub Source',
               'Email Support'
@@ -604,7 +648,7 @@ Best regards,
                 
                 <button onClick={handleBugReport} className="menu-item">
                   <img src="/sgex/bug-report-icon.svg" alt={getAltText(t, ALT_TEXT_KEYS.ICON_BUG_REPORT, 'Bug Report')} className="menu-icon" />
-                  File Bug Report
+                  Report an issue
                 </button>
                 
                 {contextData.repository && (
