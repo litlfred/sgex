@@ -183,7 +183,7 @@ const DAKDashboardContent = () => {
             <span className="status-bar-text">{title}</span>
           </div>
           <span className={`status-bar-chevron ${isExpanded ? 'expanded' : ''}`}>▼</span>
-        </div>
+        </button>
         {isExpanded && (
           <div className="status-bar-content">
             {children}
