@@ -12,6 +12,8 @@
  * - Asset management
  * - Shared FSH parsing and generation utilities
  * - Base component classes for all DAK types
+ * - DAK Component Objects for managing component instances
+ * - Source resolution for canonical, URL, and inline sources
  * - No web or MCP service dependencies
  */
 export * from './types';
@@ -20,9 +22,11 @@ export { DAKValidationService } from './validation';
 export { ActorDefinitionCore, actorDefinitionCore } from './actor-definition';
 export { QuestionnaireDefinitionCore, questionnaireDefinitionCore } from './questionnaire-definition';
 export { DecisionTableCore, decisionTableCore } from './decision-table';
+export { SourceResolutionService } from './sourceResolution';
+export * from './dakComponentObject';
 export * from './base-component';
 export * from './fsh-utils';
-export type { DAK, DAKRepository, DAKMetadata, DAKValidationResult, DAKValidationError, DAKValidationWarning, DAKPublisher } from './types';
+export type { DAK, DAKRepository, DAKMetadata, DAKValidationResult, DAKValidationError, DAKValidationWarning, DAKPublisher, DAKComponentSource, ResolvedSource, SourceValidationResult, SaveOptions, HealthInterventionsSource, GenericPersonaSource, UserScenarioSource, BusinessProcessWorkflowSource, CoreDataElementSource, DecisionSupportLogicSource, ProgramIndicatorSource, RequirementsSource, TestScenarioSource } from './types';
 export type { ActorDefinition, ActorValidationResult } from './actor-definition';
 export type { QuestionnaireDefinition, QuestionnaireItem } from './questionnaire-definition';
 export type { DecisionTable, DecisionTableVariable } from './decision-table';

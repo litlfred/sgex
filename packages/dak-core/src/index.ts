@@ -12,6 +12,8 @@
  * - Asset management
  * - Shared FSH parsing and generation utilities
  * - Base component classes for all DAK types
+ * - DAK Component Objects for managing component instances
+ * - Source resolution for canonical, URL, and inline sources
  * - No web or MCP service dependencies
  */
 
@@ -25,6 +27,10 @@ export { ActorDefinitionCore, actorDefinitionCore } from './actor-definition';
 export { QuestionnaireDefinitionCore, questionnaireDefinitionCore } from './questionnaire-definition';
 export { DecisionTableCore, decisionTableCore } from './decision-table';
 
+// New: Source resolution and Component Objects
+export { SourceResolutionService } from './sourceResolution';
+export * from './dakComponentObject';
+
 // Base component classes and utilities
 export * from './base-component';
 export * from './fsh-utils';
@@ -37,7 +43,21 @@ export type {
   DAKValidationResult,
   DAKValidationError,
   DAKValidationWarning,
-  DAKPublisher
+  DAKPublisher,
+  // New: Source types
+  DAKComponentSource,
+  ResolvedSource,
+  SourceValidationResult,
+  SaveOptions,
+  HealthInterventionsSource,
+  GenericPersonaSource,
+  UserScenarioSource,
+  BusinessProcessWorkflowSource,
+  CoreDataElementSource,
+  DecisionSupportLogicSource,
+  ProgramIndicatorSource,
+  RequirementsSource,
+  TestScenarioSource
 } from './types';
 
 export type {
