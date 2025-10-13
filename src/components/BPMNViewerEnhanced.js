@@ -315,22 +315,47 @@ const BPMNViewerEnhanced = () => {
             
             // Zoom to fit the actual diagram bounds
             if (diagramBounds.width > 0 && diagramBounds.height > 0) {
-              canvas.viewbox(diagramBounds);
-              console.log('✅ BPMNViewerEnhanced: Set viewbox to diagram bounds');
+              // Only set viewbox if container has valid dimensions
+              const container = containerRef.current;
+              const rect = container?.getBoundingClientRect();
+              if (container && rect && rect.width > 0 && rect.height > 0) {
+                canvas.viewbox(diagramBounds);
+                console.log('✅ BPMNViewerEnhanced: Set viewbox to diagram bounds');
+              } else {
+                console.warn('⚠️ BPMNViewerEnhanced: Skipping viewbox - container has invalid dimensions');
+              }
             } else {
               // Fallback to fit-viewport if bounds calculation fails
-              canvas.zoom('fit-viewport');
-              console.log('⚠️ BPMNViewerEnhanced: Using fit-viewport fallback (invalid bounds)');
+              const container = containerRef.current;
+              const rect = container?.getBoundingClientRect();
+              if (container && rect && rect.width > 0 && rect.height > 0) {
+                canvas.zoom('fit-viewport');
+                console.log('⚠️ BPMNViewerEnhanced: Using fit-viewport fallback (invalid bounds)');
+              } else {
+                console.warn('⚠️ BPMNViewerEnhanced: Skipping zoom - container has invalid dimensions');
+              }
             }
           } else {
             // No valid positioned elements, use standard fit-viewport
-            canvas.zoom('fit-viewport');
-            console.log('⚠️ BPMNViewerEnhanced: Using fit-viewport fallback (no valid elements)');
+            const container = containerRef.current;
+            const rect = container?.getBoundingClientRect();
+            if (container && rect && rect.width > 0 && rect.height > 0) {
+              canvas.zoom('fit-viewport');
+              console.log('⚠️ BPMNViewerEnhanced: Using fit-viewport fallback (no valid elements)');
+            } else {
+              console.warn('⚠️ BPMNViewerEnhanced: Skipping zoom - container has invalid dimensions');
+            }
           }
         } else {
           // No elements, use standard fit-viewport
-          canvas.zoom('fit-viewport');
-          console.log('⚠️ BPMNViewerEnhanced: Using fit-viewport fallback (no elements)');
+          const container = containerRef.current;
+          const rect = container?.getBoundingClientRect();
+          if (container && rect && rect.width > 0 && rect.height > 0) {
+            canvas.zoom('fit-viewport');
+            console.log('⚠️ BPMNViewerEnhanced: Using fit-viewport fallback (no elements)');
+          } else {
+            console.warn('⚠️ BPMNViewerEnhanced: Skipping zoom - container has invalid dimensions');
+          }
         }
         
         setZoomLevel(canvas.zoom());

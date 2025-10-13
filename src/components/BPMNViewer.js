@@ -253,6 +253,14 @@ const BPMNViewerContent = () => {
         const executeViewportFit = () => {
           const container = containerRef.current;
           
+          // CRITICAL: Final dimension check right before zoom
+          // Container dimensions can change between wait completion and execution
+          if (!hasValidDimensions(container)) {
+            console.warn('[BPMN Viewer] WARNING: Container dimensions invalid at zoom time, aborting');
+            console.warn('[BPMN Viewer] This indicates container was hidden/resized after initial check');
+            return;
+          }
+          
           // Log viewport transform before zoom
           const svg = container?.querySelector('svg');
           const viewportGroup = svg?.querySelector('.viewport');
