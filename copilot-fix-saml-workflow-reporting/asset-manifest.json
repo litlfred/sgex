@@ -1,9 +1,10 @@
 {
   "files": {
     "main.css": "/sgex/copilot-fix-saml-workflow-reporting/static/css/main.e2a7dfc4.css",
-    "main.js": "/sgex/copilot-fix-saml-workflow-reporting/static/js/main.6adb0484.js",
+    "main.js": "/sgex/copilot-fix-saml-workflow-reporting/static/js/main.b27b7b99.js",
     "static/js/228.5d506763.chunk.js": "/sgex/copilot-fix-saml-workflow-reporting/static/js/228.5d506763.chunk.js",
-    "static/js/8700.251e24f3.chunk.js": "/sgex/copilot-fix-saml-workflow-reporting/static/js/8700.251e24f3.chunk.js",
+    "static/css/8700.247e7b29.chunk.css": "/sgex/copilot-fix-saml-workflow-reporting/static/css/8700.247e7b29.chunk.css",
+    "static/js/8700.b7c5e789.chunk.js": "/sgex/copilot-fix-saml-workflow-reporting/static/js/8700.b7c5e789.chunk.js",
     "static/js/984.efd90ee0.chunk.js": "/sgex/copilot-fix-saml-workflow-reporting/static/js/984.efd90ee0.chunk.js",
     "static/js/9414.0002f65d.chunk.js": "/sgex/copilot-fix-saml-workflow-reporting/static/js/9414.0002f65d.chunk.js",
     "static/css/2101.247e7b29.chunk.css": "/sgex/copilot-fix-saml-workflow-reporting/static/css/2101.247e7b29.chunk.css",
@@ -66,6 +67,6 @@
   },
   "entrypoints": [
     "static/css/main.e2a7dfc4.css",
-    "static/js/main.6adb0484.js"
+    "static/js/main.b27b7b99.js"
   ]
 }
