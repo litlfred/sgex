@@ -218,7 +218,7 @@ class TutorialService {
       category: 'authentication',
       pages: ['landing-page-unauthenticated', 'welcome', 'pat-login', 'pat-setup-instructions'],
       priority: 1,
-      badge: '/sgex/cat-paw-lock-icon.svg',
+      badge: 'cat-paw-lock-icon.svg',
       steps: [
         {
           title: 'Step 1: Go to GitHub Settings',
@@ -461,7 +461,7 @@ class TutorialService {
       category: 'getting-started',
       pages: ['dak-dashboard', 'landing-page-authenticated'],
       priority: 0, // High priority to show first
-      badge: '/sgex/cat-paw-icon.svg',
+      badge: 'cat-paw-icon.svg',
       steps: [
         {
           title: 'Welcome to Enhanced Tutorials!',

@@ -1,246 +1,151 @@
-# Merge Conflict Analysis: Security Check PR vs Main Branch
+badge: 'cat-paw-icon.svg'
+```
+
+---
+
+## Recommended Resolution Steps
+
+### Step-by-Step Guide
+
+1. **Verify the conflict:**
+```bash
+git status
+# Should show: "both modified: src/services/helpContentService.js"
+```
+
+2. **Review the conflict:**
+```bash
+git diff src/services/helpContentService.js
+```
+
+3. **Choose resolution strategy:**
+   - **Quick fix:** Use Option 1 (accept PR changes) ✅
+   - **Thorough fix:** Use Option 3 (manual merge) if main has new content
+
+4. **For Option 1 (Recommended):**
+```bash
+# Accept this PR's changes
+git checkout --ours src/services/helpContentService.js
+
+# Check if main added any new badge references
+git show origin/main:src/services/helpContentService.js | grep "badge:"
+
+# If main has new badge references with absolute paths:
+# Edit src/services/helpContentService.js manually to convert them to relative
+
+# Stage the resolved file
+git add src/services/helpContentService.js
+```
+
+5. **For Option 3 (Manual merge):**
+```bash
+# Open in your editor
+code src/services/helpContentService.js
+
+# Or use git mergetool
+git mergetool src/services/helpContentService.js
+
+# After resolving manually:
+git add src/services/helpContentService.js
+```
+
+6. **Complete the merge:**
+```bash
+git commit -m "Merge main into copilot/fix-404-errors-for-assets
+
+Resolved conflict in helpContentService.js by keeping relative badge paths
+from this PR to ensure 404 fix works in all deployment scenarios."
+```
+
+7. **Verify the resolution:**
+```bash
+# Check the resolved file
+git show HEAD:src/services/helpContentService.js | grep "badge:"
+
+# Should show relative paths like:
+# badge: 'cat-paw-icon.svg'
+# badge: 'cat-paw-info-icon.svg'
+# etc.
+```
+
+8. **Test the changes:**
+```bash
+npm run build
+npm test
+```
+
+---
+
+## Impact Analysis
+
+### If Conflict Resolved with Option 1 (Relative Paths)
+
+**Deployment Testing Required:**
+- ✅ Local development: `http://localhost:3000/sgex/`
+- ✅ Main deployment: `https://litlfred.github.io/sgex/`
+- ✅ Feature branch: `https://litlfred.github.io/sgex/branch-name/`
+
+**Files to Test:**
+- All pages with contextual help menus
+- Badge icon rendering in light mode
+- Badge icon rendering in dark mode
+- Theme switching functionality
+
+### If Conflict Resolved with Option 2 (Absolute Paths)
+
+**Known Issues That Will Return:**
+- ❌ 404 errors in feature branch deployments
+- ❌ Broken badge icons in help menus
+- ❌ Console errors in browser developer tools
+
+---
+
+## Additional Considerations
+
+### Other Files in This PR
+
+These files have **NO CONFLICTS** and will merge cleanly:
+
+**New Files (14):**
+- 6 light mode SVG icons
+- 8 dark mode SVG icons (6 new + 2 existing)
+- 3 documentation files
+- 1 test file
+
+**Modified Files (6):**
+- `src/hooks/useThemeImage.js` - SVG dark mode support
+- `src/utils/themeUtils.js` - Path transformation fix
+- `src/components/ContextualHelpMascot.js` - Relative badge path
+- `src/services/tutorialService.js` - Relative badge paths
+- `src/tests/imageAssetValidity.test.js` - Extended tests
+
+All these will merge automatically without conflicts.
+
+---
 
 ## Summary
 
-The security check PR (`copilot/improve-security-reporting`) has conflicts with the main branch due to parallel development on the `code-quality.yml` workflow file. Both branches modified this file for different purposes.
+**Conflict:** Single file (`src/services/helpContentService.js`)  
+**Cause:** Badge path format change (absolute → relative)  
+**Recommended Fix:** Option 1 - Keep relative paths from this PR  
+**Complexity:** Low - Simple string replacement conflict  
+**Testing Required:** Yes - Verify across all deployment scenarios  
 
-## Conflict Details
-
-### File in Conflict
-- **`.github/workflows/code-quality.yml`**
-
-### What Changed in Each Branch
-
-#### Main Branch Changes (FETCH_HEAD)
-- **Purpose**: Improved framework compliance PR comment system
-- **Key changes**:
-  - Added `--json` and `--condensed` output options to compliance checker
-  - Replaced inline GitHub Actions script with new Python script: `scripts/manage-compliance-comment.py`
-  - Removed 100+ lines of inline JavaScript comment management code
-  - Changed from `actions/github-script@v8` to Python-based comment management
-  - Made compliance check `continue-on-error: true`
-
-#### Our Branch Changes (copilot/improve-security-reporting)
-- **Purpose**: Remove duplicate npm audit and streamline workflow
-- **Key changes**:
-  - **Removed entire `security-audit` job** (lines 191-260 deleted)
-  - **Removed npm audit from dependencies** in `success-summary` job
-  - Added comment linking to new PR Security Check workflow
-  - File went from 469 lines → 229 lines (240 lines removed)
-
-### Conflict Type
-- **MODIFICATION CONFLICT**: Both branches modified `code-quality.yml`
-- Main branch: Modernized comment management (lines 302-313)
-- Our branch: Removed security-audit job entirely (lines 191-260)
-
-## Resolution Options
-
-### Option 1: Rebase onto Main (RECOMMENDED)
-**Description**: Rebase our branch onto latest main, keeping both sets of changes.
-
-**Steps**:
-```bash
-git fetch origin main
-git rebase origin/main
-# Resolve conflicts manually:
-# - Keep main's improved comment management system
-# - Keep our removal of security-audit job
-# - Ensure success-summary only depends on framework-compliance
-```
-
-**Pros**:
-- ✅ Linear history
-- ✅ Preserves both improvements
-- ✅ Clean integration
-- ✅ Best practice for feature branches
-
-**Cons**:
-- ⚠️ Requires manual conflict resolution
-- ⚠️ Will rewrite commit history (force push needed)
-
-**Time**: 10-15 minutes
+**After Resolution:**
+- All 8 cat-paw icons will work in light and dark mode
+- No 404 errors in any deployment scenario
+- Simpler, more portable code
+- Complete dark mode support for all badge icons
 
 ---
 
-### Option 2: Merge Main into Branch
-**Description**: Merge latest main into our security-check branch.
+## Questions?
 
-**Steps**:
-```bash
-git fetch origin main
-git merge origin/main
-# Resolve conflicts in code-quality.yml:
-# - Keep main's Python-based comment system
-# - Keep our removal of security-audit job
-# - Update job dependencies
-git add .github/workflows/code-quality.yml
-git commit -m "Merge main into security-check branch"
-```
+If you need help resolving this conflict, please:
+1. Review the [resolution options](#resolution-options) above
+2. Follow the [step-by-step guide](#step-by-step-guide)
+3. Test thoroughly after resolution
+4. If still unclear, ask for clarification with specific questions about the conflict
 
-**Pros**:
-- ✅ Preserves full commit history
-- ✅ No force push needed
-- ✅ Safe and reversible
+**Note:** This is a straightforward conflict with a clear recommended resolution. The relative path approach is tested and working in this PR.
 
-**Cons**:
-- ⚠️ Creates merge commit
-- ⚠️ Less clean history
-
-**Time**: 10-15 minutes
-
----
-
-### Option 3: Cherry-pick Main's Changes
-**Description**: Manually apply main's comment management improvements to our branch.
-
-**Steps**:
-```bash
-# Identify the commit that added manage-compliance-comment.py
-git log origin/main --oneline | grep -i compliance
-# Cherry-pick those commits
-git cherry-pick <commit-sha>
-# Resolve any conflicts
-```
-
-**Pros**:
-- ✅ Granular control
-- ✅ Can select specific commits
-
-**Cons**:
-- ⚠️ Time consuming
-- ⚠️ Risk of missing related changes
-- ⚠️ Requires understanding of multiple commits
-
-**Time**: 20-30 minutes
-
----
-
-### Option 4: Accept Main and Re-apply Our Changes
-**Description**: Reset to main and reapply only our security-related changes.
-
-**Steps**:
-```bash
-# Save our changes
-git diff a731cb4..HEAD > /tmp/our-changes.patch
-
-# Reset to main
-git fetch origin main
-git reset --hard origin/main
-
-# Re-apply our changes (excluding code-quality.yml)
-# Manually edit code-quality.yml to remove security-audit job
-```
-
-**Pros**:
-- ✅ Starts from known good state (main)
-- ✅ Ensures main's improvements are intact
-
-**Cons**:
-- ⚠️ Most time-consuming
-- ⚠️ Lose commit history
-- ⚠️ Need to re-validate all changes
-
-**Time**: 30-45 minutes
-
----
-
-## Recommended Resolution: Option 1 (Rebase)
-
-### Detailed Rebase Steps
-
-```bash
-# 1. Fetch latest main
-git fetch origin main
-
-# 2. Start rebase
-git rebase origin/main
-
-# 3. When conflict occurs in code-quality.yml, resolve by:
-#    a. Keep main's comment management system (Python-based)
-#    b. Keep our removal of security-audit job
-#    c. Update success-summary job dependencies
-
-# 4. Edit .github/workflows/code-quality.yml:
-#    - Line ~302: Keep Python comment management from main
-#    - Lines 191-260: Keep removed (security-audit job deleted by us)
-#    - Update success-summary needs: only framework-compliance
-
-# 5. Continue rebase
-git add .github/workflows/code-quality.yml
-git rebase --continue
-
-# 6. Force push (since history was rewritten)
-git push --force-with-lease origin copilot/improve-security-reporting
-```
-
-### Expected Result After Rebase
-
-The final `code-quality.yml` should have:
-- ✅ Main's Python-based comment management (`manage-compliance-comment.py`)
-- ✅ Main's JSON output support for compliance checker
-- ✅ Our removal of `security-audit` job
-- ✅ Our simplified `success-summary` dependencies
-- ✅ All our new security check files intact
-- ✅ No duplicate npm audit execution
-
-### Files That Should Merge Cleanly
-
-These files from our PR should merge without conflicts:
-- ✅ `.github/workflows/pr-security-check.yml` (new file)
-- ✅ `scripts/run-security-checks.js` (new file)
-- ✅ `scripts/format-security-comment.js` (new file)
-- ✅ `scripts/manage-security-comment.py` (new file)
-- ✅ `scripts/lib/pr-comment-manager.js` (new file)
-- ✅ `scripts/lib/pr-comment-manager.test.js` (new file)
-- ✅ All documentation files in `docs/` (new files)
-- ✅ Test files (new files)
-- ✅ `.gitignore` (simple append)
-- ✅ `README.md` (simple append)
-- ✅ `DEPLOYMENT.md` (simple append)
-
-### Only Conflict
-
-- ⚠️ `.github/workflows/code-quality.yml` - Requires manual merge of:
-  - Main's lines 295-327 (improved comment system)
-  - Our deletion of lines 191-260 (security-audit job)
-
-## Post-Resolution Validation
-
-After resolving conflicts, validate:
-
-```bash
-# 1. Run tests
-npm test
-
-# 2. Lint workflow files
-npx yamllint .github/workflows/*.yml
-
-# 3. Check workflow syntax
-gh workflow list
-
-# 4. Verify our changes are still present
-git diff origin/main .github/workflows/code-quality.yml | grep -A5 "security-audit"
-# Should show security-audit job is NOT present
-
-# 5. Verify main's changes are present
-git diff origin/main .github/workflows/code-quality.yml | grep -A5 "manage-compliance-comment"
-# Should show Python script is present
-```
-
-## Timeline Estimate
-
-- **Option 1 (Rebase)**: 10-15 minutes + 5 minutes validation = **15-20 minutes**
-- **Option 2 (Merge)**: 10-15 minutes + 5 minutes validation = **15-20 minutes**
-- **Option 3 (Cherry-pick)**: 20-30 minutes + 10 minutes validation = **30-40 minutes**
-- **Option 4 (Reset)**: 30-45 minutes + 15 minutes validation = **45-60 minutes**
-
-## Recommendation
-
-**Use Option 1 (Rebase)** because:
-1. ✅ Fastest resolution
-2. ✅ Clean linear history
-3. ✅ Standard Git workflow for feature branches
-4. ✅ Preserves all improvements from both branches
-5. ✅ Easy to validate
-
-The conflict is straightforward - just need to merge two sets of improvements to the same workflow file. Both changes are compatible and complement each other.
