@@ -4,14 +4,15 @@
 
 ### 0.1 NO HEURISTICS Policy
 
-**CRITICAL DESIGN PRINCIPLE**: The SGeX Workbench operates on a strict **NO HEURISTICS** policy for all business logic, routing, and system behavior.
+**CRITICAL DESIGN PRINCIPLE**: The SGeX Workbench operates on a strict **NO HEURISTICS** policy for all business logic, routing, and system behavior, **unless explicit approval from code owner or maintainer**.
 
-**REQ-PRINCIPLE-001**: The system SHALL NOT use heuristics, pattern matching, or guessing for ANY business logic
+**REQ-PRINCIPLE-001**: The system SHALL NOT use heuristics, pattern matching, or guessing for ANY business logic (unless explicitly approved)
 - All system behavior MUST be deterministic and explicit
 - NO pattern matching on names, file paths, or code structure to infer behavior
 - NO "auto-detection" based on naming conventions or content analysis
 - NO fallback mechanisms that attempt to guess correct behavior
 - Failure MUST be explicit with clear error messages, not silent fallbacks
+- Exceptions require explicit approval from code owner or maintainer with documented justification
 
 **REQ-PRINCIPLE-002**: When configuration or explicit information is unavailable, the system SHALL fail clearly
 - Provide explicit error messages indicating what is missing
@@ -25,7 +26,7 @@
 - Require explicit declarations in configuration rather than inferring from code
 - Validate configuration at startup and fail fast if invalid
 
-**Rationale**: Heuristics make systems unpredictable, difficult to debug, and brittle to changes. They create maintenance burden and hide problems until runtime. Explicit configuration makes behavior clear, testable, and maintainable.
+**Rationale**: Heuristics make systems unpredictable, difficult to debug, and brittle to changes. They create maintenance burden and hide problems until runtime. Explicit configuration makes behavior clear, testable, and maintainable. In rare cases where heuristics may provide value, explicit approval from code owner or maintainer is required with clear documentation of the rationale and limitations.
 
 **Examples of PROHIBITED heuristics**:
 - ❌ Inferring component type from naming patterns (e.g., "Modal" suffix = modal component)
