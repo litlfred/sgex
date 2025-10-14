@@ -207,14 +207,16 @@ const BPMNViewerContent = () => {
         const canvas = viewerRef.current.get('canvas');
         
         // Defer zoom to ensure container dimensions are available
-        setTimeout(() => {
-          try {
-            canvas.zoom('fit-viewport');
-            console.log('✅ BPMNViewer: Applied fit-viewport zoom');
-          } catch (error) {
-            console.error('❌ BPMNViewer: Error applying zoom:', error);
-          }
-        }, 0);
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            try {
+              canvas.zoom('fit-viewport');
+              console.log('✅ BPMNViewer: Applied fit-viewport zoom');
+            } catch (error) {
+              console.error('❌ BPMNViewer: Error applying zoom:', error);
+            }
+          });
+        });
         
         // Force canvas update to ensure diagram is immediately visible
         // This prevents the issue where diagram requires a drag/mouse interaction to appear

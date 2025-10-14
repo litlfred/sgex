@@ -283,15 +283,17 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
             });
             
             // Always use fit-viewport for previews - it's reliable and works well for small containers
-            // Wait a tick to ensure container dimensions are available, then zoom
-            setTimeout(() => {
-              try {
-                canvas.zoom('fit-viewport');
-                console.log('✅ BPMNPreview: Zoom to fit-viewport completed');
+            // Use requestAnimationFrame to ensure browser has painted container with dimensions
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                try {
+                  canvas.zoom('fit-viewport');
+                  console.log('✅ BPMNPreview: Zoom to fit-viewport completed');
               } catch (zoomError) {
                 console.error('❌ BPMNPreview: Zoom failed:', zoomError);
               }
-            }, 0);
+              });
+            });
             
             // Log viewport and SVG state after zoom
             const viewboxAfterZoom = canvas.viewbox();

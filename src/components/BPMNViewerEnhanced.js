@@ -283,6 +283,9 @@ const BPMNViewerEnhanced = () => {
         
         console.log(`📊 BPMNViewerEnhanced: Found ${allElements.length} elements in diagram`);
         
+        // Use requestAnimationFrame to ensure browser has painted container
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
         // Calculate the bounds of all elements to ensure proper viewport
         if (allElements.length > 0) {
           let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
@@ -334,6 +337,8 @@ const BPMNViewerEnhanced = () => {
         }
         
         setZoomLevel(canvas.zoom());
+          });
+        });
         
         // Force canvas update to ensure diagram is immediately visible
         // This prevents the issue where diagram requires a drag/mouse interaction to appear
