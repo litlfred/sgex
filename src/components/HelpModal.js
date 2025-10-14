@@ -146,8 +146,14 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose, tutorialId }) => {
           console.log('[HelpModal] DAK issue clicked without repository. Authenticated:', isAuthenticated);
           
           if (isAuthenticated) {
-            console.log('[HelpModal] Showing bug report form for DAK issue');
-            setShowBugReportForm(true);
+            console.log('[HelpModal] Showing bug report form for DAK issue via global handler');
+            // Call the global handler to show bug report form at ContextualHelpMascot level
+            if (window.helpModalInstance?.showBugReportForm) {
+              window.helpModalInstance.showBugReportForm();
+            } else {
+              // Fallback: try to show it at this level
+              setShowBugReportForm(true);
+            }
             return;
           }
           
