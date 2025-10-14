@@ -6,11 +6,9 @@
 export { GenericPersonaComponent } from './personas';
 export { CoreDataElementComponent } from './dataElements';
 export { BusinessProcessWorkflowComponent } from './businessProcesses';
-
-// TODO: Add remaining component objects:
-// - HealthInterventionsComponent
-// - UserScenarioComponent
-// - DecisionSupportLogicComponent
-// - ProgramIndicatorComponent
-// - RequirementsComponent
-// - TestScenarioComponent
+export { DecisionSupportLogicComponent } from './decisionLogic';
+export { HealthInterventionsComponent } from './healthInterventions';
+export { UserScenarioComponent } from './userScenarios';
+export { ProgramIndicatorComponent } from './indicators';
+export { RequirementsComponent } from './requirements';
+export { TestScenarioComponent } from './testScenarios';

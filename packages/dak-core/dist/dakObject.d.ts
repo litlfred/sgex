@@ -6,10 +6,10 @@
 import { DAK, DAKMetadata, DAKRepository, DAKComponentType, DAKComponentSource } from './types';
 import { SourceResolutionService } from './sourceResolution';
 import { BaseDAKComponentObject } from './dakComponentObject';
-import { GenericPersonaComponent, CoreDataElementComponent, BusinessProcessWorkflowComponent } from './components';
+import { GenericPersonaComponent, CoreDataElementComponent, BusinessProcessWorkflowComponent, DecisionSupportLogicComponent, HealthInterventionsComponent, UserScenarioComponent, ProgramIndicatorComponent, RequirementsComponent, TestScenarioComponent } from './components';
 /**
  * DAK Object - represents a repository instance of a DAK
- * Provides access to all component objects (currently 3, will be 9)
+ * Provides access to all component objects (all 9 components)
  */
 export declare class DAKObject {
     private repository;
@@ -34,6 +34,30 @@ export declare class DAKObject {
      * Convenience getter for business processes component
      */
     get businessProcesses(): BusinessProcessWorkflowComponent;
+    /**
+     * Convenience getter for health interventions component
+     */
+    get healthInterventions(): HealthInterventionsComponent;
+    /**
+     * Convenience getter for user scenarios component
+     */
+    get userScenarios(): UserScenarioComponent;
+    /**
+     * Convenience getter for decision logic component
+     */
+    get decisionLogic(): DecisionSupportLogicComponent;
+    /**
+     * Convenience getter for indicators component
+     */
+    get indicators(): ProgramIndicatorComponent;
+    /**
+     * Convenience getter for requirements component
+     */
+    get requirements(): RequirementsComponent;
+    /**
+     * Convenience getter for test scenarios component
+     */
+    get testScenarios(): TestScenarioComponent;
     /**
      * Get DAK metadata
      */

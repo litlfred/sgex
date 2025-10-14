@@ -10,7 +10,7 @@ const types_1 = require("./types");
 const components_1 = require("./components");
 /**
  * DAK Object - represents a repository instance of a DAK
- * Provides access to all component objects (currently 3, will be 9)
+ * Provides access to all component objects (all 9 components)
  */
 class DAKObject {
     constructor(repository, sourceResolver, stagingGroundService, dak) {
@@ -48,6 +48,42 @@ class DAKObject {
      */
     get businessProcesses() {
         return this.getComponent(types_1.DAKComponentType.BUSINESS_PROCESSES);
+    }
+    /**
+     * Convenience getter for health interventions component
+     */
+    get healthInterventions() {
+        return this.getComponent(types_1.DAKComponentType.HEALTH_INTERVENTIONS);
+    }
+    /**
+     * Convenience getter for user scenarios component
+     */
+    get userScenarios() {
+        return this.getComponent(types_1.DAKComponentType.USER_SCENARIOS);
+    }
+    /**
+     * Convenience getter for decision logic component
+     */
+    get decisionLogic() {
+        return this.getComponent(types_1.DAKComponentType.DECISION_LOGIC);
+    }
+    /**
+     * Convenience getter for indicators component
+     */
+    get indicators() {
+        return this.getComponent(types_1.DAKComponentType.INDICATORS);
+    }
+    /**
+     * Convenience getter for requirements component
+     */
+    get requirements() {
+        return this.getComponent(types_1.DAKComponentType.REQUIREMENTS);
+    }
+    /**
+     * Convenience getter for test scenarios component
+     */
+    get testScenarios() {
+        return this.getComponent(types_1.DAKComponentType.TEST_SCENARIOS);
     }
     /**
      * Get DAK metadata
@@ -114,19 +150,43 @@ class DAKObject {
         await this.saveDakJson();
     }
     initializeComponents() {
-        // Create component objects - currently 3 implemented, will be 9
+        // Create all 9 component objects
+        this.componentObjects.set(types_1.DAKComponentType.HEALTH_INTERVENTIONS, new components_1.HealthInterventionsComponent(this.repository, this.sourceResolver, this.stagingGroundService, (sources) => this.updateComponentSources(types_1.DAKComponentType.HEALTH_INTERVENTIONS, sources)));
         this.componentObjects.set(types_1.DAKComponentType.PERSONAS, new components_1.GenericPersonaComponent(this.repository, this.sourceResolver, this.stagingGroundService, (sources) => this.updateComponentSources(types_1.DAKComponentType.PERSONAS, sources)));
-        this.componentObjects.set(types_1.DAKComponentType.DATA_ELEMENTS, new components_1.CoreDataElementComponent(this.repository, this.sourceResolver, this.stagingGroundService, (sources) => this.updateComponentSources(types_1.DAKComponentType.DATA_ELEMENTS, sources)));
+        this.componentObjects.set(types_1.DAKComponentType.USER_SCENARIOS, new components_1.UserScenarioComponent(this.repository, this.sourceResolver, this.stagingGroundService, (sources) => this.updateComponentSources(types_1.DAKComponentType.USER_SCENARIOS, sources)));
         this.componentObjects.set(types_1.DAKComponentType.BUSINESS_PROCESSES, new components_1.BusinessProcessWorkflowComponent(this.repository, this.sourceResolver, this.stagingGroundService, (sources) => this.updateComponentSources(types_1.DAKComponentType.BUSINESS_PROCESSES, sources)));
+        this.componentObjects.set(types_1.DAKComponentType.DATA_ELEMENTS, new components_1.CoreDataElementComponent(this.repository, this.sourceResolver, this.stagingGroundService, (sources) => this.updateComponentSources(types_1.DAKComponentType.DATA_ELEMENTS, sources)));
+        this.componentObjects.set(types_1.DAKComponentType.DECISION_LOGIC, new components_1.DecisionSupportLogicComponent(this.repository, this.sourceResolver, this.stagingGroundService, (sources) => this.updateComponentSources(types_1.DAKComponentType.DECISION_LOGIC, sources)));
+        this.componentObjects.set(types_1.DAKComponentType.INDICATORS, new components_1.ProgramIndicatorComponent(this.repository, this.sourceResolver, this.stagingGroundService, (sources) => this.updateComponentSources(types_1.DAKComponentType.INDICATORS, sources)));
+        this.componentObjects.set(types_1.DAKComponentType.REQUIREMENTS, new components_1.RequirementsComponent(this.repository, this.sourceResolver, this.stagingGroundService, (sources) => this.updateComponentSources(types_1.DAKComponentType.REQUIREMENTS, sources)));
+        this.componentObjects.set(types_1.DAKComponentType.TEST_SCENARIOS, new components_1.TestScenarioComponent(this.repository, this.sourceResolver, this.stagingGroundService, (sources) => this.updateComponentSources(types_1.DAKComponentType.TEST_SCENARIOS, sources)));
         // Load existing sources into components
         this.loadSourcesIntoComponents();
     }
     loadSourcesIntoComponents() {
-        // Load sources from dak into component objects
+        // Load sources from dak into component objects for all 9 components
+        if (this.dak.healthInterventions) {
+            const component = this.componentObjects.get(types_1.DAKComponentType.HEALTH_INTERVENTIONS);
+            if (component) {
+                component.initializeSources(this.dak.healthInterventions);
+            }
+        }
         if (this.dak.personas) {
             const component = this.componentObjects.get(types_1.DAKComponentType.PERSONAS);
             if (component) {
                 component.initializeSources(this.dak.personas);
+            }
+        }
+        if (this.dak.userScenarios) {
+            const component = this.componentObjects.get(types_1.DAKComponentType.USER_SCENARIOS);
+            if (component) {
+                component.initializeSources(this.dak.userScenarios);
+            }
+        }
+        if (this.dak.businessProcesses) {
+            const component = this.componentObjects.get(types_1.DAKComponentType.BUSINESS_PROCESSES);
+            if (component) {
+                component.initializeSources(this.dak.businessProcesses);
             }
         }
         if (this.dak.dataElements) {
@@ -135,10 +195,28 @@ class DAKObject {
                 component.initializeSources(this.dak.dataElements);
             }
         }
-        if (this.dak.businessProcesses) {
-            const component = this.componentObjects.get(types_1.DAKComponentType.BUSINESS_PROCESSES);
+        if (this.dak.decisionLogic) {
+            const component = this.componentObjects.get(types_1.DAKComponentType.DECISION_LOGIC);
             if (component) {
-                component.initializeSources(this.dak.businessProcesses);
+                component.initializeSources(this.dak.decisionLogic);
+            }
+        }
+        if (this.dak.indicators) {
+            const component = this.componentObjects.get(types_1.DAKComponentType.INDICATORS);
+            if (component) {
+                component.initializeSources(this.dak.indicators);
+            }
+        }
+        if (this.dak.requirements) {
+            const component = this.componentObjects.get(types_1.DAKComponentType.REQUIREMENTS);
+            if (component) {
+                component.initializeSources(this.dak.requirements);
+            }
+        }
+        if (this.dak.testScenarios) {
+            const component = this.componentObjects.get(types_1.DAKComponentType.TEST_SCENARIOS);
+            if (component) {
+                component.initializeSources(this.dak.testScenarios);
             }
         }
     }
