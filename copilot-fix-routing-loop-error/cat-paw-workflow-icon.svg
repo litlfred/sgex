@@ -1,0 +1,46 @@
+<svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+  <!-- Cat paw -->
+  <g fill="#8B4513" stroke="#654321" stroke-width="0.5">
+    <!-- Main paw pad -->
+    <ellipse cx="10" cy="14" rx="4" ry="2.5" />
+    
+    <!-- Toe pads -->
+    <circle cx="7" cy="10" r="1.5" />
+    <circle cx="10" cy="9" r="1.5" />
+    <circle cx="13" cy="10" r="1.5" />
+  </g>
+  
+  <!-- Workflow diagram nodes and connections -->
+  <g fill="#4A90E2" stroke="#2E5C8A" stroke-width="0.5">
+    <!-- Node 1 -->
+    <circle cx="6" cy="3" r="1.2" fill="#E8F4F8" />
+    
+    <!-- Node 2 -->
+    <circle cx="10" cy="3" r="1.2" fill="#E8F4F8" />
+    
+    <!-- Node 3 -->
+    <circle cx="14" cy="3" r="1.2" fill="#E8F4F8" />
+    
+    <!-- Connection arrows -->
+    <g stroke="#4A90E2" stroke-width="0.6" fill="none">
+      <!-- Arrow 1 to 2 -->
+      <path d="M 7.2 3 L 8.8 3" />
+      <polygon points="8.8,3 8.2,2.7 8.2,3.3" fill="#4A90E2" />
+      
+      <!-- Arrow 2 to 3 -->
+      <path d="M 11.2 3 L 12.8 3" />
+      <polygon points="12.8,3 12.2,2.7 12.2,3.3" fill="#4A90E2" />
+    </g>
+    
+    <!-- Sub-nodes for branching -->
+    <circle cx="10" cy="6" r="0.8" fill="#A8D5F2" />
+    <path d="M 10 4.2 L 10 5.2" stroke="#4A90E2" stroke-width="0.5" fill="none" />
+  </g>
+  
+  <!-- Flow indicator sparkles -->
+  <g fill="#FFD700" opacity="0.7">
+    <circle cx="8.5" cy="2" r="0.3" />
+    <circle cx="12" cy="2" r="0.3" />
+    <circle cx="10" cy="7" r="0.3" />
+  </g>
+</svg>
