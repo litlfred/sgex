@@ -104,23 +104,68 @@ export class StagingGroundIntegrationService {
 }
 ```
 
-## Remaining Work
+### Phase 6: Update Asset Editors (In Progress)
+**Status:** Framework complete, 2 of 9 editors migrated with clean replacement
 
-### Phase 6: Update Asset Editors
-**Status:** Partial Complete - Framework and examples done
+**Migration Strategy (Clean Replacement - No Backward Compatibility):**
+- Replace original editor files completely with Component Object versions
+- Remove all legacy code (no backward compatibility layers)
+- Remove direct staging ground and GitHub API access
+- Use useDakComponent(type) hook exclusively
+- Delete deprecated code completely
 
-**Completed:**
+**Framework Complete:**
 - ✅ ComponentObjectProvider React context created
 - ✅ useDakObject and useDakComponent hooks created
 - ✅ editorIntegrationService bridge service created
 - ✅ Mock fallback system for development
 - ✅ Complete 13KB implementation guide (PHASE_6_EDITOR_INTEGRATION.md)
-- ✅ Migration examples documented
-- ✅ **BPMNEditorIntegrated.js** - Example BPMN editor using BusinessProcessWorkflowComponent
-- ✅ **ActorEditorIntegrated.js** - Example Actor editor using GenericPersonaComponent
+- ✅ Migration strategy documented
+
+**Migrated Editors (Clean Replacements):**
+1. ✅ **BPMNEditor.js** (427 lines) - Uses BusinessProcessWorkflowComponent
+   - Replaced original (410 lines) completely
+   - Clean Component Object implementation only
+   - No legacy code retained
+2. ✅ **ActorEditor.js** (555 lines) - Uses GenericPersonaComponent
+   - Replaced original (1011 lines) completely
+   - 456 lines of legacy code removed
+   - No legacy code retained
+
+**Code Reduction:**
+- Total: 1421 lines → 982 lines (439 lines removed)
+- No dead code - clean implementations only
+
+## Remaining Work
+
+### Phase 6 (Continued): Migrate Remaining 7 Editors
+**Status:** 2 of 9 editors complete
+
+**Remaining Editors to Migrate (Clean Replacement Approach):**
+3. [ ] CoreDataDictionaryViewer → CoreDataElementComponent
+4. [ ] QuestionnaireEditor → (TBD - may use multiple components)
+5. [ ] DocumentationViewer → HealthInterventionsComponent/RequirementsComponent
+6. [ ] DMN/Decision logic editors → DecisionSupportLogicComponent
+7. [ ] Indicators editors → ProgramIndicatorComponent
+8. [ ] Requirements editors → RequirementsComponent
+9. [ ] Test scenario editors → TestScenarioComponent
 - Both use Component Objects exclusively via useDakComponent() hook
 - Automatic dak.json updates when saving
 - No direct staging ground access
+
+## Remaining Work
+
+### Phase 6 (Continued): Migrate Remaining 7 Editors
+**Status:** 2 of 9 editors complete
+
+**Remaining Editors to Migrate (Clean Replacement Approach):**
+3. [ ] CoreDataDictionaryViewer → CoreDataElementComponent
+4. [ ] QuestionnaireEditor → (TBD - may use multiple components)
+5. [ ] DocumentationViewer → HealthInterventionsComponent/RequirementsComponent
+6. [ ] DMN/Decision logic editors → DecisionSupportLogicComponent
+7. [ ] Indicators editors → ProgramIndicatorComponent
+8. [ ] Requirements editors → RequirementsComponent
+9. [ ] Test scenario editors → TestScenarioComponent
 
 **Remaining Tasks:**
 - Test integrated editors with real repository data
