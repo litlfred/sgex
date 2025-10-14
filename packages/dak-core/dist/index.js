@@ -32,7 +32,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DAKAssetType = exports.DAKComponentType = exports.DAKFactory = exports.DAKObject = exports.SourceResolutionService = exports.decisionTableCore = exports.DecisionTableCore = exports.questionnaireDefinitionCore = exports.QuestionnaireDefinitionCore = exports.actorDefinitionCore = exports.ActorDefinitionCore = exports.DAKValidationService = exports.dakService = exports.DAKService = void 0;
+exports.DAKAssetType = exports.DAKComponentType = exports.StagingGroundIntegrationService = exports.DAKFactory = exports.DAKObject = exports.SourceResolutionService = exports.decisionTableCore = exports.DecisionTableCore = exports.questionnaireDefinitionCore = exports.QuestionnaireDefinitionCore = exports.actorDefinitionCore = exports.ActorDefinitionCore = exports.DAKValidationService = exports.dakService = exports.DAKService = void 0;
 // Core types
 __exportStar(require("./types"), exports);
 // Core services
@@ -59,6 +59,8 @@ var dakObject_1 = require("./dakObject");
 Object.defineProperty(exports, "DAKObject", { enumerable: true, get: function () { return dakObject_1.DAKObject; } });
 var dakFactory_1 = require("./dakFactory");
 Object.defineProperty(exports, "DAKFactory", { enumerable: true, get: function () { return dakFactory_1.DAKFactory; } });
+var stagingGroundIntegration_1 = require("./stagingGroundIntegration");
+Object.defineProperty(exports, "StagingGroundIntegrationService", { enumerable: true, get: function () { return stagingGroundIntegration_1.StagingGroundIntegrationService; } });
 // Base component classes and utilities
 __exportStar(require("./base-component"), exports);
 __exportStar(require("./fsh-utils"), exports);

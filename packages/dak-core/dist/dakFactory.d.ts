@@ -5,10 +5,11 @@
 import { DAK, DAKMetadata, DAKRepository } from './types';
 import { DAKObject } from './dakObject';
 import { SourceResolutionService } from './sourceResolution';
+import { IStagingGroundService } from './stagingGroundIntegration';
 export declare class DAKFactory {
     private sourceResolver;
     private stagingGroundService;
-    constructor(sourceResolver: SourceResolutionService, stagingGroundService: any);
+    constructor(sourceResolver: SourceResolutionService, stagingGroundService: IStagingGroundService);
     /**
      * Create DAK object from repository
      */
@@ -21,5 +22,4 @@ export declare class DAKFactory {
      * Initialize empty DAK object for new repository
      */
     createEmpty(repository: DAKRepository, metadata?: Partial<DAKMetadata>): DAKObject;
-    private loadDakJson;
 }

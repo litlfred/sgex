@@ -11,12 +11,11 @@ exports.BaseDAKComponentObject = void 0;
  * Provides common functionality for all 9 components
  */
 class BaseDAKComponentObject {
-    constructor(componentType, repository, sourceResolver, stagingGroundService, // Will be typed properly
-    onSourcesChanged) {
+    constructor(componentType, repository, sourceResolver, stagingGroundIntegration, onSourcesChanged) {
         this.componentType = componentType;
         this.repository = repository;
         this.sourceResolver = sourceResolver;
-        this.stagingGroundService = stagingGroundService;
+        this.stagingGroundIntegration = stagingGroundIntegration;
         this.sources = [];
         this.cache = new Map();
         this.onSourcesChanged = onSourcesChanged;
@@ -164,31 +163,20 @@ class BaseDAKComponentObject {
     async saveToFile(data, path, message) {
         // Serialize data to file format
         const content = this.serializeToFile(data);
-        // Save to staging ground
-        await this.stagingGroundService.updateFile(path, content, {
-            message,
-            componentType: this.componentType
+        // Save to staging ground using integration service
+        await this.stagingGroundIntegration.saveComponentArtifact(this.componentType, path, content, { message });
+        // Create relative URL source for the file
+        const relativeUrlSource = this.stagingGroundIntegration.createRelativeUrlSource(path, {
+            lastValidated: new Date().toISOString(),
+            savedBy: 'sgex-workbench'
         });
         // Update or add source with relative URL
-        const existingIndex = this.sources.findIndex(s => s.url === path);
+        const existingIndex = this.sources.findIndex(s => s.url === relativeUrlSource.url);
         if (existingIndex >= 0) {
-            await this.updateSource(existingIndex, {
-                url: path,
-                metadata: {
-                    ...this.sources[existingIndex].metadata,
-                    lastValidated: new Date().toISOString()
-                }
-            });
+            await this.updateSource(existingIndex, relativeUrlSource);
         }
         else {
-            await this.addSource({
-                url: path,
-                metadata: {
-                    addedAt: new Date().toISOString(),
-                    addedBy: 'sgex-workbench',
-                    sourceType: 'url-relative'
-                }
-            });
+            await this.addSource(relativeUrlSource);
         }
         // Update cache
         const dataWithId = data;
@@ -197,9 +185,12 @@ class BaseDAKComponentObject {
         }
     }
     /**
-     * Sync sources to parent DAK object
+     * Sync sources to parent DAK object and update dak.json
      */
     async syncSources() {
+        // Update dak.json through staging ground integration
+        await this.stagingGroundIntegration.updateComponentSources(this.componentType, this.sources);
+        // Also notify DAK object if callback is provided
         if (this.onSourcesChanged) {
             await this.onSourcesChanged(this.sources);
         }

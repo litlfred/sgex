@@ -5,6 +5,7 @@
  */
 import { DAK, DAKMetadata, DAKRepository, DAKComponentType, DAKComponentSource } from './types';
 import { SourceResolutionService } from './sourceResolution';
+import { StagingGroundIntegrationService } from './stagingGroundIntegration';
 import { BaseDAKComponentObject } from './dakComponentObject';
 import { GenericPersonaComponent, CoreDataElementComponent, BusinessProcessWorkflowComponent, DecisionSupportLogicComponent, HealthInterventionsComponent, UserScenarioComponent, ProgramIndicatorComponent, RequirementsComponent, TestScenarioComponent } from './components';
 /**
@@ -14,10 +15,10 @@ import { GenericPersonaComponent, CoreDataElementComponent, BusinessProcessWorkf
 export declare class DAKObject {
     private repository;
     private sourceResolver;
-    private stagingGroundService;
+    private stagingGroundIntegration;
     private dak;
     private componentObjects;
-    constructor(repository: DAKRepository, sourceResolver: SourceResolutionService, stagingGroundService: any, dak?: DAK);
+    constructor(repository: DAKRepository, sourceResolver: SourceResolutionService, stagingGroundIntegration: StagingGroundIntegrationService, dak?: DAK);
     /**
      * Get component object for a specific component type
      */

@@ -12,6 +12,7 @@ import {
   DAKComponentSource
 } from './types';
 import { SourceResolutionService } from './sourceResolution';
+import { StagingGroundIntegrationService } from './stagingGroundIntegration';
 import { BaseDAKComponentObject } from './dakComponentObject';
 import { 
   GenericPersonaComponent,
@@ -36,7 +37,7 @@ export class DAKObject {
   constructor(
     private repository: DAKRepository,
     private sourceResolver: SourceResolutionService,
-    private stagingGroundService: any,
+    private stagingGroundIntegration: StagingGroundIntegrationService,
     dak?: DAK
   ) {
     this.dak = dak || this.createEmptyDAK();
@@ -174,14 +175,7 @@ export class DAKObject {
    */
   async saveDakJson(): Promise<void> {
     const dakJson = this.toJSON();
-    await this.stagingGroundService.updateFile(
-      'dak.json',
-      JSON.stringify(dakJson, null, 2),
-      {
-        message: 'Update DAK metadata',
-        componentType: 'metadata'
-      }
-    );
+    await this.stagingGroundIntegration.saveDakJson(dakJson);
   }
 
   /**
@@ -206,7 +200,7 @@ export class DAKObject {
       new HealthInterventionsComponent(
         this.repository,
         this.sourceResolver,
-        this.stagingGroundService,
+        this.stagingGroundIntegration,
         (sources) => this.updateComponentSources(DAKComponentType.HEALTH_INTERVENTIONS, sources)
       )
     );
@@ -216,7 +210,7 @@ export class DAKObject {
       new GenericPersonaComponent(
         this.repository,
         this.sourceResolver,
-        this.stagingGroundService,
+        this.stagingGroundIntegration,
         (sources) => this.updateComponentSources(DAKComponentType.PERSONAS, sources)
       )
     );
@@ -226,7 +220,7 @@ export class DAKObject {
       new UserScenarioComponent(
         this.repository,
         this.sourceResolver,
-        this.stagingGroundService,
+        this.stagingGroundIntegration,
         (sources) => this.updateComponentSources(DAKComponentType.USER_SCENARIOS, sources)
       )
     );
@@ -236,7 +230,7 @@ export class DAKObject {
       new BusinessProcessWorkflowComponent(
         this.repository,
         this.sourceResolver,
-        this.stagingGroundService,
+        this.stagingGroundIntegration,
         (sources) => this.updateComponentSources(DAKComponentType.BUSINESS_PROCESSES, sources)
       )
     );
@@ -246,7 +240,7 @@ export class DAKObject {
       new CoreDataElementComponent(
         this.repository,
         this.sourceResolver,
-        this.stagingGroundService,
+        this.stagingGroundIntegration,
         (sources) => this.updateComponentSources(DAKComponentType.DATA_ELEMENTS, sources)
       )
     );
@@ -256,7 +250,7 @@ export class DAKObject {
       new DecisionSupportLogicComponent(
         this.repository,
         this.sourceResolver,
-        this.stagingGroundService,
+        this.stagingGroundIntegration,
         (sources) => this.updateComponentSources(DAKComponentType.DECISION_LOGIC, sources)
       )
     );
@@ -266,7 +260,7 @@ export class DAKObject {
       new ProgramIndicatorComponent(
         this.repository,
         this.sourceResolver,
-        this.stagingGroundService,
+        this.stagingGroundIntegration,
         (sources) => this.updateComponentSources(DAKComponentType.INDICATORS, sources)
       )
     );
@@ -276,7 +270,7 @@ export class DAKObject {
       new RequirementsComponent(
         this.repository,
         this.sourceResolver,
-        this.stagingGroundService,
+        this.stagingGroundIntegration,
         (sources) => this.updateComponentSources(DAKComponentType.REQUIREMENTS, sources)
       )
     );
@@ -286,7 +280,7 @@ export class DAKObject {
       new TestScenarioComponent(
         this.repository,
         this.sourceResolver,
-        this.stagingGroundService,
+        this.stagingGroundIntegration,
         (sources) => this.updateComponentSources(DAKComponentType.TEST_SCENARIOS, sources)
       )
     );

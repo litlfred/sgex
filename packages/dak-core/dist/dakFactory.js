@@ -6,6 +6,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DAKFactory = void 0;
 const dakObject_1 = require("./dakObject");
+const stagingGroundIntegration_1 = require("./stagingGroundIntegration");
 class DAKFactory {
     constructor(sourceResolver, stagingGroundService) {
         this.sourceResolver = sourceResolver;
@@ -16,15 +17,19 @@ class DAKFactory {
      */
     async createFromRepository(owner, repo, branch = 'main') {
         const repository = { owner, repo, branch };
+        // Create staging ground integration
+        const stagingGroundIntegration = new stagingGroundIntegration_1.StagingGroundIntegrationService(this.stagingGroundService, repository, branch);
         // Try to load existing dak.json from staging ground or repository
-        const dakJson = await this.loadDakJson(repository);
-        return new dakObject_1.DAKObject(repository, this.sourceResolver, this.stagingGroundService, dakJson);
+        const dakJson = await stagingGroundIntegration.loadDakJson();
+        return new dakObject_1.DAKObject(repository, this.sourceResolver, stagingGroundIntegration, dakJson || undefined);
     }
     /**
      * Create DAK object from existing dak.json
      */
     async createFromDakJson(dakJson, repository) {
-        return new dakObject_1.DAKObject(repository, this.sourceResolver, this.stagingGroundService, dakJson);
+        // Create staging ground integration
+        const stagingGroundIntegration = new stagingGroundIntegration_1.StagingGroundIntegrationService(this.stagingGroundService, repository, repository.branch || 'main');
+        return new dakObject_1.DAKObject(repository, this.sourceResolver, stagingGroundIntegration, dakJson);
     }
     /**
      * Initialize empty DAK object for new repository
@@ -43,22 +48,9 @@ class DAKFactory {
             copyrightYear: metadata?.copyrightYear || new Date().getFullYear().toString(),
             publisher: metadata?.publisher || { name: repository.owner, url: '' }
         };
-        return new dakObject_1.DAKObject(repository, this.sourceResolver, this.stagingGroundService, emptyDak);
-    }
-    async loadDakJson(repository) {
-        // Try staging ground first
-        try {
-            const staged = await this.stagingGroundService.getFile('dak.json');
-            if (staged && staged.content) {
-                return JSON.parse(staged.content);
-            }
-        }
-        catch (error) {
-            // Staging ground file not found, continue
-        }
-        // Try remote repository - would need GitHub service integration
-        // For now, return undefined
-        return undefined;
+        // Create staging ground integration
+        const stagingGroundIntegration = new stagingGroundIntegration_1.StagingGroundIntegrationService(this.stagingGroundService, repository, repository.branch || 'main');
+        return new dakObject_1.DAKObject(repository, this.sourceResolver, stagingGroundIntegration, emptyDak);
     }
 }
 exports.DAKFactory = DAKFactory;

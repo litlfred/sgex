@@ -13,6 +13,7 @@ import {
   DAKValidationResult
 } from './types';
 import { SourceResolutionService } from './sourceResolution';
+import { StagingGroundIntegrationService } from './stagingGroundIntegration';
 
 /**
  * Base interface for DAK Component Objects
@@ -65,7 +66,7 @@ export abstract class BaseDAKComponentObject<TData, TSource extends DAKComponent
     public readonly componentType: DAKComponentType,
     protected repository: DAKRepository,
     protected sourceResolver: SourceResolutionService,
-    protected stagingGroundService: any, // Will be typed properly
+    protected stagingGroundIntegration: StagingGroundIntegrationService,
     onSourcesChanged?: (sources: TSource[]) => Promise<void>
   ) {
     this.onSourcesChanged = onSourcesChanged;
@@ -265,31 +266,29 @@ export abstract class BaseDAKComponentObject<TData, TSource extends DAKComponent
     // Serialize data to file format
     const content = this.serializeToFile(data);
     
-    // Save to staging ground
-    await this.stagingGroundService.updateFile(path, content, {
-      message,
-      componentType: this.componentType
-    });
+    // Save to staging ground using integration service
+    await this.stagingGroundIntegration.saveComponentArtifact(
+      this.componentType,
+      path,
+      content,
+      { message }
+    );
+    
+    // Create relative URL source for the file
+    const relativeUrlSource = this.stagingGroundIntegration.createRelativeUrlSource<TData>(
+      path,
+      {
+        lastValidated: new Date().toISOString(),
+        savedBy: 'sgex-workbench'
+      }
+    );
     
     // Update or add source with relative URL
-    const existingIndex = this.sources.findIndex(s => s.url === path);
+    const existingIndex = this.sources.findIndex(s => s.url === relativeUrlSource.url);
     if (existingIndex >= 0) {
-      await this.updateSource(existingIndex, { 
-        url: path,
-        metadata: { 
-          ...this.sources[existingIndex].metadata,
-          lastValidated: new Date().toISOString() 
-        }
-      } as Partial<TSource>);
+      await this.updateSource(existingIndex, relativeUrlSource as Partial<TSource>);
     } else {
-      await this.addSource({
-        url: path,
-        metadata: {
-          addedAt: new Date().toISOString(),
-          addedBy: 'sgex-workbench',
-          sourceType: 'url-relative'
-        }
-      } as TSource);
+      await this.addSource(relativeUrlSource as TSource);
     }
     
     // Update cache
@@ -300,9 +299,16 @@ export abstract class BaseDAKComponentObject<TData, TSource extends DAKComponent
   }
   
   /**
-   * Sync sources to parent DAK object
+   * Sync sources to parent DAK object and update dak.json
    */
   private async syncSources(): Promise<void> {
+    // Update dak.json through staging ground integration
+    await this.stagingGroundIntegration.updateComponentSources(
+      this.componentType,
+      this.sources
+    );
+    
+    // Also notify DAK object if callback is provided
     if (this.onSourcesChanged) {
       await this.onSourcesChanged(this.sources);
     }

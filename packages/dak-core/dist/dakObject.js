@@ -13,10 +13,10 @@ const components_1 = require("./components");
  * Provides access to all component objects (all 9 components)
  */
 class DAKObject {
-    constructor(repository, sourceResolver, stagingGroundService, dak) {
+    constructor(repository, sourceResolver, stagingGroundIntegration, dak) {
         this.repository = repository;
         this.sourceResolver = sourceResolver;
-        this.stagingGroundService = stagingGroundService;
+        this.stagingGroundIntegration = stagingGroundIntegration;
         this.dak = dak || this.createEmptyDAK();
         this.componentObjects = new Map();
         this.initializeComponents();
@@ -134,10 +134,7 @@ class DAKObject {
      */
     async saveDakJson() {
         const dakJson = this.toJSON();
-        await this.stagingGroundService.updateFile('dak.json', JSON.stringify(dakJson, null, 2), {
-            message: 'Update DAK metadata',
-            componentType: 'metadata'
-        });
+        await this.stagingGroundIntegration.saveDakJson(dakJson);
     }
     /**
      * Internal method to update component sources (called by components)
@@ -151,15 +148,15 @@ class DAKObject {
     }
     initializeComponents() {
         // Create all 9 component objects
-        this.componentObjects.set(types_1.DAKComponentType.HEALTH_INTERVENTIONS, new components_1.HealthInterventionsComponent(this.repository, this.sourceResolver, this.stagingGroundService, (sources) => this.updateComponentSources(types_1.DAKComponentType.HEALTH_INTERVENTIONS, sources)));
-        this.componentObjects.set(types_1.DAKComponentType.PERSONAS, new components_1.GenericPersonaComponent(this.repository, this.sourceResolver, this.stagingGroundService, (sources) => this.updateComponentSources(types_1.DAKComponentType.PERSONAS, sources)));
-        this.componentObjects.set(types_1.DAKComponentType.USER_SCENARIOS, new components_1.UserScenarioComponent(this.repository, this.sourceResolver, this.stagingGroundService, (sources) => this.updateComponentSources(types_1.DAKComponentType.USER_SCENARIOS, sources)));
-        this.componentObjects.set(types_1.DAKComponentType.BUSINESS_PROCESSES, new components_1.BusinessProcessWorkflowComponent(this.repository, this.sourceResolver, this.stagingGroundService, (sources) => this.updateComponentSources(types_1.DAKComponentType.BUSINESS_PROCESSES, sources)));
-        this.componentObjects.set(types_1.DAKComponentType.DATA_ELEMENTS, new components_1.CoreDataElementComponent(this.repository, this.sourceResolver, this.stagingGroundService, (sources) => this.updateComponentSources(types_1.DAKComponentType.DATA_ELEMENTS, sources)));
-        this.componentObjects.set(types_1.DAKComponentType.DECISION_LOGIC, new components_1.DecisionSupportLogicComponent(this.repository, this.sourceResolver, this.stagingGroundService, (sources) => this.updateComponentSources(types_1.DAKComponentType.DECISION_LOGIC, sources)));
-        this.componentObjects.set(types_1.DAKComponentType.INDICATORS, new components_1.ProgramIndicatorComponent(this.repository, this.sourceResolver, this.stagingGroundService, (sources) => this.updateComponentSources(types_1.DAKComponentType.INDICATORS, sources)));
-        this.componentObjects.set(types_1.DAKComponentType.REQUIREMENTS, new components_1.RequirementsComponent(this.repository, this.sourceResolver, this.stagingGroundService, (sources) => this.updateComponentSources(types_1.DAKComponentType.REQUIREMENTS, sources)));
-        this.componentObjects.set(types_1.DAKComponentType.TEST_SCENARIOS, new components_1.TestScenarioComponent(this.repository, this.sourceResolver, this.stagingGroundService, (sources) => this.updateComponentSources(types_1.DAKComponentType.TEST_SCENARIOS, sources)));
+        this.componentObjects.set(types_1.DAKComponentType.HEALTH_INTERVENTIONS, new components_1.HealthInterventionsComponent(this.repository, this.sourceResolver, this.stagingGroundIntegration, (sources) => this.updateComponentSources(types_1.DAKComponentType.HEALTH_INTERVENTIONS, sources)));
+        this.componentObjects.set(types_1.DAKComponentType.PERSONAS, new components_1.GenericPersonaComponent(this.repository, this.sourceResolver, this.stagingGroundIntegration, (sources) => this.updateComponentSources(types_1.DAKComponentType.PERSONAS, sources)));
+        this.componentObjects.set(types_1.DAKComponentType.USER_SCENARIOS, new components_1.UserScenarioComponent(this.repository, this.sourceResolver, this.stagingGroundIntegration, (sources) => this.updateComponentSources(types_1.DAKComponentType.USER_SCENARIOS, sources)));
+        this.componentObjects.set(types_1.DAKComponentType.BUSINESS_PROCESSES, new components_1.BusinessProcessWorkflowComponent(this.repository, this.sourceResolver, this.stagingGroundIntegration, (sources) => this.updateComponentSources(types_1.DAKComponentType.BUSINESS_PROCESSES, sources)));
+        this.componentObjects.set(types_1.DAKComponentType.DATA_ELEMENTS, new components_1.CoreDataElementComponent(this.repository, this.sourceResolver, this.stagingGroundIntegration, (sources) => this.updateComponentSources(types_1.DAKComponentType.DATA_ELEMENTS, sources)));
+        this.componentObjects.set(types_1.DAKComponentType.DECISION_LOGIC, new components_1.DecisionSupportLogicComponent(this.repository, this.sourceResolver, this.stagingGroundIntegration, (sources) => this.updateComponentSources(types_1.DAKComponentType.DECISION_LOGIC, sources)));
+        this.componentObjects.set(types_1.DAKComponentType.INDICATORS, new components_1.ProgramIndicatorComponent(this.repository, this.sourceResolver, this.stagingGroundIntegration, (sources) => this.updateComponentSources(types_1.DAKComponentType.INDICATORS, sources)));
+        this.componentObjects.set(types_1.DAKComponentType.REQUIREMENTS, new components_1.RequirementsComponent(this.repository, this.sourceResolver, this.stagingGroundIntegration, (sources) => this.updateComponentSources(types_1.DAKComponentType.REQUIREMENTS, sources)));
+        this.componentObjects.set(types_1.DAKComponentType.TEST_SCENARIOS, new components_1.TestScenarioComponent(this.repository, this.sourceResolver, this.stagingGroundIntegration, (sources) => this.updateComponentSources(types_1.DAKComponentType.TEST_SCENARIOS, sources)));
         // Load existing sources into components
         this.loadSourcesIntoComponents();
     }

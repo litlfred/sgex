@@ -27,6 +27,7 @@ export * from './dakComponentObject';
 export * from './components';
 export { DAKObject } from './dakObject';
 export { DAKFactory } from './dakFactory';
+export { StagingGroundIntegrationService, IStagingGroundService } from './stagingGroundIntegration';
 export * from './base-component';
 export * from './fsh-utils';
 export type { DAK, DAKRepository, DAKMetadata, DAKValidationResult, DAKValidationError, DAKValidationWarning, DAKPublisher, DAKComponentSource, ResolvedSource, SourceValidationResult, SaveOptions, HealthInterventionsSource, GenericPersonaSource, UserScenarioSource, BusinessProcessWorkflowSource, CoreDataElementSource, DecisionSupportLogicSource, ProgramIndicatorSource, RequirementsSource, TestScenarioSource } from './types';

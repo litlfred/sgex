@@ -5,6 +5,7 @@
  */
 import { DAKComponentSource, DAKComponentType, DAKRepository, SaveOptions, DAKValidationResult } from './types';
 import { SourceResolutionService } from './sourceResolution';
+import { StagingGroundIntegrationService } from './stagingGroundIntegration';
 /**
  * Base interface for DAK Component Objects
  * Each of the 9 DAK components will implement this interface
@@ -39,12 +40,11 @@ export declare abstract class BaseDAKComponentObject<TData, TSource extends DAKC
     readonly componentType: DAKComponentType;
     protected repository: DAKRepository;
     protected sourceResolver: SourceResolutionService;
-    protected stagingGroundService: any;
+    protected stagingGroundIntegration: StagingGroundIntegrationService;
     protected sources: TSource[];
     protected cache: Map<string, TData>;
     protected onSourcesChanged?: (sources: TSource[]) => Promise<void>;
-    constructor(componentType: DAKComponentType, repository: DAKRepository, sourceResolver: SourceResolutionService, stagingGroundService: any, // Will be typed properly
-    onSourcesChanged?: (sources: TSource[]) => Promise<void>);
+    constructor(componentType: DAKComponentType, repository: DAKRepository, sourceResolver: SourceResolutionService, stagingGroundIntegration: StagingGroundIntegrationService, onSourcesChanged?: (sources: TSource[]) => Promise<void>);
     /** Get all sources for this component */
     getSources(): TSource[];
     /** Add a source to this component */
@@ -87,7 +87,7 @@ export declare abstract class BaseDAKComponentObject<TData, TSource extends DAKC
      */
     private saveToFile;
     /**
-     * Sync sources to parent DAK object
+     * Sync sources to parent DAK object and update dak.json
      */
     private syncSources;
     /**

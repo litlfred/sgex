@@ -33,6 +33,7 @@ export * from './dakComponentObject';
 export * from './components';
 export { DAKObject } from './dakObject';
 export { DAKFactory } from './dakFactory';
+export { StagingGroundIntegrationService, IStagingGroundService } from './stagingGroundIntegration';
 
 // Base component classes and utilities
 export * from './base-component';
