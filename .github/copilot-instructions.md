@@ -582,6 +582,133 @@ npm test -- --coverage     # Generate coverage report
 
 **Remember**: These files control the entire deployment and routing infrastructure. Unauthorized changes can break the production application for all users.
 
+## 🔒 TypeScript-First Development Policy
+
+**CRITICAL**: SGEX Workbench has adopted TypeScript as the default for ALL code development.
+
+### TypeScript Policy for Copilot Agents
+
+**🚨 MANDATORY RULES:**
+1. **TypeScript is the default**: ALL new code MUST be written in TypeScript (`.ts` or `.tsx`)
+2. **JavaScript requires explicit approval**: Creating or modifying JavaScript files (`.js`, `.jsx`) requires explicit written approval from @litlfred
+3. **No JavaScript exceptions without approval**: Do NOT create JavaScript files even if "it's faster" or "simpler" - TypeScript is required
+4. **Migration in progress**: Existing JavaScript files are legacy code being migrated - do not add new JavaScript files
+
+### When Generating Code
+
+**✅ ALWAYS DO:**
+- Use `.ts` extension for utility modules, services, and non-React code
+- Use `.tsx` extension for React components
+- Add proper TypeScript type definitions and interfaces
+- Import types from `src/types/core.ts` or create new type definitions as needed
+- Use TypeScript best practices (type inference, strict types, no `any` unless necessary)
+- **Export all types and interfaces** for JSON Schema generation
+- **Add JSDoc comments** to types for better schema documentation
+- **Run `npm run generate-schemas`** after creating or modifying types
+- **Use `RuntimeValidationService`** for validating data at runtime
+- **Document APIs with OpenAPI annotations** using JSDoc comments
+
+**❌ NEVER DO (without explicit approval):**
+- Create new `.js` or `.jsx` files
+- Convert TypeScript files back to JavaScript
+- Suggest JavaScript as an alternative to TypeScript
+- Use JavaScript for "quick prototypes" or "temporary code"
+
+### Pre-Approved JavaScript Exceptions
+
+Only these files are approved to remain as JavaScript:
+1. **`.eslintrc.js`** - ESLint configuration (CommonJS required)
+2. **`craco.config.js`** - CRA override configuration (CommonJS required)
+
+All other files should be TypeScript or require explicit approval.
+
+### Requesting JavaScript Approval
+
+If you believe JavaScript is technically required (very rare):
+
+1. **STOP** and do not proceed with JavaScript
+2. **Ask the user** if JavaScript is acceptable for this specific case
+3. **Explain** why TypeScript cannot be used (technical blocker, not convenience)
+4. **Wait for explicit approval** from @litlfred before proceeding
+5. **Document** the exception in code comments
+
+**Example scenarios requiring approval:**
+- Node.js scripts that must use CommonJS `require()` syntax
+- Third-party integrations that mandate JavaScript
+- Build tooling that doesn't support TypeScript
+
+**NOT acceptable reasons for JavaScript:**
+- "TypeScript is more complex" - TypeScript is required
+- "JavaScript is faster to write" - TypeScript is required
+- "This is just a utility" - TypeScript is required
+- "The existing file is JavaScript" - Migrate to TypeScript when editing
+
+### Migration Resources
+
+- **Complete Migration Plan**: See [TYPESCRIPT_MIGRATION_PLAN.md](TYPESCRIPT_MIGRATION_PLAN.md)
+- **Technical Guide**: See [TYPESCRIPT_MIGRATION.md](TYPESCRIPT_MIGRATION.md)
+- **Type Definitions**: Located in `src/types/core.ts`
+- **Examples**: Look at existing `.ts` and `.tsx` files for patterns
+
+### Copilot Best Practices for TypeScript
+
+1. **Start with types**: Define interfaces/types before implementing
+2. **Use existing types**: Import from `src/types/core.ts` when available
+3. **Be explicit**: Add return types and parameter types
+4. **Avoid `any`**: Use proper types or `unknown` if type is truly unknown
+5. **Document types**: Add JSDoc comments for complex type definitions
+6. **Export types**: Always export types/interfaces for JSON Schema generation
+7. **Validate data**: Use `RuntimeValidationService` for runtime validation
+8. **Generate schemas**: Run `npm run generate-schemas` after type changes
+9. **Document APIs**: Add OpenAPI JSDoc annotations for service methods
+10. **Include examples**: Add `@example` tags in JSDoc for better documentation
+
+**JSON Schema Example:**
+```typescript
+/**
+ * Represents a DAK repository
+ * @example { "name": "anc-dak", "owner": "who", "branch": "main" }
+ */
+export interface DAKRepository {
+  /** Repository name */
+  name: string;
+  /** Repository owner/organization */
+  owner: string;
+  /** Default branch name */
+  branch: string;
+}
+```
+
+**OpenAPI Documentation Example:**
+```typescript
+/**
+ * Fetch repository information
+ * @openapi
+ * /api/repositories/{owner}/{repo}:
+ *   get:
+ *     summary: Get repository details
+ *     parameters:
+ *       - name: owner
+ *         in: path
+ *         required: true
+ *       - name: repo
+ *         in: path
+ *         required: true
+ *     responses:
+ *       200:
+ *         description: Repository found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/DAKRepository'
+ */
+export async function getRepository(owner: string, repo: string): Promise<DAKRepository> {
+  // implementation
+}
+```
+
+**Remember**: TypeScript is not optional. It's the project standard. Always default to TypeScript unless you have explicit approval for a JavaScript exception.
+
 ## Troubleshooting Common Issues
 
 ### Authentication Issues

@@ -223,7 +223,13 @@ SGEX Workbench is currently undergoing a phased migration to TypeScript for impr
 - **Type Safety**: Gradual adoption of TypeScript across the codebase
 - **Documentation**: Generated type documentation and schemas
 
-For detailed information about the TypeScript migration, see [TYPESCRIPT_MIGRATION.md](TYPESCRIPT_MIGRATION.md).
+**🔒 TypeScript Policy**: TypeScript is the default for all new and migrated code. Future use of JavaScript files requires explicit approval from a code maintainer (@litlfred). 
+
+**📊 JSON Schema & OpenAPI Required**: All TypeScript types must have corresponding JSON Schema validation (auto-generated), and all APIs must be documented with OpenAPI specifications.
+
+See [TYPESCRIPT_MIGRATION_PLAN.md](TYPESCRIPT_MIGRATION_PLAN.md) for the complete migration plan and approval process.
+
+For detailed technical information about the TypeScript migration, see [TYPESCRIPT_MIGRATION.md](TYPESCRIPT_MIGRATION.md).
 
 #### Current TypeScript Features
 
