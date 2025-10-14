@@ -18,19 +18,22 @@ The **DAK Validation Framework** provides comprehensive validation of WHO SMART 
 
 | Category | Example Rules | File Types |
 |----------|---------------|------------|
-| **DAK-Level** | SMART Base dependency required | sushi-config.yaml |
+| **DAK-Level** | SMART Base dependency required | sushi-config.json |
 | **BPMN** | businessRuleTask ID required, Start events | .bpmn |
 | **DMN** | Decision ID/label required, Links to BPMN | .dmn |
 | **XML** | Well-formed, XSD schema validation | .xml, .bpmn, .dmn |
 | **JSON** | Valid syntax, FHIR resource types | .json |
-| **FHIR** | Profile structure, Resource validation | .json, .fsh |
+| **FHIR** | Profile structure, Resource validation, FSH syntax | .json, .fsh |
 | **General** | File size, Naming conventions | All files |
 
 ### 3. Validation Levels
 
-- **Error** 🔴: Must be fixed before save/publication
-- **Warning** ⚠️: Should be addressed but allows save
-- **Info** ℹ️: Suggestions for best practices
+Validation results use colored button indicators following GitHub Pages deployment workflow styling:
+
+- **Error** `[RED]`: Must be fixed before save/publication (can be overridden with explanation)
+- **Warning** `[YELLOW]`: Should be addressed but allows save
+- **Info** `[BLUE]`: Suggestions for best practices
+- **Success** `[GREEN]`: Validation passed
 
 ### 4. Internationalization
 

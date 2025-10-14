@@ -22,6 +22,19 @@ This framework enables:
 4. **Authoritative Standards**: References WHO SMART Base logical models at https://worldhealthorganization.github.io/smart-base/
 5. **Progressive Enhancement**: Works for both staging ground uploads and existing repository artifacts
 6. **Composability**: Individual validators can be combined and configured per DAK component
+7. **JSON-First Configuration**: Strongly prefers JSON over YAML for configuration files
+
+### 1.2.1 Important Note on Configuration File Formats
+
+**⚠️ YAML Usage Policy:**
+- **YAML configuration files (.yaml, .yml) are strongly discouraged** without explicit stakeholder consent
+- **JSON format (.json) is the preferred configuration format** for all DAK components
+- Historical references to `sushi-config.yaml` should be replaced with `sushi-config.json`
+- Validation rules for YAML files should include warnings about format preference
+- Any new YAML file usage requires documented justification and approval
+- Existing YAML files should be migrated to JSON format when feasible
+
+This policy ensures better tooling support, type safety, and consistency across the DAK ecosystem.
 
 ### 1.3 Key References
 
@@ -360,7 +373,7 @@ The validation framework integrates with existing services:
 #### DAK-DEPENDENCY-001: SMART Base Dependency Required
 - **Description**: A DAK IG SHALL have smart.who.int.base as a dependency
 - **Level**: error
-- **File**: sushi-config.yaml
+- **File**: sushi-config.json (Note: YAML configuration files should be avoided without explicit consent; JSON is preferred)
 - **Implementation**: Check `dependencies` section for `smart.who.int.base` key
 
 #### DAK-AUTHORING-CONVENTIONS: WHO Authoring Conventions
@@ -456,6 +469,20 @@ The validation framework integrates with existing services:
 - **File Types**: .json, .fsh
 - **Implementation**: Validate StructureDefinition structure
 
+#### FHIR-FSH-SYNTAX-001: FHIR Shorthand Syntax
+- **Description**: FSH (FHIR Shorthand) files must have valid syntax
+- **Level**: error
+- **Component**: data-elements, fhir-profiles, fhir-extensions
+- **File Types**: .fsh
+- **Implementation**: Parse FSH content and validate syntax against FHIR Shorthand grammar
+
+#### FHIR-FSH-CONVENTIONS-001: FSH Naming Conventions
+- **Description**: FSH resource names should follow WHO SMART Guidelines naming conventions
+- **Level**: warning
+- **Component**: data-elements, fhir-profiles, fhir-extensions
+- **File Types**: .fsh
+- **Implementation**: Validate resource names, IDs, and paths follow conventions
+
 ### 4.7 General File Validations
 
 #### FILE-SIZE-001: File Size Limit
@@ -495,15 +522,15 @@ Add a "Validation" section to the DAK Dashboard Publications tab:
 │ │                                                      │ │
 │ │ Validate by Component:                              │ │
 │ │                                                      │ │
-│ │ ☑ Business Processes        [Validate] [3 errors]  │ │
-│ │ ☑ Decision Support Logic    [Validate] [1 warning] │ │
-│ │ ☑ Data Elements            [Validate] [✓ Valid]    │ │
+│ │ ☑ Business Processes        [Validate] [RED: 3 errors] │ │
+│ │ ☑ Decision Support Logic    [Validate] [YELLOW: 1 warn] │ │
+│ │ ☑ Data Elements            [Validate] [GREEN: Valid]   │ │
 │ │ ☐ Program Indicators       [Validate]              │ │
 │ │ ☐ Test Scenarios           [Validate]              │ │
 │ │                                                      │ │
 │ │ General Validations (not component-specific):       │ │
-│ │ ☑ sushi-config.yaml        [Validate] [✓ Valid]    │ │
-│ │ ☑ File naming conventions  [Validate] [2 info]     │ │
+│ │ ☑ sushi-config.json        [Validate] [GREEN: Valid] │ │
+│ │ ☑ File naming conventions  [Validate] [BLUE: 2 info]  │ │
 │ │                                                      │ │
 │ └─────────────────────────────────────────────────────┘ │
 │                                                          │
@@ -526,18 +553,18 @@ When validation is run, display results in a modal:
 │                                                          │
 │ ──────────────────────────────────────────────────────  │
 │                                                          │
-│ ❌ input/bpmn/anc-workflow.bpmn                         │
+│ [RED] input/bpmn/anc-workflow.bpmn                         │
 │    BPMN-BUSINESS-RULE-TASK-ID-001                       │
 │    Business Rule Task ID Required                       │
 │    Line 45: businessRuleTask missing required @id       │
 │    Suggestion: Add an 'id' attribute matching DMN...    │
 │                                                          │
-│ ❌ input/bpmn/delivery-workflow.bpmn                    │
+│ [RED] input/bpmn/delivery-workflow.bpmn                    │
 │    BPMN-NAMESPACE-001                                   │
 │    BPMN 2.0 Namespace Required                          │
 │    Incorrect namespace URI                              │
 │                                                          │
-│ ⚠️  input/bpmn/screening-workflow.bpmn                  │
+│ [YELLOW] input/bpmn/screening-workflow.bpmn                  │
 │    BPMN-START-EVENT-001                                 │
 │    Start Event Required                                 │
 │    BPMN process should have at least one start event    │
@@ -554,22 +581,48 @@ When validation is run, display results in a modal:
 When saving files from component editors (BPMN Editor, DMN Editor, etc.):
 
 1. Run validation automatically before save
-2. If errors: Show blocking dialog with validation results
+2. If errors: Show dialog with validation results and option to override
 3. If warnings only: Show dialog with option to save anyway
 4. If info only: Save and show non-blocking notification
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│ ⚠️ Cannot Save - Validation Errors                      │
+│ [RED] Validation Errors Detected                        │
 ├─────────────────────────────────────────────────────────┤
 │                                                          │
-│ The following errors must be fixed before saving:       │
+│ The following errors were found:                        │
 │                                                          │
-│ ❌ BPMN-BUSINESS-RULE-TASK-ID-001                       │
+│ [RED] BPMN-BUSINESS-RULE-TASK-ID-001                    │
 │    Business Rule Task missing required @id attribute    │
 │    Line 45, Column 12                                   │
 │                                                          │
-│ [Fix Issues] [Cancel]                                   │
+│ Options:                                                 │
+│ • [Fix Issues] - Return to editor to fix errors         │
+│ • [Override & Save] - Save with errors (explanation     │
+│   required)                                              │
+│ • [Cancel] - Discard changes                            │
+│                                                          │
+└─────────────────────────────────────────────────────────┘
+```
+
+**Override Dialog** (when user selects "Override & Save"):
+
+```
+┌─────────────────────────────────────────────────────────┐
+│ Override Validation Errors                               │
+├─────────────────────────────────────────────────────────┤
+│                                                          │
+│ You are about to save with 1 validation error(s).       │
+│                                                          │
+│ Please provide an explanation for overriding:           │
+│                                                          │
+│ ┌─────────────────────────────────────────────────────┐ │
+│ │ [Required explanation text area]                    │ │
+│ │                                                      │ │
+│ │                                                      │ │
+│ └─────────────────────────────────────────────────────┘ │
+│                                                          │
+│ [Save with Override] [Cancel]                           │
 │                                                          │
 └─────────────────────────────────────────────────────────┘
 ```
@@ -590,7 +643,40 @@ const validateStagingGround = async (stagingGroundData) => {
   // Update UI to show detailed validation results
   updateValidationUI(validationResult);
 };
+
+// Allow save with override option for errors
+const handleSave = async () => {
+  const validationResult = await validateStagingGround(stagingGround);
+  
+  if (validationResult.errors.length > 0) {
+    // Show override dialog
+    setShowOverrideDialog(true);
+  } else {
+    // Proceed with save
+    await commitToRepository();
+  }
+};
+
+const handleOverrideSave = async (explanation) => {
+  if (!explanation || explanation.trim().length < 10) {
+    setError('Explanation must be at least 10 characters');
+    return;
+  }
+  
+  // Save with override metadata
+  await commitToRepository({
+    overrideValidation: true,
+    overrideExplanation: explanation,
+    validationErrors: validationResult.errors
+  });
+};
 ```
+
+**Note on Staging Ground Validation:**
+- Validation errors do NOT block saving to staging ground
+- Users can override validation errors by providing a required explanation
+- Override explanations are logged with the commit metadata
+- This allows flexibility while maintaining audit trail of validation bypasses
 
 ## 6. File Structure
 

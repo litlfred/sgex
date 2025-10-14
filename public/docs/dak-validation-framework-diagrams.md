@@ -214,12 +214,12 @@ This document provides visual representations of the DAK Validation Framework ar
 │  │  [Validate All]  [History]                                 ││
 │  │                                                             ││
 │  │  Validate by Component:                                    ││
-│  │  ☑ Business Processes    [Validate] ❌ 3 errors           ││
-│  │  ☑ Decision Logic         [Validate] ⚠️ 1 warning          ││
-│  │  ☑ Data Elements         [Validate] ✅ Valid               ││
+│  │  ☑ Business Processes    [Validate] [RED: 3 errors]    ││
+│  │  ☑ Decision Logic         [Validate] [YELLOW: 1 warn]   ││
+│  │  ☑ Data Elements         [Validate] [GREEN: Valid]     ││
 │  │                                                             ││
 │  │  General Validations:                                      ││
-│  │  ☑ sushi-config.yaml     [Validate] ✅ Valid               ││
+│  │  ☑ sushi-config.json     [Validate] [GREEN: Valid]      ││
 │  └─────────────────────────────────────────────────────────────┘│
 └───────────────────────────────────────────────────────────────────┘
                                │
@@ -241,7 +241,7 @@ This document provides visual representations of the DAK Validation Framework ar
 │  Summary: 3 errors, 1 warning                                   │
 │                                                                  │
 │  ┌────────────────────────────────────────────────────────────┐ │
-│  │ ❌ input/bpmn/anc-workflow.bpmn                           │ │
+│  │ [RED] input/bpmn/anc-workflow.bpmn                        │ │
 │  │    BPMN-BUSINESS-RULE-TASK-ID-001                         │ │
 │  │    Line 45: businessRuleTask missing @id                  │ │
 │  │    Suggestion: Add id matching DMN decision...            │ │
@@ -324,8 +324,8 @@ Step 2: Validate DMN Files Against Index
 ┌──────────────────────────────────────────────────────────────┐
 │ input/dmn/decisions.dmn                                      │
 │   decisions: [                                               │
-│     { id: 'decision_001', label: 'Assess Risk' }    ✅      │
-│     { id: 'decision_004', label: 'Determine Care' } ❌      │
+│     { id: 'decision_001', label: 'Assess Risk' }    [GREEN]  │
+│     { id: 'decision_004', label: 'Determine Care' } [RED]    │
 │   ]                                                          │
 └──────────────────────────────────────────────────────────────┘
                                │
@@ -334,7 +334,7 @@ Step 2: Validate DMN Files Against Index
 ┌──────────────────────────────────────────────────────────────┐
 │ Validation Results:                                          │
 │                                                              │
-│ ⚠️  decision_004: Not linked to any BPMN businessRuleTask   │
+│ [YELLOW] decision_004: Not linked to any BPMN businessRuleTask │
 │     Suggestion: Create corresponding businessRuleTask in    │
 │     a BPMN diagram with id='decision_004'                   │
 └──────────────────────────────────────────────────────────────┘
@@ -456,7 +456,7 @@ Step 2: Validate DMN Files Against Index
 ┌────────────────────────────────────────────────────────┐
 │               Validation Report UI                     │
 ├────────────────────────────────────────────────────────┤
-│  ❌ Business Rule Task ID Required                    │
+│  [RED] Business Rule Task ID Required                       │
 │     In BPMN diagrams, a bpmn:businessRuleTask         │
 │     SHALL have an @id attribute                       │
 │     Suggestion: Add an 'id' attribute...              │
