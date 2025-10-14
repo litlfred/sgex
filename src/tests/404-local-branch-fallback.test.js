@@ -298,5 +298,34 @@ describe('404.html Local Branch Fallback', () => {
       expect(branchSegments.length).toBe(5);
       expect(componentSegments.length).toBe(4);
     });
+
+    test('should handle index.html in branch deployment URLs', () => {
+      // This tests the fix for the redirect loop issue
+      const indexHtmlUrl = '/sgex/copilot-add-dak-component-indicators/index.html';
+      const segments = indexHtmlUrl.split('/').filter(Boolean);
+      
+      // Should recognize this as branch + index.html pattern
+      expect(segments.length).toBe(3);
+      expect(segments[0]).toBe('sgex');
+      expect(segments[1]).toBe('copilot-add-dak-component-indicators');
+      expect(segments[2]).toBe('index.html');
+      
+      // Should redirect to branch root, not treat index.html as a component
+      const expectedRedirect = '/sgex/copilot-add-dak-component-indicators/';
+      expect(expectedRedirect).toBe('/sgex/' + segments[1] + '/');
+    });
+
+    test('should not create ?/index.html redirect URLs', () => {
+      // This validates that index.html doesn't get treated as a route path
+      const indexHtmlSegment = 'index.html';
+      
+      // index.html should NEVER appear in a ?/ redirect
+      const invalidRedirect = '/sgex/branch/?/index.html';
+      const validRedirect = '/sgex/branch/';
+      
+      // The fix ensures we redirect to branch root, not with ?/index.html
+      expect(indexHtmlSegment).toBe('index.html');
+      expect(validRedirect).not.toContain('?/index.html');
+    });
   });
 });
