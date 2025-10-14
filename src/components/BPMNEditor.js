@@ -1,11 +1,25 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AssetEditorLayout, usePage } from './framework';
-import { createLazyBpmnModeler, createLazyOctokit } from '../services/lazyFactoryService';
+import { useDakComponent } from '../services/ComponentObjectProvider';
+import { createLazyBpmnModeler } from '../services/lazyFactoryService';
 
+/**
+ * BPMN Editor - Uses DAK Component Objects
+ * 
+ * This editor uses BusinessProcessWorkflowComponent for all data operations
+ * instead of direct staging ground/GitHub access.
+ * 
+ * Key features:
+ * - Uses useDakComponent('businessProcesses') hook for Component Object access
+ * - Saves via component.save() which automatically updates dak.json
+ * - Loads via component.retrieveAll() for consistent data access
+ * - No direct staging ground or GitHub API calls
+ */
 const BPMNEditor = () => {
   const navigate = useNavigate();
   const { profile, repository, branch } = usePage();
+  const component = useDakComponent('businessProcesses');
   const modelerRef = useRef(null);
   const containerRef = useRef(null);
   
@@ -15,29 +29,26 @@ const BPMNEditor = () => {
   const [error, setError] = useState(null);
   const [currentXmlContent, setCurrentXmlContent] = useState('');
   const [originalXmlContent, setOriginalXmlContent] = useState('');
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // Initialize BPMN modeler
   useEffect(() => {
-    // Initialize modeler when container is available and file is selected
     const initializeModeler = async () => {
       if (containerRef.current && !modelerRef.current && selectedFile) {
         try {
-          // Lazy load BPMN.js modeler to improve initial page responsiveness
           modelerRef.current = await createLazyBpmnModeler({
             container: containerRef.current
           });
           console.log('BPMN modeler initialized successfully');
         } catch (error) {
           console.error('Failed to initialize BPMN modeler:', error);
+          setError('Failed to initialize BPMN editor');
         }
       }
     };
 
-    // Try to initialize immediately if we have a selected file
     if (selectedFile) {
       initializeModeler();
-      
-      // If container is not ready, wait a bit and try again
       const timer = setTimeout(initializeModeler, 100);
       return () => clearTimeout(timer);
     }
@@ -54,7 +65,7 @@ const BPMNEditor = () => {
     };
   }, [selectedFile]);
 
-  // Load BPMN files from repository
+  // Load BPMN files using Component Object
   useEffect(() => {
     const loadBpmnFiles = async () => {
       if (!profile || !repository) {
@@ -62,209 +73,179 @@ const BPMNEditor = () => {
         return;
       }
 
+      if (!component) {
+        console.log('Component Object not yet available, waiting...');
+        return;
+      }
+
       try {
         setLoading(true);
         setError(null);
 
-        // Use GitHub API if profile has token, otherwise use mock data
-        if (profile.token) {
-          try {
-            // Lazy load Octokit to improve initial page responsiveness
-            const octokit = await createLazyOctokit({ auth: profile.token });
-            const { data } = await octokit.rest.repos.getContent({
-              owner: repository.owner?.login || repository.full_name.split('/')[0],
-              repo: repository.name,
-              path: 'input/business-processes'
-            });
+        // Use Component Object to retrieve all business processes
+        const workflows = await component.retrieveAll();
+        
+        // Transform Component Object data to file list format
+        const fileList = workflows.map((workflow, index) => ({
+          name: workflow.filename || `workflow-${index + 1}.bpmn`,
+          path: workflow.path || `input/process/${workflow.filename || `workflow-${index + 1}.bpmn`}`,
+          sha: workflow.sha || `mock-sha-${index}`,
+          size: workflow.content?.length || 0,
+          type: 'file',
+          url: workflow.url,
+          download_url: workflow.downloadUrl,
+          content: workflow.content
+        }));
 
-            // Filter for .bpmn files
-            const bpmnFiles = Array.isArray(data) 
-              ? data.filter(file => file.name.endsWith('.bpmn'))
-              : data.name.endsWith('.bpmn') ? [data] : [];
-
-            setBpmnFiles(bpmnFiles);
-            setLoading(false);
-            return;
-          } catch (apiError) {
-            console.warn('GitHub API error, falling back to mock data:', apiError);
-            // Fall through to mock data
-          }
-        }
-
-        // Mock BPMN files for demonstration
-        const mockFiles = [
-          {
-            name: 'patient-registration.bpmn',
-            path: 'input/business-processes/patient-registration.bpmn',
-            sha: 'abc123',
-            size: 2048,
-            download_url: 'https://raw.githubusercontent.com/...'
-          },
-          {
-            name: 'vaccination-workflow.bpmn',
-            path: 'input/business-processes/vaccination-workflow.bpmn',
-            sha: 'def456',
-            size: 3072,
-            download_url: 'https://raw.githubusercontent.com/...'
-          },
-          {
-            name: 'appointment-scheduling.bpmn',
-            path: 'input/business-processes/appointment-scheduling.bpmn',
-            sha: 'ghi789',
-            size: 1536,
-            download_url: 'https://raw.githubusercontent.com/...'
-          }
-        ];
-
-        setBpmnFiles(mockFiles);
+        setBpmnFiles(fileList);
+        console.log(`Loaded ${fileList.length} BPMN files via Component Object`);
         setLoading(false);
-      } catch (err) {
-        console.error('Error loading BPMN files:', err);
-        setError('Failed to load BPMN files from repository');
+      } catch (error) {
+        console.error('Error loading BPMN files via Component Object:', error);
+        setError('Failed to load BPMN files');
         setLoading(false);
       }
     };
 
     loadBpmnFiles();
-  }, [profile, repository, navigate]);
+  }, [profile, repository, component, navigate]);
 
-  // Track BPMN content changes
-  useEffect(() => {
-    if (modelerRef.current) {
-      const handleChanged = () => {
-        // Update current content when diagram changes
-        modelerRef.current.saveXML({ format: true })
-          .then(({ xml }) => {
-            setCurrentXmlContent(xml);
-          })
-          .catch(error => {
-            console.error('Error getting XML content:', error);
-          });
-      };
-
-      modelerRef.current.on('commandStack.changed', handleChanged);
-      
-      return () => {
-        if (modelerRef.current) {
-          modelerRef.current.off('commandStack.changed', handleChanged);
-        }
-      };
-    }
-  }, [selectedFile]);
-
-  // Handle save completion
-  const handleSave = async (content, saveType) => {
-    console.log(`BPMN diagram saved to ${saveType}`);
-    if (saveType === 'github') {
-      // After GitHub save, update the original content
-      setOriginalXmlContent(content);
-    }
-  };
-
-  // Custom save to GitHub function that exports XML and uses GitHub API
-  const customSaveToGitHub = async (commitMessage) => {
-    if (!commitMessage.trim() || !selectedFile || !modelerRef.current) {
+  // Save BPMN using Component Object
+  const saveBpmn = async () => {
+    if (!modelerRef.current || !selectedFile) {
+      console.error('Cannot save: modeler or file not available');
       return false;
     }
 
     try {
-      // Export BPMN XML
+      // Get current XML from modeler
       const { xml } = await modelerRef.current.saveXML({ format: true });
+      
+      // Validate the BPMN
+      const validationResult = await component.validate({
+        id: selectedFile.name.replace('.bpmn', ''),
+        name: selectedFile.name.replace('.bpmn', '').replace(/-/g, ' '),
+        content: xml,
+        filename: selectedFile.name
+      });
 
-      // Use GitHub API if profile has token
-      if (profile.token && repository) {
-        // Lazy load Octokit to improve initial page responsiveness
-        const octokit = await createLazyOctokit({ auth: profile.token });
-        
-        // Get current file to get SHA for update
-        let currentSha = selectedFile.sha;
-        try {
-          const { data: currentFile } = await octokit.rest.repos.getContent({
-            owner: repository.owner?.login || repository.full_name.split('/')[0],
-            repo: repository.name,
-            path: selectedFile.path
-          });
-          currentSha = currentFile.sha;
-        } catch (getError) {
-          console.warn('Could not get current file SHA, using provided SHA:', getError);
-        }
-
-        // Commit the updated BPMN file
-        await octokit.rest.repos.createOrUpdateFileContents({
-          owner: repository.owner?.login || repository.full_name.split('/')[0],
-          repo: repository.name,
-          path: selectedFile.path,
-          message: commitMessage,
-          content: btoa(xml), // Base64 encode the XML content
-          sha: currentSha,
-          committer: {
-            name: profile.name || profile.login,
-            email: profile.email || `${profile.login}@users.noreply.github.com`
-          }
-        });
-
-        console.log('BPMN file committed to GitHub successfully');
-        return true;
+      if (!validationResult.isValid) {
+        setError(`Validation errors: ${validationResult.errors.join(', ')}`);
+        return false;
       }
 
-      // Fallback: return false for demo mode
-      return false;
+      // Save using Component Object
+      // This automatically creates/updates the source in dak.json
+      await component.save(
+        {
+          id: selectedFile.name.replace('.bpmn', ''),
+          name: selectedFile.name.replace('.bpmn', '').replace(/-/g, ' '),
+          content: xml,
+          filename: selectedFile.name,
+          path: selectedFile.path
+        },
+        {
+          saveType: 'file', // Save as file (not inline)
+          path: selectedFile.path,
+          commit: false // Don't commit yet, just stage
+        }
+      );
+
+      // Update state
+      setOriginalXmlContent(xml);
+      setCurrentXmlContent(xml);
+      setHasUnsavedChanges(false);
+      
+      console.log('BPMN saved successfully via Component Object');
+      console.log('dak.json automatically updated with source reference');
+      return true;
     } catch (error) {
-      console.error('Error saving BPMN to GitHub:', error);
-      throw error;
+      console.error('Error saving BPMN via Component Object:', error);
+      setError(`Failed to save: ${error.message}`);
+      return false;
     }
   };
 
-  // Load selected BPMN file content
+  // Load selected BPMN file
   const loadBpmnFile = async (file) => {
     try {
       setLoading(true);
       setError(null);
       setSelectedFile(file);
 
-      // Wait for the next render cycle to ensure container is visible
+      // Wait for modeler to be ready
       setTimeout(async () => {
         try {
-          // Initialize modeler if not already done
           if (!modelerRef.current && containerRef.current) {
-            // Lazy load BPMN.js modeler to improve initial page responsiveness
             modelerRef.current = await createLazyBpmnModeler({
               container: containerRef.current
             });
-            console.log('BPMN modeler initialized for file loading');
           }
 
-          // Ensure modeler is initialized
           if (!modelerRef.current) {
-            console.error('BPMN modeler not available');
             setError('BPMN editor not ready. Please try again.');
             setLoading(false);
             return;
           }
 
-          // Load actual BPMN content from GitHub if available
-          let bpmnXml = null;
-          if (profile.token && file.download_url) {
-            try {
-              const response = await fetch(file.download_url);
-              if (response.ok) {
-                bpmnXml = await response.text();
-                console.log('Loaded BPMN content from GitHub');
-              }
-            } catch (fetchError) {
-              console.warn('Could not fetch BPMN content from GitHub:', fetchError);
+          // Get BPMN content
+          let bpmnXml = file.content;
+          
+          if (!bpmnXml) {
+            // If no content in file object, try to retrieve via Component Object
+            const workflows = await component.retrieveAll();
+            const workflow = workflows.find(w => w.filename === file.name);
+            if (workflow && workflow.content) {
+              bpmnXml = workflow.content;
             }
           }
 
-          // Use mock content if we couldn't load from GitHub
+          // Use default if still no content
           if (!bpmnXml) {
-            bpmnXml = `<?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn" exporter="bpmn-js (https://demo.bpmn.io)" exporterVersion="17.11.1">
-  <bpmn:process id="Process_${file.name.replace('.bpmn', '')}" isExecutable="true">
+            bpmnXml = createDefaultBpmnXml(file.name);
+          }
+
+          // Import diagram
+          await modelerRef.current.importXML(bpmnXml);
+          setOriginalXmlContent(bpmnXml);
+          setCurrentXmlContent(bpmnXml);
+          setHasUnsavedChanges(false);
+
+          // Listen for changes
+          const eventBus = modelerRef.current.get('eventBus');
+          eventBus.on('commandStack.changed', () => {
+            modelerRef.current.saveXML({ format: true }).then(({ xml }) => {
+              setCurrentXmlContent(xml);
+              setHasUnsavedChanges(xml !== originalXmlContent);
+            });
+          });
+
+          setLoading(false);
+        } catch (error) {
+          console.error('Error loading BPMN file:', error);
+          setError(`Failed to load diagram: ${error.message}`);
+          setLoading(false);
+        }
+      }, 100);
+    } catch (error) {
+      console.error('Error in loadBpmnFile:', error);
+      setError(`Failed to load file: ${error.message}`);
+      setLoading(false);
+    }
+  };
+
+  // Create default BPMN XML
+  const createDefaultBpmnXml = (filename) => {
+    const processId = filename.replace('.bpmn', '');
+    const processName = processId.replace(/-/g, ' ').toUpperCase();
+    
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="Process_${processId}" name="${processName}" isExecutable="true">
     <bpmn:startEvent id="StartEvent_1">
       <bpmn:outgoing>Flow_1</bpmn:outgoing>
     </bpmn:startEvent>
-    <bpmn:task id="Task_1" name="${file.name.replace('.bpmn', '').replace('-', ' ').toUpperCase()}">
+    <bpmn:task id="Task_1" name="${processName}">
       <bpmn:incoming>Flow_1</bpmn:incoming>
       <bpmn:outgoing>Flow_2</bpmn:outgoing>
     </bpmn:task>
@@ -275,7 +256,7 @@ const BPMNEditor = () => {
     <bpmn:sequenceFlow id="Flow_2" sourceRef="Task_1" targetRef="EndEvent_1" />
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
-    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_${file.name.replace('.bpmn', '')}">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_${processId}">
       <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
         <dc:Bounds x="179" y="99" width="36" height="36" />
       </bpmndi:BPMNShape>
@@ -296,113 +277,148 @@ const BPMNEditor = () => {
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
 </bpmn:definitions>`;
-          }
-
-          // Load the BPMN diagram
-          await modelerRef.current.importXML(bpmnXml);
-          
-          // Set the content states
-          setOriginalXmlContent(bpmnXml);
-          setCurrentXmlContent(bpmnXml);
-          
-          setLoading(false);
-        } catch (err) {
-          console.error('Error loading BPMN file:', err);
-          setError('Failed to load BPMN diagram');
-          setLoading(false);
-        }
-      }, 100);
-
-    } catch (err) {
-      console.error('Error initializing BPMN file load:', err);
-      setError('Failed to initialize BPMN editor');
-      setLoading(false);
-    }
   };
 
-  if (!profile || !repository) {
-    navigate('/');
-    return <div>Redirecting...</div>;
-  }
-
-  // Check if there are changes in the BPMN diagram
-  const hasChanges = currentXmlContent !== originalXmlContent;
+  // Component status message
+  const componentStatus = component ? 
+    'Using Component Object for data operations' : 
+    'Waiting for Component Object initialization...';
 
   return (
     <AssetEditorLayout
-      pageName="bpmn-editor"
-      file={selectedFile}
-      repository={repository}
-      branch={branch || 'main'}
-      content={currentXmlContent}
-      originalContent={originalXmlContent}
-      hasChanges={hasChanges}
-      onSave={handleSave}
-      saveButtonsPosition="top"
-      // Custom save function for GitHub to handle BPMN XML export
-      customSaveToGitHub={customSaveToGitHub}
+      title="BPMN Business Process Editor (Integrated)"
+      status={componentStatus}
+      onSave={saveBpmn}
+      onCancel={() => navigate('/dashboard')}
+      hasUnsavedChanges={hasUnsavedChanges}
+      saveLabel="Save Process"
     >
       <div className="bpmn-editor">
-        <div className="editor-content">
-          <div className="bpmn-workspace">
-            <div className="file-browser">
-              <div className="file-browser-header">
-                <h3>BPMN Files</h3>
-                <span className="file-path">input/business-processes/</span>
-              </div>
-              
-              {loading && !selectedFile ? (
-                <div className="loading">
-                  <div className="spinner"></div>
-                  <p>Loading BPMN files...</p>
-                </div>
-              ) : error ? (
-                <div className="error">
-                  <p>❌ {error}</p>
-                </div>
-              ) : (
-                <div className="file-list">
-                  {bpmnFiles.map((file) => (
-                    <button 
-                      key={file.sha}
-                      className={`file-item ${selectedFile?.sha === file.sha ? 'selected' : ''}`}
-                      onClick={() => loadBpmnFile(file)}
-                      type="button"
-                      aria-pressed={selectedFile?.sha === file.sha}
-                    >
-                      <div className="file-icon">📋</div>
-                      <div className="file-details">
-                        <div className="file-name">{file.name}</div>
-                        <div className="file-size">{(file.size / 1024).toFixed(1)} KB</div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
+        <div className="bpmn-editor-header">
+          <h2>BPMN Workflows</h2>
+          <p className="integration-note">
+            ✅ This editor uses Component Objects - all changes automatically update dak.json
+          </p>
+        </div>
+
+        {loading && (
+          <div className="loading-message">
+            <p>Loading BPMN files...</p>
+          </div>
+        )}
+
+        {error && (
+          <div className="error-message">
+            <p>{error}</p>
+          </div>
+        )}
+
+        {!loading && !error && (
+          <>
+            <div className="file-list">
+              <h3>Available Workflows ({bpmnFiles.length})</h3>
+              <ul>
+                {bpmnFiles.map((file) => (
+                  <li
+                    key={file.path}
+                    className={selectedFile?.path === file.path ? 'selected' : ''}
+                    onClick={() => loadBpmnFile(file)}
+                  >
+                    <span className="file-icon">📄</span>
+                    <span className="file-name">{file.name}</span>
+                    <span className="file-size">{(file.size / 1024).toFixed(1)} KB</span>
+                  </li>
+                ))}
+              </ul>
             </div>
 
-            <div className="diagram-editor">
-              {selectedFile ? (
-                <>
-                  <div className="editor-toolbar">
-                    <div className="toolbar-left">
-                      <h4>{selectedFile.name}</h4>
-                    </div>
-                  </div>
-                  <div className="bpmn-container" ref={containerRef}></div>
-                </>
-              ) : (
-                <div className="diagram-placeholder">
-                  <div className="placeholder-content">
-                    <div className="placeholder-icon">🔄</div>
-                    <h3>Select a BPMN File</h3>
-                    <p>Choose a .bpmn file from the list to start editing business processes.</p>
-                  </div>
+            {selectedFile && (
+              <div className="bpmn-modeler-container">
+                <div className="modeler-header">
+                  <h3>Editing: {selectedFile.name}</h3>
+                  {hasUnsavedChanges && (
+                    <span className="unsaved-indicator">● Unsaved changes</span>
+                  )}
                 </div>
-              )}
-            </div>
-          </div>
-        </div>
+                <div 
+                  ref={containerRef} 
+                  className="bpmn-canvas"
+                  style={{ height: '600px', border: '1px solid #ccc' }}
+                />
+              </div>
+            )}
+          </>
+        )}
+
+        <style jsx>{`
+          .bpmn-editor {
+            padding: 20px;
+          }
+          .bpmn-editor-header {
+            margin-bottom: 20px;
+          }
+          .integration-note {
+            color: #0078d4;
+            font-weight: 500;
+            margin-top: 8px;
+          }
+          .file-list {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 4px;
+          }
+          .file-list ul {
+            list-style: none;
+            padding: 0;
+          }
+          .file-list li {
+            padding: 10px;
+            margin: 5px 0;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+          }
+          .file-list li:hover {
+            background: #e8e8e8;
+          }
+          .file-list li.selected {
+            background: #0078d4;
+            color: white;
+          }
+          .file-name {
+            flex: 1;
+          }
+          .file-size {
+            font-size: 0.9em;
+            color: #666;
+          }
+          .file-list li.selected .file-size {
+            color: #fff;
+          }
+          .modeler-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+          }
+          .unsaved-indicator {
+            color: #ff9800;
+            font-weight: bold;
+          }
+          .loading-message, .error-message {
+            padding: 20px;
+            text-align: center;
+          }
+          .error-message {
+            background: #ffe6e6;
+            color: #d32f2f;
+            border-radius: 4px;
+          }
+        `}</style>
       </div>
     </AssetEditorLayout>
   );
