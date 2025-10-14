@@ -2,19 +2,19 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://worldhealthorganization.github.io/smart-base/StructureDefinition-DAKComponentSource.schema.json",
   "title": "DAK Component Source",
-  "description": "Source reference for DAK component data - supports canonical IRI, URL (absolute/relative), or inline data",
+  "description": "Source reference for DAK component data - supports canonical URI, URL (absolute/relative), or inline instance data",
   "type": "object",
   "properties": {
     "canonical": {
       "type": "string",
       "format": "uri",
-      "description": "Canonical IRI reference (e.g., IRIS publication URL)"
+      "description": "Canonical URI pointing to the component definition"
     },
     "url": {
       "type": "string",
-      "description": "URL reference - absolute or relative to input/ directory"
+      "description": "URL to retrieve component definition from input/ or external source"
     },
-    "data": {
+    "instance": {
       "type": "object",
       "description": "Inline instance data"
     },
@@ -41,20 +41,20 @@
           "description": "Source type for tracking"
         }
       },
-      "description": "Metadata about the source"
+      "description": "Metadata about the source (SGEX-specific)"
     }
   },
   "oneOf": [
     {
       "required": ["canonical"],
-      "description": "Canonical IRI reference"
+      "description": "Canonical URI reference"
     },
     {
       "required": ["url"],
       "description": "URL reference (absolute or relative)"
     },
     {
-      "required": ["data"],
+      "required": ["instance"],
       "description": "Inline instance data"
     }
   ]

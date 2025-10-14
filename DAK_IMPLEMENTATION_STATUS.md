@@ -9,18 +9,24 @@ Implementation of the updated WHO SMART Guidelines DAK logical model with Source
 ### 1. Updated Type Definitions ✅
 **File:** `packages/dak-core/src/types.ts`
 
-- Added `DAKComponentSource<T>` interface supporting 4 source types:
-  - `canonical`: IRI/canonical reference (e.g., IRIS publication)
-  - `url`: Absolute or relative URL
-  - `data`: Inline instance data
-  - `metadata`: Source tracking information
+- Added `DAKComponentSource<T>` interface supporting 3 source types:
+  - `canonical`: Canonical URI pointing to the component definition
+  - `url`: URL to retrieve component definition from input/ or external source
+  - `instance`: Inline instance data (renamed from `data` to match WHO SMART Guidelines)
+  - `metadata`: Source tracking information (SGEX-specific)
 
 - Added helper types:
   - `ResolvedSource<T>`: Result of source resolution
   - `SourceValidationResult`: Validation result for sources
   - `SaveOptions`: Options for saving component data
 
-- Updated 9 DAK component data interfaces to include optional `id` field
+- Updated 9 DAK component data interfaces:
+  - **CoreDataElement updated** to match WHO SMART Guidelines logical model:
+    - `type`: Type of element (valueset, codesystem, conceptmap, logicalmodel)
+    - `canonical`: Canonical URI/IRI pointing to the definition
+    - `id`: Optional identifier
+    - `description`: Optional description (string or URI)
+  - Other components have optional `id` field
 
 - Created specific source types for all 9 components:
   - `HealthInterventionsSource`
@@ -36,12 +42,19 @@ Implementation of the updated WHO SMART Guidelines DAK logical model with Source
 - Updated `DAK` interface to use Source types instead of direct component arrays
 
 ### 2. Created JSON Schema for Sources ✅
-**File:** `packages/dak-core/schemas/dak-component-source.schema.json`
+**Files:** 
+- `packages/dak-core/schemas/dak-component-source.schema.json`
+- `packages/dak-core/schemas/core-data-element.schema.json`
 
 - JSON Schema for `DAKComponentSource` with:
-  - `oneOf` constraint requiring at least one of: canonical, url, or data
+  - `oneOf` constraint requiring at least one of: canonical, url, or instance
   - Proper validation for each source type
-  - Metadata schema
+  - Metadata schema (SGEX-specific)
+  
+- JSON Schema for `CoreDataElement` with:
+  - Type enumeration (valueset, codesystem, conceptmap, logicalmodel)
+  - Required canonical URI
+  - Optional id and description fields
 
 ### 3. Implemented Source Resolution Service ✅
 **File:** `packages/dak-core/src/sourceResolution.ts`
@@ -51,13 +64,14 @@ Implementation of the updated WHO SMART Guidelines DAK logical model with Source
   - `determineSourceType()`: Determine source type from source object
   - `validateSource()`: Validate source structure
   - Private methods for each resolution type:
-    - `resolveCanonical()`: Fetch from canonical IRI
+    - `resolveCanonical()`: Fetch from canonical URI
     - `resolveAbsoluteUrl()`: Fetch from absolute URL
     - `resolveRelativeUrl()`: Load from repository (to be implemented)
-    - `resolveInline()`: Return inline data directly
+    - `resolveInline()`: Return inline instance data directly
   
 - Caching support with configurable TTL
 - Error handling for failed resolutions
+- **Updated to use `instance` instead of `data` to match WHO SMART Guidelines**
 
 ### 4. Implemented Base Component Object ✅
 **File:** `packages/dak-core/src/dakComponentObject.ts`
@@ -79,6 +93,7 @@ Implementation of the updated WHO SMART Guidelines DAK logical model with Source
     - `determineFilePath()`: Determine where to save files
     - `serializeToFile()`: Format data for file storage
     - `parseFromFile()`: Parse data from file content
+  - **Updated to use `instance` instead of `data` for inline storage**
 
 ### 5. Updated Package Exports ✅
 **File:** `packages/dak-core/src/index.ts`
@@ -90,9 +105,39 @@ Implementation of the updated WHO SMART Guidelines DAK logical model with Source
   - All source type definitions
 
 ### 6. Build Success ✅
-- TypeScript compilation successful
-- All type checking passing
+- TypeScript compilation successful for new files
+- All type checking passing for updated code
 - Package ready for use
+- Note: Pre-existing errors in other files (dak-service.ts, validation.ts, fsh-utils.ts) remain
+
+### 7. Updated FSH Model ✅
+**File:** `packages/dak-core/schemas/dak-model.fsh`
+- Updated to reference Source types (HealthInterventionsSource, etc.) instead of direct component types
+- Aligns with WHO SMART Guidelines smart-base DAK.fsh
+
+## Recent Updates (2025-10-14)
+
+### Updated Core Data Element Logical Model ✅
+Based on feedback, updated CoreDataElement to match the latest WHO SMART Guidelines smart-base definition:
+
+**Changes:**
+1. **CoreDataElement interface** now has:
+   - `type`: Required field (valueset | codesystem | conceptmap | logicalmodel)
+   - `canonical`: Required canonical URI/IRI
+   - `id`: Optional identifier
+   - `description`: Optional (string or URI object)
+   
+2. **Source types** updated to use `instance` instead of `data`:
+   - Changed `DAKComponentSource.data` → `DAKComponentSource.instance`
+   - Updated all references in source resolution service
+   - Updated component object base class
+   - Updated JSON schema
+
+3. **Created CoreDataElement JSON Schema**
+   - New file: `packages/dak-core/schemas/core-data-element.schema.json`
+   - Validates type, canonical, id, and description fields
+
+**Reference:** https://github.com/WorldHealthOrganization/smart-base/blob/main/input/fsh/models/CoreDataElement.fsh
 
 ## Architecture Implemented
 
@@ -202,14 +247,16 @@ Update editors to use Component Objects instead of direct file access
 
 ### Created:
 1. `packages/dak-core/schemas/dak-component-source.schema.json` - Source schema
-2. `packages/dak-core/src/sourceResolution.ts` - Source resolution service
-3. `packages/dak-core/src/dakComponentObject.ts` - Component Object base class
-4. `DAK_IMPLEMENTATION_STATUS.md` - This file
+2. `packages/dak-core/schemas/core-data-element.schema.json` - CoreDataElement schema
+3. `packages/dak-core/src/sourceResolution.ts` - Source resolution service
+4. `packages/dak-core/src/dakComponentObject.ts` - Component Object base class
+5. `DAK_IMPLEMENTATION_STATUS.md` - This file
 
 ### Modified:
-1. `packages/dak-core/src/types.ts` - Added Source types
+1. `packages/dak-core/src/types.ts` - Added Source types, updated CoreDataElement
 2. `packages/dak-core/src/index.ts` - Updated exports
-3. `packages/dak-core/package.json` - (dependencies already present)
+3. `packages/dak-core/schemas/dak-model.fsh` - Updated to use Source types
+4. `packages/dak-core/package.json` - (dependencies already present)
 
 ## Build Status
 

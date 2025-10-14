@@ -137,20 +137,20 @@ class BaseDAKComponentObject {
     // Private helper methods
     // ============================================================================
     /**
-     * Save as inline data in source
+     * Save as inline instance data in source
      */
     async saveInline(data, updateExisting) {
         if (updateExisting) {
             // Find existing inline source and update
-            const inlineIndex = this.sources.findIndex(s => s.data !== undefined);
+            const inlineIndex = this.sources.findIndex(s => s.instance !== undefined);
             if (inlineIndex >= 0) {
-                await this.updateSource(inlineIndex, { data });
+                await this.updateSource(inlineIndex, { instance: data });
                 return;
             }
         }
         // Add new inline source
         await this.addSource({
-            data,
+            instance: data,
             metadata: {
                 addedAt: new Date().toISOString(),
                 addedBy: 'sgex-workbench',

@@ -235,21 +235,21 @@ export abstract class BaseDAKComponentObject<TData, TSource extends DAKComponent
   // ============================================================================
   
   /**
-   * Save as inline data in source
+   * Save as inline instance data in source
    */
   private async saveInline(data: TData, updateExisting: boolean): Promise<void> {
     if (updateExisting) {
       // Find existing inline source and update
-      const inlineIndex = this.sources.findIndex(s => s.data !== undefined);
+      const inlineIndex = this.sources.findIndex(s => s.instance !== undefined);
       if (inlineIndex >= 0) {
-        await this.updateSource(inlineIndex, { data } as Partial<TSource>);
+        await this.updateSource(inlineIndex, { instance: data } as Partial<TSource>);
         return;
       }
     }
     
     // Add new inline source
     await this.addSource({ 
-      data,
+      instance: data,
       metadata: {
         addedAt: new Date().toISOString(),
         addedBy: 'sgex-workbench',

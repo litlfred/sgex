@@ -66,7 +66,7 @@ export class SourceResolutionService {
           break;
           
         case 'inline':
-          data = this.resolveInline<T>(source.data!);
+          data = this.resolveInline<T>(source.instance!);
           resolutionMethod = 'inline';
           break;
           
@@ -94,7 +94,7 @@ export class SourceResolutionService {
    */
   determineSourceType(source: DAKComponentSource<any>): 'canonical' | 'url-absolute' | 'url-relative' | 'inline' {
     // Priority order: inline > relative URL > absolute URL > canonical
-    if (source.data !== undefined) {
+    if (source.instance !== undefined) {
       return 'inline';
     }
     
@@ -113,7 +113,7 @@ export class SourceResolutionService {
       return 'canonical';
     }
     
-    throw new Error('Source must have at least one of: canonical, url, or data');
+    throw new Error('Source must have at least one of: canonical, url, or instance');
   }
   
   /**
@@ -158,8 +158,8 @@ export class SourceResolutionService {
         break;
         
       case 'inline':
-        if (source.data === null || source.data === undefined) {
-          errors.push('Inline data cannot be null or undefined');
+        if (source.instance === null || source.instance === undefined) {
+          errors.push('Inline instance cannot be null or undefined');
         }
         break;
     }
@@ -250,10 +250,10 @@ export class SourceResolutionService {
   }
   
   /**
-   * Return inline data directly
+   * Return inline instance data directly
    */
-  private resolveInline<T>(data: T): T {
-    return data;
+  private resolveInline<T>(instance: T): T {
+    return instance;
   }
   
   /**
@@ -261,7 +261,7 @@ export class SourceResolutionService {
    */
   private getCacheKey(source: DAKComponentSource<any>, repositoryContext: DAKRepository): string {
     const type = this.determineSourceType(source);
-    const sourceKey = source.canonical || source.url || JSON.stringify(source.data);
+    const sourceKey = source.canonical || source.url || JSON.stringify(source.instance);
     const repoKey = `${repositoryContext.owner}/${repositoryContext.repo}/${repositoryContext.branch || 'main'}`;
     return `${type}:${repoKey}:${sourceKey}`;
   }

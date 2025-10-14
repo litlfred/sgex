@@ -35,16 +35,17 @@ export interface DAKMetadata {
 }
 /**
  * Base source type for DAK component sources
- * Supports IRI/canonical, URL (absolute/relative), or inline data
+ * Supports canonical URI, URL (absolute/relative), or inline instance data
+ * Based on WHO SMART Guidelines DAKComponentSources.fsh
  */
 export interface DAKComponentSource<T> {
-    /** Canonical IRI reference (e.g., IRIS publication) */
+    /** Canonical URI pointing to the component definition */
     canonical?: string;
-    /** URL reference - absolute or relative to input/ directory */
+    /** URL to retrieve component definition from input/ or external source */
     url?: string;
     /** Inline instance data */
-    data?: T;
-    /** Metadata about the source */
+    instance?: T;
+    /** Metadata about the source (SGEX-specific, not in FHIR LM) */
     metadata?: {
         /** When this source was added */
         addedAt?: string;
@@ -115,11 +116,22 @@ export interface BusinessProcessWorkflow {
     /** Business processes and workflows for achieving health programme objectives */
     processes: any[];
 }
+/**
+ * Core Data Element
+ * A core data element can be one of: ValueSet, CodeSystem, ConceptMap, or Logical Model
+ * Based on WHO SMART Guidelines CoreDataElement.fsh
+ */
 export interface CoreDataElement {
-    /** Unique identifier */
+    /** Identifier for the core data element */
     id?: string;
-    /** Data elements required throughout the different points of a workflow */
-    elements: any[];
+    /** Type of core data element */
+    type: 'valueset' | 'codesystem' | 'conceptmap' | 'logicalmodel';
+    /** Canonical URI/IRI pointing to the definition */
+    canonical: string;
+    /** Description - either Markdown content or URI to a Markdown file */
+    description?: string | {
+        uri: string;
+    };
 }
 export interface DecisionSupportLogic {
     /** Unique identifier */

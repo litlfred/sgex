@@ -45,7 +45,7 @@ export declare class SourceResolutionService {
      */
     private resolveRelativeUrl;
     /**
-     * Return inline data directly
+     * Return inline instance data directly
      */
     private resolveInline;
     /**

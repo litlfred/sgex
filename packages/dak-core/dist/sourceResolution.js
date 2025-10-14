@@ -50,7 +50,7 @@ class SourceResolutionService {
                     resolutionMethod = 'url-relative';
                     break;
                 case 'inline':
-                    data = this.resolveInline(source.data);
+                    data = this.resolveInline(source.instance);
                     resolutionMethod = 'inline';
                     break;
                 default:
@@ -74,7 +74,7 @@ class SourceResolutionService {
      */
     determineSourceType(source) {
         // Priority order: inline > relative URL > absolute URL > canonical
-        if (source.data !== undefined) {
+        if (source.instance !== undefined) {
             return 'inline';
         }
         if (source.url) {
@@ -91,7 +91,7 @@ class SourceResolutionService {
         if (source.canonical) {
             return 'canonical';
         }
-        throw new Error('Source must have at least one of: canonical, url, or data');
+        throw new Error('Source must have at least one of: canonical, url, or instance');
     }
     /**
      * Validate a source
@@ -130,8 +130,8 @@ class SourceResolutionService {
                 }
                 break;
             case 'inline':
-                if (source.data === null || source.data === undefined) {
-                    errors.push('Inline data cannot be null or undefined');
+                if (source.instance === null || source.instance === undefined) {
+                    errors.push('Inline instance cannot be null or undefined');
                 }
                 break;
         }
@@ -209,17 +209,17 @@ class SourceResolutionService {
             `Path: ${fullPath} in ${repositoryContext.owner}/${repositoryContext.repo}/${repositoryContext.branch || 'main'}`);
     }
     /**
-     * Return inline data directly
+     * Return inline instance data directly
      */
-    resolveInline(data) {
-        return data;
+    resolveInline(instance) {
+        return instance;
     }
     /**
      * Generate cache key
      */
     getCacheKey(source, repositoryContext) {
         const type = this.determineSourceType(source);
-        const sourceKey = source.canonical || source.url || JSON.stringify(source.data);
+        const sourceKey = source.canonical || source.url || JSON.stringify(source.instance);
         const repoKey = `${repositoryContext.owner}/${repositoryContext.repo}/${repositoryContext.branch || 'main'}`;
         return `${type}:${repoKey}:${sourceKey}`;
     }

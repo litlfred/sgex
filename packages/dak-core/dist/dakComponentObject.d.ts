@@ -79,7 +79,7 @@ export declare abstract class BaseDAKComponentObject<TData, TSource extends DAKC
      */
     protected abstract parseFromFile(content: string): TData;
     /**
-     * Save as inline data in source
+     * Save as inline instance data in source
      */
     private saveInline;
     /**
