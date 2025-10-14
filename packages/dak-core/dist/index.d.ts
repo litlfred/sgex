@@ -24,6 +24,9 @@ export { QuestionnaireDefinitionCore, questionnaireDefinitionCore } from './ques
 export { DecisionTableCore, decisionTableCore } from './decision-table';
 export { SourceResolutionService } from './sourceResolution';
 export * from './dakComponentObject';
+export * from './components';
+export { DAKObject } from './dakObject';
+export { DAKFactory } from './dakFactory';
 export * from './base-component';
 export * from './fsh-utils';
 export type { DAK, DAKRepository, DAKMetadata, DAKValidationResult, DAKValidationError, DAKValidationWarning, DAKPublisher, DAKComponentSource, ResolvedSource, SourceValidationResult, SaveOptions, HealthInterventionsSource, GenericPersonaSource, UserScenarioSource, BusinessProcessWorkflowSource, CoreDataElementSource, DecisionSupportLogicSource, ProgramIndicatorSource, RequirementsSource, TestScenarioSource } from './types';

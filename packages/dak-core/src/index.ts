@@ -30,6 +30,9 @@ export { DecisionTableCore, decisionTableCore } from './decision-table';
 // New: Source resolution and Component Objects
 export { SourceResolutionService } from './sourceResolution';
 export * from './dakComponentObject';
+export * from './components';
+export { DAKObject } from './dakObject';
+export { DAKFactory } from './dakFactory';
 
 // Base component classes and utilities
 export * from './base-component';
