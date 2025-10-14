@@ -260,51 +260,6 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
             const canvas = viewer.get('canvas');
             console.log('🔍 BPMNPreview: Canvas service retrieved:', !!canvas);
             
-            // CRITICAL: Check if diagram has any elements before attempting zoom
-            // Wait a bit for bpmn-js to finish initial layout
-            const elementRegistry = viewer.get('elementRegistry');
-            const checkDiagramHasElements = () => {
-              return new Promise((resolve, reject) => {
-                let attempts = 0;
-                const maxAttempts = 30; // About 500ms at 60fps
-                
-                const checkElements = () => {
-                  const allElements = elementRegistry.getAll();
-                  const shapeElements = allElements.filter(el => el.type !== 'label' && el.type !== 'root');
-                  
-                  console.log(`[BPMN Preview] Checking diagram elements (attempt ${attempts + 1}):`, {
-                    totalElements: allElements.length,
-                    shapeElements: shapeElements.length,
-                    hasElements: shapeElements.length > 0
-                  });
-                  
-                  if (shapeElements.length > 0) {
-                    console.log(`[BPMN Preview] Found ${shapeElements.length} diagram elements after ${attempts + 1} RAF cycles`);
-                    resolve();
-                  } else if (attempts < maxAttempts) {
-                    attempts++;
-                    requestAnimationFrame(checkElements);
-                  } else {
-                    const error = 'Diagram has no elements - may be empty or malformed';
-                    console.error('[BPMN Preview] ERROR:', error);
-                    reject(new Error(error));
-                  }
-                };
-                
-                requestAnimationFrame(checkElements);
-              });
-            };
-            
-            try {
-              await checkDiagramHasElements();
-              console.log('✅ BPMNPreview: Diagram has elements, proceeding with zoom');
-            } catch (elementsError) {
-              console.error('❌ BPMNPreview: Failed to find diagram elements:', elementsError);
-              setError('Diagram has no valid content to display');
-              setLoading(false);
-              return;
-            }
-            
             // Log SVG state before zoom
             const svgBefore = containerRef.current?.querySelector('svg');
             console.log('📐 BPMNPreview: SVG state BEFORE zoom:', {
@@ -327,157 +282,64 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
               childCount: svgBefore?.children?.length || 0
             });
             
-            // Helper function to check if container has valid dimensions
-            const hasValidDimensions = (container) => {
-              if (!container) return false;
-              const rect = container.getBoundingClientRect();
-              const width = rect.width || container.offsetWidth;
-              const height = rect.height || container.offsetHeight;
-              
-              // Comprehensive diagnostic logging
-              const computed = window.getComputedStyle(container);
-              console.log('[BPMN Preview] Container dimensions check:', {
-                offsetWidth: container.offsetWidth,
-                offsetHeight: container.offsetHeight,
-                clientWidth: container.clientWidth,
-                clientHeight: container.clientHeight,
-                'boundingRect.width': rect.width,
-                'boundingRect.height': rect.height,
-                'computedStyle.width': computed.width,
-                'computedStyle.height': computed.height,
-                hasValidDimensions: width > 0 && height > 0
-              });
-              
-              return width > 0 && height > 0;
-            };
-            
-            // Helper function to wait for valid container dimensions
-            const waitForValidDimensions = (container, callback, maxAttempts = 50) => {
-              let attempts = 0;
-              const checkDimensions = () => {
-                if (hasValidDimensions(container)) {
-                  console.log(`[BPMN Preview] Valid dimensions found after ${attempts} RAF cycles`);
-                  callback();
-                } else if (attempts < maxAttempts) {
-                  attempts++;
-                  requestAnimationFrame(checkDimensions);
-                } else {
-                  console.warn('[BPMN Preview] WARNING: Container dimensions never became valid after', maxAttempts, 'attempts');
-                  console.warn('[BPMN Preview] Skipping zoom to prevent Infinity/NaN transform. Container may be hidden or have CSS issues.');
-                  // DO NOT call callback - calling zoom with 0x0 dimensions produces Infinity/NaN transform
-                }
-              };
-              requestAnimationFrame(checkDimensions);
-            };
-            
-            // Execute viewport fit with proper diagnostic logging
-            const executeViewportFit = () => {
-              const container = containerRef.current;
-              
-              // CRITICAL: Final dimension check right before zoom
-              // Container dimensions can change between wait completion and execution
-              if (!hasValidDimensions(container)) {
-                console.warn('[BPMN Preview] WARNING: Container dimensions invalid at zoom time, aborting');
-                console.warn('[BPMN Preview] This indicates container was hidden/resized after initial check');
-                return;
-              }
-              
-              // Log viewport transform before zoom
-              const svg = container?.querySelector('svg');
-              const viewportGroup = svg?.querySelector('.viewport');
-              const transformBefore = viewportGroup?.getAttribute('transform');
-              const viewboxBefore = canvas.viewbox();
-              
-              console.log('[BPMN Preview] Viewport transform before zoom:', transformBefore || 'none');
-              console.log('[BPMN Preview] Pre-zoom state:', {
-                'viewbox.outer': viewboxBefore?.outer,
-                'viewbox.scale': viewboxBefore?.scale
-              });
-              
+            // Always use fit-viewport for previews - it's reliable and works well for small containers
+            // Wait a tick to ensure container dimensions are available, then zoom
+            setTimeout(() => {
               try {
                 canvas.zoom('fit-viewport');
                 console.log('✅ BPMNPreview: Zoom to fit-viewport completed');
-                
-                // Log viewport transform after zoom
-                requestAnimationFrame(() => {
-                  const transformAfter = viewportGroup?.getAttribute('transform');
-                  const viewboxAfter = canvas.viewbox();
-                  const svgAfter = containerRef.current?.querySelector('svg');
-                  
-                  console.log('[BPMN Preview] Viewport transform after zoom:', transformAfter || 'none');
-                  console.log('📐 BPMNPreview: Viewport state AFTER zoom:', {
-                    viewbox: viewboxAfter,
-                    outer: viewboxAfter?.outer,
-                    inner: viewboxAfter?.inner,
-                    scale: viewboxAfter?.scale,
-                    containerDimensions: {
-                      width: containerRef.current?.offsetWidth,
-                      height: containerRef.current?.offsetHeight,
-                      clientWidth: containerRef.current?.clientWidth,
-                      clientHeight: containerRef.current?.clientHeight
-                    },
-                    svgAttributes: {
-                      width: svgAfter?.getAttribute('width'),
-                      height: svgAfter?.getAttribute('height'),
-                      viewBox: svgAfter?.getAttribute('viewBox'),
-                      transform: svgAfter?.getAttribute('transform')
-                    },
-                    svgStyles: {
-                      display: svgAfter?.style.display,
-                      visibility: svgAfter?.style.visibility,
-                      opacity: svgAfter?.style.opacity,
-                      backgroundColor: svgAfter?.style.backgroundColor
-                    },
-                    svgComputedStyles: svgAfter ? {
-                      display: window.getComputedStyle(svgAfter).display,
-                      visibility: window.getComputedStyle(svgAfter).visibility,
-                      opacity: window.getComputedStyle(svgAfter).opacity,
-                      backgroundColor: window.getComputedStyle(svgAfter).backgroundColor
-                    } : null
-                  });
-                  
-                  // Check for all-zeros transform (failure indicator)
-                  if (transformAfter && transformAfter.includes('matrix(0 0 0 0 0 0)')) {
-                    console.log('[BPMN Preview] WARNING: Viewport transform is all zeros after zoom!');
-                    
-                    // Attempt manual viewbox recovery
-                    try {
-                      const outer = viewboxAfter.outer;
-                      if (outer && outer.width > 0 && outer.height > 0) {
-                        console.log('[BPMN Preview] Attempting manual viewbox recovery');
-                        canvas.viewbox({
-                          x: 0, y: 0,
-                          width: outer.width,
-                          height: outer.height
-                        });
-                        console.log('[BPMN Preview] Manual viewbox recovery completed');
-                      }
-                    } catch (err) {
-                      console.log('[BPMN Preview] Manual viewbox recovery failed:', err);
-                    }
-                  }
-                  
-                  // Force SVG visibility
-                  if (svgAfter) {
-                    svgAfter.style.opacity = '1';
-                    svgAfter.style.visibility = 'visible';
-                    svgAfter.style.display = 'block';
-                  }
-                });
               } catch (zoomError) {
                 console.error('❌ BPMNPreview: Zoom failed:', zoomError);
               }
-            };
+            }, 0);
             
-            // Force canvas update to ensure diagram stays visible
+            // Log viewport and SVG state after zoom
+            const viewboxAfterZoom = canvas.viewbox();
+            const svgAfter = containerRef.current?.querySelector('svg');
+            console.log('📐 BPMNPreview: Viewport state AFTER zoom:', {
+              viewbox: viewboxAfterZoom,
+              outer: viewboxAfterZoom?.outer,
+              inner: viewboxAfterZoom?.inner,
+              scale: viewboxAfterZoom?.scale,
+              containerDimensions: {
+                width: containerRef.current?.offsetWidth,
+                height: containerRef.current?.offsetHeight,
+                clientWidth: containerRef.current?.clientWidth,
+                clientHeight: containerRef.current?.clientHeight
+              },
+              svgAttributes: {
+                width: svgAfter?.getAttribute('width'),
+                height: svgAfter?.getAttribute('height'),
+                viewBox: svgAfter?.getAttribute('viewBox'),
+                transform: svgAfter?.getAttribute('transform')
+              },
+              svgStyles: {
+                display: svgAfter?.style.display,
+                visibility: svgAfter?.style.visibility,
+                opacity: svgAfter?.style.opacity,
+                backgroundColor: svgAfter?.style.backgroundColor
+              },
+              svgComputedStyles: svgAfter ? {
+                display: window.getComputedStyle(svgAfter).display,
+                visibility: window.getComputedStyle(svgAfter).visibility,
+                opacity: window.getComputedStyle(svgAfter).opacity,
+                backgroundColor: window.getComputedStyle(svgAfter).backgroundColor
+              } : null
+            });
+            
+            console.log(`✅ BPMNPreview: Successfully fitted to viewport`);
+
+
+            // Force canvas update to ensure diagram is immediately visible
             // This prevents the issue where diagram requires a drag/mouse interaction to appear
+            // Use multiple strategies to ensure rendering
             const forceCanvasUpdate = () => {
               if (viewer && containerRef.current) {
                 try {
                   const canvas = viewer.get('canvas');
                   // Trigger a canvas update by getting the viewbox
-                  canvas.viewbox();
-                  // Force a repaint by resetting zoom to current value
+                  const currentViewbox = canvas.viewbox();
+                  // Force a repaint by slightly adjusting zoom and resetting
                   const currentZoom = canvas.zoom();
                   canvas.zoom(currentZoom);
                   
@@ -489,10 +351,17 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
                     svgElement.style.display = 'block';
                   }
                   
-                  console.log('🎨 BPMNPreview: Forced canvas update', {
+                  // Trigger a scroll event which can force repaints
+                  if (containerRef.current) {
+                    containerRef.current.scrollTop = containerRef.current.scrollTop;
+                  }
+                  
+                  console.log('🎨 BPMNPreview: Forced SVG visibility and canvas update', {
+                    viewbox: currentViewbox,
                     zoom: currentZoom,
                     svgVisible: svgElement?.style.visibility,
-                    svgOpacity: svgElement?.style.opacity
+                    svgOpacity: svgElement?.style.opacity,
+                    svgDisplay: svgElement?.style.display
                   });
                 } catch (canvasError) {
                   console.warn('⚠️ BPMNPreview: Could not force canvas update:', canvasError);
@@ -500,50 +369,11 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
               }
             };
             
-            // Always use fit-viewport for previews - it's reliable and works well for small containers
-            // Use nested requestAnimationFrame to ensure browser has painted
-            requestAnimationFrame(() => {
-              console.log('[BPMN Preview] First RAF callback: layout should be painted');
-              const container = containerRef.current;
-              
-              // Check if container has valid dimensions
-              if (!hasValidDimensions(container)) {
-                console.log('[BPMN Preview] Container dimensions not ready, waiting...');
-                waitForValidDimensions(container, () => {
-                  console.log('[BPMN Preview] Container ready, proceeding with zoom');
-                  requestAnimationFrame(executeViewportFit);
-                });
-              } else {
-                // Second RAF to ensure dynamic content is ready
-                console.log('[BPMN Preview] Container dimensions valid, proceeding with callback');
-                requestAnimationFrame(() => {
-                  console.log('[BPMN Preview] Second RAF callback: executing zoom');
-                  executeViewportFit();
-                });
-              }
-            });
-            
-            // Apply force updates at intervals using RAF to ensure diagram stays visible
-            // This addresses the issue where diagram disappears until a drag event
-            const scheduleForceUpdate = (delay) => {
-              let rafCount = Math.ceil(delay / 16); // Approximate RAF cycles for the delay
-              const countdown = () => {
-                if (rafCount > 0) {
-                  rafCount--;
-                  requestAnimationFrame(countdown);
-                } else {
-                  forceCanvasUpdate();
-                }
-              };
-              requestAnimationFrame(countdown);
-            };
-            
-            // Schedule multiple force updates at increasing intervals
-            scheduleForceUpdate(100);  // ~6 RAF cycles
-            scheduleForceUpdate(200);  // ~12 RAF cycles
-            scheduleForceUpdate(400);  // ~25 RAF cycles
-            
-            console.log(`✅ BPMNPreview: Initiated viewport fitting sequence`);
+            // Apply multiple times with increasing delays to ensure it works
+            // Start after zoom has had time to complete
+            setTimeout(forceCanvasUpdate, 100);
+            setTimeout(forceCanvasUpdate, 200);
+            setTimeout(forceCanvasUpdate, 400);
 
             // Final validation - check if diagram was actually rendered
             setTimeout(() => {

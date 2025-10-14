@@ -277,52 +277,8 @@ const BPMNViewerEnhanced = () => {
         // Initialize zoom level and fit diagram to viewport with element scanning
         const canvas = viewerRef.current.get('canvas');
         
-        // CRITICAL: Check if diagram has any elements before attempting zoom
-        // Wait a bit for bpmn-js to finish initial layout
+        // Get the element registry to scan all visual elements
         const elementRegistry = viewerRef.current.get('elementRegistry');
-        const checkDiagramHasElements = () => {
-          return new Promise((resolve, reject) => {
-            let attempts = 0;
-            const maxAttempts = 30; // About 500ms at 60fps
-            
-            const checkElements = () => {
-              const allElements = elementRegistry.getAll();
-              const shapeElements = allElements.filter(el => el.type !== 'label' && el.type !== 'root');
-              
-              console.log(`[BPMN ViewerEnhanced] Checking diagram elements (attempt ${attempts + 1}):`, {
-                totalElements: allElements.length,
-                shapeElements: shapeElements.length,
-                hasElements: shapeElements.length > 0
-              });
-              
-              if (shapeElements.length > 0) {
-                console.log(`[BPMN ViewerEnhanced] Found ${shapeElements.length} diagram elements after ${attempts + 1} RAF cycles`);
-                resolve();
-              } else if (attempts < maxAttempts) {
-                attempts++;
-                requestAnimationFrame(checkElements);
-              } else {
-                const error = 'Diagram has no elements - may be empty or malformed';
-                console.error('[BPMN ViewerEnhanced] ERROR:', error);
-                reject(new Error(error));
-              }
-            };
-            
-            requestAnimationFrame(checkElements);
-          });
-        };
-        
-        try {
-          await checkDiagramHasElements();
-          console.log('✅ BPMNViewerEnhanced: Diagram has elements, proceeding with zoom');
-        } catch (elementsError) {
-          console.error('❌ BPMNViewerEnhanced: Failed to find diagram elements:', elementsError);
-          setError('Diagram has no valid content to display');
-          setLoading(false);
-          return;
-        }
-        
-        // Get all visual elements for zoom calculation
         const allElements = elementRegistry.getAll();
         
         console.log(`📊 BPMNViewerEnhanced: Found ${allElements.length} elements in diagram`);
@@ -359,108 +315,33 @@ const BPMNViewerEnhanced = () => {
             
             // Zoom to fit the actual diagram bounds
             if (diagramBounds.width > 0 && diagramBounds.height > 0) {
-              // Only set viewbox if container has valid dimensions
-              const container = containerRef.current;
-              const rect = container?.getBoundingClientRect();
-              if (container && rect && rect.width > 0 && rect.height > 0) {
-                canvas.viewbox(diagramBounds);
-                console.log('✅ BPMNViewerEnhanced: Set viewbox to diagram bounds');
-              } else {
-                console.warn('⚠️ BPMNViewerEnhanced: Skipping viewbox - container has invalid dimensions');
-              }
+              canvas.viewbox(diagramBounds);
+              console.log('✅ BPMNViewerEnhanced: Set viewbox to diagram bounds');
             } else {
               // Fallback to fit-viewport if bounds calculation fails
-              const container = containerRef.current;
-              const rect = container?.getBoundingClientRect();
-              if (container && rect && rect.width > 0 && rect.height > 0) {
-                canvas.zoom('fit-viewport');
-                console.log('⚠️ BPMNViewerEnhanced: Using fit-viewport fallback (invalid bounds)');
-              } else {
-                console.warn('⚠️ BPMNViewerEnhanced: Skipping zoom - container has invalid dimensions');
-              }
+              canvas.zoom('fit-viewport');
+              console.log('⚠️ BPMNViewerEnhanced: Using fit-viewport fallback (invalid bounds)');
             }
           } else {
             // No valid positioned elements, use standard fit-viewport
-            const container = containerRef.current;
-            const rect = container?.getBoundingClientRect();
-            if (container && rect && rect.width > 0 && rect.height > 0) {
-              canvas.zoom('fit-viewport');
-              console.log('⚠️ BPMNViewerEnhanced: Using fit-viewport fallback (no valid elements)');
-            } else {
-              console.warn('⚠️ BPMNViewerEnhanced: Skipping zoom - container has invalid dimensions');
-            }
+            canvas.zoom('fit-viewport');
+            console.log('⚠️ BPMNViewerEnhanced: Using fit-viewport fallback (no valid elements)');
           }
         } else {
           // No elements, use standard fit-viewport
-          const container = containerRef.current;
-          const rect = container?.getBoundingClientRect();
-          if (container && rect && rect.width > 0 && rect.height > 0) {
-            canvas.zoom('fit-viewport');
-            console.log('⚠️ BPMNViewerEnhanced: Using fit-viewport fallback (no elements)');
-          } else {
-            console.warn('⚠️ BPMNViewerEnhanced: Skipping zoom - container has invalid dimensions');
-          }
+          canvas.zoom('fit-viewport');
+          console.log('⚠️ BPMNViewerEnhanced: Using fit-viewport fallback (no elements)');
         }
         
         setZoomLevel(canvas.zoom());
         
-        // Helper function to check if container has valid dimensions
-        const hasValidDimensions = (container) => {
-          if (!container) return false;
-          const rect = container.getBoundingClientRect();
-          const width = rect.width || container.offsetWidth;
-          const height = rect.height || container.offsetHeight;
-          
-          // Comprehensive diagnostic logging
-          const computed = window.getComputedStyle(container);
-          console.log('[BPMN ViewerEnhanced] Container dimensions check:', {
-            offsetWidth: container.offsetWidth,
-            offsetHeight: container.offsetHeight,
-            clientWidth: container.clientWidth,
-            clientHeight: container.clientHeight,
-            'boundingRect.width': rect.width,
-            'boundingRect.height': rect.height,
-            'computedStyle.width': computed.width,
-            'computedStyle.height': computed.height,
-            hasValidDimensions: width > 0 && height > 0
-          });
-          
-          return width > 0 && height > 0;
-        };
-        
-        // Helper function to wait for valid container dimensions
-        const waitForValidDimensions = (container, callback, maxAttempts = 50) => {
-          let attempts = 0;
-          const checkDimensions = () => {
-            if (hasValidDimensions(container)) {
-              console.log(`[BPMN ViewerEnhanced] Valid dimensions found after ${attempts} RAF cycles`);
-              callback();
-            } else if (attempts < maxAttempts) {
-              attempts++;
-              requestAnimationFrame(checkDimensions);
-            } else {
-              console.warn('[BPMN ViewerEnhanced] WARNING: Container dimensions never became valid after', maxAttempts, 'attempts');
-              console.warn('[BPMN ViewerEnhanced] Skipping zoom to prevent Infinity/NaN transform. Container may be hidden or have CSS issues.');
-              // DO NOT call callback - calling zoom with 0x0 dimensions produces Infinity/NaN transform
-            }
-          };
-          requestAnimationFrame(checkDimensions);
-        };
-        
-        // Execute force canvas update with proper diagnostic logging
+        // Force canvas update to ensure diagram is immediately visible
+        // This prevents the issue where diagram requires a drag/mouse interaction to appear
+        // Use multiple strategies to ensure rendering
         const forceCanvasUpdate = () => {
           if (viewerRef.current) {
             try {
               const canvas = viewerRef.current.get('canvas');
-              const container = containerRef.current;
-              
-              // Log viewport transform before update
-              const svg = container?.querySelector('svg');
-              const viewportGroup = svg?.querySelector('.viewport');
-              const transformBefore = viewportGroup?.getAttribute('transform');
-              
-              console.log('[BPMN ViewerEnhanced] Viewport transform before force update:', transformBefore || 'none');
-              
               // Trigger a canvas update by getting the viewbox
               canvas.viewbox();
               // Force a repaint by slightly adjusting zoom and resetting
@@ -468,18 +349,9 @@ const BPMNViewerEnhanced = () => {
               canvas.zoom(currentZoom);
               
               // Also trigger a scroll event which can force repaints
+              const container = containerRef.current;
               if (container) {
-                // eslint-disable-next-line no-self-assign
                 container.scrollTop = container.scrollTop;
-              }
-              
-              // Log viewport transform after update
-              const transformAfter = viewportGroup?.getAttribute('transform');
-              console.log('[BPMN ViewerEnhanced] Viewport transform after force update:', transformAfter || 'none');
-              
-              // Check for all-zeros transform (failure indicator)
-              if (transformAfter && transformAfter.includes('matrix(0 0 0 0 0 0)')) {
-                console.log('[BPMN ViewerEnhanced] WARNING: Viewport transform is all zeros after force update!');
               }
             } catch (canvasError) {
               console.warn('⚠️ BPMNViewerEnhanced: Could not force canvas update:', canvasError);
@@ -487,47 +359,10 @@ const BPMNViewerEnhanced = () => {
           }
         };
         
-        // Use nested requestAnimationFrame to ensure browser has painted
-        requestAnimationFrame(() => {
-          console.log('[BPMN ViewerEnhanced] First RAF callback: layout should be painted');
-          const container = containerRef.current;
-          
-          // Check if container has valid dimensions
-          if (!hasValidDimensions(container)) {
-            console.log('[BPMN ViewerEnhanced] Container dimensions not ready, waiting...');
-            waitForValidDimensions(container, () => {
-              console.log('[BPMN ViewerEnhanced] Container ready, proceeding with force update');
-              requestAnimationFrame(forceCanvasUpdate);
-            });
-          } else {
-            // Second RAF to ensure dynamic content is ready
-            console.log('[BPMN ViewerEnhanced] Container dimensions valid, proceeding with callback');
-            requestAnimationFrame(() => {
-              console.log('[BPMN ViewerEnhanced] Second RAF callback: executing force update');
-              forceCanvasUpdate();
-            });
-          }
-        });
-        
-        // Apply force updates at intervals using RAF to ensure diagram stays visible
-        // This addresses the issue where diagram disappears until a drag event
-        const scheduleForceUpdate = (delay) => {
-          let rafCount = Math.ceil(delay / 16); // Approximate RAF cycles for the delay
-          const countdown = () => {
-            if (rafCount > 0) {
-              rafCount--;
-              requestAnimationFrame(countdown);
-            } else {
-              forceCanvasUpdate();
-            }
-          };
-          requestAnimationFrame(countdown);
-        };
-        
-        // Schedule multiple force updates at increasing intervals
-        scheduleForceUpdate(50);   // ~3 RAF cycles
-        scheduleForceUpdate(150);  // ~9 RAF cycles
-        scheduleForceUpdate(300);  // ~18 RAF cycles
+        // Apply multiple times with increasing delays to ensure it works
+        setTimeout(forceCanvasUpdate, 50);
+        setTimeout(forceCanvasUpdate, 150);
+        setTimeout(forceCanvasUpdate, 300);
         
         console.log('BPMN diagram loaded successfully');
         setLoading(false);
