@@ -109,7 +109,7 @@ This index provides quick navigation to all DAK Validation Framework documentati
 
 ### By Validation Rule Category
 
-- **DAK-Level**: [Section 4.1](dak-validation-framework.md#41-dak-level-validations) - sushi-config.json (JSON preferred), conventions
+- **DAK-Level**: [Section 4.1](dak-validation-framework.md#41-dak-level-validations) - sushi-config.yaml, conventions
 - **BPMN**: [Section 4.2](dak-validation-framework.md#42-bpmn-specific-validations) - businessRuleTask, start events, namespaces
 - **DMN**: [Section 4.3](dak-validation-framework.md#43-dmn-specific-validations) - decision IDs, BPMN links, namespaces
 - **XML**: [Section 4.4](dak-validation-framework.md#44-xml-specific-validations) - well-formedness, XSD validation

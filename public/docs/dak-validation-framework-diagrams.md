@@ -219,7 +219,7 @@ This document provides visual representations of the DAK Validation Framework ar
 │  │  ☑ Data Elements         [Validate] [GREEN: Valid]     ││
 │  │                                                             ││
 │  │  General Validations:                                      ││
-│  │  ☑ sushi-config.json     [Validate] [GREEN: Valid]      ││
+│  │  ☑ sushi-config.yaml     [Validate] [GREEN: Valid]      ││
 │  └─────────────────────────────────────────────────────────────┘│
 └───────────────────────────────────────────────────────────────────┘
                                │

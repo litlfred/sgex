@@ -335,7 +335,7 @@ touch src/tests/validation/dakArtifactValidationService.test.js
 
 ### Step 2.1: Create First Validation Rule (DAK Dependency)
 
-**Note:** This example uses JSON format (preferred) instead of YAML. YAML usage requires explicit consent.
+**Note:** This example validates `sushi-config.yaml` which is required by FSH/SUSHI tooling. The YAML restriction applies to SGeX application features, not external tooling requirements.
 
 **File**: `src/validation/rules/dak/smartBaseDependency.js`
 
@@ -345,32 +345,22 @@ export default {
   category: 'dak',
   level: 'error',
   dakComponent: null, // DAK-level, not component-specific
-  fileTypes: ['json'], // JSON preferred; add 'yaml', 'yml' only with explicit consent
+  fileTypes: ['yaml', 'yml'],
   
   labelKey: 'validation.dak.smartBaseDependency.label',
   descriptionKey: 'validation.dak.smartBaseDependency.description',
   suggestionKey: 'validation.dak.smartBaseDependency.suggestion',
   
   validate: async (fileContent, filePath, context) => {
-    // Only validate if this is sushi-config.json (or .yaml with consent)
-    if (!filePath.endsWith('sushi-config.json') && !filePath.endsWith('sushi-config.yaml')) {
+    // Only validate if this is sushi-config.yaml
+    if (!filePath.endsWith('sushi-config.yaml')) {
       return { valid: true, violations: [] };
     }
     
-    // Warn if YAML format is used
-    if (filePath.endsWith('.yaml') || filePath.endsWith('.yml')) {
-      console.warn('YAML configuration file detected. JSON format is preferred.');
-    }
-    
     try {
-      // Parse JSON or YAML
-      let config;
-      if (filePath.endsWith('.json')) {
-        config = JSON.parse(fileContent);
-      } else {
-        const yaml = await import('yaml');
-        config = yaml.parse(fileContent);
-      }
+      // Parse YAML
+      const yaml = await import('yaml');
+      config = yaml.parse(fileContent);
       
       // Check for dependencies
       if (!config.dependencies) {
@@ -420,7 +410,7 @@ Update `public/locales/en_US/translation.json`:
       "smartBaseDependency": {
         "label": "SMART Base Dependency Required",
         "description": "A DAK IG SHALL have smart.who.int.base as a dependency",
-        "suggestion": "Add 'smart.who.int.base: current' to the dependencies section of sushi-config.json (Note: JSON format preferred over YAML)"
+        "suggestion": "Add 'smart.who.int.base: current' to the dependencies section of sushi-config.yaml"
       }
     }
   }
@@ -549,30 +539,28 @@ import smartBaseDependency from '../../../../validation/rules/dak/smartBaseDepen
 import ValidationContext from '../../../../services/validationContext';
 
 describe('DAK SMART Base Dependency Rule', () => {
-  test('should pass when smart.who.int.base dependency exists (JSON)', async () => {
-    const jsonContent = JSON.stringify({
-      dependencies: {
-        'smart.who.int.base': 'current',
-        'hl7.fhir.core': '4.0.1'
-      }
-    });
+  test('should pass when smart.who.int.base dependency exists', async () => {
+    const yamlContent = `
+dependencies:
+  smart.who.int.base: current
+  hl7.fhir.core: 4.0.1
+`;
     
-    const context = new ValidationContext('sushi-config.json', jsonContent);
-    const result = await smartBaseDependency.validate(jsonContent, 'sushi-config.json', context);
+    const context = new ValidationContext('sushi-config.yaml', yamlContent);
+    const result = await smartBaseDependency.validate(yamlContent, 'sushi-config.yaml', context);
     
     expect(result.valid).toBe(true);
     expect(result.violations).toHaveLength(0);
   });
   
-  test('should fail when smart.who.int.base dependency is missing (JSON)', async () => {
-    const jsonContent = JSON.stringify({
-      dependencies: {
-        'hl7.fhir.core': '4.0.1'
-      }
-    });
+  test('should fail when smart.who.int.base dependency is missing', async () => {
+    const yamlContent = `
+dependencies:
+  hl7.fhir.core: 4.0.1
+`;
     
-    const context = new ValidationContext('sushi-config.json', jsonContent);
-    const result = await smartBaseDependency.validate(jsonContent, 'sushi-config.json', context);
+    const context = new ValidationContext('sushi-config.yaml', yamlContent);
+    const result = await smartBaseDependency.validate(yamlContent, 'sushi-config.yaml', context);
     
     expect(result.valid).toBe(false);
     expect(result.violations).toHaveLength(1);
@@ -580,9 +568,9 @@ describe('DAK SMART Base Dependency Rule', () => {
   });
   
   test('should skip validation for non-sushi-config files', async () => {
-    const jsonContent = '{"other": "content"}';
-    const context = new ValidationContext('other.json', jsonContent);
-    const result = await smartBaseDependency.validate(jsonContent, 'other.json', context);
+    const yamlContent = 'other: content';
+    const context = new ValidationContext('other.yaml', yamlContent);
+    const result = await smartBaseDependency.validate(yamlContent, 'other.yaml', context);
     
     expect(result.valid).toBe(true);
   });
@@ -635,12 +623,10 @@ mkdir -p src/tests/fixtures/validation
 ```
 
 Add sample files:
-- `src/tests/fixtures/validation/valid-sushi-config.json`
-- `src/tests/fixtures/validation/invalid-sushi-config.json`
+- `src/tests/fixtures/validation/valid-sushi-config.yaml`
+- `src/tests/fixtures/validation/invalid-sushi-config.yaml`
 - `src/tests/fixtures/validation/valid-bpmn.bpmn`
 - `src/tests/fixtures/validation/invalid-bpmn.bpmn`
-
-**Note:** Use JSON format for configuration files; YAML requires explicit consent.
 
 ### Use Console Commands
 
@@ -651,8 +637,8 @@ import dakArtifactValidationService from './services/dakArtifactValidationServic
 
 // Test with file content
 const result = await dakArtifactValidationService.validateArtifact(
-  'sushi-config.json',
-  '{"dependencies": {"hl7.fhir.core": "4.0.1"}}'
+  'sushi-config.yaml',
+  'dependencies:\n  hl7.fhir.core: 4.0.1\n'
 );
 
 console.log(result);

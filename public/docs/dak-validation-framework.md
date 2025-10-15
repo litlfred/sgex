@@ -26,15 +26,14 @@ This framework enables:
 
 ### 1.2.1 Important Note on Configuration File Formats
 
-**⚠️ YAML Usage Policy:**
-- **YAML configuration files (.yaml, .yml) are strongly discouraged** without explicit stakeholder consent
-- **JSON format (.json) is the preferred configuration format** for all DAK components
-- Historical references to `sushi-config.yaml` should be replaced with `sushi-config.json`
-- Validation rules for YAML files should include warnings about format preference
-- Any new YAML file usage requires documented justification and approval
-- Existing YAML files should be migrated to JSON format when feasible
+**⚠️ YAML Usage Policy for SGeX Application:**
+- **YAML configuration files (.yaml, .yml) are strongly discouraged for SGeX application features** without explicit stakeholder consent
+- **JSON format (.json) is the preferred configuration format** for new SGeX application features
+- **Exception**: `sushi-config.yaml` is REQUIRED as it is an external FSH/SUSHI tooling requirement, not an SGeX feature
+- Any new YAML file usage in SGeX application code requires documented justification and approval
+- This policy applies to SGeX-specific configuration, not to external DAK tooling requirements
 
-This policy ensures better tooling support, type safety, and consistency across the DAK ecosystem.
+This policy ensures better tooling support, type safety, and consistency across the SGeX application while respecting external tooling requirements.
 
 ### 1.3 Key References
 
@@ -373,7 +372,7 @@ The validation framework integrates with existing services:
 #### DAK-DEPENDENCY-001: SMART Base Dependency Required
 - **Description**: A DAK IG SHALL have smart.who.int.base as a dependency
 - **Level**: error
-- **File**: sushi-config.json (Note: YAML configuration files should be avoided without explicit consent; JSON is preferred)
+- **File**: sushi-config.yaml (required by FSH/SUSHI tooling)
 - **Implementation**: Check `dependencies` section for `smart.who.int.base` key
 
 #### DAK-AUTHORING-CONVENTIONS: WHO Authoring Conventions
@@ -529,7 +528,7 @@ Add a "Validation" section to the DAK Dashboard Publications tab:
 │ │ ☐ Test Scenarios           [Validate]              │ │
 │ │                                                      │ │
 │ │ General Validations (not component-specific):       │ │
-│ │ ☑ sushi-config.json        [Validate] [GREEN: Valid] │ │
+│ │ ☑ sushi-config.yaml        [Validate] [GREEN: Valid] │ │
 │ │ ☑ File naming conventions  [Validate] [BLUE: 2 info]  │ │
 │ │                                                      │ │
 │ └─────────────────────────────────────────────────────┘ │
