@@ -211,6 +211,67 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
           
           console.log('✅ BPMNPreview: BPMN viewer instance created successfully');
 
+          // Add comprehensive event logging for bpmn-js lifecycle
+          const eventBus = viewer.get('eventBus');
+          console.log('🎧 BPMNPreview: Setting up bpmn-js event listeners...');
+          
+          eventBus.on('import.done', (event) => {
+            console.log('🎉 [BPMN Event] import.done:', {
+              error: event.error,
+              warnings: event.warnings?.length || 0
+            });
+          });
+          
+          eventBus.on('import.render.start', () => {
+            console.log('🎨 [BPMN Event] import.render.start - Rendering began');
+          });
+          
+          eventBus.on('import.render.complete', (event) => {
+            console.log('✅ [BPMN Event] import.render.complete:', {
+              duration: event.duration || 'N/A',
+              error: event.error
+            });
+            
+            // Log canvas state after render
+            const canvas = viewer.get('canvas');
+            const viewbox = canvas.viewbox();
+            const svg = containerRef.current?.querySelector('svg');
+            console.log('📊 [Post-Render State]:', {
+              viewbox: viewbox,
+              svgExists: !!svg,
+              svgVisibility: svg ? window.getComputedStyle(svg).visibility : 'N/A',
+              svgOpacity: svg ? window.getComputedStyle(svg).opacity : 'N/A',
+              svgDisplay: svg ? window.getComputedStyle(svg).display : 'N/A',
+              svgChildCount: svg?.children?.length || 0
+            });
+          });
+          
+          eventBus.on('canvas.viewbox.changed', (event) => {
+            console.log('🔄 [BPMN Event] canvas.viewbox.changed:', {
+              viewbox: event.viewbox,
+              outer: event.viewbox?.outer,
+              inner: event.viewbox?.inner,
+              scale: event.viewbox?.scale
+            });
+          });
+          
+          eventBus.on('shape.added', (event) => {
+            console.log('➕ [BPMN Event] shape.added:', {
+              id: event.element?.id,
+              type: event.element?.type,
+              x: event.element?.x,
+              y: event.element?.y,
+              width: event.element?.width,
+              height: event.element?.height
+            });
+          });
+          
+          eventBus.on('elements.changed', (event) => {
+            console.log('🔧 [BPMN Event] elements.changed:', {
+              elementCount: event.elements?.length || 0
+            });
+          });
+
           try {
             console.log('🔗 BPMNPreview: Attaching viewer to container...');
             console.log('🔍 BPMNPreview: Container element details:', {
