@@ -402,11 +402,17 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
                   const canvas = viewer.get('canvas');
                   // Trigger a canvas update by getting the viewbox
                   const currentViewbox = canvas.viewbox();
-                  // Force a repaint by slightly adjusting zoom and resetting
-                  const currentZoom = canvas.zoom();
-                  canvas.zoom(currentZoom);
                   
-                  // Also force SVG visibility
+                  // Only attempt zoom operations if we have a valid zoom value
+                  // Avoid calling canvas.zoom() with invalid values that would cause matrix inversion errors
+                  const currentZoom = canvas.zoom();
+                  if (currentZoom && !isNaN(currentZoom) && isFinite(currentZoom) && currentZoom > 0) {
+                    // Just getting the zoom value is enough to trigger internal updates
+                    // Don't call canvas.zoom(currentZoom) as it can cause matrix inversion errors
+                    console.log('✅ BPMNPreview: Valid zoom level:', currentZoom);
+                  }
+                  
+                  // Force SVG visibility
                   const svgElement = containerRef.current.querySelector('svg');
                   if (svgElement) {
                     svgElement.style.opacity = '1';
@@ -419,7 +425,7 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
                     containerRef.current.scrollTop = containerRef.current.scrollTop;
                   }
                   
-                  console.log('🎨 BPMNPreview: Forced SVG visibility and canvas update', {
+                  console.log('🎨 BPMNPreview: Forced SVG visibility', {
                     viewbox: currentViewbox,
                     zoom: currentZoom,
                     svgVisible: svgElement?.style.visibility,

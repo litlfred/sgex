@@ -227,11 +227,15 @@ const BPMNViewerContent = () => {
               const canvas = viewerRef.current.get('canvas');
               // Trigger a canvas update by getting the viewbox
               canvas.viewbox();
-              // Force a repaint by slightly adjusting zoom and resetting
-              const currentZoom = canvas.zoom();
-              canvas.zoom(currentZoom);
               
-              // Also trigger a scroll event which can force repaints
+              // Only get zoom value for validation - don't call canvas.zoom() with it
+              // as it can cause matrix inversion errors with invalid transforms
+              const currentZoom = canvas.zoom();
+              if (currentZoom && !isNaN(currentZoom) && isFinite(currentZoom) && currentZoom > 0) {
+                console.log('✅ BPMNViewer: Valid zoom level:', currentZoom);
+              }
+              
+              // Trigger a scroll event which can force repaints
               const container = containerRef.current;
               if (container) {
                 container.scrollTop = container.scrollTop;
