@@ -92,13 +92,36 @@ potential blocking of copilot access to this repository.
             return;
           }
 
-          // Optimistic routing: try branch deployment first, fallback to main
+          // Smart routing: check if first segment is a valid component name
+          var firstSegment = pathSegments[1];
+          
+          // Load route config to check if it's a valid component
+          if (typeof window.getSGEXRouteConfig === 'function') {
+            var routeConfig = window.getSGEXRouteConfig();
+            if (routeConfig && routeConfig.isValidComponent && routeConfig.isValidComponent(firstSegment)) {
+              // Component-first routing: /sgex/{component}/{user}/{repo}/{branch}
+              var componentRoutePath = pathSegments.slice(1).join('/');
+              redirectToSPA('/sgex/', componentRoutePath);
+              return;
+            }
+          }
+          
+          // Fallback to optimistic branch routing if not a known component
           var branch = pathSegments[1];
           var component = pathSegments[2];
           
           if (pathSegments.length === 2) {
             // /sgex/{branch}/ - try branch deployment
             optimisticBranchRedirect(branch, '');
+            return;
+          }
+
+          // Special handling for index.html - redirect to branch root
+          if (pathSegments.length === 3 && pathSegments[2] === 'index.html') {
+            // /sgex/{branch}/index.html -> /sgex/{branch}/
+            var branchRootUrl = '/sgex/' + branch + '/';
+            console.log('SGEX 404.html: index.html detected, redirecting to branch root:', branchRootUrl);
+            redirectToSPA(branchRootUrl, '');
             return;
           }
 
@@ -177,16 +200,43 @@ potential blocking of copilot access to this repository.
             ) +
             '&labels=' + encodeURIComponent('bug,routing');
 
-          var errorHTML = '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; text-align: center;">' +
-              '<h1 style="color: #d73527;">SGEX URL Routing Error</h1>' +
-              '<h2>' + title + '</h2>' +
-              '<p style="background: #f5f5f5; padding: 15px; border-radius: 5px; text-align: left;">' + message + '</p>' +
-              '<p><strong>Error Code:</strong> ' + errorCode + '</p>' +
-              '<div style="margin: 30px 0;">' +
-                '<a href="https://litlfred.github.io/sgex/" style="background: #0078d4; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 5px;">Go to SGEX Home</a>' +
-                '<a href="' + bugReportUrl + '" target="_blank" style="background: #d73527; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 5px;">Report Bug</a>' +
+          // Add dark mode styles
+          var styleTag = '<style>' +
+            'body { margin: 0; padding: 0; min-height: 100vh; background: #f8f9fa; }' +
+            '.error-container { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; text-align: center; }' +
+            '.error-title { color: #d73527; margin-bottom: 1rem; }' +
+            '.error-subtitle { color: #333; margin-bottom: 1rem; }' +
+            '.error-message { background: #f5f5f5; padding: 15px; border-radius: 5px; text-align: left; color: #333; margin-bottom: 1rem; }' +
+            '.error-code { color: #333; margin-bottom: 1rem; }' +
+            '.error-actions { margin: 30px 0; }' +
+            '.error-btn { background: #0078d4; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 5px; display: inline-block; }' +
+            '.error-btn.report { background: #d73527; }' +
+            '.error-footer { color: #666; font-size: 12px; }' +
+            '@media (prefers-color-scheme: dark) {' +
+              'body { background: #1f2937; }' +
+              '.error-title { color: #f87171; }' +
+              '.error-subtitle { color: #f9fafb; }' +
+              '.error-message { background: #374151; color: #e5e7eb; }' +
+              '.error-code { color: #f3f4f6; }' +
+              '.error-btn { background: #60a5fa; color: #ffffff; }' +
+              '.error-btn:hover { background: #3b82f6; }' +
+              '.error-btn.report { background: #ef4444; }' +
+              '.error-btn.report:hover { background: #dc2626; }' +
+              '.error-footer { color: #9ca3af; }' +
+            '}' +
+            '</style>';
+
+          var errorHTML = styleTag +
+            '<div class="error-container">' +
+              '<h1 class="error-title">SGEX URL Routing Error</h1>' +
+              '<h2 class="error-subtitle">' + title + '</h2>' +
+              '<p class="error-message">' + message + '</p>' +
+              '<p class="error-code"><strong>Error Code:</strong> ' + errorCode + '</p>' +
+              '<div class="error-actions">' +
+                '<a href="https://litlfred.github.io/sgex/" class="error-btn">Go to SGEX Home</a>' +
+                '<a href="' + bugReportUrl + '" target="_blank" class="error-btn report">Report Bug</a>' +
               '</div>' +
-              '<p style="color: #666; font-size: 12px;">If you think this is a bug, please use the "Report Bug" button to help us fix it.</p>' +
+              '<p class="error-footer">If you think this is a bug, please use the "Report Bug" button to help us fix it.</p>' +
             '</div>';
 
           if (document.body) {
