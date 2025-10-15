@@ -1,23 +1,78 @@
-import githubService from './githubService';
-import { lazyLoadYaml } from '../services/libraryLoaderService';
-
 /**
- * Service for validating WHO SMART Guidelines Digital Adaptation Kit repositories
+ * DAK Validation Service
+ * 
+ * Service for validating WHO SMART Guidelines Digital Adaptation Kit repositories.
  * 
  * A repository is considered a valid DAK if:
  * 1. It has a sushi-config.yaml file in the root
  * 2. The sushi-config.yaml contains a 'dependencies' section
  * 3. The dependencies section contains the key 'smart.who.int.base'
+ * 
+ * @module dakValidationService
+ */
+
+import githubService from './githubService';
+import { lazyLoadYaml } from '../services/libraryLoaderService';
+
+/**
+ * YAML configuration structure
+ */
+interface SushiConfig {
+  /** Dependencies section */
+  dependencies?: Record<string, string>;
+  /** Other YAML configuration fields */
+  [key: string]: any;
+}
+
+/**
+ * DAK Validation Service class
+ * 
+ * Validates repositories against WHO SMART Guidelines DAK requirements.
+ * 
+ * @openapi
+ * components:
+ *   schemas:
+ *     ValidationResult:
+ *       type: object
+ *       properties:
+ *         isValid:
+ *           type: boolean
+ *         reason:
+ *           type: string
  */
 class DAKValidationService {
   /**
    * Validates if a repository is a WHO SMART Guidelines Digital Adaptation Kit
-   * @param {string} owner - Repository owner (username or organization)
-   * @param {string} repo - Repository name
-   * @param {string} branch - Branch to check (defaults to 'main')
-   * @returns {Promise<boolean>} - True if repository is a valid DAK
+   * 
+   * @openapi
+   * /api/dak/validate/{owner}/{repo}:
+   *   get:
+   *     summary: Validate if repository is a DAK
+   *     parameters:
+   *       - name: owner
+   *         in: path
+   *         required: true
+   *         schema:
+   *           type: string
+   *       - name: repo
+   *         in: path
+   *         required: true
+   *         schema:
+   *           type: string
+   *       - name: branch
+   *         in: query
+   *         schema:
+   *           type: string
+   *           default: main
+   *     responses:
+   *       200:
+   *         description: Validation result
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/ValidationResult'
    */
-  async validateDAKRepository(owner, repo, branch = 'main') {
+  async validateDAKRepository(owner: string, repo: string, branch: string = 'main'): Promise<boolean> {
     try {
       // First, check if this is an existing GitHub repository
       const repositoryExists = await this.checkRepositoryExists(owner, repo);
@@ -39,7 +94,7 @@ class DAKValidationService {
       // Parse the YAML content
       // Lazy load js-yaml to improve initial page responsiveness
       const yaml = await lazyLoadYaml();
-      const config = yaml.load(sushiConfigContent);
+      const config = yaml.load(sushiConfigContent) as SushiConfig;
       
       if (!config || typeof config !== 'object') {
         // If YAML is invalid but repository exists, still allow it
@@ -79,18 +134,15 @@ class DAKValidationService {
       }
 
     } catch (error) {
-      console.log(`Error validating DAK repository ${owner}/${repo}:`, error.message);
+      console.log(`Error validating DAK repository ${owner}/${repo}:`, error instanceof Error ? error.message : String(error));
       return false;
     }
   }
 
   /**
    * Checks if a repository exists on GitHub
-   * @param {string} owner - Repository owner
-   * @param {string} repo - Repository name
-   * @returns {Promise<boolean>} - True if repository exists
    */
-  async checkRepositoryExists(owner, repo) {
+  async checkRepositoryExists(owner: string, repo: string): Promise<boolean> {
     try {
       // Use the same approach as githubService - get the octokit instance
       const octokit = githubService.isAuth() ? githubService.octokit : null;
@@ -108,7 +160,7 @@ class DAKValidationService {
       
       console.log(`Repository ${owner}/${repo} exists on GitHub`);
       return true;
-    } catch (error) {
+    } catch (error: any) {
       if (error.status === 404) {
         console.log(`Repository ${owner}/${repo} does not exist on GitHub`);
         return false;
@@ -122,12 +174,8 @@ class DAKValidationService {
 
   /**
    * Fetches the sushi-config.yaml file content from a repository
-   * @param {string} owner - Repository owner
-   * @param {string} repo - Repository name  
-   * @param {string} branch - Branch to check
-   * @returns {Promise<string|null>} - YAML content or null if not found
    */
-  async fetchSushiConfig(owner, repo, branch = 'main') {
+  async fetchSushiConfig(owner: string, repo: string, branch: string = 'main'): Promise<string | null> {
     try {
       // Use the same approach as githubService - get the octokit instance
       const octokit = githubService.isAuth() ? githubService.octokit : null;
@@ -150,13 +198,13 @@ class DAKValidationService {
             ref: branchName
           });
           
-          if (data.type === 'file' && data.content) {
+          if ('type' in data && data.type === 'file' && 'content' in data && data.content) {
             // Decode base64 content
             const content = decodeURIComponent(escape(atob(data.content)));
             console.log(`Found sushi-config.yaml in ${owner}/${repo} on branch ${branchName}`);
             return content;
           }
-        } catch (branchError) {
+        } catch (branchError: any) {
           console.log(`sushi-config.yaml not found on branch ${branchName} for ${owner}/${repo}:`, branchError.status === 404 ? 'File not found' : branchError.message);
           continue;
         }
@@ -164,7 +212,7 @@ class DAKValidationService {
       
       return null;
     } catch (error) {
-      console.log(`Error fetching sushi-config.yaml for ${owner}/${repo}:`, error.message);
+      console.log(`Error fetching sushi-config.yaml for ${owner}/${repo}:`, error instanceof Error ? error.message : String(error));
       return null;
     }
   }
@@ -174,11 +222,8 @@ class DAKValidationService {
    * A repository is valid if it has proper org/repo format. In demo mode,
    * we cannot reliably fetch sushi-config.yaml due to authentication limitations,
    * so we allow any repository that follows the basic org/repo pattern.
-   * @param {string} owner - Repository owner
-   * @param {string} repo - Repository name
-   * @returns {boolean} - True if repository has valid org/repo format
    */
-  validateDemoDAKRepository(owner, repo) {
+  validateDemoDAKRepository(owner: string, repo: string): boolean {
     // Validate basic format: must look like org/repo
     if (!owner || !repo || owner.includes('/') || repo.includes('/')) {
       console.log(`Demo mode: Invalid repository format ${owner}/${repo}`);
