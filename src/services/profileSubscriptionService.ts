@@ -1,13 +1,81 @@
 /**
- * Profile Subscription Service - Manages profile subscriptions in localStorage
+ * Profile Subscription Service
+ * 
+ * Manages profile subscriptions in localStorage.
  * 
  * Provides functionality to manage profile subscriptions:
  * - Always includes WorldHealthOrganization
  * - Includes logged-in user when authenticated
  * - Auto-adds users when browsing their profiles
  * - Allows removal of profiles (except WHO and current user)
+ * 
+ * @module profileSubscriptionService
+ */
+
+/**
+ * Profile subscription
+ * @example { "login": "octocat", "name": "The Octocat", "type": "User", "isPermanent": false }
+ */
+export interface ProfileSubscription {
+  /** GitHub username */
+  login: string;
+  /** Display name */
+  name: string;
+  /** Avatar URL */
+  avatar_url: string;
+  /** Account type */
+  type: 'User' | 'Organization';
+  /** Whether profile cannot be removed */
+  isPermanent: boolean;
+  /** When profile was added */
+  addedAt: string;
+  /** When profile was last updated */
+  lastUpdated?: string;
+  /** Whether this is a demo profile */
+  isDemo?: boolean;
+}
+
+/**
+ * Profile for selection UI
+ * @example { "login": "octocat", "displayName": "The Octocat", "isRemovable": true }
+ */
+export interface ProfileForSelection extends ProfileSubscription {
+  /** Display name for UI */
+  displayName: string;
+  /** Whether profile can be removed */
+  isRemovable: boolean;
+}
+
+/**
+ * Profile Subscription Service class
+ * 
+ * Manages user profile subscriptions in localStorage.
+ * 
+ * @openapi
+ * components:
+ *   schemas:
+ *     ProfileSubscription:
+ *       type: object
+ *       properties:
+ *         login:
+ *           type: string
+ *         name:
+ *           type: string
+ *         avatar_url:
+ *           type: string
+ *         type:
+ *           type: string
+ *           enum: [User, Organization]
+ *         isPermanent:
+ *           type: boolean
+ *         addedAt:
+ *           type: string
+ *           format: date-time
  */
 class ProfileSubscriptionService {
+  private readonly storageKey: string;
+  private readonly whoProfile: string;
+
   constructor() {
     this.storageKey = 'sgex-profile-subscriptions';
     this.whoProfile = 'WorldHealthOrganization';
@@ -15,12 +83,25 @@ class ProfileSubscriptionService {
 
   /**
    * Get profile subscriptions from localStorage
-   * @returns {Array} Array of profile objects
+   * 
+   * @openapi
+   * /api/profile-subscriptions:
+   *   get:
+   *     summary: Get profile subscriptions
+   *     responses:
+   *       200:
+   *         description: List of subscribed profiles
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: array
+   *               items:
+   *                 $ref: '#/components/schemas/ProfileSubscription'
    */
-  getSubscriptions() {
+  getSubscriptions(): ProfileSubscription[] {
     try {
       const stored = localStorage.getItem(this.storageKey);
-      const subscriptions = stored ? JSON.parse(stored) : [];
+      const subscriptions: ProfileSubscription[] = stored ? JSON.parse(stored) : [];
       
       // Always ensure WHO is included
       if (!subscriptions.find(profile => profile.login === this.whoProfile)) {
@@ -52,9 +133,8 @@ class ProfileSubscriptionService {
 
   /**
    * Save profile subscriptions to localStorage
-   * @param {Array} subscriptions - Array of profile objects
    */
-  saveSubscriptions(subscriptions) {
+  saveSubscriptions(subscriptions: ProfileSubscription[]): void {
     try {
       localStorage.setItem(this.storageKey, JSON.stringify(subscriptions));
     } catch (error) {
@@ -65,11 +145,26 @@ class ProfileSubscriptionService {
 
   /**
    * Add a profile to subscriptions
-   * @param {Object} profile - Profile object with login, name, avatar_url, type
-   * @param {boolean} isPermanent - Whether the profile cannot be removed
-   * @returns {Object} The added profile
+   * 
+   * @openapi
+   * /api/profile-subscriptions:
+   *   post:
+   *     summary: Add profile subscription
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/ProfileSubscription'
+   *     responses:
+   *       200:
+   *         description: Profile added
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/ProfileSubscription'
    */
-  addSubscription(profile, isPermanent = false) {
+  addSubscription(profile: Partial<ProfileSubscription>, isPermanent: boolean = false): ProfileSubscription {
     if (!profile || !profile.login) {
       throw new Error('Profile must have a login property');
     }
@@ -83,6 +178,11 @@ class ProfileSubscriptionService {
       subscriptions[existingIndex] = {
         ...subscriptions[existingIndex],
         ...profile,
+        login: profile.login,
+        name: profile.name || subscriptions[existingIndex].name,
+        avatar_url: profile.avatar_url || subscriptions[existingIndex].avatar_url,
+        type: profile.type || subscriptions[existingIndex].type,
+        addedAt: subscriptions[existingIndex].addedAt,
         isPermanent: subscriptions[existingIndex].isPermanent || isPermanent,
         lastUpdated: new Date().toISOString()
       };
@@ -91,7 +191,7 @@ class ProfileSubscriptionService {
     }
 
     // Add new subscription
-    const newSubscription = {
+    const newSubscription: ProfileSubscription = {
       login: profile.login,
       name: profile.name || profile.login,
       avatar_url: profile.avatar_url || `https://github.com/${profile.login}.png`,
@@ -108,10 +208,8 @@ class ProfileSubscriptionService {
 
   /**
    * Remove a profile from subscriptions
-   * @param {string} login - Login/username to remove
-   * @returns {boolean} Success status
    */
-  removeSubscription(login) {
+  removeSubscription(login: string): boolean {
     if (!login) {
       return false;
     }
@@ -143,10 +241,8 @@ class ProfileSubscriptionService {
 
   /**
    * Check if a profile is subscribed
-   * @param {string} login - Login/username to check
-   * @returns {boolean} Whether the profile is subscribed
    */
-  isSubscribed(login) {
+  isSubscribed(login: string): boolean {
     if (!login) return false;
     const subscriptions = this.getSubscriptions();
     return subscriptions.some(p => p.login === login);
@@ -154,10 +250,8 @@ class ProfileSubscriptionService {
 
   /**
    * Get a specific subscription by login
-   * @param {string} login - Login/username to find
-   * @returns {Object|null} Profile object or null if not found
    */
-  getSubscription(login) {
+  getSubscription(login: string): ProfileSubscription | null {
     if (!login) return null;
     const subscriptions = this.getSubscriptions();
     return subscriptions.find(p => p.login === login) || null;
@@ -165,9 +259,8 @@ class ProfileSubscriptionService {
 
   /**
    * Auto-add current user to subscriptions (when logged in)
-   * @param {Object} userProfile - Current user's profile
    */
-  ensureCurrentUserSubscribed(userProfile) {
+  ensureCurrentUserSubscribed(userProfile: Partial<ProfileSubscription>): void {
     if (!userProfile || !userProfile.login) {
       return;
     }
@@ -190,9 +283,8 @@ class ProfileSubscriptionService {
 
   /**
    * Auto-add a visited user profile (from browsing)
-   * @param {Object} visitedProfile - Profile that user is browsing
    */
-  autoAddVisitedProfile(visitedProfile) {
+  autoAddVisitedProfile(visitedProfile: Partial<ProfileSubscription>): void {
     if (!visitedProfile || !visitedProfile.login) {
       return;
     }
@@ -212,9 +304,8 @@ class ProfileSubscriptionService {
 
   /**
    * Get subscriptions sorted alphabetically by name
-   * @returns {Array} Sorted array of profile objects
    */
-  getSubscriptionsSorted() {
+  getSubscriptionsSorted(): ProfileSubscription[] {
     const subscriptions = this.getSubscriptions();
     return subscriptions.sort((a, b) => {
       // WHO always first
@@ -230,9 +321,8 @@ class ProfileSubscriptionService {
 
   /**
    * Get subscriptions for profile selection (formatted for UI)
-   * @returns {Array} Array of profile objects formatted for selection UI
    */
-  getSubscriptionsForSelection() {
+  getSubscriptionsForSelection(): ProfileForSelection[] {
     return this.getSubscriptionsSorted().map(profile => ({
       ...profile,
       displayName: profile.name || profile.login,
@@ -242,11 +332,8 @@ class ProfileSubscriptionService {
 
   /**
    * Update subscription with latest profile information
-   * @param {string} login - Login/username to update
-   * @param {Object} updatedProfile - Updated profile information
-   * @returns {boolean} Success status
    */
-  updateSubscription(login, updatedProfile) {
+  updateSubscription(login: string, updatedProfile: Partial<ProfileSubscription>): boolean {
     if (!login || !updatedProfile) {
       return false;
     }
@@ -277,9 +364,9 @@ class ProfileSubscriptionService {
   /**
    * Clear all subscriptions (except WHO)
    */
-  clearSubscriptions() {
+  clearSubscriptions(): void {
     try {
-      const whoProfile = {
+      const whoProfile: ProfileSubscription = {
         login: this.whoProfile,
         name: 'World Health Organization',
         avatar_url: `https://github.com/${this.whoProfile}.png`,
@@ -295,28 +382,24 @@ class ProfileSubscriptionService {
 
   /**
    * Export subscriptions as JSON
-   * @returns {string} JSON string of subscriptions
    */
-  exportSubscriptions() {
+  exportSubscriptions(): string {
     const subscriptions = this.getSubscriptions();
     return JSON.stringify(subscriptions, null, 2);
   }
 
   /**
    * Import subscriptions from JSON
-   * @param {string} jsonString - JSON string of subscriptions
-   * @param {boolean} merge - Whether to merge with existing subscriptions
-   * @returns {boolean} Success status
    */
-  importSubscriptions(jsonString, merge = false) {
+  importSubscriptions(jsonString: string, merge: boolean = false): boolean {
     try {
-      const importedSubscriptions = JSON.parse(jsonString);
+      const importedSubscriptions: ProfileSubscription[] = JSON.parse(jsonString);
       
       if (!Array.isArray(importedSubscriptions)) {
         throw new Error('Invalid subscription format');
       }
 
-      let finalSubscriptions;
+      let finalSubscriptions: ProfileSubscription[];
       
       if (merge) {
         const existingSubscriptions = this.getSubscriptions();
@@ -363,4 +446,5 @@ class ProfileSubscriptionService {
 
 // Create and export singleton instance
 const profileSubscriptionService = new ProfileSubscriptionService();
+
 export default profileSubscriptionService;
