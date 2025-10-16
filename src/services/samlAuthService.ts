@@ -4,11 +4,68 @@
  * Centralized service for handling GitHub SAML SSO authorization requests.
  * Prevents console spam by tracking SAML errors and providing a single
  * modal interface for users to authorize their Personal Access Tokens.
+ * 
+ * @module samlAuthService
  */
 
 import logger from '../utils/logger';
 
+/**
+ * SAML error details
+ * @example { "organization": "who", "message": "SAML enforcement enabled" }
+ */
+export interface SAMLErrorDetails {
+  /** Organization name */
+  organization: string;
+  /** Error message */
+  message: string;
+  /** Original error object */
+  originalError: any;
+}
+
+/**
+ * SAML modal information
+ * @example { "organization": "who", "authorizationUrl": "https://github.com/orgs/who/sso" }
+ */
+export interface SAMLModalInfo {
+  /** Organization name */
+  organization: string;
+  /** Repository name (optional) */
+  repository: string | null;
+  /** SAML authorization URL */
+  authorizationUrl: string;
+  /** Error message */
+  message: string;
+}
+
+/**
+ * SAML modal callback function
+ */
+export type SAMLModalCallback = (info: SAMLModalInfo) => void;
+
+/**
+ * SAML Authorization Service class
+ * 
+ * Manages SAML SSO authorization for GitHub organizations.
+ * 
+ * @openapi
+ * components:
+ *   schemas:
+ *     SAMLErrorDetails:
+ *       type: object
+ *       properties:
+ *         organization:
+ *           type: string
+ *         message:
+ *           type: string
+ */
 class SAMLAuthService {
+  private logger: any;
+  private pendingSAMLRequests: Set<string>;
+  private modalCallback: SAMLModalCallback | null;
+  private recentSAMLErrors: Map<string, number>;
+  private errorCooldownMs: number;
+
   constructor() {
     this.logger = logger.getLogger('SAMLAuthService');
     this.pendingSAMLRequests = new Set();
@@ -19,19 +76,16 @@ class SAMLAuthService {
 
   /**
    * Register a callback to show the SAML authorization modal
-   * @param {Function} callback - Function to display modal with organization info
    */
-  registerModalCallback(callback) {
+  registerModalCallback(callback: SAMLModalCallback): void {
     this.modalCallback = callback;
     this.logger.debug('SAML modal callback registered');
   }
 
   /**
    * Detect if an error is a SAML enforcement error
-   * @param {Error} error - Error object from GitHub API
-   * @returns {Object|null} SAML error details or null if not a SAML error
    */
-  detectSAMLError(error) {
+  detectSAMLError(error: any): SAMLErrorDetails | null {
     if (error.status === 403 && error.message) {
       const message = error.message.toLowerCase();
       if (message.includes('saml') && message.includes('enforcement')) {
@@ -51,10 +105,8 @@ class SAMLAuthService {
 
   /**
    * Check if we should handle this SAML error or if it's too recent
-   * @param {string} organization - Organization name
-   * @returns {boolean} True if we should handle this error
    */
-  shouldHandleSAMLError(organization) {
+  shouldHandleSAMLError(organization: string): boolean {
     const lastError = this.recentSAMLErrors.get(organization);
     if (lastError) {
       const timeSinceError = Date.now() - lastError;
@@ -72,12 +124,21 @@ class SAMLAuthService {
 
   /**
    * Handle a SAML enforcement error
-   * @param {Error} error - GitHub API error
-   * @param {string} owner - Repository owner (organization)
-   * @param {string} repo - Repository name (optional)
-   * @returns {boolean} True if SAML error was handled
+   * 
+   * @openapi
+   * /api/saml/handle-error:
+   *   post:
+   *     summary: Handle SAML authorization error
+   *     parameters:
+   *       - name: owner
+   *         in: query
+   *         schema:
+   *           type: string
+   *     responses:
+   *       200:
+   *         description: SAML error handled
    */
-  handleSAMLError(error, owner, repo = null) {
+  handleSAMLError(error: any, owner: string, repo: string | null = null): boolean {
     const samlError = this.detectSAMLError(error);
     
     if (!samlError) {
@@ -126,28 +187,23 @@ class SAMLAuthService {
 
   /**
    * Get the GitHub URL for SAML SSO authorization
-   * @param {string} organization - Organization name
-   * @returns {string} Authorization URL
    */
-  getSAMLAuthorizationUrl(organization) {
+  getSAMLAuthorizationUrl(organization: string): string {
     return `https://github.com/orgs/${organization}/sso`;
   }
 
   /**
    * Clear cooldown for an organization (called after successful authorization)
-   * @param {string} organization - Organization name
    */
-  clearCooldown(organization) {
+  clearCooldown(organization: string): void {
     this.recentSAMLErrors.delete(organization);
     this.logger.debug('SAML error cooldown cleared', { organization });
   }
 
   /**
    * Remove a pending SAML request
-   * @param {string} organization - Organization name
-   * @param {string} repo - Repository name (optional)
    */
-  resolvePendingRequest(organization, repo = null) {
+  resolvePendingRequest(organization: string, repo: string | null = null): void {
     const requestKey = repo ? `${organization}/${repo}` : organization;
     this.pendingSAMLRequests.delete(requestKey);
     this.clearCooldown(organization);
@@ -155,16 +211,15 @@ class SAMLAuthService {
 
   /**
    * Get all pending SAML requests
-   * @returns {Set} Set of pending request keys
    */
-  getPendingRequests() {
+  getPendingRequests(): Set<string> {
     return new Set(this.pendingSAMLRequests);
   }
 
   /**
    * Clear all pending requests and cooldowns
    */
-  reset() {
+  reset(): void {
     this.pendingSAMLRequests.clear();
     this.recentSAMLErrors.clear();
     this.logger.debug('SAML auth service reset');
