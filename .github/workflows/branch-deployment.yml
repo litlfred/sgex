@@ -50,7 +50,6 @@ on:
   # Trigger for pull request events to ensure copilot and external contributions trigger workflows
   pull_request:
     types: [opened, synchronize, reopened]
-    branches: [main]  # Only for PRs targeting main branch
     paths:
       - 'src/**'
       - 'public/**'
@@ -70,6 +69,7 @@ concurrency:
 
 jobs:
   deploy-branch:
+    if: github.base_ref != 'gh-pages'
     runs-on: ubuntu-latest
     environment: 
       name: ${{ (github.event_name == 'workflow_dispatch' && (github.event.inputs.branch == 'main' || github.ref_name == 'main')) && 'production-pages' || 'branch-preview' }}
