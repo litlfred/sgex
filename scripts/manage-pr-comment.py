@@ -36,7 +36,8 @@ class PRCommentManager:
     # Allowed stages to prevent injection
     ALLOWED_STAGES = {
         'started', 'setup', 'building', 'deploying', 'verifying', 
-        'success', 'failure', 'pages-built', 'security-check'
+        'success', 'failure', 'pages-built', 'security-check',
+        'rate-limit-waiting', 'rate-limit-complete'
     }
     
     def __init__(self, token: str, repo: str, pr_number: int, action_id: Optional[str] = None, 
@@ -511,6 +512,33 @@ class PRCommentManager:
 
 **Error:** {error_message}"""
             timeline_entry = f"- **{timestamp}** - 🔴 {step_link} - Failed: {error_message}"
+        
+        elif stage == 'rate-limit-waiting':
+            wait_info = self.sanitize_string(data.get('error_message', 'Waiting for rate limit to reset'), max_length=300)
+            remaining_minutes = self.sanitize_string(data.get('remaining_minutes', 'unknown'), max_length=10)
+            status_line = "<h2>⏳ Copilot Rate Limit Handler: Waiting 🟡</h2>"
+            status_icon = "🟡"
+            status_text = "Waiting for rate limit to reset"
+            next_step = f"**Status:** {wait_info}"
+            actions = f"""<h3>🔗 Quick Actions</h3>
+
+<a href="{workflow_url}"><img src="https://img.shields.io/badge/Handler_Logs-orange?style=for-the-badge&logo=github&label=⏳&labelColor=gray" alt="Handler Logs"/></a>
+
+**Info:** Copilot rate limit detected. Automatically waiting and will retry when ready.
+**Remaining time:** {remaining_minutes} minutes"""
+            timeline_entry = f"- **{timestamp}** - 🟡 Waiting for rate limit - {remaining_minutes} minutes remaining"
+        
+        elif stage == 'rate-limit-complete':
+            status_line = "<h2>✅ Copilot Rate Limit Handler: Complete 🟢</h2>"
+            status_icon = "🟢"
+            status_text = "Wait complete, triggering Copilot retry"
+            next_step = "**Status:** Done waiting! Copilot retry command posted."
+            actions = f"""<h3>🔗 Quick Actions</h3>
+
+<a href="{workflow_url}"><img src="https://img.shields.io/badge/Handler_Logs-brightgreen?style=for-the-badge&logo=github&label=✅&labelColor=gray" alt="Handler Logs"/></a>
+
+**Result:** Rate limit wait completed successfully. Copilot has been triggered to retry."""
+            timeline_entry = f"- **{timestamp}** - 🟢 Rate limit handler complete - Copilot retry triggered"
         
         else:
             # Fallback (should not reach here due to validation)
