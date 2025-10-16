@@ -65,12 +65,18 @@ jobs:
             
             if (hasRateLimitError) {
               // Try to extract wait time from comment
-              const waitTimeMatch = commentBody.match(/retry after (\d+)|wait (\d+)|(\d+)\s*(minute|hour|second)/i);
+              // Look for patterns like "retry after 30 minutes", "wait 2 hours", "90 seconds"
+              const retryAfterMatch = commentBody.match(/retry\s+after\s+(\d+)\s*(minute|hour|second)/i);
+              const waitMatch = commentBody.match(/wait\s+(\d+)\s*(minute|hour|second)/i);
+              const timeMatch = commentBody.match(/(\d+)\s*(hour|minute|second)s?\s+before/i) || 
+                                commentBody.match(/(\d+)\s*(hour|minute|second)s?$/i);
+              
+              const match = retryAfterMatch || waitMatch || timeMatch;
               let waitMinutes = 60; // Default to 60 minutes if not specified
               
-              if (waitTimeMatch) {
-                const time = parseInt(waitTimeMatch[1] || waitTimeMatch[2] || waitTimeMatch[3]);
-                const unit = waitTimeMatch[4] || 'minute';
+              if (match) {
+                const time = parseInt(match[1]);
+                const unit = match[2].toLowerCase();
                 
                 if (unit.includes('hour')) {
                   waitMinutes = time * 60;
