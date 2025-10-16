@@ -274,95 +274,118 @@ const BPMNViewerEnhanced = () => {
           setSelectedElement(event.element);
         });
         
-        // Initialize zoom level and fit diagram to viewport with element scanning
+        // Initialize zoom level and fit diagram to viewport with robust initialization
         const canvas = viewerRef.current.get('canvas');
-        
-        // Get the element registry to scan all visual elements
         const elementRegistry = viewerRef.current.get('elementRegistry');
-        const allElements = elementRegistry.getAll();
         
-        console.log(`📊 BPMNViewerEnhanced: Found ${allElements.length} elements in diagram`);
+        console.log('🎯 BPMNViewerEnhanced: Starting viewport initialization...');
         
-        // Calculate the bounds of all elements to ensure proper viewport
-        if (allElements.length > 0) {
-          let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-          let validElementCount = 0;
+        // Advanced viewport initialization
+        const initializeViewport = async () => {
+          // Wait for elements to be registered
+          const allElements = elementRegistry.getAll();
+          const validElements = allElements.filter(el => 
+            el.type !== 'bpmn:Process' && 
+            el.type !== 'bpmn:Collaboration' && 
+            !el.labelTarget &&
+            el.x !== undefined && 
+            el.y !== undefined && 
+            el.width && 
+            el.height
+          );
           
-          allElements.forEach(element => {
-            if (element.x !== undefined && element.y !== undefined && element.width && element.height) {
-              minX = Math.min(minX, element.x);
-              minY = Math.min(minY, element.y);
-              maxX = Math.max(maxX, element.x + element.width);
-              maxY = Math.max(maxY, element.y + element.height);
-              validElementCount++;
-            }
+          console.log(`📊 BPMNViewerEnhanced: Found ${validElements.length} valid positioned elements out of ${allElements.length} total`);
+          
+          if (validElements.length === 0) {
+            console.warn('⚠️ BPMNViewerEnhanced: No valid positioned elements found, using fit-viewport');
+            canvas.zoom('fit-viewport');
+            setZoomLevel(canvas.zoom());
+            return;
+          }
+          
+          // Calculate diagram bounds
+          let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+          
+          validElements.forEach(element => {
+            minX = Math.min(minX, element.x);
+            minY = Math.min(minY, element.y);
+            maxX = Math.max(maxX, element.x + element.width);
+            maxY = Math.max(maxY, element.y + element.height);
           });
           
-          console.log(`📐 BPMNViewerEnhanced: Found ${validElementCount} valid positioned elements`);
+          const padding = 50;
+          const diagramBounds = {
+            x: minX - padding,
+            y: minY - padding,
+            width: (maxX - minX) + (padding * 2),
+            height: (maxY - minY) + (padding * 2)
+          };
           
-          // Only use calculated bounds if we found valid elements
-          if (validElementCount > 0 && minX !== Infinity && maxX !== -Infinity) {
-            // Add padding around the diagram
-            const padding = 50;
-            const diagramBounds = {
-              x: minX - padding,
-              y: minY - padding,
-              width: (maxX - minX) + (padding * 2),
-              height: (maxY - minY) + (padding * 2)
+          console.log('📐 BPMNViewerEnhanced: Calculated diagram bounds:', diagramBounds);
+          
+          // Get container dimensions
+          const containerWidth = containerRef.current?.offsetWidth || 0;
+          const containerHeight = containerRef.current?.offsetHeight || 0;
+          
+          if (containerWidth > 0 && containerHeight > 0 && diagramBounds.width > 0 && diagramBounds.height > 0) {
+            // Calculate scale
+            const scaleX = containerWidth / diagramBounds.width;
+            const scaleY = containerHeight / diagramBounds.height;
+            const scale = Math.min(scaleX, scaleY, 1);
+            
+            // Calculate centered viewbox
+            const viewboxWidth = containerWidth / scale;
+            const viewboxHeight = containerHeight / scale;
+            const viewboxX = diagramBounds.x + (diagramBounds.width - viewboxWidth) / 2;
+            const viewboxY = diagramBounds.y + (diagramBounds.height - viewboxHeight) / 2;
+            
+            const calculatedViewbox = {
+              x: viewboxX,
+              y: viewboxY,
+              width: viewboxWidth,
+              height: viewboxHeight
             };
             
-            console.log('📐 BPMNViewerEnhanced: Calculated diagram bounds:', diagramBounds);
+            console.log('📊 BPMNViewerEnhanced: Calculated viewbox:', { scale, viewbox: calculatedViewbox });
             
-            // Zoom to fit the actual diagram bounds
-            if (diagramBounds.width > 0 && diagramBounds.height > 0) {
-              canvas.viewbox(diagramBounds);
-              console.log('✅ BPMNViewerEnhanced: Set viewbox to diagram bounds');
-            } else {
-              // Fallback to fit-viewport if bounds calculation fails
+            try {
+              canvas.viewbox(calculatedViewbox);
+              console.log('✅ BPMNViewerEnhanced: Set custom viewbox based on element bounds');
+            } catch (error) {
+              console.error('❌ BPMNViewerEnhanced: Failed to set custom viewbox, falling back to fit-viewport:', error);
               canvas.zoom('fit-viewport');
-              console.log('⚠️ BPMNViewerEnhanced: Using fit-viewport fallback (invalid bounds)');
             }
           } else {
-            // No valid positioned elements, use standard fit-viewport
+            console.warn('⚠️ BPMNViewerEnhanced: Invalid dimensions, using fit-viewport fallback');
             canvas.zoom('fit-viewport');
-            console.log('⚠️ BPMNViewerEnhanced: Using fit-viewport fallback (no valid elements)');
           }
-        } else {
-          // No elements, use standard fit-viewport
-          canvas.zoom('fit-viewport');
-          console.log('⚠️ BPMNViewerEnhanced: Using fit-viewport fallback (no elements)');
-        }
-        
-        setZoomLevel(canvas.zoom());
-        
-        // Force canvas update to ensure diagram is immediately visible
-        // This prevents the issue where diagram requires a drag/mouse interaction to appear
-        // Use multiple strategies to ensure rendering
-        const forceCanvasUpdate = () => {
-          if (viewerRef.current) {
-            try {
-              const canvas = viewerRef.current.get('canvas');
-              // Trigger a canvas update by getting the viewbox
-              canvas.viewbox();
-              // Force a repaint by slightly adjusting zoom and resetting
-              const currentZoom = canvas.zoom();
-              canvas.zoom(currentZoom);
-              
-              // Also trigger a scroll event which can force repaints
-              const container = containerRef.current;
-              if (container) {
-                container.scrollTop = container.scrollTop;
-              }
-            } catch (canvasError) {
-              console.warn('⚠️ BPMNViewerEnhanced: Could not force canvas update:', canvasError);
-            }
-          }
+          
+          setZoomLevel(canvas.zoom());
         };
         
-        // Apply multiple times with increasing delays to ensure it works
-        setTimeout(forceCanvasUpdate, 50);
-        setTimeout(forceCanvasUpdate, 150);
-        setTimeout(forceCanvasUpdate, 300);
+        // Use RAF to ensure DOM is ready, then run initialization
+        requestAnimationFrame(() => {
+          requestAnimationFrame(async () => {
+            await initializeViewport();
+            console.log('✅ BPMNViewerEnhanced: Viewport initialization complete');
+          });
+        });
+        
+        // Ensure SVG visibility after viewport initialization
+        const ensureVisibility = () => {
+          requestAnimationFrame(() => {
+            const svg = containerRef.current?.querySelector('svg');
+            if (svg) {
+              if (!svg.style.opacity || svg.style.opacity === '0') svg.style.opacity = '1';
+              if (svg.style.visibility === 'hidden') svg.style.visibility = 'visible';
+              if (svg.style.display === 'none') svg.style.display = 'block';
+              console.log('✅ BPMNViewerEnhanced: SVG visibility ensured');
+            }
+          });
+        };
+        
+        setTimeout(ensureVisibility, 100);
+        setTimeout(ensureVisibility, 300);
         
         console.log('BPMN diagram loaded successfully');
         setLoading(false);
@@ -652,22 +675,22 @@ const BPMNViewerEnhanced = () => {
                     <div className="property-group">
                       <h5>General</h5>
                       <div className="property-item">
-                        <span className="property-label">ID:</span>
+                        <label>ID:</label>
                         <span>{selectedElement.id}</span>
                       </div>
                       <div className="property-item">
-                        <span className="property-label">Type:</span>
+                        <label>Type:</label>
                         <span>{selectedElement.type}</span>
                       </div>
                       {selectedElement.businessObject?.name && (
                         <div className="property-item">
-                          <span className="property-label">Name:</span>
+                          <label>Name:</label>
                           <span>{selectedElement.businessObject.name}</span>
                         </div>
                       )}
                       {selectedElement.businessObject?.documentation && (
                         <div className="property-item">
-                          <span className="property-label">Documentation:</span>
+                          <label>Documentation:</label>
                           <div className="documentation">
                             {selectedElement.businessObject.documentation[0]?.text || 'No documentation'}
                           </div>
@@ -679,11 +702,11 @@ const BPMNViewerEnhanced = () => {
                       <div className="property-group">
                         <h5>Sequence Flow</h5>
                         <div className="property-item">
-                          <span className="property-label">Source:</span>
+                          <label>Source:</label>
                           <span>{selectedElement.businessObject.sourceRef?.id}</span>
                         </div>
                         <div className="property-item">
-                          <span className="property-label">Target:</span>
+                          <label>Target:</label>
                           <span>{selectedElement.businessObject.targetRef?.id}</span>
                         </div>
                       </div>
@@ -715,19 +738,19 @@ const BPMNViewerEnhanced = () => {
               <h4>File Information</h4>
               <div className="info-grid">
                 <div className="info-item">
-                  <span className="info-label">File Name:</span>
+                  <label>File Name:</label>
                   <span>{selectedFile.name}</span>
                 </div>
                 <div className="info-item">
-                  <span className="info-label">File Path:</span>
+                  <label>File Path:</label>
                   <span className="file-path">{selectedFile.path}</span>
                 </div>
                 <div className="info-item">
-                  <span className="info-label">File Size:</span>
+                  <label>File Size:</label>
                   <span>{(selectedFile.size / 1024).toFixed(1)} KB</span>
                 </div>
                 <div className="info-item">
-                  <span className="info-label">Access Level:</span>
+                  <label>Access Level:</label>
                   <span className={`access-badge ${hasWriteAccess ? 'write' : 'read'}`}>
                     {hasWriteAccess ? '✏️ Edit Access' : '👁️ Read-Only'}
                   </span>

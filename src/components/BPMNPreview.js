@@ -211,6 +211,67 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
           
           console.log('✅ BPMNPreview: BPMN viewer instance created successfully');
 
+          // Add comprehensive event logging for bpmn-js lifecycle
+          const eventBus = viewer.get('eventBus');
+          console.log('🎧 BPMNPreview: Setting up bpmn-js event listeners...');
+          
+          eventBus.on('import.done', (event) => {
+            console.log('🎉 [BPMN Event] import.done:', {
+              error: event.error,
+              warnings: event.warnings?.length || 0
+            });
+          });
+          
+          eventBus.on('import.render.start', () => {
+            console.log('🎨 [BPMN Event] import.render.start - Rendering began');
+          });
+          
+          eventBus.on('import.render.complete', (event) => {
+            console.log('✅ [BPMN Event] import.render.complete:', {
+              duration: event.duration || 'N/A',
+              error: event.error
+            });
+            
+            // Log canvas state after render
+            const canvas = viewer.get('canvas');
+            const viewbox = canvas.viewbox();
+            const svg = containerRef.current?.querySelector('svg');
+            console.log('📊 [Post-Render State]:', {
+              viewbox: viewbox,
+              svgExists: !!svg,
+              svgVisibility: svg ? window.getComputedStyle(svg).visibility : 'N/A',
+              svgOpacity: svg ? window.getComputedStyle(svg).opacity : 'N/A',
+              svgDisplay: svg ? window.getComputedStyle(svg).display : 'N/A',
+              svgChildCount: svg?.children?.length || 0
+            });
+          });
+          
+          eventBus.on('canvas.viewbox.changed', (event) => {
+            console.log('🔄 [BPMN Event] canvas.viewbox.changed:', {
+              viewbox: event.viewbox,
+              outer: event.viewbox?.outer,
+              inner: event.viewbox?.inner,
+              scale: event.viewbox?.scale
+            });
+          });
+          
+          eventBus.on('shape.added', (event) => {
+            console.log('➕ [BPMN Event] shape.added:', {
+              id: event.element?.id,
+              type: event.element?.type,
+              x: event.element?.x,
+              y: event.element?.y,
+              width: event.element?.width,
+              height: event.element?.height
+            });
+          });
+          
+          eventBus.on('elements.changed', (event) => {
+            console.log('🔧 [BPMN Event] elements.changed:', {
+              elementCount: event.elements?.length || 0
+            });
+          });
+
           try {
             console.log('🔗 BPMNPreview: Attaching viewer to container...');
             console.log('🔍 BPMNPreview: Container element details:', {
@@ -258,135 +319,283 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
             console.log('🎯 BPMNPreview: Fitting to viewport...');
             // Fit to viewport for preview
             const canvas = viewer.get('canvas');
+            const elementRegistry = viewer.get('elementRegistry');
             console.log('🔍 BPMNPreview: Canvas service retrieved:', !!canvas);
+            console.log('🔍 BPMNPreview: ElementRegistry retrieved:', !!elementRegistry);
+            
+            // Log container state
+            const containerStyle = containerRef.current ? window.getComputedStyle(containerRef.current) : null;
+            console.log('📦 BPMNPreview: Container state:', {
+              exists: !!containerRef.current,
+              dimensions: {
+                offsetWidth: containerRef.current?.offsetWidth,
+                offsetHeight: containerRef.current?.offsetHeight,
+                clientWidth: containerRef.current?.clientWidth,
+                clientHeight: containerRef.current?.clientHeight
+              },
+              visibility: {
+                display: containerStyle?.display,
+                visibility: containerStyle?.visibility,
+                opacity: containerStyle?.opacity
+              },
+              hasParent: !!containerRef.current?.parentElement,
+              isAttached: containerRef.current ? document.body.contains(containerRef.current) : false
+            });
             
             // Log SVG state before zoom
             const svgBefore = containerRef.current?.querySelector('svg');
+            const svgBeforeStyle = svgBefore ? window.getComputedStyle(svgBefore) : null;
             console.log('📐 BPMNPreview: SVG state BEFORE zoom:', {
               exists: !!svgBefore,
               width: svgBefore?.getAttribute('width'),
               height: svgBefore?.getAttribute('height'),
               viewBox: svgBefore?.getAttribute('viewBox'),
-              style: {
+              inlineStyle: {
                 display: svgBefore?.style.display,
                 visibility: svgBefore?.style.visibility,
                 opacity: svgBefore?.style.opacity,
                 width: svgBefore?.style.width,
                 height: svgBefore?.style.height
               },
-              computedStyle: svgBefore ? {
-                display: window.getComputedStyle(svgBefore).display,
-                visibility: window.getComputedStyle(svgBefore).visibility,
-                opacity: window.getComputedStyle(svgBefore).opacity
+              computedStyle: svgBeforeStyle ? {
+                display: svgBeforeStyle.display,
+                visibility: svgBeforeStyle.visibility,
+                opacity: svgBeforeStyle.opacity,
+                position: svgBeforeStyle.position,
+                top: svgBeforeStyle.top,
+                left: svgBeforeStyle.left
               } : null,
-              childCount: svgBefore?.children?.length || 0
+              childCount: svgBefore?.children?.length || 0,
+              transform: svgBefore?.querySelector('g')?.getAttribute('transform')
             });
             
-            // Always use fit-viewport for previews - it's reliable and works well for small containers
-            // Wait a tick to ensure container dimensions are available, then zoom
-            setTimeout(() => {
-              try {
-                canvas.zoom('fit-viewport');
-                console.log('✅ BPMNPreview: Zoom to fit-viewport completed');
-              } catch (zoomError) {
-                console.error('❌ BPMNPreview: Zoom failed:', zoomError);
-              }
-            }, 0);
-            
-            // Log viewport and SVG state after zoom
-            const viewboxAfterZoom = canvas.viewbox();
-            const svgAfter = containerRef.current?.querySelector('svg');
-            console.log('📐 BPMNPreview: Viewport state AFTER zoom:', {
-              viewbox: viewboxAfterZoom,
-              outer: viewboxAfterZoom?.outer,
-              inner: viewboxAfterZoom?.inner,
-              scale: viewboxAfterZoom?.scale,
-              containerDimensions: {
-                width: containerRef.current?.offsetWidth,
-                height: containerRef.current?.offsetHeight,
-                clientWidth: containerRef.current?.clientWidth,
-                clientHeight: containerRef.current?.clientHeight
-              },
-              svgAttributes: {
-                width: svgAfter?.getAttribute('width'),
-                height: svgAfter?.getAttribute('height'),
-                viewBox: svgAfter?.getAttribute('viewBox'),
-                transform: svgAfter?.getAttribute('transform')
-              },
-              svgStyles: {
-                display: svgAfter?.style.display,
-                visibility: svgAfter?.style.visibility,
-                opacity: svgAfter?.style.opacity,
-                backgroundColor: svgAfter?.style.backgroundColor
-              },
-              svgComputedStyles: svgAfter ? {
-                display: window.getComputedStyle(svgAfter).display,
-                visibility: window.getComputedStyle(svgAfter).visibility,
-                opacity: window.getComputedStyle(svgAfter).opacity,
-                backgroundColor: window.getComputedStyle(svgAfter).backgroundColor
-              } : null
-            });
-            
-            console.log(`✅ BPMNPreview: Successfully fitted to viewport`);
-
-
-            // Force canvas update to ensure diagram is immediately visible
-            // This prevents the issue where diagram requires a drag/mouse interaction to appear
-            // Use multiple strategies to ensure rendering
-            const forceCanvasUpdate = () => {
-              if (viewer && containerRef.current) {
-                try {
-                  const canvas = viewer.get('canvas');
-                  // Trigger a canvas update by getting the viewbox
-                  const currentViewbox = canvas.viewbox();
-                  // Force a repaint by slightly adjusting zoom and resetting
-                  const currentZoom = canvas.zoom();
-                  canvas.zoom(currentZoom);
+            // Advanced initialization sequence based on bpmn-js documentation
+            // Wait for bpmn-js to complete internal layout before applying zoom
+            const initializeViewport = async () => {
+              console.log('🔄 BPMNPreview: Starting viewport initialization sequence...');
+              
+              // Step 1: Wait for elements to be registered (confirms diagram is loaded)
+              const waitForElements = async (maxAttempts = 30) => {
+                for (let attempt = 0; attempt < maxAttempts; attempt++) {
+                  const elements = elementRegistry.getAll();
+                  const nonRootElements = elements.filter(el => el.type !== 'bpmn:Process' && el.type !== 'bpmn:Collaboration' && !el.labelTarget);
                   
-                  // Also force SVG visibility
-                  const svgElement = containerRef.current.querySelector('svg');
-                  if (svgElement) {
-                    svgElement.style.opacity = '1';
-                    svgElement.style.visibility = 'visible';
-                    svgElement.style.display = 'block';
-                  }
-                  
-                  // Trigger a scroll event which can force repaints
-                  if (containerRef.current) {
-                    containerRef.current.scrollTop = containerRef.current.scrollTop;
-                  }
-                  
-                  console.log('🎨 BPMNPreview: Forced SVG visibility and canvas update', {
-                    viewbox: currentViewbox,
-                    zoom: currentZoom,
-                    svgVisible: svgElement?.style.visibility,
-                    svgOpacity: svgElement?.style.opacity,
-                    svgDisplay: svgElement?.style.display
+                  console.log(`🔍 BPMNPreview: Element check attempt ${attempt + 1}/${maxAttempts}:`, {
+                    totalElements: elements.length,
+                    nonRootElements: nonRootElements.length,
+                    elementTypes: [...new Set(elements.map(el => el.type))]
                   });
-                } catch (canvasError) {
-                  console.warn('⚠️ BPMNPreview: Could not force canvas update:', canvasError);
+                  
+                  if (nonRootElements.length > 0) {
+                    console.log('✅ BPMNPreview: Found diagram elements:', nonRootElements.length);
+                    return true;
+                  }
+                  
+                  await new Promise(resolve => requestAnimationFrame(resolve));
+                }
+                console.warn('⚠️ BPMNPreview: No diagram elements found after max attempts');
+                return false;
+              };
+              
+              // Step 2: Wait for canvas viewbox to have valid outer bounds
+              const waitForViewbox = async (maxAttempts = 30) => {
+                for (let attempt = 0; attempt < maxAttempts; attempt++) {
+                  const viewbox = canvas.viewbox();
+                  console.log(`🔍 BPMNPreview: Viewbox check attempt ${attempt + 1}/${maxAttempts}:`, {
+                    outer: viewbox?.outer,
+                    inner: viewbox?.inner,
+                    hasValidOuter: !!(viewbox?.outer && viewbox.outer.width > 0 && viewbox.outer.height > 0)
+                  });
+                  
+                  if (viewbox?.outer && viewbox.outer.width > 0 && viewbox.outer.height > 0) {
+                    console.log('✅ BPMNPreview: Canvas viewbox has valid bounds:', viewbox.outer);
+                    return viewbox;
+                  }
+                  
+                  await new Promise(resolve => requestAnimationFrame(resolve));
+                }
+                console.warn('⚠️ BPMNPreview: Canvas viewbox never got valid bounds');
+                return null;
+              };
+              
+              // Execute initialization sequence
+              const hasElements = await waitForElements();
+              if (!hasElements) {
+                console.error('❌ BPMNPreview: Cannot initialize viewport - no elements found');
+                return false;
+              }
+              
+              const viewbox = await waitForViewbox();
+              if (!viewbox) {
+                console.error('❌ BPMNPreview: Cannot initialize viewport - invalid viewbox');
+                return false;
+              }
+              
+              // Step 3: Calculate manual viewport if container has valid dimensions
+              const containerWidth = containerRef.current?.offsetWidth || 0;
+              const containerHeight = containerRef.current?.offsetHeight || 0;
+              
+              if (containerWidth === 0 || containerHeight === 0) {
+                console.error('❌ BPMNPreview: Container has invalid dimensions:', { containerWidth, containerHeight });
+                return false;
+              }
+              
+              console.log('📐 BPMNPreview: Calculating manual viewport...');
+              console.log('📊 BPMNPreview: Input data:', {
+                containerWidth,
+                containerHeight,
+                diagramBounds: viewbox.outer
+              });
+              
+              // Manual viewport calculation following bpmn-js internal algorithm
+              const padding = 20; // Add padding around diagram
+              const diagramWidth = viewbox.outer.width;
+              const diagramHeight = viewbox.outer.height;
+              
+              // Calculate scale to fit diagram in container
+              const scaleX = containerWidth / (diagramWidth + padding * 2);
+              const scaleY = containerHeight / (diagramHeight + padding * 2);
+              const scale = Math.min(scaleX, scaleY, 1); // Don't zoom in beyond 100%
+              
+              // Calculate center position
+              const scaledWidth = diagramWidth * scale;
+              const scaledHeight = diagramHeight * scale;
+              const x = viewbox.outer.x - (containerWidth / scale - diagramWidth) / 2;
+              const y = viewbox.outer.y - (containerHeight / scale - diagramHeight) / 2;
+              
+              const manualViewbox = {
+                x,
+                y,
+                width: containerWidth / scale,
+                height: containerHeight / scale
+              };
+              
+              console.log('📊 BPMNPreview: Manual viewport calculated:', {
+                scale,
+                scaleX,
+                scaleY,
+                scaledDimensions: { width: scaledWidth, height: scaledHeight },
+                viewbox: manualViewbox
+              });
+              
+              // Step 4: Apply viewport with both automatic and manual fallback
+              try {
+                // Try automatic fit-viewport first
+                console.log('🎯 BPMNPreview: Attempting automatic fit-viewport...');
+                canvas.zoom('fit-viewport');
+                
+                // Verify it worked by checking the zoom level
+                await new Promise(resolve => requestAnimationFrame(resolve));
+                const appliedZoom = canvas.zoom();
+                const appliedViewbox = canvas.viewbox();
+                
+                console.log('✅ BPMNPreview: Automatic zoom applied:', {
+                  zoom: appliedZoom,
+                  viewbox: appliedViewbox,
+                  isIdentityMatrix: appliedZoom === 1 && appliedViewbox?.scale === 1
+                });
+                
+                // If zoom didn't work (identity matrix), use manual calculation
+                if (appliedZoom === 1 || !appliedViewbox || appliedViewbox.scale === 1) {
+                  console.warn('⚠️ BPMNPreview: Automatic zoom failed (identity matrix), applying manual viewbox...');
+                  canvas.viewbox(manualViewbox);
+                  console.log('✅ BPMNPreview: Manual viewbox applied');
+                }
+                
+                return true;
+              } catch (zoomError) {
+                console.error('❌ BPMNPreview: Zoom operation failed:', zoomError);
+                
+                // Fallback to manual viewbox
+                try {
+                  console.log('🔄 BPMNPreview: Falling back to manual viewbox...');
+                  canvas.viewbox(manualViewbox);
+                  console.log('✅ BPMNPreview: Manual viewbox applied as fallback');
+                  return true;
+                } catch (manualError) {
+                  console.error('❌ BPMNPreview: Manual viewbox also failed:', manualError);
+                  return false;
                 }
               }
             };
             
-            // Apply multiple times with increasing delays to ensure it works
-            // Start after zoom has had time to complete
-            setTimeout(forceCanvasUpdate, 100);
-            setTimeout(forceCanvasUpdate, 200);
-            setTimeout(forceCanvasUpdate, 400);
+            // Use RAF to ensure DOM is ready, then run initialization
+            requestAnimationFrame(() => {
+              requestAnimationFrame(async () => {
+                const success = await initializeViewport();
+                
+                if (!success) {
+                  console.error('❌ BPMNPreview: Viewport initialization failed completely');
+                } else {
+                  console.log('✅ BPMNPreview: Viewport initialization completed successfully');
+                }
+              });
+            });
+            
+            // Ensure SVG visibility after viewport initialization
+            const ensureVisibility = () => {
+              requestAnimationFrame(() => {
+                const svg = containerRef.current?.querySelector('svg');
+                const svgStyle = svg ? window.getComputedStyle(svg) : null;
+                
+                console.log('👁️ BPMNPreview: Checking SVG visibility:', {
+                  exists: !!svg,
+                  inlineStyle: {
+                    display: svg?.style.display,
+                    visibility: svg?.style.visibility,
+                    opacity: svg?.style.opacity
+                  },
+                  computedStyle: svgStyle ? {
+                    display: svgStyle.display,
+                    visibility: svgStyle.visibility,
+                    opacity: svgStyle.opacity
+                  } : null
+                });
+                
+                if (svg) {
+                  // Ensure SVG is visible
+                  if (!svg.style.opacity || svg.style.opacity === '0') {
+                    svg.style.opacity = '1';
+                  }
+                  if (svg.style.visibility === 'hidden') {
+                    svg.style.visibility = 'visible';
+                  }
+                  if (svg.style.display === 'none') {
+                    svg.style.display = 'block';
+                  }
+                  
+                  console.log('✅ BPMNPreview: SVG visibility ensured');
+                }
+              });
+            };
+            
+            // Apply visibility check after viewport initialization
+            setTimeout(ensureVisibility, 100);
+            setTimeout(ensureVisibility, 300);
 
             // Final validation - check if diagram was actually rendered
             setTimeout(() => {
               const viewbox = canvas.viewbox();
+              const currentZoom = canvas.zoom();
               const svgFinal = containerRef.current?.querySelector('svg');
               const gElements = svgFinal?.querySelectorAll('g') || [];
               const shapeElements = svgFinal?.querySelectorAll('[data-element-id]') || [];
+              const svgTransform = svgFinal?.querySelector('g.viewport')?.getAttribute('transform') || 'not found';
+              const svgFinalStyle = svgFinal ? window.getComputedStyle(svgFinal) : null;
               
               console.log('🔍 BPMNPreview: Final rendering state:', {
                 viewbox: {
                   outer: viewbox?.outer,
                   inner: viewbox?.inner,
-                  scale: viewbox?.scale
+                  scale: viewbox?.scale,
+                  x: viewbox?.x,
+                  y: viewbox?.y,
+                  width: viewbox?.width,
+                  height: viewbox?.height
+                },
+                zoom: {
+                  level: currentZoom,
+                  isIdentity: currentZoom === 1
                 },
                 svg: {
                   exists: !!svgFinal,
@@ -396,17 +605,18 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
                   childCount: svgFinal?.children?.length || 0,
                   gElementCount: gElements.length,
                   shapeElementCount: shapeElements.length,
-                  style: {
+                  viewportTransform: svgTransform,
+                  inlineStyle: {
                     display: svgFinal?.style.display,
                     visibility: svgFinal?.style.visibility,
                     opacity: svgFinal?.style.opacity
                   },
-                  computedStyle: svgFinal ? {
-                    display: window.getComputedStyle(svgFinal).display,
-                    visibility: window.getComputedStyle(svgFinal).visibility,
-                    opacity: window.getComputedStyle(svgFinal).opacity,
-                    backgroundColor: window.getComputedStyle(svgFinal).backgroundColor,
-                    fill: window.getComputedStyle(svgFinal).fill
+                  computedStyle: svgFinalStyle ? {
+                    display: svgFinalStyle.display,
+                    visibility: svgFinalStyle.visibility,
+                    opacity: svgFinalStyle.opacity,
+                    backgroundColor: svgFinalStyle.backgroundColor,
+                    fill: svgFinalStyle.fill
                   } : null
                 },
                 container: {
@@ -429,7 +639,8 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
                   } : null
                 },
                 hasElements: viewbox?.inner?.width > 0 && viewbox?.inner?.height > 0,
-                containerHasContent: containerRef.current?.children?.length > 0
+                containerHasContent: containerRef.current?.children?.length > 0,
+                transformIsIdentity: svgTransform.includes('matrix(1, 0, 0, 1, 0, 0)') || svgTransform.includes('matrix(1,0,0,1,0,0)')
               });
               
               // Check if container actually has content
@@ -439,10 +650,12 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
                 console.error('❌ BPMNPreview: No SVG element found after rendering - CRITICAL ISSUE');
               } else if (shapeElements.length === 0) {
                 console.warn('⚠️ BPMNPreview: SVG exists but has no BPMN shape elements - possible rendering issue');
+              } else if (svgTransform.includes('matrix(1, 0, 0, 1, 0, 0)') || svgTransform.includes('matrix(1,0,0,1,0,0)')) {
+                console.warn('⚠️ BPMNPreview: Viewport transform is identity matrix - zoom may not have worked properly');
               } else {
-                console.log(`✅ BPMNPreview: Diagram appears to be properly rendered with ${shapeElements.length} shapes`);
+                console.log(`✅ BPMNPreview: Diagram appears to be properly rendered with ${shapeElements.length} shapes and valid transform`);
               }
-            }, 500);
+            }, 1000); // Give more time for all operations to complete
 
             console.log(`🎉 BPMNPreview: Successfully rendered preview for: ${file.name}`);
             setLoading(false);
