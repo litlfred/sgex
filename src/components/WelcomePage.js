@@ -31,6 +31,7 @@ const WelcomePage = () => {
   const mascotImage = useThemeImage('sgex-mascot.png');
   const authoringImage = useThemeImage('authoring.png');
   const collaborationImage = useThemeImage('collaboration.png');
+  const patLoginImage = useThemeImage('pat-login.png');
 
   // Initial authentication check - runs once on mount
   useEffect(() => {
@@ -238,6 +239,7 @@ const WelcomePage = () => {
               <div className="action-card pat-demo-card">
                 {/* PAT Login Section */}
                 <div className="pat-section">
+                  <img src={patLoginImage} alt={getAltText(t, ALT_TEXT_KEYS.IMAGE_PAT_LOGIN, 'PAT Login Helper')} className="pat-card-image" />
                   <h4>Quick PAT Login</h4>
                   <form onSubmit={handlePATSubmit} className="pat-form">
                     <div className="form-group">
