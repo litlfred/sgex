@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/sgex/copilot-investigate-pat-token-issue/static/css/main.f06452fd.css",
-    "main.js": "/sgex/copilot-investigate-pat-token-issue/static/js/main.b3cfb15d.js",
+    "main.js": "/sgex/copilot-investigate-pat-token-issue/static/js/main.e6814876.js",
     "static/js/228.f48b79bd.chunk.js": "/sgex/copilot-investigate-pat-token-issue/static/js/228.f48b79bd.chunk.js",
     "static/css/8700.247e7b29.chunk.css": "/sgex/copilot-investigate-pat-token-issue/static/css/8700.247e7b29.chunk.css",
     "static/js/8700.8625dc93.chunk.js": "/sgex/copilot-investigate-pat-token-issue/static/js/8700.8625dc93.chunk.js",
@@ -67,6 +67,6 @@
   },
   "entrypoints": [
     "static/css/main.f06452fd.css",
-    "static/js/main.b3cfb15d.js"
+    "static/js/main.e6814876.js"
   ]
 }
