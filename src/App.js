@@ -5,6 +5,7 @@ import { generateLazyRoutes } from './services/componentRouteService';
 import { initializeTheme } from './utils/themeManager';
 import logger from './utils/logger';
 import { initializeRoutingContext } from './services/routingContextService';
+import { AuthProvider } from './contexts/AuthContext';
 
 function App() {
   const appLogger = logger.getLogger('App');
@@ -36,13 +37,15 @@ function App() {
   const routes = generateLazyRoutes();
 
   return (
-    <Router basename={basename}>
-      <div className="App">
-        <Routes>
-          {routes}
-        </Routes>
-      </div>
-    </Router>
+    <AuthProvider>
+      <Router basename={basename}>
+        <div className="App">
+          <Routes>
+            {routes}
+          </Routes>
+        </div>
+      </Router>
+    </AuthProvider>
   );
 }
 
