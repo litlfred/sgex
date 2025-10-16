@@ -261,6 +261,17 @@ body.theme-light .welcome-page-content {
   padding-bottom: 1.5rem;
   border-bottom: 1px solid var(--who-border-color);
   margin-bottom: 1.5rem;
+  position: relative;
+}
+
+/* PAT login card image */
+.pat-card-image {
+  width: 100%;
+  max-width: 200px;
+  height: auto;
+  margin: 0 auto 1rem auto;
+  display: block;
+  object-fit: contain;
 }
 
 .pat-section h4 {
@@ -349,6 +360,15 @@ body.theme-light .welcome-page-content {
 
 .pat-help-btn:hover {
   color: var(--who-blue-dark);
+}
+
+/* Dark mode - use lighter blue for better visibility */
+body.theme-dark .pat-help-btn {
+  color: var(--who-blue-light);
+}
+
+body.theme-dark .pat-help-btn:hover {
+  color: var(--who-light-blue);
 }
 
 .demo-section {
@@ -554,6 +574,11 @@ body.theme-light .welcome-page-content {
     max-height: calc(var(--card-icon-size) * 0.8);
     max-width: calc(var(--card-icon-size) * 0.8);
   }
+  
+  /* PAT card image responsive */
+  .pat-card-image {
+    max-width: 150px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -610,6 +635,11 @@ body.theme-light .welcome-page-content {
     margin: 0;
     flex: 1;
     overflow: visible;
+  }
+  
+  /* PAT card image responsive for mobile */
+  .pat-card-image {
+    max-width: 120px;
   }
 }
 
