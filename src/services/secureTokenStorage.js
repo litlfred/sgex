@@ -16,43 +16,50 @@ class SecureTokenStorage {
     this.logger = logger.getLogger('SecureTokenStorage');
     this.storageKey = 'sgex_secure_token';
     this.expirationHours = 24;
+    this.crossTabSyncInitialized = false;
     this.logger.debug('SecureTokenStorage instance created');
-    
-    // Set up cross-tab synchronization
-    this.setupCrossTabSync();
   }
 
   /**
-   * Set up cross-tab synchronization for token storage
+   * Set up cross-tab synchronization for token storage (lazy initialization)
    */
   setupCrossTabSync() {
-    if (!crossTabSyncService.isAvailable()) {
-      this.logger.warn('Cross-tab sync not available - tabs will not share authentication state');
-      return;
+    if (this.crossTabSyncInitialized) {
+      return; // Already initialized
     }
 
-    // Listen for PAT authentication events from other tabs
-    crossTabSyncService.on(CrossTabEventTypes.PAT_AUTHENTICATED, (data) => {
-      this.logger.debug('PAT authentication event received from another tab');
-      
-      // Store the token in this tab's sessionStorage
-      if (data && data.encryptedData) {
-        try {
-          sessionStorage.setItem(this.storageKey, data.encryptedData);
-          this.logger.debug('Token synced from another tab');
-        } catch (error) {
-          this.logger.error('Failed to sync token from another tab', { error: error.message });
-        }
+    try {
+      if (!crossTabSyncService.isAvailable()) {
+        this.logger.warn('Cross-tab sync not available - tabs will not share authentication state');
+        return;
       }
-    });
 
-    // Listen for logout events from other tabs
-    crossTabSyncService.on(CrossTabEventTypes.LOGOUT, () => {
-      this.logger.debug('Logout event received from another tab');
-      this.clearToken();
-    });
+      // Listen for PAT authentication events from other tabs
+      crossTabSyncService.on(CrossTabEventTypes.PAT_AUTHENTICATED, (data) => {
+        this.logger.debug('PAT authentication event received from another tab');
+        
+        // Store the token in this tab's sessionStorage
+        if (data && data.encryptedData) {
+          try {
+            sessionStorage.setItem(this.storageKey, data.encryptedData);
+            this.logger.debug('Token synced from another tab');
+          } catch (error) {
+            this.logger.error('Failed to sync token from another tab', { error: error.message });
+          }
+        }
+      });
 
-    this.logger.debug('Cross-tab sync configured for PAT authentication');
+      // Listen for logout events from other tabs
+      crossTabSyncService.on(CrossTabEventTypes.LOGOUT, () => {
+        this.logger.debug('Logout event received from another tab');
+        this.clearToken();
+      });
+
+      this.crossTabSyncInitialized = true;
+      this.logger.debug('Cross-tab sync configured for PAT authentication');
+    } catch (error) {
+      this.logger.error('Failed to setup cross-tab sync', { error: error.message });
+    }
   }
 
   /**
@@ -178,6 +185,9 @@ class SecureTokenStorage {
    */
   storeToken(token) {
     try {
+      // Lazy initialize cross-tab sync on first use
+      this.setupCrossTabSync();
+      
       this.logger.debug('Starting secure token storage');
 
       // Validate token format
