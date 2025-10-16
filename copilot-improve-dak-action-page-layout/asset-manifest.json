@@ -1,6 +1,6 @@
 {
   "files": {
-    "main.css": "/sgex/copilot-improve-dak-action-page-layout/static/css/main.e0ac19cc.css",
+    "main.css": "/sgex/copilot-improve-dak-action-page-layout/static/css/main.89e8e44d.css",
     "main.js": "/sgex/copilot-improve-dak-action-page-layout/static/js/main.51d0facc.js",
     "static/js/228.f48b79bd.chunk.js": "/sgex/copilot-improve-dak-action-page-layout/static/js/228.f48b79bd.chunk.js",
     "static/css/8700.247e7b29.chunk.css": "/sgex/copilot-improve-dak-action-page-layout/static/css/8700.247e7b29.chunk.css",
@@ -66,7 +66,7 @@
     "index.html": "/sgex/copilot-improve-dak-action-page-layout/index.html"
   },
   "entrypoints": [
-    "static/css/main.e0ac19cc.css",
+    "static/css/main.89e8e44d.css",
     "static/js/main.51d0facc.js"
   ]
 }
