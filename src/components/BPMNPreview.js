@@ -520,42 +520,35 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
                 manualViewbox
               });
               
-              // Step 4: Apply viewport with both automatic and manual fallback
+              // Step 4: Apply element-based manual viewport calculation
               try {
-                // Try automatic fit-viewport first
-                console.log('🎯 BPMNPreview: Attempting automatic fit-viewport...');
-                canvas.zoom('fit-viewport');
+                // Use manual viewbox based on actual element bounds
+                // This is more accurate than fit-viewport which uses viewbox.outer
+                console.log('🎯 BPMNPreview: Applying element-based manual viewbox...');
+                canvas.viewbox(manualViewbox);
                 
-                // Verify it worked by checking the zoom level
+                // Verify it was applied
                 await new Promise(resolve => requestAnimationFrame(resolve));
-                const appliedZoom = canvas.zoom();
                 const appliedViewbox = canvas.viewbox();
+                const appliedZoom = canvas.zoom();
                 
-                console.log('✅ BPMNPreview: Automatic zoom applied:', {
+                console.log('✅ BPMNPreview: Manual viewbox applied:', {
                   zoom: appliedZoom,
                   viewbox: appliedViewbox,
-                  isIdentityMatrix: appliedZoom === 1 && appliedViewbox?.scale === 1
+                  requested: manualViewbox
                 });
                 
-                // If zoom didn't work (identity matrix), use manual calculation
-                if (appliedZoom === 1 || !appliedViewbox || appliedViewbox.scale === 1) {
-                  console.warn('⚠️ BPMNPreview: Automatic zoom failed (identity matrix), applying manual viewbox...');
-                  canvas.viewbox(manualViewbox);
-                  console.log('✅ BPMNPreview: Manual viewbox applied');
-                }
-                
                 return true;
-              } catch (zoomError) {
-                console.error('❌ BPMNPreview: Zoom operation failed:', zoomError);
+              } catch (viewboxError) {
+                console.error('❌ BPMNPreview: Manual viewbox failed, trying fit-viewport fallback:', viewboxError);
                 
-                // Fallback to manual viewbox
+                // Last resort: use automatic fit-viewport
                 try {
-                  console.log('🔄 BPMNPreview: Falling back to manual viewbox...');
-                  canvas.viewbox(manualViewbox);
-                  console.log('✅ BPMNPreview: Manual viewbox applied as fallback');
+                  canvas.zoom('fit-viewport');
+                  console.warn('⚠️ BPMNPreview: Used fit-viewport as fallback');
                   return true;
-                } catch (manualError) {
-                  console.error('❌ BPMNPreview: Manual viewbox also failed:', manualError);
+                } catch (fallbackError) {
+                  console.error('❌ BPMNPreview: All viewport methods failed:', fallbackError);
                   return false;
                 }
               }

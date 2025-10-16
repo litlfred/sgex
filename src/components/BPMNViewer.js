@@ -333,26 +333,31 @@ const BPMNViewerContent = () => {
           
           console.log('📊 BPMNViewer: Calculated viewport:', { scale, diagramBounds, manualViewbox });
           
-          // Try automatic zoom first, fallback to manual
+          // Use element-based manual viewbox directly for accurate scaling
           try {
-            canvas.zoom('fit-viewport');
+            console.log('🎯 BPMNViewer: Applying element-based manual viewbox...');
+            canvas.viewbox(manualViewbox);
             
             await new Promise(resolve => requestAnimationFrame(resolve));
             const appliedZoom = canvas.zoom();
+            const appliedViewbox = canvas.viewbox();
             
-            console.log('✅ BPMNViewer: Automatic zoom applied:', appliedZoom);
+            console.log('✅ BPMNViewer: Manual viewbox applied:', {
+              zoom: appliedZoom,
+              viewbox: appliedViewbox
+            });
             
-            // If zoom is identity matrix, use manual calculation
-            if (appliedZoom === 1) {
-              console.warn('⚠️ BPMNViewer: Automatic zoom failed, using manual viewbox');
-              canvas.viewbox(manualViewbox);
+            return true;
+          } catch (viewboxError) {
+            console.error('❌ BPMNViewer: Manual viewbox failed, trying fit-viewport:', viewboxError);
+            try {
+              canvas.zoom('fit-viewport');
+              console.warn('⚠️ BPMNViewer: Used fit-viewport as fallback');
+              return true;
+            } catch (fallbackError) {
+              console.error('❌ BPMNViewer: All viewport methods failed:', fallbackError);
+              return false;
             }
-            
-            return true;
-          } catch (zoomError) {
-            console.error('❌ BPMNViewer: Zoom failed, using manual viewbox:', zoomError);
-            canvas.viewbox(manualViewbox);
-            return true;
           }
         };
         
