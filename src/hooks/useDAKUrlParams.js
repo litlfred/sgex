@@ -89,6 +89,8 @@ const useDAKUrlParams = () => {
               selectedBranch: branch || 'main'
             });
 
+            // NOTE: Session storage updates are now handled by globalNavigationSync service
+            // This code is kept as a safety fallback during transition period
             // Update session storage for public access navigation
             try {
               sessionStorage.setItem('sgex_selected_user', user);
@@ -114,7 +116,7 @@ const useDAKUrlParams = () => {
                 window.SGEX_ROUTING_LOGGER.logSessionStorageUpdate('sgex_selected_branch', branch || 'main');
               }
               
-              console.log('✅ useDAKUrlParams: Updated session storage for public access navigation');
+              console.log('✅ useDAKUrlParams: Updated session storage for public access navigation (fallback)');
             } catch (storageErr) {
               console.warn('Failed to update session storage:', storageErr);
             }
@@ -212,6 +214,8 @@ const useDAKUrlParams = () => {
             selectedBranch: branch || repoData.default_branch
           });
 
+          // NOTE: Session storage updates are now handled by globalNavigationSync service
+          // This code is kept as a safety fallback during transition period
           // Update session storage for SPA navigation consistency
           // This ensures session storage stays in sync when navigating between repos
           try {
