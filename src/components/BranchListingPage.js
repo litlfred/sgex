@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PageLayout } from './framework';
 import PATLogin from './PATLogin';
+import CollaborationModal from './CollaborationModal';
 import githubService from '../services/githubService';
 import useThemeImage from '../hooks/useThemeImage';
 import { ALT_TEXT_KEYS, getAltText, getAvatarAltText } from '../utils/imageAltTextHelper';
@@ -29,11 +30,13 @@ const BranchListingPage = () => {
     const [expandedDiscussions, setExpandedDiscussions] = useState({});
     const [discussionSummaries, setDiscussionSummaries] = useState({});
     const [loadingSummaries, setLoadingSummaries] = useState(false);
+    const [showCollaborationModal, setShowCollaborationModal] = useState(false);
 
     const ITEMS_PER_PAGE = 10;
 
     // Theme-aware image paths
     const mascotImage = useThemeImage('sgex-mascot.png');
+    const collaborationImage = useThemeImage('collaboration.png');
 
     // GitHub authentication functions
     const handleAuthSuccess = (token) => {
@@ -50,6 +53,15 @@ const BranchListingPage = () => {
         setIsAuthenticated(false);
         githubService.logout(); // Use secure logout method
         setPrComments({});
+    };
+
+    // Collaboration modal handlers
+    const handleCollaborationOpen = () => {
+        setShowCollaborationModal(true);
+    };
+
+    const handleCollaborationClose = () => {
+        setShowCollaborationModal(false);
     };
 
 
@@ -525,9 +537,26 @@ const BranchListingPage = () => {
 
                         <div className="action-cards">
                             <div className="action-card main-site-card">
-                                <a 
-                                    href="/sgex/main/"
+                                <button 
                                     className="card-link"
+                                    type="button"
+                                    onClick={(e) => {
+                                        try {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            console.log('View Main Site clicked (loading state) - navigating to /sgex/main/');
+                                            console.log('Current location:', window.location.href);
+                                            console.log('Target location:', '/sgex/main/');
+                                            // Try multiple methods to ensure navigation works
+                                            setTimeout(() => {
+                                                window.location.href = '/sgex/main/';
+                                            }, 100);
+                                        } catch (error) {
+                                            console.error('Navigation error:', error);
+                                            // Fallback
+                                            window.open('/sgex/main/', '_self');
+                                        }
+                                    }}
                                 >
                                     <div className="card-content">
                                         <img src={mascotImage} alt={getAltText(t, ALT_TEXT_KEYS.MASCOT_HELPER, 'SGEX Mascot')} className="card-icon" />
@@ -536,7 +565,22 @@ const BranchListingPage = () => {
                                             <p>Access the main SGEX workbench</p>
                                         </div>
                                     </div>
-                                </a>
+                                </button>
+                            </div>
+                            <div className="action-card collaboration-card">
+                                <button 
+                                    className="card-link"
+                                    onClick={handleCollaborationOpen}
+                                    onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleCollaborationOpen()}
+                                >
+                                    <div className="card-content">
+                                        <img src={collaborationImage} alt={getAltText(t, ALT_TEXT_KEYS.IMAGE_COLLABORATION, 'Collaboration')} className="card-icon" />
+                                        <div className="card-text">
+                                            <h3>Collaboration</h3>
+                                            <p>Learn about our mission, how to contribute, and join our community-driven development process.</p>
+                                        </div>
+                                    </div>
+                                </button>
                             </div>
                             
                             {!isAuthenticated ? (
@@ -595,9 +639,26 @@ const BranchListingPage = () => {
 
                         <div className="action-cards">
                             <div className="action-card main-site-card">
-                                <a 
-                                    href="/sgex/main/"
+                                <button 
                                     className="card-link"
+                                    type="button"
+                                    onClick={(e) => {
+                                        try {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            console.log('View Main Site clicked (error state) - navigating to /sgex/main/');
+                                            console.log('Current location:', window.location.href);
+                                            console.log('Target location:', '/sgex/main/');
+                                            // Try multiple methods to ensure navigation works
+                                            setTimeout(() => {
+                                                window.location.href = '/sgex/main/';
+                                            }, 100);
+                                        } catch (error) {
+                                            console.error('Navigation error:', error);
+                                            // Fallback
+                                            window.open('/sgex/main/', '_self');
+                                        }
+                                    }}
                                 >
                                     <div className="card-content">
                                         <img src={mascotImage} alt={getAltText(t, ALT_TEXT_KEYS.MASCOT_HELPER, 'SGEX Mascot')} className="card-icon" />
@@ -606,7 +667,22 @@ const BranchListingPage = () => {
                                             <p>Access the main SGEX workbench</p>
                                         </div>
                                     </div>
-                                </a>
+                                </button>
+                            </div>
+                            <div className="action-card collaboration-card">
+                                <button 
+                                    className="card-link"
+                                    onClick={handleCollaborationOpen}
+                                    onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleCollaborationOpen()}
+                                >
+                                    <div className="card-content">
+                                        <img src={collaborationImage} alt={getAltText(t, ALT_TEXT_KEYS.IMAGE_COLLABORATION, 'Collaboration')} className="card-icon" />
+                                        <div className="card-text">
+                                            <h3>Collaboration</h3>
+                                            <p>Learn about our mission, how to contribute, and join our community-driven development process.</p>
+                                        </div>
+                                    </div>
+                                </button>
                             </div>
                             
                             {!isAuthenticated ? (
@@ -668,9 +744,26 @@ const BranchListingPage = () => {
 
                 <div className="action-cards">
                     <div className="action-card main-site-card">
-                        <a 
-                            href="/sgex/main/"
+                        <button 
                             className="card-link"
+                            type="button"
+                            onClick={(e) => {
+                                try {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    console.log('View Main Site clicked (main content state) - navigating to /sgex/main/');
+                                    console.log('Current location:', window.location.href);
+                                    console.log('Target location:', '/sgex/main/');
+                                    // Try multiple methods to ensure navigation works
+                                    setTimeout(() => {
+                                        window.location.href = '/sgex/main/';
+                                    }, 100);
+                                } catch (error) {
+                                    console.error('Navigation error:', error);
+                                    // Fallback
+                                    window.open('/sgex/main/', '_self');
+                                }
+                            }}
                         >
                             <div className="card-content">
                                 <img src={mascotImage} alt={getAltText(t, ALT_TEXT_KEYS.MASCOT_HELPER, 'SGEX Mascot')} className="card-icon" />
@@ -679,7 +772,22 @@ const BranchListingPage = () => {
                                     <p>Access the main SGEX workbench</p>
                                 </div>
                             </div>
-                        </a>
+                        </button>
+                    </div>
+                    <div className="action-card collaboration-card">
+                        <button 
+                            className="card-link"
+                            onClick={handleCollaborationOpen}
+                            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleCollaborationOpen()}
+                        >
+                            <div className="card-content">
+                                <img src={collaborationImage} alt={getAltText(t, ALT_TEXT_KEYS.IMAGE_COLLABORATION, 'Collaboration')} className="card-icon" />
+                                <div className="card-text">
+                                    <h3>Collaboration</h3>
+                                    <p>Learn about our mission, how to contribute, and join our community-driven development process.</p>
+                                </div>
+                            </div>
+                        </button>
                     </div>
                     
                     {!isAuthenticated ? (
@@ -956,6 +1064,11 @@ const BranchListingPage = () => {
                     </>
                 )}
             </div>
+
+            {/* Collaboration Modal */}
+            {showCollaborationModal && (
+                <CollaborationModal onClose={handleCollaborationClose} />
+            )}
         </PageLayout>
     );
 };
