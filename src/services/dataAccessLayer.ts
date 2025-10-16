@@ -3,6 +3,8 @@
  * 
  * Comprehensive service that integrates user access, staging ground, and GitHub
  * for a unified asset management experience across all user types.
+ * 
+ * @module dataAccessLayer
  */
 
 import userAccessService from './userAccessService';
@@ -16,7 +18,9 @@ import logger from '../utils/logger';
 export const SAVE_TARGETS = {
   LOCAL: 'local',
   GITHUB: 'github'
-};
+} as const;
+
+export type SaveTarget = typeof SAVE_TARGETS[keyof typeof SAVE_TARGETS];
 
 /**
  * Asset operation results
@@ -25,9 +29,134 @@ export const OPERATION_RESULTS = {
   SUCCESS: 'success',
   ERROR: 'error',
   PERMISSION_DENIED: 'permission_denied'
-};
+} as const;
 
+export type OperationResult = typeof OPERATION_RESULTS[keyof typeof OPERATION_RESULTS];
+
+/**
+ * Asset content response
+ * @example { "content": "library logic", "source": "local", "hasLocalChanges": true }
+ */
+export interface AssetContent {
+  /** Asset content */
+  content: string;
+  /** Source of content (local or github) */
+  source: 'local' | 'github';
+  /** File metadata */
+  metadata?: any;
+  /** Whether asset has local changes */
+  hasLocalChanges: boolean;
+}
+
+/**
+ * Save operation response
+ * @example { "result": "success", "message": "Changes saved", "target": "local" }
+ */
+export interface SaveResponse {
+  /** Operation result */
+  result: OperationResult;
+  /** Result message */
+  message: string;
+  /** Save target */
+  target: SaveTarget;
+  /** Commit SHA (for GitHub saves) */
+  commitSha?: string;
+  /** Commit URL (for GitHub saves) */
+  commitUrl?: string;
+}
+
+/**
+ * Save options
+ * @example { "canSaveLocal": true, "canSaveGitHub": false, "userType": "demo" }
+ */
+export interface SaveOptions {
+  /** Can save to local storage */
+  canSaveLocal: boolean;
+  /** Can save to GitHub */
+  canSaveGitHub: boolean;
+  /** Show save to local option */
+  showSaveLocal: boolean;
+  /** Show save to GitHub option */
+  showSaveGitHub: boolean;
+  /** Require confirmation before save */
+  confirmBeforeSave: boolean;
+  /** User type */
+  userType: string;
+  /** Save restrictions */
+  restrictions: SaveRestrictions;
+}
+
+/**
+ * Save restrictions
+ */
+export interface SaveRestrictions {
+  /** Local save message */
+  localMessage: string;
+  /** GitHub save message */
+  githubMessage: string;
+  /** Whether GitHub save is disabled */
+  githubDisabled: boolean;
+}
+
+/**
+ * Access information
+ */
+export interface AccessInfo {
+  /** Repository access level */
+  access: string;
+  /** Access badge */
+  badge: any;
+  /** Save options */
+  saveOptions: SaveOptions;
+  /** User type */
+  userType: string;
+}
+
+/**
+ * Batch save result
+ */
+export interface BatchSaveResult {
+  /** Overall success status */
+  success: boolean;
+  /** Individual results */
+  results: (SaveResponse & { path: string })[];
+}
+
+/**
+ * Asset for batch operations
+ */
+export interface BatchAsset {
+  /** Asset path */
+  path: string;
+  /** Asset content */
+  content: string;
+  /** Asset metadata */
+  metadata?: any;
+}
+
+/**
+ * Data Access Layer class
+ * 
+ * Unified data access across local and GitHub storage.
+ * 
+ * @openapi
+ * components:
+ *   schemas:
+ *     AssetContent:
+ *       type: object
+ *       properties:
+ *         content:
+ *           type: string
+ *         source:
+ *           type: string
+ *         hasLocalChanges:
+ *           type: boolean
+ */
 class DataAccessLayer {
+  private logger: any;
+  private pendingOperations: Map<string, any>;
+  private assetCache: Map<string, any>;
+
   constructor() {
     this.logger = logger.getLogger('DataAccessLayer');
     this.pendingOperations = new Map();
@@ -37,7 +166,7 @@ class DataAccessLayer {
   /**
    * Initialize data access layer
    */
-  async initialize(repository, branch) {
+  async initialize(repository: any, branch: string): Promise<void> {
     this.logger.info('Initializing data access layer', { 
       repository: repository?.full_name, 
       branch 
@@ -53,7 +182,7 @@ class DataAccessLayer {
   /**
    * Get asset content from GitHub or local storage
    */
-  async getAsset(owner, repo, branch, assetPath) {
+  async getAsset(owner: string, repo: string, branch: string, assetPath: string): Promise<AssetContent> {
     const cacheKey = `${owner}/${repo}/${branch}/${assetPath}`;
     
     try {
@@ -92,7 +221,7 @@ class DataAccessLayer {
 
     } catch (error) {
       this.logger.error('Error getting asset', { 
-        owner, repo, branch, assetPath, error: error.message 
+        owner, repo, branch, assetPath, error: (error as Error).message 
       });
       throw error;
     }
@@ -101,7 +230,7 @@ class DataAccessLayer {
   /**
    * Save asset to local storage (staging ground)
    */
-  async saveAssetLocal(assetPath, content, metadata = {}) {
+  async saveAssetLocal(assetPath: string, content: string, metadata: any = {}): Promise<SaveResponse> {
     try {
       const userType = userAccessService.getUserType();
       
@@ -124,10 +253,10 @@ class DataAccessLayer {
       }
 
     } catch (error) {
-      this.logger.error('Error saving asset locally', { assetPath, error: error.message });
+      this.logger.error('Error saving asset locally', { assetPath, error: (error as Error).message });
       return {
         result: OPERATION_RESULTS.ERROR,
-        message: `Failed to save locally: ${error.message}`,
+        message: `Failed to save locally: ${(error as Error).message}`,
         target: SAVE_TARGETS.LOCAL
       };
     }
@@ -136,7 +265,15 @@ class DataAccessLayer {
   /**
    * Save asset to GitHub
    */
-  async saveAssetGitHub(owner, repo, branch, assetPath, content, commitMessage, metadata = {}) {
+  async saveAssetGitHub(
+    owner: string, 
+    repo: string, 
+    branch: string, 
+    assetPath: string, 
+    content: string, 
+    commitMessage: string, 
+    metadata: any = {}
+  ): Promise<SaveResponse> {
     try {
       const userType = userAccessService.getUserType();
       
@@ -194,23 +331,21 @@ class DataAccessLayer {
 
     } catch (error) {
       this.logger.error('Error saving asset to GitHub', { 
-        owner, repo, branch, assetPath, error: error.message 
+        owner, repo, branch, assetPath, error: (error as Error).message 
       });
       
       return {
         result: OPERATION_RESULTS.ERROR,
-        message: `Failed to save to GitHub: ${error.message}`,
+        message: `Failed to save to GitHub: ${(error as Error).message}`,
         target: SAVE_TARGETS.GITHUB
       };
     }
   }
 
-
-
   /**
    * Get save options for current user and asset
    */
-  async getSaveOptions(owner, repo, branch) {
+  async getSaveOptions(owner: string, repo: string, branch: string): Promise<SaveOptions> {
     const userType = userAccessService.getUserType();
     const canSaveGitHub = await userAccessService.canSaveToGitHub(owner, repo, branch);
     const canSaveLocal = userAccessService.canSaveLocal();
@@ -230,7 +365,7 @@ class DataAccessLayer {
   /**
    * Get save restrictions and messaging for user type
    */
-  getSaveRestrictions(userType, canSaveGitHub) {
+  getSaveRestrictions(userType: string, canSaveGitHub: boolean): SaveRestrictions {
     switch (userType) {
       case 'unauthenticated':
         return {
@@ -249,14 +384,14 @@ class DataAccessLayer {
       case 'authenticated':
         if (canSaveGitHub) {
           return {
-            localMessage: 'Save changes to staging area',
-            githubMessage: 'Commit changes to GitHub repository',
+            localMessage: 'Save to local staging area',
+            githubMessage: 'Commit changes to GitHub',
             githubDisabled: false
           };
         } else {
           return {
-            localMessage: 'Changes will be saved to your browser only',
-            githubMessage: 'You do not have write access to this repository',
+            localMessage: 'Save to local staging area',
+            githubMessage: 'No write access to this repository',
             githubDisabled: true
           };
         }
@@ -280,7 +415,7 @@ class DataAccessLayer {
   /**
    * Clear staging ground
    */
-  clearStagingGround() {
+  clearStagingGround(): boolean {
     return stagingGroundService.clearStagingGround();
   }
 
@@ -295,7 +430,7 @@ class DataAccessLayer {
   /**
    * Check if asset has local changes
    */
-  hasLocalChanges(assetPath) {
+  hasLocalChanges(assetPath: string): boolean {
     const stagingGround = stagingGroundService.getStagingGround();
     return stagingGround.files.some(f => f.path === assetPath);
   }
@@ -303,7 +438,14 @@ class DataAccessLayer {
   /**
    * Create new asset (when supported by user type)
    */
-  async createAsset(owner, repo, branch, assetPath, initialContent = '', metadata = {}) {
+  async createAsset(
+    owner: string, 
+    repo: string, 
+    branch: string, 
+    assetPath: string, 
+    initialContent: string = '', 
+    metadata: any = {}
+  ): Promise<SaveResponse> {
     const uiBehavior = userAccessService.getUIBehavior();
     
     if (!uiBehavior.allowCreateNew) {
@@ -321,8 +463,8 @@ class DataAccessLayer {
   /**
    * Batch operations for multiple assets
    */
-  async batchSaveLocal(assets) {
-    const results = [];
+  async batchSaveLocal(assets: BatchAsset[]): Promise<BatchSaveResult> {
+    const results: (SaveResponse & { path: string })[] = [];
     
     for (const asset of assets) {
       const result = await this.saveAssetLocal(
@@ -342,7 +484,7 @@ class DataAccessLayer {
   /**
    * Get access information for current context
    */
-  async getAccessInfo(owner, repo, branch) {
+  async getAccessInfo(owner: string, repo: string, branch: string): Promise<AccessInfo> {
     const [access, badge, saveOptions] = await Promise.all([
       userAccessService.getRepositoryAccess(owner, repo, branch),
       userAccessService.getAccessBadge(owner, repo, branch),
