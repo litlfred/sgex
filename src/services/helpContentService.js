@@ -8,7 +8,7 @@ class HelpContentService {
       documentation: {
         id: 'sgex-documentation',
         title: 'View Documentation',
-        badge: '/sgex/cat-paw-info-icon.svg',
+        badge: 'cat-paw-info-icon.svg',
         type: 'action',
         action: () => {
           // Navigate to documentation viewer in the same window
@@ -56,7 +56,7 @@ class HelpContentService {
       workflows: {
         id: 'sgex-workflows',
         title: 'View Deployment Workflows',
-        badge: '/sgex/cat-paw-workflow-icon.svg',
+        badge: 'cat-paw-workflow-icon.svg',
         type: 'action',
         action: () => {
           // Open workflows in GitHub Actions tab
@@ -90,7 +90,7 @@ class HelpContentService {
       githubSource: {
         id: 'sgex-github-source',
         title: 'GitHub Source',
-        badge: '/sgex/cat-paw-lock-icon.svg', // Using lock icon temporarily until we add a proper GitHub icon
+        badge: 'cat-paw-lock-icon.svg', // Using lock icon temporarily until we add a proper GitHub icon
         type: 'action',
         action: () => {
           // Open the SGEX GitHub repository
@@ -105,30 +105,25 @@ class HelpContentService {
       },
       bugReport: {
         id: 'report-sgex-bug',
-        title: 'Report a SGeX bug',
-        badge: '/sgex/cat-paw-bug-icon.svg',
+        title: 'Report an issue',
+        badge: 'cat-paw-bug-icon.svg',
+
         type: 'slideshow',
         content: [
           {
-            title: 'Report a Bug or Issue',
+            title: 'Report an Issue',
             content: `
-              <p>Help us improve SGeX by reporting bugs and issues:</p>
-              <h4>What type of issue are you experiencing?</h4>
+              <p>Help us improve SGeX by reporting issues:</p>
+              <h4>What type of issue would you like to report?</h4>
               <div class="bug-report-options">
-                <button class="bug-type-btn" onclick="window.helpModalInstance?.openSgexIssue('bug')">
-                  🐛 Bug Report - Something isn't working correctly
+                <button class="bug-type-btn" onclick="window.helpModalInstance?.openDakIssue('content')">
+                  📝 Issue with DAK content
                 </button>
                 <button class="bug-type-btn" onclick="window.helpModalInstance?.openSgexIssue('feature')">
-                  ✨ Feature Request - Suggest a new feature or improvement
+                  ✨ SGeX feature request
                 </button>
-                <button class="bug-type-btn" onclick="window.helpModalInstance?.openSgexIssue('question')">
-                  ❓ Question - Ask for help or clarification
-                </button>
-                <button class="bug-type-btn" onclick="window.helpModalInstance?.openSgexIssue('documentation')">
-                  📚 Documentation Issue - Report problems with documentation
-                </button>
-                <button class="bug-type-btn" onclick="window.helpModalInstance?.openSgexIssue('blank')">
-                  📝 Blank Issue - Create an issue without a template
+                <button class="bug-type-btn" onclick="window.helpModalInstance?.openSgexIssue('bug')">
+                  🐛 SGeX bug report
                 </button>
               </div>
               <div class="help-tip">
@@ -186,7 +181,7 @@ class HelpContentService {
         {
           id: 'github-pat-setup',
           title: 'How to Create a GitHub Personal Access Token',
-          badge: '/sgex/cat-paw-lock-icon.svg',
+          badge: 'cat-paw-lock-icon.svg',
           type: 'slideshow',
           content: [
             {
@@ -425,7 +420,7 @@ class HelpContentService {
         {
           id: 'using-questionnaire-editor',
           title: 'Using the FHIR Questionnaire Editor',
-          badge: '/sgex/cat-paw-icon.svg',
+          badge: 'cat-paw-icon.svg',
           type: 'slideshow',
           content: [
             {
@@ -495,7 +490,7 @@ class HelpContentService {
         {
           id: 'questionnaire-management',
           title: 'Managing Questionnaire Assets',
-          badge: '/sgex/cat-paw-file-icon.svg',
+          badge: 'cat-paw-file-icon.svg',
           type: 'slideshow',
           content: [
             {
@@ -562,7 +557,7 @@ class HelpContentService {
         {
           id: 'pat-authentication-help',
           title: 'Using Personal Access Tokens',
-          badge: '/sgex/cat-paw-lock-icon.svg',
+          badge: 'cat-paw-lock-icon.svg',
           type: 'slideshow',
           content: [
             {
@@ -587,7 +582,7 @@ class HelpContentService {
         {
           id: 'detailed-pat-setup',
           title: 'Detailed PAT Setup Guide',
-          badge: '/sgex/cat-paw-lock-icon.svg',
+          badge: 'cat-paw-lock-icon.svg',
           type: 'slideshow',
           content: [
             {
@@ -617,7 +612,7 @@ class HelpContentService {
         {
           id: 'github-pat-setup',
           title: 'How to Create a GitHub Personal Access Token',
-          badge: '/sgex/cat-paw-lock-icon.svg',
+          badge: 'cat-paw-lock-icon.svg',
           type: 'slideshow',
           content: [
             {
@@ -716,7 +711,7 @@ class HelpContentService {
         {
           id: 'core-data-dictionary-help',
           title: 'Understanding Core Data Dictionary',
-          badge: '/sgex/cat-paw-info-icon.svg',
+          badge: 'cat-paw-info-icon.svg',
           type: 'slideshow',
           content: [
             {
@@ -758,7 +753,7 @@ class HelpContentService {
         {
           id: 'github-pages-setup',
           title: 'Setting Up GitHub Pages',
-          badge: '/sgex/cat-paw-settings-icon.svg',
+          badge: 'cat-paw-settings-icon.svg',
           type: 'slideshow',
           content: [
             {
@@ -806,7 +801,7 @@ class HelpContentService {
         {
           id: 'business-process-help',
           title: 'Understanding Business Processes',
-          badge: '/sgex/cat-paw-workflow-icon.svg',
+          badge: 'cat-paw-workflow-icon.svg',
           type: 'slideshow',
           content: [
             {
@@ -848,7 +843,7 @@ class HelpContentService {
         {
           id: 'page-content-help',
           title: 'Managing Page Content',
-          badge: '/sgex/cat-paw-document-icon.svg',
+          badge: 'cat-paw-document-icon.svg',
           type: 'slideshow',
           content: [
             {

@@ -342,13 +342,15 @@ const DAKPublicationGenerator = ({ profile, repository, selectedBranch, hasWrite
 
       <div className="publication-generator-content">
         <div className="publication-scope-selection">
-          <label className="scope-label">Publication Scope:</label>
+          <div className="scope-label">Publication Scope:</div>
           <div className="scope-options">
             {dakComponents.map((component) => (
-              <div
+              <button
                 key={component.id}
                 className={`scope-option ${selectedScope === component.id ? 'selected' : ''}`}
                 onClick={() => setSelectedScope(component.id)}
+                type="button"
+                aria-pressed={selectedScope === component.id}
               >
                 <div className="scope-icon">{component.icon}</div>
                 <div className="scope-info">
@@ -356,19 +358,21 @@ const DAKPublicationGenerator = ({ profile, repository, selectedBranch, hasWrite
                   <div className="scope-description">{component.description}</div>
                 </div>
                 {selectedScope === component.id && <div className="scope-selected">✓</div>}
-              </div>
+              </button>
             ))}
           </div>
         </div>
 
         <div className="format-selection">
-          <label className="format-label">Select Publication Format:</label>
+          <div className="format-label">Select Publication Format:</div>
           <div className="format-options">
             {formatOptions.map((option) => (
-              <div
+              <button
                 key={option.value}
                 className={`format-option ${selectedFormat === option.value ? 'selected' : ''}`}
                 onClick={() => setSelectedFormat(option.value)}
+                type="button"
+                aria-pressed={selectedFormat === option.value}
               >
                 <div className="format-icon">{option.icon}</div>
                 <div className="format-info">
@@ -376,7 +380,7 @@ const DAKPublicationGenerator = ({ profile, repository, selectedBranch, hasWrite
                   <div className="format-description">{option.description}</div>
                 </div>
                 {selectedFormat === option.value && <div className="format-selected">✓</div>}
-              </div>
+              </button>
             ))}
           </div>
         </div>

@@ -47,9 +47,20 @@
               "items": {
                 "type": "object",
                 "properties": {
-                  "name": { "type": "string" },
-                  "file": { "type": "string" },
-                  "type": { "type": "string" }
+                  "name": { 
+                    "type": "string",
+                    "description": "Test scenario name"
+                  },
+                  "file": { 
+                    "type": "string",
+                    "description": "File path containing the test scenario"
+                  },
+                  "type": { 
+                    "type": "string",
+                    "description": "Type of test scenario (unit, integration, functional, etc.)",
+                    "x-canonical-url": "https://worldhealthorganization.github.io/smart-base/ValueSet-TestScenarioType.schema.json",
+                    "x-canonical-note": "Should reference WHO SMART Guidelines test scenario types"
+                  }
                 }
               }
             }

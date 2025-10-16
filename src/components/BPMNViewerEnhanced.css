@@ -339,7 +339,8 @@
   margin-bottom: 0;
 }
 
-.property-item label {
+.property-item label,
+.property-item .property-label {
   font-size: 0.85rem;
   color: var(--who-text-secondary, #666);
   font-weight: 500;
@@ -438,7 +439,8 @@ body.theme-dark .help-text {
   gap: 0.3rem;
 }
 
-.info-item label {
+.info-item label,
+.info-item .info-label {
   font-size: 0.85rem;
   color: var(--who-text-secondary, #666);
   font-weight: 500;

@@ -1962,6 +1962,11 @@ body.theme-light .file-count {
   align-items: center;
   transition: all 0.2s ease;
   user-select: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  font-size: inherit;
+  font-family: inherit;
 }
 
 .status-bar-header:hover {

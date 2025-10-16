@@ -205,85 +205,49 @@ const BPMNViewerContent = () => {
       setLoadingStep('centering');
       try {
         const canvas = viewerRef.current.get('canvas');
-        canvas.zoom('fit-viewport');
+        
+        // Defer zoom to ensure container dimensions are available
+        setTimeout(() => {
+          try {
+            canvas.zoom('fit-viewport');
+            console.log('✅ BPMNViewer: Applied fit-viewport zoom');
+          } catch (error) {
+            console.error('❌ BPMNViewer: Error applying zoom:', error);
+          }
+        }, 0);
+        
+        // Force canvas update to ensure diagram is immediately visible
+        // This prevents the issue where diagram requires a drag/mouse interaction to appear
+        // Use multiple strategies to ensure rendering
+        const forceCanvasUpdate = () => {
+          if (viewerRef.current) {
+            try {
+              const canvas = viewerRef.current.get('canvas');
+              // Trigger a canvas update by getting the viewbox
+              canvas.viewbox();
+              // Force a repaint by slightly adjusting zoom and resetting
+              const currentZoom = canvas.zoom();
+              canvas.zoom(currentZoom);
+              
+              // Also trigger a scroll event which can force repaints
+              const container = containerRef.current;
+              if (container) {
+                container.scrollTop = container.scrollTop;
+              }
+            } catch (canvasError) {
+              console.warn('⚠️ BPMNViewer: Could not force canvas update:', canvasError);
+            }
+          }
+        };
+        
+        // Apply multiple times with increasing delays to ensure it works
+        setTimeout(forceCanvasUpdate, 50);
+        setTimeout(forceCanvasUpdate, 150);
+        setTimeout(forceCanvasUpdate, 300);
+        
         console.log('✅ BPMNViewer: Successfully loaded and centered BPMN diagram');
       } catch (centerError) {
         console.warn('⚠️ BPMNViewer: Could not center diagram:', centerError);
-      }
-      
-      // Force immediate and comprehensive visibility
-      const forceVisibility = () => {
-        const container = containerRef.current;
-        if (container) {
-          // Force visibility on all SVG elements and their children
-          const svgElements = container.querySelectorAll('svg, svg *');
-          svgElements.forEach(element => {
-            element.style.opacity = '1';
-            element.style.visibility = 'visible';
-            element.style.display = element.tagName.toLowerCase() === 'svg' ? 'block' : '';
-            
-            // Force remove bold styling from text elements
-            if (element.tagName.toLowerCase() === 'text' || element.tagName.toLowerCase() === 'tspan') {
-              element.style.fontWeight = 'normal';
-              element.style.fontStyle = 'normal';
-              element.style.fontVariant = 'normal';
-              // Remove any inline font-weight attributes
-              element.removeAttribute('font-weight');
-              element.removeAttribute('style');
-            }
-            
-            // Force proper fill colors for paths and shapes
-            if (['path', 'rect', 'circle', 'ellipse', 'polygon'].includes(element.tagName.toLowerCase())) {
-              // Don't override text color fills
-              if (!element.closest('text')) {
-                element.style.fill = 'var(--who-card-bg)';
-                element.style.stroke = 'var(--who-text-secondary)';
-                element.style.strokeWidth = '1.5px';
-              }
-            }
-          });
-          
-          // Also force the container itself to be visible
-          container.style.opacity = '1';
-          container.style.visibility = 'visible';
-          container.style.display = 'block';
-          
-          console.log('🎨 BPMNViewer: Forced comprehensive SVG visibility and styling');
-        }
-      };
-      
-      // Apply immediately
-      forceVisibility();
-      
-      // Also apply after a short delay to catch any delayed rendering
-      setTimeout(forceVisibility, 50);
-      setTimeout(forceVisibility, 200);
-      setTimeout(forceVisibility, 500);
-      
-      // Set up a MutationObserver to watch for dynamic changes and fix them
-      const observer = new MutationObserver((mutations) => {
-        let needsUpdate = false;
-        mutations.forEach((mutation) => {
-          if (mutation.type === 'childList' || mutation.type === 'attributes') {
-            needsUpdate = true;
-          }
-        });
-        if (needsUpdate) {
-          setTimeout(forceVisibility, 10);
-        }
-      });
-      
-      // Observe changes to the container
-      if (containerRef.current) {
-        observer.observe(containerRef.current, {
-          childList: true,
-          subtree: true,
-          attributes: true,
-          attributeFilter: ['style', 'fill', 'stroke', 'font-weight']
-        });
-        
-        // Store observer for cleanup
-        containerRef.current._bpmnObserver = observer;
       }
       
       setLoadingStep('complete');

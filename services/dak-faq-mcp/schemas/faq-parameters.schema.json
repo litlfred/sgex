@@ -50,7 +50,9 @@
         "fhir-extensions",
         "test-data"
       ],
-      "examples": ["business-processes", "terminology"]
+      "examples": ["business-processes", "terminology"],
+      "x-canonical-url": "https://worldhealthorganization.github.io/smart-base/ValueSet-DAKComponentType.schema.json",
+      "x-canonical-note": "This enum should align with WHO SMART Guidelines DAK component types ValueSet. Values are hand-authored but should be verified against canonical."
     }
   },
   "additionalProperties": true,

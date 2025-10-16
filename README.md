@@ -247,6 +247,20 @@ const user = validateAndCast<GitHubUser>('GitHubUser', userData);
 
 The project uses `eslint-plugin-jsx-a11y` to enforce accessibility best practices. See [docs/accessibility-linting.md](docs/accessibility-linting.md) for detailed information about accessibility rules and how to fix common issues.
 
+### Security Checks
+
+The project includes comprehensive automated security checks that run on every PR build. These checks include:
+
+- **NPM Audit** - Scans for known vulnerabilities in dependencies
+- **Outdated Dependencies** - Identifies packages needing updates
+- **ESLint Security Rules** - Detects security issues in code
+- **Security Headers** - Verifies security header configuration
+- **License Compliance** - Checks for restrictive licenses
+- **Secret Scanning** - Detects hardcoded secrets
+- **Framework Compliance** - Ensures security best practices
+
+See [docs/security-checks.md](docs/security-checks.md) for detailed information about security checks and how to interpret results.
+
 ### Troubleshooting
 
 If you encounter build or installation issues:

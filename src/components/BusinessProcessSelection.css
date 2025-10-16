@@ -195,10 +195,17 @@ body.theme-dark .selection-intro {
 }
 
 .files-grid {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 1.5rem;
   padding: 2rem;
+}
+
+/* Responsive: single column on smaller screens */
+@media (max-width: 968px) {
+  .files-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .file-card {

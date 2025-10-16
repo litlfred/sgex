@@ -47,9 +47,20 @@
               "items": {
                 "type": "object",
                 "properties": {
-                  "name": { "type": "string" },
-                  "file": { "type": "string" },
-                  "type": { "type": "string" }
+                  "name": { 
+                    "type": "string",
+                    "description": "Decision logic artifact name"
+                  },
+                  "file": { 
+                    "type": "string",
+                    "description": "File path containing the decision logic"
+                  },
+                  "type": { 
+                    "type": "string",
+                    "description": "Type of decision logic artifact (DMN, CQL, etc.)",
+                    "x-canonical-url": "https://worldhealthorganization.github.io/smart-base/ValueSet-DecisionLogicType.schema.json",
+                    "x-canonical-note": "Should reference WHO SMART Guidelines decision logic artifact types"
+                  }
                 }
               }
             }
