@@ -9,6 +9,7 @@
  */
 
 import logger from '../utils/logger';
+import crossTabSyncService, { CrossTabEventTypes } from './crossTabSyncService';
 
 class SecureTokenStorage {
   constructor() {
@@ -16,27 +17,73 @@ class SecureTokenStorage {
     this.storageKey = 'sgex_secure_token';
     this.expirationHours = 24;
     this.logger.debug('SecureTokenStorage instance created');
+    
+    // Set up cross-tab synchronization
+    this.setupCrossTabSync();
   }
 
   /**
-   * Generate a browser fingerprint for encryption key
+   * Set up cross-tab synchronization for token storage
+   */
+  setupCrossTabSync() {
+    if (!crossTabSyncService.isAvailable()) {
+      this.logger.warn('Cross-tab sync not available - tabs will not share authentication state');
+      return;
+    }
+
+    // Listen for PAT authentication events from other tabs
+    crossTabSyncService.on(CrossTabEventTypes.PAT_AUTHENTICATED, (data) => {
+      this.logger.debug('PAT authentication event received from another tab');
+      
+      // Store the token in this tab's sessionStorage
+      if (data && data.encryptedData) {
+        try {
+          sessionStorage.setItem(this.storageKey, data.encryptedData);
+          this.logger.debug('Token synced from another tab');
+        } catch (error) {
+          this.logger.error('Failed to sync token from another tab', { error: error.message });
+        }
+      }
+    });
+
+    // Listen for logout events from other tabs
+    crossTabSyncService.on(CrossTabEventTypes.LOGOUT, () => {
+      this.logger.debug('Logout event received from another tab');
+      this.clearToken();
+    });
+
+    this.logger.debug('Cross-tab sync configured for PAT authentication');
+  }
+
+  /**
+   * Generate a STABLE browser fingerprint for encryption key
+   * 
+   * Uses only STABLE components that do not change during normal usage:
+   * - navigator.userAgent (browser/version - stable)
+   * - navigator.hardwareConcurrency (CPU cores - stable)
+   * - navigator.platform (operating system - stable)
+   * - navigator.maxTouchPoints (touch capability - stable)
+   * - navigator.deviceMemory (RAM - stable, if available)
+   * 
+   * REMOVED volatile components that caused false positive logouts:
+   * - navigator.language (users may switch locales)
+   * - window.screen dimensions (changes on window resize)
+   * - canvas fingerprint (changes with zoom, rendering)
+   * - timezone offset (changes with travel/DST)
+   * - color depth (changes with monitor)
+   * 
    * @returns {string} Browser fingerprint
    */
   generateBrowserFingerprint() {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    ctx.textBaseline = 'top';
-    ctx.font = '14px Arial';
-    ctx.fillText('Browser fingerprint', 2, 2);
+    const components = [
+      navigator.userAgent || 'unknown',
+      (navigator.hardwareConcurrency || 'unknown').toString(),
+      navigator.platform || 'unknown',
+      (navigator.maxTouchPoints || 0).toString(),
+      (navigator.deviceMemory || 'unknown').toString()
+    ];
     
-    const fingerprint = [
-      navigator.userAgent,
-      navigator.language,
-      window.screen.width + 'x' + window.screen.height,
-      window.screen.colorDepth,
-      new Date().getTimezoneOffset(),
-      canvas.toDataURL()
-    ].join('|');
+    const fingerprint = components.join('|');
     
     // Create a simple hash of the fingerprint
     let hash = 0;
@@ -165,8 +212,10 @@ class SecureTokenStorage {
         fingerprint: fingerprint
       };
 
+      const encryptedData = JSON.stringify(storageData);
+
       // Store in sessionStorage (more secure than localStorage for tokens)
-      sessionStorage.setItem(this.storageKey, JSON.stringify(storageData));
+      sessionStorage.setItem(this.storageKey, encryptedData);
       
       // Clear any old tokens from localStorage
       localStorage.removeItem('github_token');
@@ -177,6 +226,16 @@ class SecureTokenStorage {
         expires: new Date(storageData.expires).toISOString(),
         tokenMask: this.maskToken(token)
       });
+
+      // Broadcast authentication event to other tabs
+      if (crossTabSyncService.isAvailable()) {
+        crossTabSyncService.broadcast(CrossTabEventTypes.PAT_AUTHENTICATED, {
+          encryptedData: encryptedData,
+          type: validation.type,
+          timestamp: Date.now()
+        });
+        this.logger.debug('PAT authentication broadcasted to other tabs');
+      }
 
       return true;
     } catch (error) {
@@ -296,6 +355,14 @@ class SecureTokenStorage {
     // Also clear legacy token storage
     sessionStorage.removeItem('github_token');
     localStorage.removeItem('github_token');
+    
+    // Broadcast logout event to other tabs
+    if (crossTabSyncService.isAvailable()) {
+      crossTabSyncService.broadcast(CrossTabEventTypes.LOGOUT, {
+        timestamp: Date.now()
+      });
+      this.logger.debug('Logout event broadcasted to other tabs');
+    }
   }
 
   /**
