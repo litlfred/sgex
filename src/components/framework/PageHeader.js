@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { usePage } from './PageProvider';
 import { useLocation } from 'react-router-dom';
 import githubService from '../../services/githubService';
 import userAccessService from '../../services/userAccessService';
 import bookmarkService from '../../services/bookmarkService';
+import samlAuthService from '../../services/samlAuthService';
+import SAMLAuthModal from '../SAMLAuthModal';
 import PreviewBadge from '../PreviewBadge';
 import { navigateToWelcomeWithFocus } from '../../utils/navigationUtils';
 
@@ -25,6 +27,17 @@ const PageHeader = () => {
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showBookmarkDropdown, setShowBookmarkDropdown] = useState(false);
   const [authenticatedUser, setAuthenticatedUser] = useState(null);
+  const [samlStatuses, setSamlStatuses] = useState({});
+  const [isCheckingSaml, setIsCheckingSaml] = useState(false);
+  const [samlModalOpen, setSamlModalOpen] = useState(false);
+  const [samlModalInfo, setSamlModalInfo] = useState(null);
+  const samlRefreshIntervalRef = useRef(null);
+
+  // Organizations to check for SAML status
+  const SAML_ORGS_TO_CHECK = [
+    'WorldHealthOrganization',
+    // Add more organizations as needed
+  ];
 
   // Always fetch the authenticated user for login button display
   useEffect(() => {
@@ -50,6 +63,86 @@ const PageHeader = () => {
       setAuthenticatedUser(null);
     }
   }, [isAuthenticated]);
+
+  // Register SAML modal callback on mount
+  useEffect(() => {
+    samlAuthService.registerModalCallback((samlInfo) => {
+      setSamlModalInfo(samlInfo);
+      setSamlModalOpen(true);
+    });
+    
+    return () => {
+      samlAuthService.registerModalCallback(null);
+    };
+  }, []);
+
+  // Check SAML status when dropdown is opened
+  useEffect(() => {
+    if (showUserDropdown && isAuthenticated) {
+      checkSamlStatus();
+      
+      // Start periodic refresh every 10 seconds
+      samlRefreshIntervalRef.current = setInterval(() => {
+        checkSamlStatus();
+      }, 10000);
+    } else {
+      // Stop refresh when dropdown closes
+      if (samlRefreshIntervalRef.current) {
+        clearInterval(samlRefreshIntervalRef.current);
+        samlRefreshIntervalRef.current = null;
+      }
+    }
+    
+    return () => {
+      if (samlRefreshIntervalRef.current) {
+        clearInterval(samlRefreshIntervalRef.current);
+        samlRefreshIntervalRef.current = null;
+      }
+    };
+  }, [showUserDropdown, isAuthenticated]);
+
+  const checkSamlStatus = async () => {
+    setIsCheckingSaml(true);
+    const statuses = {};
+    
+    for (const org of SAML_ORGS_TO_CHECK) {
+      try {
+        // Use a simple API call to check if SAML authorization is required
+        const status = await samlAuthService.checkSAMLStatus(
+          org,
+          async () => {
+            // Test with a minimal API call
+            await githubService.getOrganization(org);
+          }
+        );
+        
+        statuses[org] = status;
+      } catch (error) {
+        statuses[org] = {
+          organization: org,
+          authorized: false,
+          error: error.message,
+          timestamp: Date.now()
+        };
+      }
+    }
+    
+    setSamlStatuses(statuses);
+    setIsCheckingSaml(false);
+  };
+
+  const handleInitiateSamlAuth = (organization) => {
+    // Trigger SAML authorization workflow
+    const authUrl = samlAuthService.getSAMLAuthorizationUrl(organization);
+    setSamlModalInfo({
+      organization,
+      repository: null,
+      authorizationUrl: authUrl,
+      message: `SAML SSO authorization required for ${organization}`
+    });
+    setSamlModalOpen(true);
+    setShowUserDropdown(false);
+  };
 
   const handleLogout = () => {
     githubService.logout();
@@ -211,6 +304,45 @@ const PageHeader = () => {
                   )}
                 </div>
                 
+                {/* SAML Status section */}
+                <div className="saml-status-section">
+                  <div className="dropdown-item saml-status-header">
+                    🔐 SAML Authorization
+                  </div>
+                  
+                  <div className="saml-status-list">
+                    {isCheckingSaml ? (
+                      <div className="saml-loading">Checking status...</div>
+                    ) : Object.keys(samlStatuses).length > 0 ? (
+                      Object.values(samlStatuses).map(status => (
+                        <div key={status.organization} className="saml-status-item">
+                          <span className="saml-org-name">{status.organization}</span>
+                          {status.authorized ? (
+                            <span className="saml-status-indicator authorized">
+                              ✓ Authorized
+                            </span>
+                          ) : (
+                            <>
+                              <span className="saml-status-indicator not-authorized">
+                                ✗ Not Authorized
+                              </span>
+                              <button
+                                className="saml-authorize-btn-small"
+                                onClick={() => handleInitiateSamlAuth(status.organization)}
+                                title="Authorize SAML SSO"
+                              >
+                                Authorize
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="saml-loading">No organizations to check</div>
+                    )}
+                  </div>
+                </div>
+                
                 <button className="dropdown-item logout-btn" onClick={handleLogout}>
                   Logout
                 </button>
@@ -228,6 +360,20 @@ const PageHeader = () => {
           </button>
         )}
       </div>
+      
+      {/* SAML Modal */}
+      <SAMLAuthModal
+        isOpen={samlModalOpen}
+        onClose={() => {
+          setSamlModalOpen(false);
+          setSamlModalInfo(null);
+          // Recheck SAML status after modal closes
+          if (showUserDropdown) {
+            checkSamlStatus();
+          }
+        }}
+        samlInfo={samlModalInfo}
+      />
     </header>
   );
 };
