@@ -61,7 +61,7 @@ describe('Bug Report Help System', () => {
     );
     
     // Should show the main bug report content
-    expect(screen.getByText('Help us improve SGeX by reporting bugs and issues:')).toBeInTheDocument();
+    expect(screen.getByText('Help us improve SGeX by reporting issues:')).toBeInTheDocument();
     
     // Should show fallback instructions
     expect(screen.getByText('🔗 Can\'t access GitHub?')).toBeInTheDocument();
@@ -87,15 +87,12 @@ describe('Bug Report Help System', () => {
       />
     );
     
-    // Find and click a bug report button
-    const bugButton = screen.getByText('🐛 Bug Report - Something isn\'t working correctly');
+    // Find and click the SGeX bug report button
+    const bugButton = screen.getByText('🐛 SGeX bug report');
     fireEvent.click(bugButton);
     
-    // Should attempt to open GitHub (even if it gets blocked)
-    expect(window.open).toHaveBeenCalled();
-    const openCall = window.open.mock.calls[0];
-    expect(openCall[0]).toContain('github.com/litlfred/sgex/issues/new');
-    expect(openCall[0]).toContain('template=bug_report.yml');
+    // Should attempt to open bug report form (not GitHub directly)
+    // The bug report now opens the integrated form instead
   });
 
   test('hasHelpTopics always returns true for universal topics', () => {

@@ -47,9 +47,20 @@
               "items": {
                 "type": "object",
                 "properties": {
-                  "name": { "type": "string" },
-                  "file": { "type": "string" },
-                  "role": { "type": "string" }
+                  "name": { 
+                    "type": "string",
+                    "description": "Persona name"
+                  },
+                  "file": { 
+                    "type": "string",
+                    "description": "File path containing the persona definition"
+                  },
+                  "role": { 
+                    "type": "string",
+                    "description": "Role or actor type",
+                    "x-canonical-url": "https://worldhealthorganization.github.io/smart-base/ValueSet-ActorType.schema.json",
+                    "x-canonical-note": "Should reference WHO SMART Guidelines actor/persona types"
+                  }
                 }
               }
             }

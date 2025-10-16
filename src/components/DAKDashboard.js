@@ -3,10 +3,12 @@ import { useTranslation } from 'react-i18next';
 import githubService from '../services/githubService';
 import dakValidationService from '../services/dakValidationService';
 import branchContextService from '../services/branchContextService';
+import samlAuthService from '../services/samlAuthService';
 import HelpButton from './HelpButton';
 import DAKStatusBox from './DAKStatusBox';
 import Publications from './Publications';
 import ForkStatusBar from './ForkStatusBar';
+import SAMLAuthModal from './SAMLAuthModal';
 import { PageLayout, usePage } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
 import useThemeImage from '../hooks/useThemeImage';
@@ -56,6 +58,21 @@ const DAKDashboardContent = () => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showFAQModal, setShowFAQModal] = useState(false);
   const [selectedFAQComponent, setSelectedFAQComponent] = useState(null);
+  const [samlModalOpen, setSamlModalOpen] = useState(false);
+  const [samlModalInfo, setSamlModalInfo] = useState(null);
+
+  // Handle Escape key for FAQ modal
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape' && showFAQModal) {
+        setShowFAQModal(false);
+      }
+    };
+    if (showFAQModal) {
+      document.addEventListener('keydown', handleEscape);
+      return () => document.removeEventListener('keydown', handleEscape);
+    }
+  }, [showFAQModal]);
 
   // Use the branch from PageProvider
   const selectedBranch = branch;
@@ -158,17 +175,19 @@ const DAKDashboardContent = () => {
     
     return (
       <div className={`status-bar ${isExpanded ? 'expanded' : 'collapsed'}`}>
-        <div 
+        <button 
           className="status-bar-header" 
           onClick={() => setIsExpanded(!isExpanded)}
           style={{ backgroundColor: color }}
+          type="button"
+          aria-expanded={isExpanded}
         >
           <div className="status-bar-title">
             <span className="status-bar-icon">{icon}</span>
             <span className="status-bar-text">{title}</span>
           </div>
           <span className={`status-bar-chevron ${isExpanded ? 'expanded' : ''}`}>▼</span>
-        </div>
+        </button>
         {isExpanded && (
           <div className="status-bar-content">
             {children}
@@ -191,6 +210,14 @@ const DAKDashboardContent = () => {
       }
     }
   }, [repository]);
+
+  // Register SAML modal callback on mount
+  useEffect(() => {
+    samlAuthService.registerModalCallback((samlInfo) => {
+      setSamlModalInfo(samlInfo);
+      setSamlModalOpen(true);
+    });
+  }, []);
 
   // Load issue counts for repository
   const loadIssueCounts = async () => {
@@ -895,8 +922,21 @@ const DAKDashboardContent = () => {
 
       {/* FAQ Component Modal */}
       {showFAQModal && selectedFAQComponent && (
-        <div className="faq-modal-overlay" onClick={() => setShowFAQModal(false)}>
-          <div className="faq-modal" onClick={(e) => e.stopPropagation()}>
+        <div 
+          className="faq-modal-overlay" 
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowFAQModal(false);
+            }
+          }}
+          role="presentation"
+        >
+          <div 
+            className="faq-modal"
+            role="dialog"
+            aria-modal="true"
+            tabIndex={-1}
+          >
             <div className="faq-modal-header">
               <h3>❓ FAQ: {selectedFAQComponent.name}</h3>
               <button 
@@ -923,6 +963,16 @@ const DAKDashboardContent = () => {
           </div>
         </div>
       )}
+      
+      {/* SAML Authorization Modal */}
+      <SAMLAuthModal
+        isOpen={samlModalOpen}
+        onClose={() => {
+          setSamlModalOpen(false);
+          setSamlModalInfo(null);
+        }}
+        samlInfo={samlModalInfo}
+      />
     </div>
   );
 };

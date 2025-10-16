@@ -189,6 +189,7 @@
     display: block;
     height: 100%;
     pointer-events: auto;
+    cursor: pointer;
 }
 
 .card-link:hover {
@@ -205,6 +206,8 @@
 }
 
 .card-icon {
+    width: 80px;
+    height: 80px;
     object-fit: contain;
     flex-shrink: 0;
 }

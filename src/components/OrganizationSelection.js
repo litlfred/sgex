@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
+import samlAuthService from '../services/samlAuthService';
+import SAMLAuthModal from './SAMLAuthModal';
 import { PageLayout } from './framework';
 
 const OrganizationSelection = () => {
@@ -11,6 +13,8 @@ const OrganizationSelection = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [includePersonal, setIncludePersonal] = useState(true);
+  const [samlModalOpen, setSamlModalOpen] = useState(false);
+  const [samlModalInfo, setSamlModalInfo] = useState(null);
   
   const { profile, sourceRepository, action } = location.state || {};
 
@@ -242,6 +246,12 @@ const OrganizationSelection = () => {
       return;
     }
     
+    // Register SAML modal callback
+    samlAuthService.registerModalCallback((samlInfo) => {
+      setSamlModalInfo(samlInfo);
+      setSamlModalOpen(true);
+    });
+    
     fetchOrganizations();
   }, [profile, sourceRepository, action, navigate, fetchOrganizations]);
 
@@ -455,6 +465,16 @@ const OrganizationSelection = () => {
         </div>
         </div>
       )}
+      
+      {/* SAML Authorization Modal */}
+      <SAMLAuthModal
+        isOpen={samlModalOpen}
+        onClose={() => {
+          setSamlModalOpen(false);
+          setSamlModalInfo(null);
+        }}
+        samlInfo={samlModalInfo}
+      />
     </PageLayout>
   );
 };

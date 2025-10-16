@@ -41,10 +41,24 @@
         "structured": {
           "type": "object",
           "properties": {
-            "name": { "type": "string" },
-            "id": { "type": "string" },
-            "title": { "type": "string" },
-            "version": { "type": "string" }
+            "name": { 
+              "type": "string",
+              "description": "DAK name"
+            },
+            "id": { 
+              "type": "string",
+              "description": "DAK identifier",
+              "x-canonical-url": "https://worldhealthorganization.github.io/smart-base/StructureDefinition-DAK.schema.json",
+              "x-canonical-note": "Should align with WHO SMART Guidelines DAK Logical Model"
+            },
+            "title": { 
+              "type": "string",
+              "description": "DAK title"
+            },
+            "version": { 
+              "type": "string",
+              "description": "DAK version"
+            }
           }
         },
         "narrative": { "type": "string" },
