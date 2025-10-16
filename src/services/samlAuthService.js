@@ -6,13 +6,14 @@
  * modal interface for users to authorize their Personal Access Tokens.
  * 
  * Features:
- * - Cross-tab coordination for modal display using BroadcastChannel
+ * - Cross-tab coordination for modal display
  * - Polling for authorization completion
  * - Automatic retry of failed requests
  * - Session state persistence
  */
 
 import logger from '../utils/logger';
+import crossTabSyncService from './crossTabSyncService';
 import samlStateStorageService from './samlStateStorageService';
 
 class SAMLAuthService {
@@ -29,7 +30,7 @@ class SAMLAuthService {
     this.pollingIntervals = new Map(); // Active polling intervals
     this.pollingRequests = new Map(); // Original requests to retry
     
-    // Cross-tab synchronization using BroadcastChannel
+    // Cross-tab synchronization
     this.tabId = `tab-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     this.setupCrossTabSync();
     
@@ -37,43 +38,30 @@ class SAMLAuthService {
   }
 
   /**
-   * Setup cross-tab synchronization using BroadcastChannel API
-   * Based on pattern from PR #1120
+   * Setup cross-tab synchronization
    */
   setupCrossTabSync() {
-    if (typeof BroadcastChannel !== 'undefined') {
-      // Create broadcast channel for SAML events
-      this.samlChannel = new BroadcastChannel('sgex_saml_sync');
+    // Subscribe to SAML events from other tabs
+    this.crossTabUnsubscribe = crossTabSyncService.subscribe('saml-events', (data) => {
+      this.logger.debug('Received cross-tab SAML event', { data });
       
-      // Listen for SAML events from other tabs
-      this.samlChannel.addEventListener('message', (event) => {
-        this.logger.debug('Received cross-tab SAML event', { 
-          type: event.data.type,
-          organization: event.data.organization
-        });
-        
-        switch (event.data.type) {
-          case 'authorization-complete':
-            this.handleAuthorizationComplete(event.data.organization);
-            break;
-          case 'modal-opened':
-            this.handleModalOpenedInOtherTab(event.data.organization, event.data.tabId);
-            break;
-          case 'modal-closed':
-            this.handleModalClosedInOtherTab(event.data.organization, event.data.tabId);
-            break;
-          case 'polling-started':
-            this.handlePollingStartedInOtherTab(event.data.organization, event.data.tabId);
-            break;
-          default:
-            this.logger.warn('Unknown cross-tab event type', { type: event.data.type });
-        }
-      });
-      
-      this.logger.info('Cross-tab SAML synchronization enabled via BroadcastChannel');
-    } else {
-      this.logger.warn('BroadcastChannel not available, cross-tab sync disabled');
-    }
+      switch (data.type) {
+        case 'authorization-complete':
+          this.handleAuthorizationComplete(data.organization);
+          break;
+        case 'modal-opened':
+          this.handleModalOpenedInOtherTab(data.organization, data.tabId);
+          break;
+        case 'modal-closed':
+          this.handleModalClosedInOtherTab(data.organization, data.tabId);
+          break;
+        case 'polling-started':
+          this.handlePollingStartedInOtherTab(data.organization, data.tabId);
+          break;
+        default:
+          this.logger.warn('Unknown cross-tab event type', { type: data.type });
+      }
+    });
   }
 
   /**
@@ -208,14 +196,12 @@ class SAMLAuthService {
       samlStateStorageService.registerActiveModal(organization, this.tabId);
       
       // Broadcast modal opened event
-      if (this.samlChannel) {
-        this.samlChannel.postMessage({
-          type: 'modal-opened',
-          organization,
-          tabId: this.tabId,
-          timestamp: Date.now()
-        });
-      }
+      crossTabSyncService.publish('saml-events', {
+        type: 'modal-opened',
+        organization,
+        tabId: this.tabId,
+        timestamp: Date.now()
+      });
       
       this.modalCallback({
         organization,
@@ -283,14 +269,12 @@ class SAMLAuthService {
     });
     
     // Broadcast polling started
-    if (this.samlChannel) {
-      this.samlChannel.postMessage({
-        type: 'polling-started',
-        organization,
-        tabId: this.tabId,
-        timestamp: Date.now()
-      });
-    }
+    crossTabSyncService.publish('saml-events', {
+      type: 'polling-started',
+      organization,
+      tabId: this.tabId,
+      timestamp: Date.now()
+    });
     
     let pollCount = 0;
     
@@ -413,14 +397,12 @@ class SAMLAuthService {
     }
     
     // Broadcast to other tabs
-    if (this.samlChannel) {
-      this.samlChannel.postMessage({
-        type: 'authorization-complete',
-        organization,
-        tabId: this.tabId,
-        timestamp: Date.now()
-      });
-    }
+    crossTabSyncService.publish('saml-events', {
+      type: 'authorization-complete',
+      organization,
+      tabId: this.tabId,
+      timestamp: Date.now()
+    });
   }
 
   /**
@@ -529,15 +511,13 @@ class SAMLAuthService {
     }
     
     // Broadcast modal closed
-    if (this.samlChannel) {
-      this.samlChannel.postMessage({
-        type: 'modal-closed',
-        organization,
-        tabId: this.tabId,
-        laterClicked,
-        timestamp: Date.now()
-      });
-    }
+    crossTabSyncService.publish('saml-events', {
+      type: 'modal-closed',
+      organization,
+      tabId: this.tabId,
+      laterClicked,
+      timestamp: Date.now()
+    });
   }
 
   /**
@@ -632,10 +612,8 @@ class SAMLAuthService {
   destroy() {
     this.reset();
     
-    // Close BroadcastChannel
-    if (this.samlChannel) {
-      this.samlChannel.close();
-      this.samlChannel = null;
+    if (this.crossTabUnsubscribe) {
+      this.crossTabUnsubscribe();
     }
     
     this.logger.debug('SAML auth service destroyed');

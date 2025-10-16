@@ -10,7 +10,18 @@ This implementation enhances the SAML SSO authorization workflow in SGEX Workben
 
 ### New Files Created
 
-1. **`src/services/samlStateStorageService.js`** (389 lines)
+1. **`src/services/crossTabSyncService.js`** (222 lines)
+   - Cross-tab communication using BroadcastChannel API
+   - Automatic fallback to localStorage for unsupported browsers
+   - Subscription-based event handling
+   - Clean memory management
+
+2. **`src/services/crossTabSyncService.test.js`** (103 lines)
+   - Comprehensive test coverage for cross-tab sync
+   - Tests for subscribe/publish, error handling, multiple channels
+   - All 8 tests passing
+
+3. **`src/services/samlStateStorageService.js`** (389 lines)
    - Session and local storage management for SAML state
    - Pending request tracking
    - Cooldown state management
@@ -20,8 +31,8 @@ This implementation enhances the SAML SSO authorization workflow in SGEX Workben
 
 ### Files Enhanced
 
-2. **`src/services/samlAuthService.js`** (+461 lines)
-   - Added BroadcastChannel for cross-tab synchronization (following PR #1120 pattern)
+4. **`src/services/samlAuthService.js`** (+461 lines)
+   - Added cross-tab synchronization via CrossTabSyncService
    - Implemented polling mechanism (3s intervals, 5min timeout)
    - Added automatic retry functionality
    - Integrated state storage
@@ -29,14 +40,14 @@ This implementation enhances the SAML SSO authorization workflow in SGEX Workben
    - Multi-organization support
    - Tab coordination for modals and polling
 
-3. **`src/services/samlAuthService.test.js`** (+15 lines)
+5. **`src/services/samlAuthService.test.js`** (+15 lines)
    - Updated tests for new functionality
    - Added storage mocking
    - All 12 tests passing
 
-4. **`src/components/SAMLAuthModal.js`** (+98 lines)
-   - Added BroadcastChannel for cross-tab event handling
-   - Polling state and UI indicators
+6. **`src/components/SAMLAuthModal.js`** (+98 lines)
+   - Added polling state and UI indicators
+   - Cross-tab event handling via CrossTabSyncService
    - SSO window reference management
    - "Later" button with proper cooldown behavior
    - Auto-close when authorized in another tab
@@ -72,14 +83,13 @@ This implementation enhances the SAML SSO authorization workflow in SGEX Workben
 ## Features Implemented
 
 ### 1. ✅ Cross-Tab Communication
-- **Implementation:** BroadcastChannel API built directly into samlAuthService (following PR #1120 pattern)
+- **Service:** `crossTabSyncService.js`
 - **Features:**
-  - Direct BroadcastChannel usage without abstraction layer
-  - Subscribe via addEventListener on channel
-  - Publish via postMessage on channel
+  - BroadcastChannel API with localStorage fallback
+  - Subscribe/publish pattern
   - Automatic cleanup
   - Error handling
-  - Consistent with PR #1120 cross-tab sync approach
+  - Reusable across different features
 
 ### 2. ✅ State Persistence
 - **Service:** `samlStateStorageService.js`
@@ -335,7 +345,7 @@ handleSAMLError(error, owner, repo, retryCallback);
 
 ### Run All Tests
 ```bash
-npm test -- --testPathPattern=samlAuthService
+npm test -- --testPathPattern="saml|crossTab"
 ```
 
 ### Manual Testing Steps
