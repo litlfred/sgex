@@ -431,7 +431,7 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
                 return false;
               }
               
-              // Step 3: Calculate manual viewport if container has valid dimensions
+              // Step 3: Calculate bounds from actual elements for accurate viewport
               const containerWidth = containerRef.current?.offsetWidth || 0;
               const containerHeight = containerRef.current?.offsetHeight || 0;
               
@@ -440,28 +440,70 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
                 return false;
               }
               
-              console.log('📐 BPMNPreview: Calculating manual viewport...');
-              console.log('📊 BPMNPreview: Input data:', {
-                containerWidth,
-                containerHeight,
-                diagramBounds: viewbox.outer
+              // Get all visible elements and calculate their actual bounds
+              const allElements = elementRegistry.getAll();
+              const visibleElements = allElements.filter(el => {
+                // Filter out root elements, labels, and connection elements
+                // Only include shapes with actual dimensions
+                return el.x !== undefined && 
+                       el.y !== undefined && 
+                       el.width !== undefined && 
+                       el.height !== undefined &&
+                       el.width > 0 && 
+                       el.height > 0 &&
+                       !el.labelTarget; // Exclude labels
               });
               
-              // Manual viewport calculation following bpmn-js internal algorithm
+              console.log('📐 BPMNPreview: Calculating viewport from element bounds...');
+              console.log('📊 BPMNPreview: Found visible elements:', {
+                totalElements: allElements.length,
+                visibleElements: visibleElements.length,
+                containerDimensions: { containerWidth, containerHeight }
+              });
+              
+              let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+              
+              visibleElements.forEach(element => {
+                minX = Math.min(minX, element.x);
+                minY = Math.min(minY, element.y);
+                maxX = Math.max(maxX, element.x + element.width);
+                maxY = Math.max(maxY, element.y + element.height);
+              });
+              
+              // If we found valid bounds, use them; otherwise fall back to viewbox.outer
+              let diagramBounds;
+              if (minX !== Infinity && maxX !== -Infinity && minX < maxX && minY < maxY) {
+                diagramBounds = {
+                  x: minX,
+                  y: minY,
+                  width: maxX - minX,
+                  height: maxY - minY
+                };
+                console.log('✅ BPMNPreview: Calculated bounds from elements:', diagramBounds);
+              } else {
+                // Fallback to viewbox.outer if element-based calculation fails
+                diagramBounds = {
+                  x: viewbox.outer.x,
+                  y: viewbox.outer.y,
+                  width: viewbox.outer.width,
+                  height: viewbox.outer.height
+                };
+                console.warn('⚠️ BPMNPreview: Using viewbox.outer as fallback:', diagramBounds);
+              }
+              
+              // Manual viewport calculation with padding
               const padding = 20; // Add padding around diagram
-              const diagramWidth = viewbox.outer.width;
-              const diagramHeight = viewbox.outer.height;
+              const diagramWidth = diagramBounds.width;
+              const diagramHeight = diagramBounds.height;
               
               // Calculate scale to fit diagram in container
               const scaleX = containerWidth / (diagramWidth + padding * 2);
               const scaleY = containerHeight / (diagramHeight + padding * 2);
               const scale = Math.min(scaleX, scaleY, 1); // Don't zoom in beyond 100%
               
-              // Calculate center position
-              const scaledWidth = diagramWidth * scale;
-              const scaledHeight = diagramHeight * scale;
-              const x = viewbox.outer.x - (containerWidth / scale - diagramWidth) / 2;
-              const y = viewbox.outer.y - (containerHeight / scale - diagramHeight) / 2;
+              // Calculate centered position
+              const x = diagramBounds.x - (containerWidth / scale - diagramWidth) / 2;
+              const y = diagramBounds.y - (containerHeight / scale - diagramHeight) / 2;
               
               const manualViewbox = {
                 x,
@@ -474,8 +516,8 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
                 scale,
                 scaleX,
                 scaleY,
-                scaledDimensions: { width: scaledWidth, height: scaledHeight },
-                viewbox: manualViewbox
+                diagramBounds,
+                manualViewbox
               });
               
               // Step 4: Apply viewport with both automatic and manual fallback

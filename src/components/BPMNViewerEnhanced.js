@@ -303,7 +303,7 @@ const BPMNViewerEnhanced = () => {
             return;
           }
           
-          // Calculate diagram bounds
+          // Calculate diagram bounds from actual elements
           let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
           
           validElements.forEach(element => {
@@ -313,31 +313,32 @@ const BPMNViewerEnhanced = () => {
             maxY = Math.max(maxY, element.y + element.height);
           });
           
-          const padding = 50;
-          const diagramBounds = {
-            x: minX - padding,
-            y: minY - padding,
-            width: (maxX - minX) + (padding * 2),
-            height: (maxY - minY) + (padding * 2)
+          // Store raw bounds without padding for scale calculation
+          const rawDiagramBounds = {
+            x: minX,
+            y: minY,
+            width: maxX - minX,
+            height: maxY - minY
           };
           
-          console.log('📐 BPMNViewerEnhanced: Calculated diagram bounds:', diagramBounds);
+          console.log('📐 BPMNViewerEnhanced: Calculated raw diagram bounds:', rawDiagramBounds);
           
           // Get container dimensions
           const containerWidth = containerRef.current?.offsetWidth || 0;
           const containerHeight = containerRef.current?.offsetHeight || 0;
           
-          if (containerWidth > 0 && containerHeight > 0 && diagramBounds.width > 0 && diagramBounds.height > 0) {
-            // Calculate scale
-            const scaleX = containerWidth / diagramBounds.width;
-            const scaleY = containerHeight / diagramBounds.height;
+          if (containerWidth > 0 && containerHeight > 0 && rawDiagramBounds.width > 0 && rawDiagramBounds.height > 0) {
+            // Calculate scale with padding
+            const padding = 20;
+            const scaleX = containerWidth / (rawDiagramBounds.width + padding * 2);
+            const scaleY = containerHeight / (rawDiagramBounds.height + padding * 2);
             const scale = Math.min(scaleX, scaleY, 1);
             
             // Calculate centered viewbox
             const viewboxWidth = containerWidth / scale;
             const viewboxHeight = containerHeight / scale;
-            const viewboxX = diagramBounds.x + (diagramBounds.width - viewboxWidth) / 2;
-            const viewboxY = diagramBounds.y + (diagramBounds.height - viewboxHeight) / 2;
+            const viewboxX = rawDiagramBounds.x - (viewboxWidth - rawDiagramBounds.width) / 2;
+            const viewboxY = rawDiagramBounds.y - (viewboxHeight - rawDiagramBounds.height) / 2;
             
             const calculatedViewbox = {
               x: viewboxX,

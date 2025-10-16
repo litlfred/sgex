@@ -270,14 +270,59 @@ const BPMNViewerContent = () => {
             return false;
           }
           
-          // Calculate manual viewport
+          // Calculate bounds from actual elements for accurate viewport
+          const allElements = elementRegistry.getAll();
+          const visibleElements = allElements.filter(el => {
+            return el.x !== undefined && 
+                   el.y !== undefined && 
+                   el.width !== undefined && 
+                   el.height !== undefined &&
+                   el.width > 0 && 
+                   el.height > 0 &&
+                   !el.labelTarget;
+          });
+          
+          console.log('📐 BPMNViewer: Calculating viewport from element bounds...', {
+            totalElements: allElements.length,
+            visibleElements: visibleElements.length
+          });
+          
+          let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+          
+          visibleElements.forEach(element => {
+            minX = Math.min(minX, element.x);
+            minY = Math.min(minY, element.y);
+            maxX = Math.max(maxX, element.x + element.width);
+            maxY = Math.max(maxY, element.y + element.height);
+          });
+          
+          let diagramBounds;
+          if (minX !== Infinity && maxX !== -Infinity && minX < maxX && minY < maxY) {
+            diagramBounds = {
+              x: minX,
+              y: minY,
+              width: maxX - minX,
+              height: maxY - minY
+            };
+            console.log('✅ BPMNViewer: Calculated bounds from elements:', diagramBounds);
+          } else {
+            diagramBounds = {
+              x: viewbox.outer.x,
+              y: viewbox.outer.y,
+              width: viewbox.outer.width,
+              height: viewbox.outer.height
+            };
+            console.warn('⚠️ BPMNViewer: Using viewbox.outer as fallback:', diagramBounds);
+          }
+          
+          // Calculate manual viewport with padding
           const padding = 20;
-          const scaleX = containerWidth / (viewbox.outer.width + padding * 2);
-          const scaleY = containerHeight / (viewbox.outer.height + padding * 2);
+          const scaleX = containerWidth / (diagramBounds.width + padding * 2);
+          const scaleY = containerHeight / (diagramBounds.height + padding * 2);
           const scale = Math.min(scaleX, scaleY, 1);
           
-          const x = viewbox.outer.x - (containerWidth / scale - viewbox.outer.width) / 2;
-          const y = viewbox.outer.y - (containerHeight / scale - viewbox.outer.height) / 2;
+          const x = diagramBounds.x - (containerWidth / scale - diagramBounds.width) / 2;
+          const y = diagramBounds.y - (containerHeight / scale - diagramBounds.height) / 2;
           
           const manualViewbox = {
             x,
@@ -286,7 +331,7 @@ const BPMNViewerContent = () => {
             height: containerHeight / scale
           };
           
-          console.log('📊 BPMNViewer: Calculated viewport:', { scale, viewbox: manualViewbox });
+          console.log('📊 BPMNViewer: Calculated viewport:', { scale, diagramBounds, manualViewbox });
           
           // Try automatic zoom first, fallback to manual
           try {
