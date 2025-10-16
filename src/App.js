@@ -5,6 +5,7 @@ import { generateLazyRoutes } from './services/componentRouteService';
 import { initializeTheme } from './utils/themeManager';
 import logger from './utils/logger';
 import { initializeRoutingContext } from './services/routingContextService';
+import './services/routingLogger'; // Initialize routing logger early
 
 function App() {
   const appLogger = logger.getLogger('App');
