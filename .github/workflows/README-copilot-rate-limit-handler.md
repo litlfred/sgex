@@ -78,6 +78,68 @@ If the workflow encounters an error, it posts an error comment with:
   - `rate-limit-waiting` - For waiting status updates
   - `rate-limit-complete` - For completion notification
 
+## Example Workflow Execution
+
+Here's an example of how the workflow handles a Copilot rate limit error:
+
+### Scenario
+1. User asks Copilot to review a PR
+2. Copilot responds with: "Sorry, I've hit the rate limit. Please retry after 30 minutes."
+3. The rate limit handler workflow automatically triggers
+
+### Timeline
+
+**T+0 minutes** - Initial Detection
+```
+⏳ Copilot Rate Limit Handler: Waiting 🟡
+
+Copilot rate limit detected. Automatically waiting and will retry when ready.
+Remaining time: 30 minutes
+
+📋 Deployment Timeline
+- 2025-10-16 18:30:00 UTC - 🟡 Waiting for rate limit - 30 minutes remaining
+```
+
+**T+5 minutes** - First Update
+```
+⏳ Copilot Rate Limit Handler: Waiting 🟡
+
+Yep, still here waiting. Will retry in 25 minutes.
+Remaining time: 25 minutes
+
+📋 Deployment Timeline
+- 2025-10-16 18:30:00 UTC - 🟢 Waiting for rate limit - 30 minutes remaining
+- 2025-10-16 18:35:00 UTC - 🟡 Waiting for rate limit - 25 minutes remaining
+```
+
+**T+10 minutes** - Second Update
+```
+⏳ Copilot Rate Limit Handler: Waiting 🟡
+
+Yep, still here waiting. Will retry in 20 minutes.
+Remaining time: 20 minutes
+```
+
+... (continues every 5 minutes) ...
+
+**T+30 minutes** - Complete
+```
+✅ Copilot Rate Limit Handler: Complete 🟢
+
+Done waiting! Copilot retry command posted.
+
+📋 Deployment Timeline
+- 2025-10-16 18:30:00 UTC - 🟢 Waiting for rate limit - 30 minutes remaining
+- 2025-10-16 18:35:00 UTC - 🟢 Waiting for rate limit - 25 minutes remaining
+- ... (all previous updates) ...
+- 2025-10-16 19:00:00 UTC - 🟢 Rate limit handler complete - Copilot retry triggered
+```
+
+Followed by a new comment:
+```
+@copilot review previous comments and try again.
+```
+
 ## Usage
 
 This workflow runs automatically when Copilot posts rate limit errors. No manual intervention is required unless:
@@ -133,3 +195,82 @@ Potential enhancements:
 3. Integration with GitHub API rate limit headers for more accurate timing
 4. Support for different Copilot error types beyond rate limits
 5. Metrics tracking and reporting on rate limit occurrences
+
+## Architecture Details
+
+### Workflow Stages
+
+The workflow uses the `manage-pr-comment.py` script with two custom stages:
+
+1. **`rate-limit-waiting`** - Used for initial notification and periodic updates
+   - Shows remaining wait time
+   - Updates every 5 minutes with countdown
+   - Displays orange/yellow status indicator (🟡)
+
+2. **`rate-limit-complete`** - Used when wait completes
+   - Shows completion message
+   - Indicates Copilot retry has been triggered
+   - Displays green status indicator (🟢)
+
+### Comment Management
+
+The workflow creates a single managed comment that gets updated throughout the process:
+- Uses action-specific marker: `copilot-rate-limit-{github.run_id}`
+- Prevents duplicate comments for the same workflow run
+- Maintains a timeline of all status updates
+- Includes links to workflow logs for debugging
+
+### Timing Strategy
+
+The workflow implements a simple but effective timing strategy:
+
+```bash
+total_wait = wait_minutes * 60  # Convert to seconds
+elapsed = 0
+update_interval = 300  # 5 minutes
+
+while elapsed < total_wait:
+  remaining = total_wait - elapsed
+  wait_time = min(remaining, update_interval)
+  
+  sleep(wait_time)
+  elapsed += wait_time
+  
+  if elapsed < total_wait:
+    update_status(remaining_minutes)
+```
+
+This ensures:
+- Updates happen every 5 minutes
+- Last update happens when wait completes
+- No updates are skipped due to rounding errors
+- Workflow stays within GitHub Actions timeout (6 hours)
+
+### Error Recovery
+
+The workflow includes several error recovery mechanisms:
+
+1. **Detection Errors**: If rate limit detection fails, workflow simply doesn't trigger
+2. **Update Errors**: If comment updates fail, workflow continues to retry
+3. **Timeout Warning**: Posts warning if wait time exceeds 6 hours
+4. **Failure Handler**: Catches all errors and posts helpful message with manual instructions
+
+### Testing Strategy
+
+The workflow includes a companion test script (`scripts/test-copilot-rate-limit-handler.py`) that validates:
+- Rate limit error detection patterns
+- Wait time extraction from various message formats
+- Update interval calculations
+- Edge cases (missing time, invalid formats, etc.)
+
+Run tests with:
+```bash
+python3 scripts/test-copilot-rate-limit-handler.py
+```
+
+## Related Files
+
+- **Workflow**: `.github/workflows/copilot-rate-limit-handler.yml`
+- **Comment Manager**: `scripts/manage-pr-comment.py`
+- **Tests**: `scripts/test-copilot-rate-limit-handler.py`
+- **Documentation**: This file
