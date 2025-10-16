@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAML Modal Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+                'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+                sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .test-container {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #0a3e7a;
+            margin-top: 0;
+        }
+
+        .description {
+            color: #666;
+            margin-bottom: 2rem;
+        }
+
+        .test-button {
+            background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            display: block;
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+
+        .test-button:hover {
+            transform: translateY(-2px);
+        }
+
+        .test-button:active {
+            transform: translateY(0);
+        }
+
+        .info-box {
+            background: #fff9e6;
+            border: 1px solid #ffd700;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 2rem;
+        }
+
+        .info-box h3 {
+            margin-top: 0;
+            color: #664d00;
+        }
+
+        .info-box ul {
+            margin: 0;
+            padding-left: 1.5rem;
+        }
+
+        .info-box li {
+            color: #664d00;
+            margin-bottom: 0.5rem;
+        }
+
+        /* SAML Modal Styles (imported from SAMLAuthModal.css) */
+        .saml-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 1rem;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        .saml-modal-overlay.hidden {
+            display: none;
+        }
+
+        .saml-modal {
+            background: white;
+            border: 2px solid #0078d4;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 560px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            animation: modalSlideUp 0.3s ease-out;
+        }
+
+        .saml-modal-header {
+            background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+            color: white;
+            padding: 1.5rem 2rem;
+            border-radius: 14px 14px 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .saml-modal-header h2 {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .close-button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background 0.2s ease;
+        }
+
+        .close-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .saml-modal-content {
+            padding: 2rem;
+        }
+
+        .saml-info-section {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .saml-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .saml-info-section h3 {
+            margin: 0 0 1rem 0;
+            font-size: 1.5rem;
+            color: #0a3e7a;
+        }
+
+        .saml-description {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+        }
+
+        .saml-description strong {
+            color: #0078d4;
+            font-weight: 600;
+        }
+
+        .saml-steps-section {
+            background: #f5f9fc;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .saml-steps-section h4 {
+            margin: 0 0 1rem 0;
+            font-size: 1.1rem;
+            color: #0a3e7a;
+        }
+
+        .saml-steps {
+            margin: 0;
+            padding-left: 1.5rem;
+            list-style: decimal;
+        }
+
+        .saml-steps li {
+            margin-bottom: 0.75rem;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .saml-steps li:last-child {
+            margin-bottom: 0;
+        }
+
+        .saml-steps strong {
+            color: #0a3e7a;
+            font-weight: 600;
+        }
+
+        .saml-note {
+            background: #fff9e6;
+            border: 1px solid #ffd700;
+            border-radius: 8px;
+            padding: 1rem;
+            display: flex;
+            gap: 0.75rem;
+            align-items: start;
+            margin-bottom: 1.5rem;
+        }
+
+        .note-icon {
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .saml-note p {
+            margin: 0;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: #664d00;
+        }
+
+        .saml-modal-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .saml-authorize-btn,
+        .saml-cancel-btn {
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+        }
+
+        .saml-authorize-btn {
+            background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 120, 212, 0.3);
+        }
+
+        .saml-authorize-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 120, 212, 0.4);
+        }
+
+        .saml-cancel-btn {
+            background: #f5f5f5;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+
+        .saml-cancel-btn:hover {
+            background: #e0e0e0;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes modalSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔐 SAML Modal Test</h1>
+        <p class="description">
+            This page allows you to test the SAML authorization modal that appears when
+            a GitHub Personal Access Token needs SAML SSO authorization for an organization.
+        </p>
+
+        <button class="test-button" onclick="showWHOModal()">
+            Test WHO Organization SAML Error
+        </button>
+
+        <button class="test-button" onclick="showGenericModal()">
+            Test Generic Organization SAML Error
+        </button>
+
+        <button class="test-button" onclick="showWithRepoModal()">
+            Test SAML Error with Repository
+        </button>
+
+        <div class="info-box">
+            <h3>ℹ️ What to Test</h3>
+            <ul>
+                <li>Modal appearance and styling</li>
+                <li>Instructions clarity</li>
+                <li>"Authorize on GitHub" button functionality</li>
+                <li>Close button and overlay click behavior</li>
+                <li>Responsive design (try resizing window)</li>
+                <li>Accessibility (keyboard navigation)</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- SAML Modal -->
+    <div id="samlModalOverlay" class="saml-modal-overlay hidden" onclick="closeModal()">
+        <div class="saml-modal" onclick="event.stopPropagation()">
+            <div class="saml-modal-header">
+                <h2 id="saml-modal-title">🔐 SAML SSO Authorization Required</h2>
+                <button onclick="closeModal()" class="close-button" aria-label="Close">
+                    ×
+                </button>
+            </div>
+            
+            <div class="saml-modal-content">
+                <div class="saml-info-section">
+                    <div class="saml-icon">
+                        <span role="img" aria-label="lock">🔒</span>
+                    </div>
+                    
+                    <h3>Organization Access Required</h3>
+                    <p class="saml-description" id="samlDescription">
+                        Your Personal Access Token needs SAML SSO authorization to access the
+                        <strong id="orgName">Organization</strong> organization.
+                    </p>
+                </div>
+
+                <div class="saml-steps-section">
+                    <h4>How to authorize your token:</h4>
+                    <ol class="saml-steps">
+                        <li>
+                            <strong>Click "Authorize on GitHub"</strong> below to open the authorization page
+                        </li>
+                        <li>
+                            <strong>Review the permissions</strong> requested by the organization
+                        </li>
+                        <li>
+                            <strong>Click "Authorize"</strong> to grant your token access
+                        </li>
+                        <li>
+                            <strong>Return to this page</strong> and refresh or try your action again
+                        </li>
+                    </ol>
+                </div>
+
+                <div class="saml-note">
+                    <span class="note-icon">ℹ️</span>
+                    <p>
+                        This is a GitHub security feature for organizations using SAML SSO.
+                        You only need to authorize once per organization per token.
+                    </p>
+                </div>
+
+                <div class="saml-modal-actions">
+                    <button onclick="authorizeOnGitHub()" class="saml-authorize-btn">
+                        🔓 Authorize on GitHub
+                    </button>
+                    <button onclick="closeModal()" class="saml-cancel-btn">
+                        Later
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentAuthUrl = '';
+
+        function showWHOModal() {
+            showModal('WorldHealthOrganization', null);
+        }
+
+        function showGenericModal() {
+            showModal('MyOrganization', null);
+        }
+
+        function showWithRepoModal() {
+            showModal('WorldHealthOrganization', 'smart-immunizations');
+        }
+
+        function showModal(organization, repository) {
+            const overlay = document.getElementById('samlModalOverlay');
+            const orgNameEl = document.getElementById('orgName');
+            const descriptionEl = document.getElementById('samlDescription');
+            
+            currentAuthUrl = `https://github.com/orgs/${organization}/sso`;
+            
+            orgNameEl.textContent = organization;
+            
+            if (repository) {
+                descriptionEl.innerHTML = `
+                    Your Personal Access Token needs SAML SSO authorization to access the
+                    <strong>${organization}</strong> organization and the <strong>${repository}</strong> repository.
+                `;
+            } else {
+                descriptionEl.innerHTML = `
+                    Your Personal Access Token needs SAML SSO authorization to access the
+                    <strong>${organization}</strong> organization.
+                `;
+            }
+            
+            overlay.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            const overlay = document.getElementById('samlModalOverlay');
+            overlay.classList.add('hidden');
+        }
+
+        function authorizeOnGitHub() {
+            console.log('Opening GitHub SSO authorization page:', currentAuthUrl);
+            window.open(currentAuthUrl, '_blank', 'noopener,noreferrer');
+            alert('GitHub authorization page opened in a new tab.\n\nAfter authorizing:\n1. Return to this page\n2. Refresh or try your action again');
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            const overlay = document.getElementById('samlModalOverlay');
+            if (e.key === 'Escape' && !overlay.classList.contains('hidden')) {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>

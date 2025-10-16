@@ -1,0 +1,51 @@
+@startuml Edit Existing DAK Workflow Sequence
+!theme plain
+title Edit Existing DAK Workflow - Sequence Diagram
+
+actor "[[../requirements.md#req-actor-001 DAK Author]]" as Author
+participant "[[../requirements.md#req-actor-002 SGeX Workbench]]" as SGeX  
+participant "[[../requirements.md#req-actor-003 GitHub]]" as GitHub
+participant "[[../requirements.md#req-actor-004 OCL]]" as OCL
+participant "[[../requirements.md#req-actor-005 PCMT]]" as PCMT
+
+Author -> SGeX: Choose "Edit Existing DAK" action
+Author -> SGeX: Navigate to DAK selection
+
+SGeX -> GitHub: Query user organizations/repositories  
+GitHub -> SGeX: Return available repositories
+SGeX -> GitHub: Filter for SMART Guidelines repos\n(with smart.who.int.base dependency)
+GitHub -> SGeX: Return filtered DAK repositories
+SGeX -> Author: Present DAK selection interface
+
+Author -> SGeX: Select DAK repository
+SGeX -> Author: Navigate to Edit DAK Component
+
+== Edit DAK Component Phase ==
+Author -> SGeX: Access DAK Component Editor
+SGeX -> Author: Present component editing interface
+
+loop Component Editing Session
+    Author -> SGeX: Edit component content
+    
+    alt Terminology Data Needed
+        SGeX -> OCL: Request terminology data
+        OCL -> SGeX: Provide terminology definitions/mappings
+        SGeX -> Author: Present terminology options
+    end
+    
+    alt Product Data Needed  
+        SGeX -> PCMT: Request product master data
+        PCMT -> SGeX: Provide product catalog information
+        SGeX -> Author: Present product data options
+    end
+    
+    Author -> SGeX: Save component changes
+    SGeX -> GitHub: Commit changes to repository
+    GitHub -> SGeX: Confirm commit
+    SGeX -> Author: Confirm save successful
+end
+
+Author -> SGeX: Complete DAK editing
+SGeX -> Author: Return to DAK dashboard
+
+@enduml
