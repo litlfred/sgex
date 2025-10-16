@@ -172,7 +172,7 @@ body.theme-light .dak-action-selection {
   position: relative;
   background: var(--who-card-bg);
   backdrop-filter: blur(10px);
-  min-height: 350px;
+  min-height: 450px;
   flex: 1;
   max-width: 320px;
   min-width: 280px;
