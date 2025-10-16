@@ -9,6 +9,16 @@ describe('SAMLAuthService', () => {
     // Reset service state before each test
     samlAuthService.reset();
     samlAuthService.registerModalCallback(null);
+    
+    // Clear storage
+    sessionStorage.clear();
+    localStorage.clear();
+  });
+
+  afterEach(() => {
+    // Clean up
+    sessionStorage.clear();
+    localStorage.clear();
   });
 
   describe('detectSAMLError', () => {
@@ -107,6 +117,11 @@ describe('SAMLAuthService', () => {
       const handled1 = samlAuthService.handleSAMLError(error, 'TestOrg', 'repo1');
       expect(handled1).toBe(true);
       expect(mockCallback).toHaveBeenCalledTimes(1);
+
+      // Manually set cooldown in storage to simulate "Later" click
+      const cooldowns = {};
+      cooldowns['TestOrg'] = Date.now() + 60000;
+      localStorage.setItem('saml:cooldowns', JSON.stringify(cooldowns));
 
       // Second call within cooldown should still return true but not trigger modal
       const handled2 = samlAuthService.handleSAMLError(error, 'TestOrg', 'repo2');

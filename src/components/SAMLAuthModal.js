@@ -1,5 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import logger from '../utils/logger';
+import samlAuthService from '../services/samlAuthService';
+import crossTabSyncService from '../services/crossTabSyncService';
 import './SAMLAuthModal.css';
 
 /**
@@ -7,9 +9,17 @@ import './SAMLAuthModal.css';
  * 
  * Modal dialog that guides users through GitHub SAML SSO authorization process.
  * Displayed when a Personal Access Token needs SAML SSO authorization for an organization.
+ * 
+ * Features:
+ * - Polling for authorization completion
+ * - Cross-tab coordination
+ * - Automatic retry on success
  */
 const SAMLAuthModal = ({ isOpen, onClose, samlInfo }) => {
   const componentLogger = logger.getLogger('SAMLAuthModal');
+  const [isPolling, setIsPolling] = useState(false);
+  const ssoWindowRef = useRef(null);
+  const crossTabUnsubscribeRef = useRef(null);
 
   useEffect(() => {
     if (isOpen && samlInfo) {
@@ -17,10 +27,36 @@ const SAMLAuthModal = ({ isOpen, onClose, samlInfo }) => {
         organization: samlInfo.organization,
         repository: samlInfo.repository 
       });
+      
+      // Subscribe to cross-tab events for this modal
+      crossTabUnsubscribeRef.current = crossTabSyncService.subscribe('saml-events', (data) => {
+        if (data.organization === samlInfo.organization) {
+          if (data.type === 'authorization-complete') {
+            componentLogger.info('Authorization completed in another tab', {
+              organization: samlInfo.organization
+            });
+            
+            // Close this modal
+            handleClose();
+          }
+        }
+      });
     }
+    
     return () => {
       if (isOpen) {
         componentLogger.componentUnmount();
+        
+        // Clean up cross-tab subscription
+        if (crossTabUnsubscribeRef.current) {
+          crossTabUnsubscribeRef.current();
+          crossTabUnsubscribeRef.current = null;
+        }
+        
+        // Close SSO window if still open
+        if (ssoWindowRef.current && !ssoWindowRef.current.closed) {
+          ssoWindowRef.current.close();
+        }
       }
     };
   }, [componentLogger, isOpen, samlInfo]);
@@ -38,17 +74,53 @@ const SAMLAuthModal = ({ isOpen, onClose, samlInfo }) => {
     });
     
     // Open GitHub SAML authorization page in new tab
-    window.open(authorizationUrl, '_blank', 'noopener,noreferrer');
+    ssoWindowRef.current = window.open(authorizationUrl, '_blank', 'noopener,noreferrer');
+    
+    // Start polling for authorization completion
+    setIsPolling(true);
+    samlAuthService.startPolling(organization, ssoWindowRef.current);
     
     // Log instruction for user
-    componentLogger.info('SAML authorization page opened', {
+    componentLogger.info('SAML authorization page opened, polling started', {
+      type: 'authorization-initiated',
       organization,
-      instruction: 'User should authorize their PAT on GitHub and then refresh'
+      instruction: 'Polling for authorization completion'
     });
   };
 
+  const handleLater = () => {
+    componentLogger.userAction('Later clicked', { 
+      type: 'later-clicked',
+      organization 
+    });
+    
+    // Stop polling if active
+    if (isPolling) {
+      samlAuthService.stopPolling(organization);
+      setIsPolling(false);
+    }
+    
+    // Notify service that modal was closed with "Later"
+    samlAuthService.notifyModalClosed(organization, true);
+    
+    onClose();
+  };
+
   const handleClose = () => {
-    componentLogger.userAction('SAML modal closed', { organization });
+    componentLogger.userAction('SAML modal closed', { 
+      type: 'modal-closed',
+      organization 
+    });
+    
+    // Stop polling if active
+    if (isPolling) {
+      samlAuthService.stopPolling(organization);
+      setIsPolling(false);
+    }
+    
+    // Notify service that modal was closed
+    samlAuthService.notifyModalClosed(organization, false);
+    
     onClose();
   };
 
@@ -102,9 +174,16 @@ const SAMLAuthModal = ({ isOpen, onClose, samlInfo }) => {
                 <strong>Click "Authorize"</strong> to grant your token access
               </li>
               <li>
-                <strong>Return to this page</strong> and refresh or try your action again
+                <strong>Return to this page</strong> - the authorization will be detected automatically
               </li>
             </ol>
+            
+            {isPolling && (
+              <div className="polling-indicator">
+                <span className="spinner">⏳</span>
+                <span>Waiting for authorization...</span>
+              </div>
+            )}
           </div>
 
           <div className="saml-note">
@@ -112,6 +191,7 @@ const SAMLAuthModal = ({ isOpen, onClose, samlInfo }) => {
             <p>
               This is a GitHub security feature for organizations using SAML SSO.
               You only need to authorize once per organization per token.
+              {isPolling && ' Your authorization will be detected automatically when complete.'}
             </p>
           </div>
 
@@ -119,12 +199,14 @@ const SAMLAuthModal = ({ isOpen, onClose, samlInfo }) => {
             <button 
               onClick={handleAuthorize}
               className="saml-authorize-btn"
+              disabled={isPolling}
             >
-              🔓 Authorize on GitHub
+              {isPolling ? '⏳ Waiting...' : '🔓 Authorize on GitHub'}
             </button>
             <button 
-              onClick={handleClose}
+              onClick={handleLater}
               className="saml-cancel-btn"
+              title="Dismiss for 1 minute"
             >
               Later
             </button>

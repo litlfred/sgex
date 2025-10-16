@@ -136,6 +136,34 @@
   font-weight: 600;
 }
 
+.polling-indicator {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: rgba(0, 120, 212, 0.1);
+  border: 1px solid rgba(0, 120, 212, 0.3);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  color: var(--who-blue, #0078d4);
+  font-weight: 600;
+}
+
+.polling-indicator .spinner {
+  animation: spin 2s linear infinite;
+  font-size: 1.5rem;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .saml-note {
   background: #fff9e6;
   border: 1px solid #ffd700;
@@ -185,12 +213,18 @@
   box-shadow: 0 4px 12px rgba(0, 120, 212, 0.3);
 }
 
-.saml-authorize-btn:hover {
+.saml-authorize-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.saml-authorize-btn:not(:disabled):hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(0, 120, 212, 0.4);
 }
 
-.saml-authorize-btn:active {
+.saml-authorize-btn:not(:disabled):active {
   transform: translateY(0);
 }
 
@@ -264,6 +298,12 @@
 
   .saml-cancel-btn:hover {
     background: #333;
+  }
+  
+  .polling-indicator {
+    background: rgba(74, 158, 255, 0.15);
+    border-color: rgba(74, 158, 255, 0.3);
+    color: #4a9eff;
   }
 }
 
