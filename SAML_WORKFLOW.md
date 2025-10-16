@@ -63,29 +63,23 @@ samlAuthService.clearCooldown('OrgName');
 samlAuthService.reset();
 ```
 
-### 2. CrossTabSyncService (`src/services/crossTabSyncService.js`)
+### 2. Cross-Tab Communication
 
-Provides cross-tab communication using BroadcastChannel API with localStorage fallback.
+SAML authorization uses BroadcastChannel API directly for cross-tab coordination.
 
-**Key Features:**
-- Cross-tab message broadcasting
-- Subscription-based event handling
-- Automatic fallback to localStorage for unsupported browsers
-- Cleanup and memory management
+**Implementation (built into samlAuthService):**
+- Channel name: `sgex_saml_sync`
+- Uses BroadcastChannel API (no localStorage fallback)
+- Events automatically broadcast between tabs
+- Gracefully degrades if BroadcastChannel unavailable
 
-**API:**
-```javascript
-// Subscribe to a channel
-const unsubscribe = crossTabSyncService.subscribe('channel-name', (data) => {
-  console.log('Received:', data);
-});
+**Event Types:**
+- `modal-opened` - Modal displayed in a tab
+- `modal-closed` - Modal closed in a tab  
+- `polling-started` - Polling begun in a tab
+- `authorization-complete` - SAML authorization succeeded
 
-// Publish to a channel
-crossTabSyncService.publish('channel-name', { type: 'event', data: 'value' });
-
-// Cleanup
-unsubscribe();
-```
+Pattern follows PR #1120 design for consistent cross-tab sync across the application.
 
 ### 3. SAMLStateStorageService (`src/services/samlStateStorageService.js`)
 
@@ -268,12 +262,18 @@ The following components have been integrated with the SAML workflow:
 
 ## Cross-Tab Coordination
 
-The system coordinates SAML workflows across multiple browser tabs:
+The system coordinates SAML workflows across multiple browser tabs using BroadcastChannel API directly (pattern from PR #1120):
 
 1. **Modal visibility:** Only one tab shows the modal per organization
 2. **Polling:** Only one tab polls per organization to minimize API calls
 3. **State sync:** All tabs receive authorization completion events
 4. **Cleanup:** Stale modal registrations auto-expire after 5 minutes
+
+**Implementation:**
+- BroadcastChannel directly in samlAuthService and SAMLAuthModal
+- Channel name: `sgex_saml_sync`
+- No localStorage fallback (graceful degradation)
+- Consistent with PR #1120 cross-tab sync pattern
 
 **Events broadcasted:**
 - `modal-opened`: When a modal is opened in a tab
@@ -324,7 +324,6 @@ The service implements a cooldown mechanism to prevent modal spam:
 
 Tests are located in:
 - `src/services/samlAuthService.test.js` - SAML auth service tests
-- `src/services/crossTabSyncService.test.js` - Cross-tab sync tests
 
 Coverage includes:
 
@@ -335,13 +334,10 @@ Coverage includes:
 - ✓ Cooldown mechanism
 - ✓ Pending request tracking
 - ✓ Authorization URL generation
-- ✓ Cross-tab message publishing and subscribing
-- ✓ Storage-based fallback for unsupported browsers
 
 Run tests:
 ```bash
 npm test -- --testPathPattern=samlAuthService.test.js
-npm test -- --testPathPattern=crossTabSyncService.test.js
 ```
 
 ## Logging
@@ -422,12 +418,10 @@ All logs are accessible through the browser console and the logger service.
 
 ## Related Files
 
-- `src/services/samlAuthService.js` - SAML auth service
+- `src/services/samlAuthService.js` - SAML auth service with BroadcastChannel
 - `src/services/samlAuthService.test.js` - Service tests
-- `src/services/crossTabSyncService.js` - Cross-tab communication
-- `src/services/crossTabSyncService.test.js` - Cross-tab sync tests
 - `src/services/samlStateStorageService.js` - State persistence
-- `src/components/SAMLAuthModal.js` - Modal component
+- `src/components/SAMLAuthModal.js` - Modal component with BroadcastChannel
 - `src/components/SAMLAuthModal.css` - Modal styles
 - `src/components/framework/PageHeader.js` - Header with SAML status
 - `src/components/framework/PageHeader.css` - Header styles

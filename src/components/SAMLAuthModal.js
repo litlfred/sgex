@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import logger from '../utils/logger';
 import samlAuthService from '../services/samlAuthService';
-import crossTabSyncService from '../services/crossTabSyncService';
 import './SAMLAuthModal.css';
 
 /**
@@ -12,14 +11,14 @@ import './SAMLAuthModal.css';
  * 
  * Features:
  * - Polling for authorization completion
- * - Cross-tab coordination
+ * - Cross-tab coordination via BroadcastChannel
  * - Automatic retry on success
  */
 const SAMLAuthModal = ({ isOpen, onClose, samlInfo }) => {
   const componentLogger = logger.getLogger('SAMLAuthModal');
   const [isPolling, setIsPolling] = useState(false);
   const ssoWindowRef = useRef(null);
-  const crossTabUnsubscribeRef = useRef(null);
+  const samlChannelRef = useRef(null);
 
   useEffect(() => {
     if (isOpen && samlInfo) {
@@ -28,29 +27,33 @@ const SAMLAuthModal = ({ isOpen, onClose, samlInfo }) => {
         repository: samlInfo.repository 
       });
       
-      // Subscribe to cross-tab events for this modal
-      crossTabUnsubscribeRef.current = crossTabSyncService.subscribe('saml-events', (data) => {
-        if (data.organization === samlInfo.organization) {
-          if (data.type === 'authorization-complete') {
-            componentLogger.info('Authorization completed in another tab', {
-              organization: samlInfo.organization
-            });
-            
-            // Close this modal
-            handleClose();
+      // Setup BroadcastChannel to listen for cross-tab events
+      if (typeof BroadcastChannel !== 'undefined') {
+        samlChannelRef.current = new BroadcastChannel('sgex_saml_sync');
+        
+        samlChannelRef.current.addEventListener('message', (event) => {
+          if (event.data.organization === samlInfo.organization) {
+            if (event.data.type === 'authorization-complete') {
+              componentLogger.info('Authorization completed in another tab', {
+                organization: samlInfo.organization
+              });
+              
+              // Close this modal
+              handleClose();
+            }
           }
-        }
-      });
+        });
+      }
     }
     
     return () => {
       if (isOpen) {
         componentLogger.componentUnmount();
         
-        // Clean up cross-tab subscription
-        if (crossTabUnsubscribeRef.current) {
-          crossTabUnsubscribeRef.current();
-          crossTabUnsubscribeRef.current = null;
+        // Clean up BroadcastChannel
+        if (samlChannelRef.current) {
+          samlChannelRef.current.close();
+          samlChannelRef.current = null;
         }
         
         // Close SSO window if still open
