@@ -238,7 +238,8 @@ body.theme-light .welcome-page-content {
   /* Override the horizontal layout for this special card */
   flex-direction: column !important;
   text-align: center !important;
-  min-height: 350px !important;
+  /* Match height of authoring and collaboration cards */
+  min-height: 465px !important;
 }
 
 .pat-demo-card::before {
