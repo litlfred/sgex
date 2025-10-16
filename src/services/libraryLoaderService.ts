@@ -8,16 +8,25 @@
  * 3. Optimized imports with error handling
  * 
  * Split from lazyRouteUtils.js for better separation of concerns.
+ * 
+ * @module libraryLoaderService
  */
 
 // Cache for lazy-loaded modules to avoid repeated imports
-const moduleCache = new Map();
+const moduleCache = new Map<string, any>();
 
 /**
  * Lazy load Octokit for GitHub API operations
- * @returns {Promise<Octokit>} Octokit constructor
+ * 
+ * @openapi
+ * /api/library-loader/octokit:
+ *   get:
+ *     summary: Load Octokit library
+ *     responses:
+ *       200:
+ *         description: Octokit constructor loaded
  */
-export async function lazyLoadOctokit() {
+export async function lazyLoadOctokit(): Promise<any> {
   const cacheKey = 'octokit';
   
   if (moduleCache.has(cacheKey)) {
@@ -31,9 +40,8 @@ export async function lazyLoadOctokit() {
 
 /**
  * Lazy load BPMN.js Modeler for BPMN editing
- * @returns {Promise<BpmnModeler>} BpmnModeler constructor
  */
-export async function lazyLoadBpmnModeler() {
+export async function lazyLoadBpmnModeler(): Promise<any> {
   const cacheKey = 'bpmn-modeler';
   
   if (moduleCache.has(cacheKey)) {
@@ -48,9 +56,8 @@ export async function lazyLoadBpmnModeler() {
 
 /**
  * Lazy load BPMN.js Viewer for BPMN viewing
- * @returns {Promise<BpmnViewer>} BpmnViewer constructor
  */
-export async function lazyLoadBpmnViewer() {
+export async function lazyLoadBpmnViewer(): Promise<any> {
   const cacheKey = 'bpmn-viewer';
   
   if (moduleCache.has(cacheKey)) {
@@ -65,9 +72,8 @@ export async function lazyLoadBpmnViewer() {
 
 /**
  * Lazy load js-yaml for YAML parsing
- * @returns {Promise<yaml>} js-yaml module
  */
-export async function lazyLoadYaml() {
+export async function lazyLoadYaml(): Promise<any> {
   const cacheKey = 'js-yaml';
   
   if (moduleCache.has(cacheKey)) {
@@ -82,9 +88,8 @@ export async function lazyLoadYaml() {
 
 /**
  * Lazy load MDEditor for markdown editing
- * @returns {Promise<MDEditor>} MDEditor component
  */
-export async function lazyLoadMDEditor() {
+export async function lazyLoadMDEditor(): Promise<any> {
   const cacheKey = 'md-editor';
   
   if (moduleCache.has(cacheKey)) {
@@ -99,9 +104,8 @@ export async function lazyLoadMDEditor() {
 
 /**
  * Lazy load react-syntax-highlighter for code syntax highlighting
- * @returns {Promise<SyntaxHighlighter>} Prism SyntaxHighlighter
  */
-export async function lazyLoadSyntaxHighlighter() {
+export async function lazyLoadSyntaxHighlighter(): Promise<any> {
   const cacheKey = 'syntax-highlighter';
   
   if (moduleCache.has(cacheKey)) {
@@ -115,9 +119,8 @@ export async function lazyLoadSyntaxHighlighter() {
 
 /**
  * Lazy load syntax highlighter styles
- * @returns {Promise<Object>} oneLight style theme
  */
-export async function lazyLoadSyntaxHighlighterStyles() {
+export async function lazyLoadSyntaxHighlighterStyles(): Promise<any> {
   const cacheKey = 'syntax-highlighter-styles';
   
   if (moduleCache.has(cacheKey)) {
@@ -131,9 +134,8 @@ export async function lazyLoadSyntaxHighlighterStyles() {
 
 /**
  * Lazy load ReactMarkdown for markdown rendering
- * @returns {Promise<ReactMarkdown>} ReactMarkdown component
  */
-export async function lazyLoadReactMarkdown() {
+export async function lazyLoadReactMarkdown(): Promise<any> {
   const cacheKey = 'react-markdown';
   
   if (moduleCache.has(cacheKey)) {
@@ -148,9 +150,8 @@ export async function lazyLoadReactMarkdown() {
 
 /**
  * Lazy load AJV for JSON schema validation
- * @returns {Promise<Ajv>} AJV constructor
  */
-export async function lazyLoadAjv() {
+export async function lazyLoadAjv(): Promise<any> {
   const cacheKey = 'ajv';
   
   if (moduleCache.has(cacheKey)) {
@@ -165,9 +166,8 @@ export async function lazyLoadAjv() {
 
 /**
  * Lazy load AJV formats for additional validation formats
- * @returns {Promise<Function>} addFormats function
  */
-export async function lazyLoadAjvFormats() {
+export async function lazyLoadAjvFormats(): Promise<any> {
   const cacheKey = 'ajv-formats';
   
   if (moduleCache.has(cacheKey)) {
@@ -182,9 +182,8 @@ export async function lazyLoadAjvFormats() {
 
 /**
  * Lazy load DOMPurify for HTML sanitization
- * @returns {Promise<DOMPurify>} DOMPurify instance
  */
-export async function lazyLoadDOMPurify() {
+export async function lazyLoadDOMPurify(): Promise<any> {
   const cacheKey = 'dompurify';
   
   if (moduleCache.has(cacheKey)) {
@@ -201,7 +200,7 @@ export async function lazyLoadDOMPurify() {
       DOMPurify = DOMPurify(window);
     } catch (error) {
       // If it fails, DOMPurify might already be the correct object
-      console.debug('DOMPurify initialization note:', error.message);
+      console.debug('DOMPurify initialization note:', (error as Error).message);
     }
   }
   
@@ -211,9 +210,8 @@ export async function lazyLoadDOMPurify() {
 
 /**
  * Lazy load rehype-raw for HTML table rendering in markdown
- * @returns {Promise<rehypeRaw>} rehypeRaw plugin
  */
-export async function lazyLoadRehypeRaw() {
+export async function lazyLoadRehypeRaw(): Promise<any> {
   const cacheKey = 'rehype-raw';
   
   if (moduleCache.has(cacheKey)) {
@@ -229,7 +227,7 @@ export async function lazyLoadRehypeRaw() {
 /**
  * Clear the module cache (useful for testing)
  */
-export function clearLazyImportCache() {
+export function clearLazyImportCache(): void {
   moduleCache.clear();
 }
 

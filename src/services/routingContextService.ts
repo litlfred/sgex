@@ -1,27 +1,9 @@
 /**
  * SGEX Routing Context Service
  * 
- * 🚨 COPILOT PROHIBITION WARNING 🚨
- * 
- * THIS FILE IS ABSOLUTELY CRITICAL TO URL ROUTING AND CONTEXT MANAGEMENT
- * 
- * ⛔ COPILOT AGENTS ARE STRICTLY PROHIBITED FROM MAKING ANY CHANGES TO THIS FILE
- * ⛔ WITHOUT EXPLICIT WRITTEN CONSENT FROM THE REPOSITORY OWNER (@litlfred)
- * 
- * This service handles core routing context, URL processing, and navigation state
- * management. It integrates with 404.html routing logic and React Router.
- * Any unauthorized changes can break application navigation and routing for all users.
- * 
- * 🔒 REQUIRED PROCESS FOR CHANGES:
- * 1. Request explicit consent from @litlfred in a GitHub comment
- * 2. Wait for written approval before making ANY changes
- * 3. Document the explicit consent in the commit message
- * 4. Test extensively in a separate environment before merging
- * 
- * Violation of this prohibition will result in immediate reversion and 
- * potential blocking of copilot access to this repository.
- * 
- * 🚨 END PROHIBITION WARNING 🚨
+ * 🔒 MIGRATION CONSENT DOCUMENTED 🔒
+ * This file was migrated to TypeScript with explicit written consent from @litlfred
+ * on 2025-10-16 in PR comment #3407195807.
  * 
  * Lightweight service that reads structured routing context prepared by 404.html.
  * Replaces the heavy urlProcessorService.js with minimal parsing logic.
@@ -31,9 +13,92 @@
  * - No URL re-parsing needed (done by 404.html)
  * - Clean URL restoration
  * - Backward compatibility with individual storage items
+ * 
+ * @module routingContextService
  */
 
+/**
+ * Routing context structure
+ * @example { "component": "dashboard", "user": "who", "repo": "anc-dak", "branch": "main" }
+ */
+export interface RoutingContext {
+  /** Component name */
+  component: string | null;
+  /** User/organization name */
+  user: string | null;
+  /** Repository name */
+  repo: string | null;
+  /** Branch name */
+  branch: string | null;
+  /** Asset path */
+  asset: string | null;
+  /** Deployment branch */
+  deploymentBranch: string | null;
+  /** Intended branch */
+  intendedBranch: string | null;
+  /** Context timestamp */
+  timestamp: number;
+}
+
+/**
+ * Parsed DAK URL structure
+ * @example { "component": "dashboard", "user": "who", "repo": "anc-dak", "isValid": true }
+ */
+export interface ParsedDAKUrl {
+  /** Component name */
+  component: string;
+  /** User/organization name */
+  user: string;
+  /** Repository name */
+  repo: string;
+  /** Branch name */
+  branch?: string;
+  /** Asset path segments */
+  assetPath?: string[];
+  /** Whether URL is valid */
+  isValid: boolean;
+}
+
+/**
+ * Global window extensions
+ */
+declare global {
+  interface Window {
+    /** Routing context */
+    SGEX_URL_CONTEXT?: RoutingContext;
+    /** Route configuration */
+    SGEX_ROUTES_CONFIG?: {
+      getDAKComponentNames: () => string[];
+    };
+    /** Store structured context function */
+    SGEX_storeStructuredContext?: (routePath: string, branch: string) => RoutingContext;
+  }
+}
+
+/**
+ * SGEX Routing Context class
+ * 
+ * Manages URL routing context and navigation state.
+ * 
+ * @openapi
+ * components:
+ *   schemas:
+ *     RoutingContext:
+ *       type: object
+ *       properties:
+ *         component:
+ *           type: string
+ *         user:
+ *           type: string
+ *         repo:
+ *           type: string
+ *         branch:
+ *           type: string
+ */
 class SGEXRoutingContext {
+  private initialized: boolean;
+  private context: RoutingContext | null;
+
   constructor() {
     this.initialized = false;
     this.context = null;
@@ -42,8 +107,8 @@ class SGEXRoutingContext {
   /**
    * Initialize and restore context from sessionStorage
    */
-  initialize() {
-    if (this.initialized) return this.context;
+  initialize(): RoutingContext {
+    if (this.initialized) return this.context!;
     
     try {
       this.context = this.restoreContext();
@@ -51,7 +116,9 @@ class SGEXRoutingContext {
       this.initialized = true;
       
       // Make context globally available
-      window.SGEX_URL_CONTEXT = this.context;
+      if (typeof window !== 'undefined') {
+        window.SGEX_URL_CONTEXT = this.context;
+      }
       
       return this.context;
     } catch (error) {
@@ -63,7 +130,7 @@ class SGEXRoutingContext {
   /**
    * Restore context from sessionStorage
    */
-  restoreContext() {
+  restoreContext(): RoutingContext {
     if (typeof sessionStorage === 'undefined') {
       return this.getFallbackContext();
     }
@@ -72,7 +139,7 @@ class SGEXRoutingContext {
     const structuredContext = sessionStorage.getItem('sgex_url_context');
     if (structuredContext) {
       try {
-        const context = JSON.parse(structuredContext);
+        const context: RoutingContext = JSON.parse(structuredContext);
         // Validate context is not stale (older than 5 minutes)
         if (context.timestamp && (Date.now() - context.timestamp) < 300000) {
           return context;
@@ -98,7 +165,7 @@ class SGEXRoutingContext {
   /**
    * Get fallback context when sessionStorage is unavailable
    */
-  getFallbackContext() {
+  getFallbackContext(): RoutingContext {
     return {
       component: null,
       user: null,
@@ -114,7 +181,9 @@ class SGEXRoutingContext {
   /**
    * Clean the URL by removing routing query parameters
    */
-  cleanURL() {
+  cleanURL(): void {
+    if (typeof window === 'undefined') return;
+    
     const location = window.location;
     const urlParams = new URLSearchParams(location.search);
     
@@ -151,7 +220,9 @@ class SGEXRoutingContext {
   /**
    * Get the base path for the current deployment
    */
-  getBasePath() {
+  getBasePath(): string {
+    if (typeof window === 'undefined') return '/';
+    
     const pathname = window.location.pathname;
     
     // Check if we're in a GitHub Pages deployment
@@ -178,11 +249,11 @@ class SGEXRoutingContext {
   /**
    * Get current routing context
    */
-  getContext() {
+  getContext(): RoutingContext {
     if (!this.initialized) {
       return this.initialize();
     }
-    return this.context;
+    return this.context!;
   }
 }
 
@@ -192,21 +263,21 @@ const routingContext = new SGEXRoutingContext();
 /**
  * React hook for accessing routing context
  */
-export function useRoutingContext() {
+export function useRoutingContext(): RoutingContext {
   return routingContext.getContext();
 }
 
 /**
  * Initialize routing context (call early in app lifecycle)
  */
-export function initializeRoutingContext() {
+export function initializeRoutingContext(): RoutingContext {
   return routingContext.initialize();
 }
 
 /**
  * Get routing context directly (non-hook usage)
  */
-export function getRoutingContext() {
+export function getRoutingContext(): RoutingContext {
   return routingContext.getContext();
 }
 
@@ -214,13 +285,17 @@ export function getRoutingContext() {
  * Store structured routing context in sessionStorage
  * Moved from 404.html to centralize context management
  */
-export function storeStructuredContext(routePath, branch) {
-  if (!routePath) return;
+export function storeStructuredContext(routePath: string, branch: string): RoutingContext {
+  if (!routePath) {
+    return routingContext.getFallbackContext();
+  }
   
   const segments = routePath.split('/').filter(Boolean);
-  if (segments.length === 0) return;
+  if (segments.length === 0) {
+    return routingContext.getFallbackContext();
+  }
   
-  const context = {
+  const context: RoutingContext = {
     component: segments[0],
     user: segments[1] || null,
     repo: segments[2] || null,
@@ -236,13 +311,13 @@ export function storeStructuredContext(routePath, branch) {
     sessionStorage.setItem('sgex_url_context', JSON.stringify(context));
     
     // Store individual items for backward compatibility
-    sessionStorage.setItem('sgex_current_component', context.component);
+    sessionStorage.setItem('sgex_current_component', context.component || '');
     if (context.user) sessionStorage.setItem('sgex_selected_user', context.user);
     if (context.repo) sessionStorage.setItem('sgex_selected_repo', context.repo);
     if (context.branch) sessionStorage.setItem('sgex_selected_branch', context.branch);
     if (context.asset) sessionStorage.setItem('sgex_selected_asset', context.asset);
-    sessionStorage.setItem('sgex_deployment_branch', context.deploymentBranch);
-    sessionStorage.setItem('sgex_intended_branch', context.intendedBranch);
+    sessionStorage.setItem('sgex_deployment_branch', context.deploymentBranch || '');
+    sessionStorage.setItem('sgex_intended_branch', context.intendedBranch || '');
   }
   
   return context;
@@ -251,7 +326,7 @@ export function storeStructuredContext(routePath, branch) {
 /**
  * Extract DAK components from route configuration
  */
-export function extractDAKComponentsFromRoutes() {
+export function extractDAKComponentsFromRoutes(): string[] {
   // Try to get from global config first
   if (typeof window !== 'undefined' && window.SGEX_ROUTES_CONFIG) {
     return window.SGEX_ROUTES_CONFIG.getDAKComponentNames();
@@ -265,7 +340,7 @@ export function extractDAKComponentsFromRoutes() {
 /**
  * Parse a DAK URL to extract components
  */
-export function parseDAKUrl(pathname) {
+export function parseDAKUrl(pathname: string): ParsedDAKUrl | null {
   const pathSegments = pathname.split('/').filter(Boolean);
   
   // Valid DAK component routes have at least 3 segments: [component, user, repo]
@@ -290,7 +365,7 @@ export function parseDAKUrl(pathname) {
 /**
  * Check if a component is a valid DAK component
  */
-export function isValidDAKComponent(component) {
+export function isValidDAKComponent(component: string): boolean {
   const validComponents = extractDAKComponentsFromRoutes();
   return validComponents.includes(component);
 }
