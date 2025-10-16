@@ -1,6 +1,17 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 const PageViewModal = ({ page, onClose }) => {
+  // Handle Escape key
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [onClose]);
+
   if (!page) return null;
 
   const handleOverlayClick = (e) => {
@@ -27,8 +38,17 @@ const PageViewModal = ({ page, onClose }) => {
   };
 
   return (
-    <div className="page-view-modal-overlay" onClick={handleOverlayClick}>
-      <div className="page-view-modal">
+    <div 
+      className="page-view-modal-overlay" 
+      onClick={(e) => e.target === e.currentTarget && handleOverlayClick(e)}
+      role="presentation"
+    >
+      <div 
+        className="page-view-modal"
+        role="dialog"
+        aria-modal="true"
+        tabIndex={-1}
+      >
         <div className="page-view-modal-header">
           <h2>{page.title}</h2>
           <button 

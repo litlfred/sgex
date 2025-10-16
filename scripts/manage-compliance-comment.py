@@ -80,6 +80,26 @@ class ComplianceCommentManager:
         
         return value
     
+    @staticmethod
+    def get_layout_count_for_sorting(comp: Dict[str, Any]) -> int:
+        """
+        Extract layout count from component issues for sorting.
+        
+        Handles edge cases and errors gracefully by returning 0 for any
+        issues that can't be parsed.
+        
+        Args:
+            comp: Component dictionary with 'issues' list
+            
+        Returns:
+            Layout count as integer, or 0 if parsing fails
+        """
+        try:
+            match = re.search(r'(\d+)', comp['issues'][0])
+            return int(match.group(1)) if match else 0
+        except (KeyError, IndexError, ValueError, TypeError):
+            return 0
+    
     def get_existing_comment(self) -> Optional[Dict[str, Any]]:
         """
         Find existing compliance report comment on the PR.
@@ -173,7 +193,7 @@ class ComplianceCommentManager:
         
         if nested_layouts:
             comment += f"\n### 📦 Nested Layouts ({len(nested_layouts)} components)\n\n"
-            for comp in sorted(nested_layouts, key=lambda c: int(re.search(r'(\d+)', c['issues'][0]).group(1) if re.search(r'(\d+)', c['issues'][0]) else '0'), reverse=True)[:5]:
+            for comp in sorted(nested_layouts, key=self.get_layout_count_for_sorting, reverse=True)[:5]:
                 layout_count = re.search(r'Found (\d+)', comp['issues'][0])
                 count_str = layout_count.group(1) if layout_count else '?'
                 comp_url = f"https://github.com/{self.owner}/{self.repo_name}/blob/{self.commit_sha}/src/components/{comp['name']}.js"

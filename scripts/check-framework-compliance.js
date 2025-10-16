@@ -5,6 +5,16 @@
  * 
  * This script validates that all pages in the SGEX Workbench comply with
  * the Page Framework requirements.
+ * 
+ * DESIGN PRINCIPLE: NO HEURISTICS
+ * ================================
+ * This checker uses EXPLICIT EXCLUSIONS ONLY. No heuristics, pattern matching,
+ * or content analysis to determine which pages should be checked.
+ * 
+ * Only pages that handle browser routing errors (404, redirects) are excluded
+ * from LOW PRIORITY checks. All other pages are checked uniformly.
+ * 
+ * See COMPLIANCE_CHECKER_DESIGN.md for detailed design principles.
  */
 
 const fs = require('fs');
@@ -40,19 +50,35 @@ const COMPLIANCE_RULES = {
 // Calculate total number of compliance rules programmatically
 const TOTAL_COMPLIANCE_CHECKS = Object.keys(COMPLIANCE_RULES).length;
 
-// Legacy manual exclusion list - kept for reference but now uses automatic detection
-// based on component naming patterns and code structure (see isUtilityComponent function)
-// Utility components that don't need full framework compliance
-const LEGACY_UTILITY_COMPONENTS = [
-  // These are now automatically detected by isUtilityComponent()
-  // Kept here for documentation purposes only
-];
-
 // Framework components themselves
 const FRAMEWORK_COMPONENTS = [
   'PageLayout.js', 'PageHeader.js', 'PageProvider.js', 
   'ErrorHandler.js', 'usePageParams.js', 'index.js'
 ];
+
+// Explicit exclusion list for LOW PRIORITY checks
+// These pages handle browser routing errors and should not be flagged for optional service integrations
+const ROUTING_ERROR_PAGES = [
+  'NotFound',        // 404 error page
+  'DashboardRedirect' // Redirect utility page
+];
+
+/**
+ * Get the path to routes-config.json with support for overrides
+ * @returns {string} Path to routes-config.json
+ */
+function getRoutesConfigPath() {
+  // Allow overriding the path via env var or command-line argument
+  const defaultPath = path.join(__dirname, '../public/routes-config.json');
+  const envPath = process.env.ROUTES_CONFIG_PATH;
+  
+  // Command-line argument: --routes-config=/path/to/routes-config.json
+  const argPath = process.argv.find(arg => arg.startsWith('--routes-config=')) 
+    ? process.argv.find(arg => arg.startsWith('--routes-config=')).split('=')[1]
+    : undefined;
+  
+  return argPath || envPath || defaultPath;
+}
 
 /**
  * Get list of routed page components from routes-config.json
@@ -60,7 +86,7 @@ const FRAMEWORK_COMPONENTS = [
  * @returns {Array} Array of component names that are actually routed as pages
  */
 function getRoutedComponents() {
-  const ROUTES_CONFIG_PATH = path.join(__dirname, '../public/routes-config.json');
+  const ROUTES_CONFIG_PATH = getRoutesConfigPath();
   
   try {
     const configContent = fs.readFileSync(ROUTES_CONFIG_PATH, 'utf8');
@@ -89,69 +115,6 @@ function getRoutedComponents() {
     console.error('Error reading routes-config.json:', error.message);
     return [];
   }
-}
-
-/**
- * Automatically detect if a component is a utility component based on its code structure
- * This eliminates the need to maintain a manual exclusion list
- * @param {string} componentName - Name of the component
- * @param {string} content - Component file content
- * @returns {boolean} True if component should be excluded from compliance checks
- */
-function isUtilityComponent(componentName, content) {
-  // 1. Check for Example/Demo components that should be excluded
-  if (/Example|Demo/i.test(componentName)) {
-    return true;
-  }
-  
-  // 2. Check naming conventions for common utility patterns
-  const namingPatterns = [
-    /Modal$/,          // LoginModal, CollaborationModal, etc.
-    /Dialog$/,         // SaveDialog, etc.
-    /Button$/,         // HelpButton, etc.
-    /Badge$/,          // PreviewBadge, etc.
-    /Bar$/,            // ForkStatusBar, etc.
-    /Box$/,            // DAKStatusBox, etc.
-    /Card$/,           // DAKComponentCard, etc.
-    /Selector$/,       // BranchSelector, LanguageSelector, etc.
-    /Slider$/,         // CommitsSlider, etc.
-    /Enhanced$/,       // BPMNViewerEnhanced, etc.
-    /Preview$/,        // BPMNPreview - embedded viewer component
-    /_old$/i,          // Old/deprecated components
-  ];
-  
-  for (const pattern of namingPatterns) {
-    if (pattern.test(componentName)) {
-      return true;
-    }
-  }
-  
-  // 3. Check for modal/dialog characteristics (takes onClose, isOpen props)
-  const hasModalProps = content.includes('onClose') && 
-                       (content.includes('isOpen') || content.includes('open'));
-  
-  // 4. Check for embedded component characteristics (takes props like file, repository, etc.)
-  const hasEmbeddedProps = (content.includes('{ file') || content.includes('{ repository')) &&
-                           content.includes('profile') &&
-                           !content.includes('usePage()');
-  
-  // 5. Check for widget/embedded characteristics (no routing, exported but not a page)
-  const hasNoRouting = !content.includes('useNavigate') && 
-                       !content.includes('Navigate') &&
-                       !content.includes('PageLayout') &&
-                       !content.includes('AssetEditorLayout');
-  
-  // 6. Check if it's a small utility component (< 200 lines typically)
-  const isSmallComponent = content.split('\n').length < 200;
-  
-  // 7. Framework components (ContextualHelpMascot, etc.)
-  const frameworkUtilities = ['ContextualHelpMascot', 'HelpButton', 'HelpModal'];
-  if (frameworkUtilities.includes(componentName)) {
-    return true;
-  }
-  
-  // Component is a utility if it has modal props OR embedded props OR (is small AND has no routing)
-  return hasModalProps || hasEmbeddedProps || (isSmallComponent && hasNoRouting && content.includes('export'));
 }
 
 class ComplianceChecker {
@@ -207,67 +170,33 @@ class ComplianceChecker {
 
   /**
    * Extract route components from routes-config.json (deterministic approach)
-   * This is the primary method - only components explicitly registered in routing are checked
+   * This is the ONLY method - only components explicitly registered in routing are checked
+   * NO FALLBACKS - failure should be clear and explicit
    */
   async getRouteComponents() {
     // Use deterministic approach: read from routes-config.json
     const routedComponents = getRoutedComponents();
     
-    if (routedComponents.length > 0) {
-      return routedComponents;
+    if (routedComponents.length === 0) {
+      // NO FALLBACKS - If routes-config.json is not available or empty, this is a FAILURE
+      const configPath = getRoutesConfigPath();
+      throw new Error(
+        `❌ FATAL: Failed to load route components from routes-config.json\n\n` +
+        `Configuration file: ${configPath}\n` +
+        `This is a critical failure - the compliance checker requires a valid routes-config.json file.\n\n` +
+        `Possible causes:\n` +
+        `  1. The routes-config.json file does not exist at: ${configPath}\n` +
+        `  2. The file exists but has no dakComponents or standardComponents defined\n` +
+        `  3. The file cannot be read due to permissions or syntax errors\n\n` +
+        `To fix:\n` +
+        `  1. Ensure routes-config.json exists in the correct location\n` +
+        `  2. Verify the file has valid JSON syntax\n` +
+        `  3. Check that dakComponents and/or standardComponents are defined\n` +
+        `  4. Use --routes-config=/path/to/file to specify a custom location\n`
+      );
     }
     
-    // Fallback only if routes-config.json is not available
-    if (this.options.format !== 'json') {
-      console.warn('⚠️  Could not read routes-config.json, falling back to heuristic detection');
-    }
-    
-    const components = [];
-
-    // Fallback Method 1: Extract from componentRouteService.js
-    try {
-      const componentRouteServicePath = path.join(SRC_DIR, 'services', 'componentRouteService.js');
-      if (fs.existsSync(componentRouteServicePath)) {
-        const serviceContent = fs.readFileSync(componentRouteServicePath, 'utf8');
-        
-        // Find component names in switch statement
-        const switchMatches = serviceContent.match(/case\s+'([^']+)':\s*LazyComponent\s*=\s*React\.lazy\(\(\)\s*=>\s*import\('([^']+)'\)\);/g);
-        if (switchMatches) {
-          switchMatches.forEach(match => {
-            const componentMatch = match.match(/case\s+'([^']+)'/);
-            if (componentMatch) {
-              components.push(componentMatch[1]);
-            }
-          });
-        }
-      }
-    } catch (error) {
-      if (this.options.format !== 'json') {
-        console.warn('Could not parse componentRouteService.js:', error.message);
-      }
-    }
-
-    // Fallback Method 2: Extract from App.js
-    if (components.length === 0) {
-      try {
-        const appContent = fs.readFileSync(APP_JS, 'utf8');
-        
-        // Find all Route elements and extract component names
-        const routeRegex = /<Route[^>]+element=\{<([A-Za-z0-9_]+)/g;
-        let match;
-
-        while ((match = routeRegex.exec(appContent)) !== null) {
-          const componentName = match[1].trim();
-          components.push(componentName);
-        }
-      } catch (error) {
-        if (this.options.format !== 'json') {
-          console.warn('Could not parse App.js:', error.message);
-        }
-      }
-    }
-
-    return [...new Set(components)]; // Remove duplicates
+    return routedComponents;
   }
 
   /**
@@ -283,9 +212,8 @@ class ComplianceChecker {
 
     const content = fs.readFileSync(componentPath, 'utf8');
     
-    // Note: We don't apply utility detection here because components are already
-    // filtered by deterministic routing (routes-config.json). If a component is
-    // in the routing configuration, it IS a page component by definition.
+    // Components are filtered by deterministic routing (routes-config.json).
+    // If a component is in the routing configuration, it IS a page component by definition.
     
     const compliance = this.analyzeComponent(componentName, content);
     
@@ -491,61 +419,53 @@ class ComplianceChecker {
     }
 
     // Check 13: Issue Tracking Service Integration (LOW PRIORITY)
-    // Workflow components should integrate with issueTrackingService
+    // All pages should integrate with issueTrackingService except routing error pages
     const hasIssueTracking = content.includes('issueTrackingService') || 
                              content.includes('useIssueTracking');
-    const isWorkflowComponent = /Workflow|Issue|Bug|Tracking/.test(componentName) ||
-                               content.includes('workflow') ||
-                               content.includes('issue tracking');
+    const isExcludedFromIssueTracking = ROUTING_ERROR_PAGES.includes(componentName);
     
-    if (isWorkflowComponent && !hasIssueTracking) {
-      recordCheck('issueTrackingIntegration', false, 'Workflow component should use issueTrackingService');
+    if (!isExcludedFromIssueTracking && hasPageLayout && !hasIssueTracking) {
+      recordCheck('issueTrackingIntegration', false, 'Page should integrate with issueTrackingService');
       compliance.suggestions.push('Import and use issueTrackingService for issue tracking features');
     } else {
       recordCheck('issueTrackingIntegration', true);
     }
 
     // Check 14: Bookmark Service Integration (LOW PRIORITY)
-    // Navigation components should support bookmarkService for bookmarking
+    // All pages should support bookmarkService except routing error pages
     const hasBookmarkService = content.includes('bookmarkService') || 
                                content.includes('useBookmark');
-    const isNavigationComponent = /Navigation|Selection|Dashboard|Manager/.test(componentName) ||
-                                 content.includes('navigation') ||
-                                 (content.includes('useNavigate') && content.length > 500);
+    const isExcludedFromBookmark = ROUTING_ERROR_PAGES.includes(componentName);
     
-    if (isNavigationComponent && !hasBookmarkService) {
-      recordCheck('bookmarkIntegration', false, 'Navigation component should support bookmarkService');
+    if (!isExcludedFromBookmark && hasPageLayout && !hasBookmarkService) {
+      recordCheck('bookmarkIntegration', false, 'Page should support bookmarkService');
       compliance.suggestions.push('Import and use bookmarkService to enable page bookmarking');
     } else {
       recordCheck('bookmarkIntegration', true);
     }
 
     // Check 15: Help Content Registration (LOW PRIORITY)
-    // Complex pages should register help content with helpContentService
+    // All pages should register help content except routing error pages
     const hasHelpContent = content.includes('helpContentService') ||
                           content.includes('registerHelpContent');
-    const isComplexPage = content.length > 800 || // Large component
-                         content.includes('Form') ||
-                         content.includes('Editor') ||
-                         content.includes('Manager');
+    const isExcludedFromHelpContent = ROUTING_ERROR_PAGES.includes(componentName);
     
-    if (isComplexPage && !hasHelpContent) {
-      recordCheck('helpContentRegistration', false, 'Complex page should register help content');
+    if (!isExcludedFromHelpContent && hasPageLayout && !hasHelpContent) {
+      recordCheck('helpContentRegistration', false, 'Page should register help content');
       compliance.suggestions.push('Register help topics with helpContentService for user assistance');
     } else {
       recordCheck('helpContentRegistration', true);
     }
 
     // Check 16: Tutorial Integration (LOW PRIORITY)
-    // Feature-rich pages should integrate tutorials for user onboarding
+    // All pages should integrate tutorials except routing error pages
     const hasTutorialIntegration = content.includes('tutorialService') ||
                                    content.includes('useTutorial') ||
                                    content.includes('TutorialManager');
-    const isFeatureRichPage = /Editor|Manager|Configuration|Selection/.test(componentName) ||
-                             (content.includes('save') && content.includes('edit'));
+    const isExcludedFromTutorial = ROUTING_ERROR_PAGES.includes(componentName);
     
-    if (isFeatureRichPage && !hasTutorialIntegration) {
-      recordCheck('tutorialIntegration', false, 'Feature-rich page should integrate tutorials');
+    if (!isExcludedFromTutorial && hasPageLayout && !hasTutorialIntegration) {
+      recordCheck('tutorialIntegration', false, 'Page should integrate tutorials');
       compliance.suggestions.push('Add tutorial integration with tutorialService for user onboarding');
     } else {
       recordCheck('tutorialIntegration', true);
@@ -832,18 +752,24 @@ SGEX Framework Compliance Checker
 Usage: node check-framework-compliance.js [options]
 
 Options:
-  --format <type>       Output format: standard, condensed, pr-comment, json (default: standard)
-  --condensed           Shortcut for --format condensed
-  --json                Shortcut for --format json
-  --commit-sha <sha>    Git commit SHA for linking
-  --workflow-url <url>  Workflow run URL for linking
-  --help, -h            Show this help message
+  --format <type>           Output format: standard, condensed, pr-comment, json (default: standard)
+  --condensed               Shortcut for --format condensed
+  --json                    Shortcut for --format json
+  --commit-sha <sha>        Git commit SHA for linking
+  --workflow-url <url>      Workflow run URL for linking
+  --routes-config <path>    Path to routes-config.json (default: ../public/routes-config.json)
+  --help, -h                Show this help message
+
+Environment Variables:
+  ROUTES_CONFIG_PATH        Path to routes-config.json (overridden by --routes-config)
 
 Examples:
   node check-framework-compliance.js
   node check-framework-compliance.js --condensed
   node check-framework-compliance.js --format pr-comment --commit-sha abc123
   node check-framework-compliance.js --json > compliance-report.json
+  node check-framework-compliance.js --routes-config=/custom/path/routes-config.json
+  ROUTES_CONFIG_PATH=/custom/path/routes-config.json node check-framework-compliance.js
 `);
       process.exit(0);
     }

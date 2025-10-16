@@ -96,8 +96,17 @@ const LoginModal = ({ isOpen, onClose, onAuthSuccess }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="login-modal-overlay" onClick={handleOverlayClick}>
-      <div className="login-modal">
+    <div 
+      className="login-modal-overlay" 
+      onClick={(e) => e.target === e.currentTarget && handleOverlayClick(e)}
+      role="presentation"
+    >
+      <div 
+        className="login-modal"
+        role="dialog"
+        aria-modal="true"
+        tabIndex={-1}
+      >
         <div className="login-modal-header">
           <h2>Sign In with GitHub</h2>
           <button 
