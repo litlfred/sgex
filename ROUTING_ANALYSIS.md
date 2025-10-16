@@ -322,10 +322,53 @@ function performRouting() {
 ## Questions for Confirmation
 
 1. Should 404.html on landing page redirect `/sgex/docs` to `/sgex/docs/` (treating "docs" as branch)?
+   - **Answer**: Yes, no prioritization - all paths treated as branches optimistically
+   
 2. Should we keep NotFound component in landing page routes-config.deploy.json as safety net?
+   - **Answer**: Yes, keep as safety net
+   
 3. After two failed redirect attempts, should we show error or redirect to landing page?
+   - **Answer**: Show error after **7 redirect attempts** (increased from 2)
+   
 4. Should local deployment (localhost) use the same optimistic logic or different approach?
+   - **Answer**: SIMPLIFIED APPROACH - Local deployment should use `/sgex/main` for the actual app and `/sgex/` for branch listing (showing remote GitHub preview branches). This unifies the routing logic - same structure as production.
+
+## Additional Requirements from Feedback
+
+### Local Development Simplification
+
+**New Approach**:
+- `localhost:3000/sgex/` - Branch listing page (shows remote GitHub PR previews)
+- `localhost:3000/sgex/main/` - Actual local development environment
+- Main site card on branch listing → redirects to localhost deployment
+
+**Benefits**:
+- Same URL structure as production
+- Less conditional logic in routing code
+- Easier to maintain
+- Consistent behavior across environments
+
+### Analytics and Logging
+
+**Requirement**: Add comprehensive logging for routing operations
+- Log all route access attempts
+- Log redirect chains with full path
+- Log errors and failures
+- Include timestamps and context
+- Help resolve routing issues from logs
+
+**Implementation**: Add logging service that tracks:
+1. Initial URL accessed
+2. Each redirect in the chain
+3. Final destination or error
+4. Session storage updates
+5. Component loads
+6. Any routing failures
 
 ---
 
-**Status**: Analysis complete, ready for feedback before updating implementation plan.
+**Status**: Feedback received, ready to update implementation plan with:
+1. Unified routing for local/production (same `/sgex/` structure)
+2. 7-redirect attempt limit
+3. Comprehensive analytics/logging
+4. No URL pattern prioritization

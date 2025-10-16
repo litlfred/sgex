@@ -302,46 +302,240 @@ const useDAKUrlParams = () => {
 };
 ```
 
-### Phase 5: Ensure Local Deployment Support
+### Phase 5: Unified Local/Production Deployment
 
-**Goal**: All changes must work correctly for localhost development
+**Goal**: Same routing structure for local and production - simplified maintenance
 
-**Key Changes**:
-1. **Detect Local vs GitHub Pages**: Check hostname to determine deployment type
-2. **Different Base Paths**: Use `/` for local, `/sgex/` or `/sgex/{branch}/` for GitHub Pages
-3. **Simplified Routing**: Local deployments don't need complex branch detection
-4. **Testing**: Verify `npm start` works correctly after changes
+**Unified Approach** (Based on user feedback):
+1. **Same URL Structure**: Use `/sgex/` structure for both local and production
+2. **Local Branch Listing**: `localhost:3000/sgex/` shows remote GitHub PR preview branches
+3. **Local Development**: `localhost:3000/sgex/main/` is the actual development environment
+4. **No Special Cases**: Eliminate conditional logic for local vs production
+
+**Benefits**:
+- Same base path logic everywhere
+- Less conditional code
+- Easier testing and debugging
+- Consistent user experience
+- Simplified build configuration
 
 **Implementation Details**:
 ```javascript
-// Detection logic
-function isLocalDeployment() {
-  return window.location.hostname === 'localhost' || 
-         window.location.hostname === '127.0.0.1';
-}
-
+// SIMPLIFIED - No special local detection needed
 function getBasePath() {
-  if (isLocalDeployment()) {
-    return '/sgex'; // PUBLIC_URL in development
-  }
-  
   const pathname = window.location.pathname;
   const segments = pathname.split('/').filter(Boolean);
   
+  // Universal logic for both local and production
   if (segments[0] === 'sgex') {
     if (segments.length === 1) return '/sgex/';
-    if (isKnownComponent(segments[1])) return '/sgex/';
     return '/sgex/' + segments[1] + '/';
   }
   
-  return '/';
+  // Fallback to /sgex/ if not matched
+  return '/sgex/';
 }
 
-// In App.js - use detected base path
-const basename = isLocalDeployment() 
-  ? process.env.PUBLIC_URL || '/sgex'
-  : getBasePath().slice(0, -1); // Remove trailing slash
+// In App.js - always use /sgex
+const basename = process.env.PUBLIC_URL || '/sgex';
+
+// In package.json - set PUBLIC_URL for development
+// "start": "PUBLIC_URL=/sgex react-scripts start"
 ```
+
+**Local Development Setup**:
+```json
+// package.json scripts
+{
+  "start": "PUBLIC_URL=/sgex craco start",
+  "build": "PUBLIC_URL=/sgex craco build",
+  "build:deploy": "PUBLIC_URL=/sgex craco build && node scripts/prepare-deploy.js"
+}
+```
+
+**Development Workflow**:
+1. Run `npm start` → opens `localhost:3000/sgex/`
+2. Branch listing page shows remote GitHub PR previews
+3. Click "Main" card → navigates to `localhost:3000/sgex/main/`
+4. Work in `/sgex/main/` exactly like production `/sgex/main/`
+
+### Phase 6: Add Comprehensive Logging and Analytics
+
+**Goal**: Track all routing operations to help diagnose and resolve issues
+
+**Logging Requirements** (from user feedback):
+- Log all route access attempts
+- Track complete redirect chains
+- Capture errors and failures
+- Include timestamps and context
+- Help resolve other issues from logs
+
+**Implementation Details**:
+```javascript
+// Create routing logger service in routingContextService.js
+class RoutingLogger {
+  constructor() {
+    this.sessionId = `route-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    this.routeChain = [];
+    this.startTime = Date.now();
+  }
+  
+  logAccess(url, context = {}) {
+    const entry = {
+      sessionId: this.sessionId,
+      timestamp: Date.now(),
+      elapsed: Date.now() - this.startTime,
+      type: 'access',
+      url: url,
+      pathname: window.location.pathname,
+      search: window.location.search,
+      hash: window.location.hash,
+      referrer: document.referrer,
+      ...context
+    };
+    
+    this.routeChain.push(entry);
+    console.log('[ROUTING]', entry);
+    this.persistLog();
+    return entry;
+  }
+  
+  logRedirect(from, to, reason, attempt) {
+    const entry = {
+      sessionId: this.sessionId,
+      timestamp: Date.now(),
+      elapsed: Date.now() - this.startTime,
+      type: 'redirect',
+      from: from,
+      to: to,
+      reason: reason,
+      attempt: attempt,
+      chainLength: this.routeChain.filter(e => e.type === 'redirect').length + 1
+    };
+    
+    this.routeChain.push(entry);
+    console.log('[ROUTING]', entry);
+    this.persistLog();
+    
+    // Check redirect limit (7 attempts per user feedback)
+    if (entry.chainLength >= 7) {
+      this.logError('Redirect limit exceeded (7 attempts)', {
+        chain: this.routeChain,
+        finalUrl: to
+      });
+      return false; // Prevent redirect
+    }
+    
+    return entry;
+  }
+  
+  logError(message, context = {}) {
+    const entry = {
+      sessionId: this.sessionId,
+      timestamp: Date.now(),
+      elapsed: Date.now() - this.startTime,
+      type: 'error',
+      message: message,
+      url: window.location.href,
+      chain: this.routeChain,
+      ...context
+    };
+    
+    this.routeChain.push(entry);
+    console.error('[ROUTING ERROR]', entry);
+    this.persistLog();
+    return entry;
+  }
+  
+  logComponentLoad(component, context = {}) {
+    const entry = {
+      sessionId: this.sessionId,
+      timestamp: Date.now(),
+      elapsed: Date.now() - this.startTime,
+      type: 'component-load',
+      component: component,
+      url: window.location.href,
+      ...context
+    };
+    
+    this.routeChain.push(entry);
+    console.log('[ROUTING]', entry);
+    this.persistLog();
+    return entry;
+  }
+  
+  logSessionStorageUpdate(key, value) {
+    const entry = {
+      sessionId: this.sessionId,
+      timestamp: Date.now(),
+      type: 'session-storage',
+      key: key,
+      value: typeof value === 'object' ? JSON.stringify(value) : value
+    };
+    
+    this.routeChain.push(entry);
+    console.log('[ROUTING]', entry);
+    this.persistLog();
+  }
+  
+  persistLog() {
+    try {
+      sessionStorage.setItem('sgex_routing_log', JSON.stringify({
+        sessionId: this.sessionId,
+        startTime: this.startTime,
+        chain: this.routeChain
+      }));
+    } catch (e) {
+      console.warn('Failed to persist routing log:', e);
+    }
+  }
+  
+  generateReport() {
+    return {
+      sessionId: this.sessionId,
+      totalDuration: Date.now() - this.startTime,
+      totalEvents: this.routeChain.length,
+      redirectCount: this.routeChain.filter(e => e.type === 'redirect').length,
+      errorCount: this.routeChain.filter(e => e.type === 'error').length,
+      componentLoads: this.routeChain.filter(e => e.type === 'component-load').length,
+      timeline: this.routeChain
+    };
+  }
+}
+
+// Create global instance available to 404.html and React app
+window.SGEX_ROUTING_LOGGER = new RoutingLogger();
+
+// Usage in 404.html
+function performRouting() {
+  window.SGEX_ROUTING_LOGGER.logAccess(window.location.href, {
+    handler: '404.html'
+  });
+  // ... routing logic ...
+}
+
+function optimisticBranchRedirect(branch, routePath) {
+  const from = window.location.href;
+  const to = buildRedirectUrl(branch, routePath);
+  
+  const canRedirect = window.SGEX_ROUTING_LOGGER.logRedirect(
+    from, to, 'optimistic-branch', getRedirectAttemptCount()
+  );
+  
+  if (!canRedirect) {
+    showErrorPage('Too Many Redirects', 
+      'Exceeded maximum redirect attempts (7).');
+    return;
+  }
+  
+  window.location.replace(to);
+}
+```
+
+**Log Storage**:
+- Session storage: Current session routing history
+- Console: All events for real-time debugging
+- Accessible via: `window.SGEX_ROUTING_LOGGER.generateReport()`
 
 ## Testing Strategy
 
@@ -379,9 +573,15 @@ const basename = isLocalDeployment()
    - Verify: No 404 redirects needed
 
 7. **Cyclic Redirect Prevention**:
-   - Enter: URL that triggers two 404s
-   - Expected: Error page shown after second attempt
-   - Verify: No infinite loop, helpful error message
+   - Enter: URL that triggers multiple 404s
+   - Expected: Error page shown after **7th attempt** (per user feedback)
+   - Verify: No infinite loop, helpful error message with routing log
+
+8. **Logging Verification**:
+   - Enter: Any URL
+   - Expected: Console shows detailed routing log entries
+   - Verify: Can access report via `window.SGEX_ROUTING_LOGGER.generateReport()`
+   - Check: Session storage contains routing history
 
 ### Manual Testing Checklist
 
@@ -401,41 +601,51 @@ const basename = isLocalDeployment()
 
 ## Implementation Order
 
-### Step 1: Update 404.html
-- Add URL context extraction and storage
-- Implement cyclic redirect prevention
-- Preserve hash and query parameters in redirects
-- Test: Direct URL entry to various paths
+### Step 1: Create Routing Logger
+- Implement RoutingLogger class
+- Add to routingContextService.js
+- Make available globally
+- Test: Logging works in console and session storage
 
-### Step 2: Update routeConfig.js
-- Add context restoration function
-- Make component detection dynamic
-- Remove hardcoded branch names
-- Test: Configuration loads correctly in all deployments
+### Step 2: Update 404.html
+- Add comprehensive logging calls
+- Implement 7-redirect limit check
+- Remove component detection logic
+- Add optimistic branch routing
+- Preserve hash and query parameters
+- Test: Direct URL entry with logging
 
-### Step 3: Update routingContextService.js
+### Step 3: Update routeConfig.js
+- Simplify deployment detection
+- Remove local/production conditionals
+- Single source of truth for components
+- Test: Config loads correctly for all deployments
+
+### Step 4: Update routingContextService.js
+- Add logger integration
 - Read and restore stored context
 - Clean routing query parameters
-- Restore URL fragments
-- Test: Context available to React components
+- Log session storage updates
+- Test: Context restoration with logging
 
-### Step 4: Update useDAKUrlParams Hook
-- Add fallback to session storage
+### Step 5: Update useDAKUrlParams Hook
+- Add logging for context resolution
+- Fallback to session storage with logging
 - Handle unauthenticated access
-- Support all context sources
 - Test: Components receive correct context
 
-### Step 5: Test Local Development
-- Verify localhost:3000 works
-- Check all npm scripts
-- Ensure no GitHub Pages logic breaks local dev
-- Test: Full development workflow
+### Step 6: Unify Local Development
+- Update package.json scripts for `/sgex` base path
+- Test localhost:3000/sgex/ shows branch listing
+- Test localhost:3000/sgex/main/ works for development
+- Verify: Same routing logic as production
 
-### Step 6: Integration Testing
-- Test all URL patterns
-- Verify hash/query preservation
-- Check cyclic redirect prevention
-- Test: All deployment scenarios
+### Step 7: Integration Testing
+- Test all URL patterns with logging
+- Verify 7-redirect limit enforcement
+- Check hash/query preservation
+- Test all deployment scenarios
+- Review routing logs for issues
 
 ## Risk Mitigation
 
@@ -448,20 +658,23 @@ const basename = isLocalDeployment()
 - Feature flag for gradual rollout if needed
 
 ### Local Development Risk
-**Risk**: Changes could break localhost development
+**Risk**: Changes could break localhost development  
 **Mitigation**:
+- **UNIFIED APPROACH**: Use same `/sgex` structure for local and production (per user feedback)
+- `localhost:3000/sgex/` - Branch listing (remote GitHub PR previews)
+- `localhost:3000/sgex/main/` - Local development environment
+- Eliminates conditional logic for local vs production
 - Test local deployment at each step
-- Separate logic paths for local vs GitHub Pages
 - Verify npm start/build work correctly
-- Document any new local setup requirements
 
 ### Cyclic Redirect Risk
-**Risk**: New logic could introduce infinite loops
+**Risk**: New logic could introduce infinite loops  
 **Mitigation**:
-- Implement strict redirect attempt tracking
-- Add timeout/limit on redirect attempts
-- Show clear error page on loop detection
-- Log redirect paths for debugging
+- Implement strict redirect attempt tracking with logging
+- **7-redirect limit** enforced (per user feedback)
+- Show clear error page with routing log on loop detection
+- Log all redirect chains for debugging
+- Test redirect scenarios extensively
 
 ### Performance Risk
 **Risk**: Additional logic could slow page load
@@ -473,16 +686,20 @@ const basename = isLocalDeployment()
 
 ## Success Criteria
 
-✅ Direct URL entry works for all patterns
-✅ Hash fragments (#) preserved through routing
+✅ Direct URL entry works for all patterns  
+✅ Hash fragments (#) preserved through routing  
 ✅ Query parameters (?) preserved through routing  
-✅ Session storage populated from URLs
-✅ No cyclic redirects under any scenario
-✅ Local development (localhost) works correctly
-✅ All deployment types supported (landing, main, feature branches)
-✅ No hardcoded branch or component names
-✅ Backward compatible with existing URLs
-✅ Clear error messages when routing fails
+✅ Session storage populated from URLs  
+✅ No cyclic redirects (7-attempt limit enforced)  
+✅ **Unified local/production deployment** (same `/sgex` structure)  
+✅ All deployment types supported (landing, main, feature branches, local)  
+✅ No hardcoded branch or component names  
+✅ Backward compatible with existing URLs  
+✅ Clear error messages when routing fails  
+✅ **Comprehensive logging** of all routing operations  
+✅ Routing logs help diagnose issues  
+✅ Console shows detailed routing timeline  
+✅ Session storage contains routing history
 
 ## Rollback Plan
 
