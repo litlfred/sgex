@@ -129,8 +129,8 @@ body.theme-light .welcome-page-content {
   /* Use default card sizing - more flexible width */
   min-width: var(--component-width-default);
   width: var(--component-width-default);
-  /* Use standard height consistent with other components */
-  min-height: var(--component-height-default);
+  /* Desktop: Taller cards to accommodate icon and full text */
+  min-height: 350px;
   display: flex;
   flex-direction: column;
   align-items: center;
