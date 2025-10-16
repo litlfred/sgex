@@ -15,8 +15,6 @@
  * - Comprehensive logging integration
  */
 
-import RoutingLogger from './routingLogger';
-
 class SGEXRoutingContext {
   constructor() {
     this.initialized = false;

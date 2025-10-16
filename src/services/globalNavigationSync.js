@@ -18,8 +18,6 @@
  *   // Component wants to navigate? Use syncStorageToNavigation(user, repo, branch)
  */
 
-import RoutingLogger from './routingLogger';
-
 class GlobalNavigationSync {
   constructor() {
     this.initialized = false;
@@ -67,19 +65,19 @@ class GlobalNavigationSync {
     });
     
     // Override pushState and replaceState to catch React Router navigation
-    const originalPushState = history.pushState;
-    const originalReplaceState = history.replaceState;
+    const originalPushState = window.history.pushState;
+    const originalReplaceState = window.history.replaceState;
     
     const self = this;
     
-    history.pushState = function(...args) {
+    window.history.pushState = function(...args) {
       const result = originalPushState.apply(this, args);
       const newUrl = window.location.pathname + window.location.search + window.location.hash;
       self.syncFromUrl(newUrl);
       return result;
     };
     
-    history.replaceState = function(...args) {
+    window.history.replaceState = function(...args) {
       const result = originalReplaceState.apply(this, args);
       const newUrl = window.location.pathname + window.location.search + window.location.hash;
       self.syncFromUrl(newUrl);
