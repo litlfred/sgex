@@ -4,7 +4,9 @@ import { useTranslation } from 'react-i18next';
 import githubService from '../services/githubService';
 import repositoryCacheService from '../services/repositoryCacheService';
 import secureTokenStorage from '../services/secureTokenStorage';
+import samlAuthService from '../services/samlAuthService';
 import PATLogin from './PATLogin';
+import SAMLAuthModal from './SAMLAuthModal';
 import { PageLayout } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
 
@@ -17,6 +19,8 @@ const LandingPage = () => {
   const [error, setError] = useState(null);
   const [dakCounts, setDakCounts] = useState({});
   const [warningMessage, setWarningMessage] = useState(null);
+  const [samlModalOpen, setSamlModalOpen] = useState(false);
+  const [samlModalInfo, setSamlModalInfo] = useState(null);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -143,6 +147,14 @@ const LandingPage = () => {
     };
 
     initializeAuth();
+  }, []);
+
+  // Register SAML modal callback - runs once on mount
+  useEffect(() => {
+    samlAuthService.registerModalCallback((samlInfo) => {
+      setSamlModalInfo(samlInfo);
+      setSamlModalOpen(true);
+    });
   }, []);
 
   // Handle warning message from navigation state
@@ -344,6 +356,16 @@ const LandingPage = () => {
           </div>
         )}
       </div>
+      
+      {/* SAML Authorization Modal */}
+      <SAMLAuthModal
+        isOpen={samlModalOpen}
+        onClose={() => {
+          setSamlModalOpen(false);
+          setSamlModalInfo(null);
+        }}
+        samlInfo={samlModalInfo}
+      />
     </PageLayout>
   );
 };
