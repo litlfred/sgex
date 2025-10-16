@@ -1,183 +1,329 @@
 <!DOCTYPE html>
 <!--
-🚨 COPILOT PROHIBITION WARNING 🚨
+EXPLICIT CONSENT GRANTED: PR #1114, comment #3411556175
+Changes authorized by @litlfred on 2025-10-16
 
-THIS FILE IS ABSOLUTELY CRITICAL TO SPA ROUTING AND GITHUB PAGES DEPLOYMENT
-
-⛔ COPILOT AGENTS ARE STRICTLY PROHIBITED FROM MAKING ANY CHANGES TO THIS FILE
-⛔ WITHOUT EXPLICIT WRITTEN CONSENT FROM THE REPOSITORY OWNER (@litlfred)
-
-This file contains the core SPA routing logic that enables GitHub Pages to work
-as a single-page application. It handles URL redirection, branch deployments,
-and route parsing. Any unauthorized changes can break the entire application
-routing system for all users.
-
-🔒 REQUIRED PROCESS FOR CHANGES:
-1. Request explicit consent from @litlfred in a GitHub comment
-2. Wait for written approval before making ANY changes
-3. Document the explicit consent in the commit message  
-4. Test extensively in a separate environment before merging
-
-Violation of this prohibition will result in immediate reversion and 
-potential blocking of copilot access to this repository.
-
-🚨 END PROHIBITION WARNING 🚨
+SGEX Simplified Optimistic Routing for GitHub Pages
+- No component detection in 404.html (deployment-agnostic)
+- Optimistic branch routing
+- Comprehensive logging
+- 7-redirect limit enforcement
+- Preserves hash and query parameters
 -->
 <html>
   <head>
     <meta charset="utf-8">
-    <title>SGEX Workbench</title>
-    <!-- Load SGEX route configuration service -->
-    <script src="./routeConfig.js"></script>
+    <title>SGEX Workbench - Routing</title>
     <script type="text/javascript">
-      // SGEX Dynamic URL Routing for GitHub Pages
-      // Simplified Optimistic Routing with graceful fallback
-      // Significantly reduced from 651 lines to ~100 lines
-
+      // SGEX Routing Logger (embedded for 404.html usage)
+      (function() {
+        'use strict';
+        
+        // Simple routing logger for 404.html
+        var RoutingLogger = function() {
+          this.sessionId = 'route-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+          this.routeChain = [];
+          this.startTime = Date.now();
+          this.maxRedirects = 7;
+        };
+        
+        RoutingLogger.prototype.logAccess = function(url, context) {
+          var entry = {
+            sessionId: this.sessionId,
+            timestamp: Date.now(),
+            elapsed: Date.now() - this.startTime,
+            type: 'access',
+            url: url,
+            pathname: window.location.pathname,
+            search: window.location.search,
+            hash: window.location.hash,
+            handler: context.handler || '404.html'
+          };
+          
+          this.routeChain.push(entry);
+          console.log('[SGEX ROUTING]', entry);
+          this.persistLog();
+          return entry;
+        };
+        
+        RoutingLogger.prototype.logRedirect = function(from, to, reason, attempt) {
+          var redirectCount = this.routeChain.filter(function(e) { return e.type === 'redirect'; }).length;
+          
+          var entry = {
+            sessionId: this.sessionId,
+            timestamp: Date.now(),
+            elapsed: Date.now() - this.startTime,
+            type: 'redirect',
+            from: from,
+            to: to,
+            reason: reason,
+            attempt: attempt,
+            chainLength: redirectCount + 1
+          };
+          
+          this.routeChain.push(entry);
+          console.log('[SGEX ROUTING]', entry);
+          this.persistLog();
+          
+          if (entry.chainLength >= this.maxRedirects) {
+            this.logError('Redirect limit exceeded (' + this.maxRedirects + ' attempts)', {
+              maxRedirects: this.maxRedirects,
+              finalUrl: to
+            });
+            return false;
+          }
+          
+          return true;
+        };
+        
+        RoutingLogger.prototype.logError = function(message, context) {
+          var entry = {
+            sessionId: this.sessionId,
+            timestamp: Date.now(),
+            elapsed: Date.now() - this.startTime,
+            type: 'error',
+            message: message,
+            url: window.location.href,
+            context: context
+          };
+          
+          this.routeChain.push(entry);
+          console.error('[SGEX ROUTING ERROR]', entry);
+          this.persistLog();
+          return entry;
+        };
+        
+        RoutingLogger.prototype.persistLog = function() {
+          try {
+            sessionStorage.setItem('sgex_routing_log', JSON.stringify({
+              sessionId: this.sessionId,
+              startTime: this.startTime,
+              chain: this.routeChain
+            }));
+          } catch (e) {
+            console.warn('Failed to persist routing log:', e);
+          }
+        };
+        
+        // Create global logger instance
+        window.SGEX_ROUTING_LOGGER = new RoutingLogger();
+      })();
+      
+      // Main routing logic
       (function(l) {
-        // Main routing function
+        'use strict';
+        
+        // Log access
+        window.SGEX_ROUTING_LOGGER.logAccess(l.href, { handler: '404.html' });
+        
         function performRouting() {
           // Check for existing redirect to prevent infinite loops
           if (l.search && l.search.indexOf('?/') === 0) {
-            console.error('SGEX 404.html: Redirect loop detected');
+            window.SGEX_ROUTING_LOGGER.logError('Redirect loop detected - already processed', {
+              search: l.search
+            });
             showErrorPage('Redirect Loop Detected', 
               'This URL has already been processed by the routing system.',
               'routing-loop');
             return;
           }
-
-          // Check for redirect loops using sessionStorage
-          var currentPath = l.pathname;
-          var redirectAttempts = JSON.parse(sessionStorage.getItem('sgex-redirect-attempts') || '[]');
           
-          // Clean old attempts (older than 30 seconds)
-          var now = Date.now();
-          redirectAttempts = redirectAttempts.filter(function(attempt) {
-            return now - attempt.timestamp < 30000;
-          });
-          
-          // Check if we've tried this path too many times
-          var recentAttempts = redirectAttempts.filter(function(attempt) {
-            return attempt.path === currentPath;
-          });
-          
-          if (recentAttempts.length >= 2) {
-            console.log('SGEX 404.html: Multiple redirect attempts detected, showing error');
-            showBranchNotFoundError(currentPath);
-            return;
-          }
-
-          // Record this attempt
-          redirectAttempts.push({ path: currentPath, timestamp: now });
-          sessionStorage.setItem('sgex-redirect-attempts', JSON.stringify(redirectAttempts));
-
           // Parse URL segments
           var pathSegments = l.pathname.split('/').filter(Boolean);
           
-          // Handle different deployment scenarios
+          // Handle root or empty path
           if (pathSegments.length === 0) {
-            // Root path - redirect to SGEX landing
             redirectToSPA('/sgex/', '');
             return;
           }
-
+          
+          // Validate SGEX prefix
           if (pathSegments[0] !== 'sgex') {
-            showErrorPage('Invalid URL', 'Expected /sgex/ path prefix', 'invalid-base');
+            window.SGEX_ROUTING_LOGGER.logError('Invalid URL - missing /sgex/ prefix', {
+              pathname: l.pathname
+            });
+            showErrorPage('Invalid URL', 
+              'GitHub Pages URLs must start with /sgex/',
+              'invalid-base');
             return;
           }
-
+          
+          // Handle /sgex/ root
           if (pathSegments.length === 1) {
-            // /sgex/ - load landing page
             redirectToSPA('/sgex/', '');
             return;
           }
-
-          // Smart routing: check if first segment is a valid component name
-          var firstSegment = pathSegments[1];
           
-          // Load route config to check if it's a valid component
-          if (typeof window.getSGEXRouteConfig === 'function') {
-            var routeConfig = window.getSGEXRouteConfig();
-            if (routeConfig && routeConfig.isValidComponent && routeConfig.isValidComponent(firstSegment)) {
-              // Component-first routing: /sgex/{component}/{user}/{repo}/{branch}
-              var componentRoutePath = pathSegments.slice(1).join('/');
-              redirectToSPA('/sgex/', componentRoutePath);
-              return;
-            }
-          }
+          // OPTIMISTIC BRANCH ROUTING
+          // Treat everything as a potential branch (except 404.html/index.html)
+          var secondSegment = pathSegments[1];
           
-          // Fallback to optimistic branch routing if not a known component
-          var branch = pathSegments[1];
-          var component = pathSegments[2];
-          
-          if (pathSegments.length === 2) {
-            // /sgex/{branch}/ - try branch deployment
-            optimisticBranchRedirect(branch, '');
+          // Special handling for physical files that should exist
+          if (secondSegment === '404.html' || secondSegment === 'index.html') {
+            window.SGEX_ROUTING_LOGGER.logError('Core file not found', {
+              file: secondSegment,
+              pathname: l.pathname
+            });
+            showErrorPage('System Error', 
+              'Core file not found: ' + secondSegment,
+              'missing-core-file');
             return;
           }
-
-          if (pathSegments.length >= 3) {
-            // /sgex/{branch}/{component}/... - try branch with route
-            var routePath = pathSegments.slice(2).join('/');
-            optimisticBranchRedirect(branch, routePath);
-            return;
-          }
-
-          showErrorPage('Unknown URL Pattern', 'URL pattern not recognized: ' + l.pathname, 'unknown-pattern');
+          
+          // Optimistic branch routing
+          // /sgex/{branch}/... → treat as branch deployment
+          var branch = secondSegment;
+          var basePath = '/sgex/' + branch + '/';
+          var routePath = pathSegments.slice(2).join('/');
+          
+          optimisticBranchRedirect(basePath, routePath, branch);
         }
-
-        function optimisticBranchRedirect(branch, routePath) {
-          // Parse and store structured context before redirect using global service
-          if (routePath && typeof window.SGEX_storeStructuredContext === 'function') {
-            window.SGEX_storeStructuredContext(routePath, branch);
-          }
+        
+        function optimisticBranchRedirect(basePath, routePath, branch) {
+          // Store URL context before redirect
+          storeUrlContext(l.pathname, l.search, l.hash, branch);
           
-          // Always try branch deployment first (optimistic approach)
-          var branchUrl = '/sgex/' + branch + '/';
+          // Get redirect attempt count
+          var attempts = getRedirectAttempts();
+          var currentPath = l.pathname;
+          var attemptCount = attempts.filter(function(a) { return a.path === currentPath; }).length;
+          
+          // Build redirect URL
+          var targetUrl = basePath;
           if (routePath) {
-            branchUrl += '?/' + routePath;
+            targetUrl += '?/' + routePath;
           }
           
-          console.log('SGEX 404.html: Optimistic branch redirect to:', branchUrl);
-          redirectToSPA(branchUrl, '');
+          // Preserve query parameters (excluding our routing param)
+          if (l.search && !l.search.startsWith('?/')) {
+            var separator = targetUrl.includes('?') ? '&' : '?';
+            targetUrl += separator + l.search.substring(1);
+          }
+          
+          // Always preserve hash
+          if (l.hash) {
+            targetUrl += l.hash;
+          }
+          
+          // Log redirect attempt
+          var canRedirect = window.SGEX_ROUTING_LOGGER.logRedirect(
+            l.href,
+            l.protocol + '//' + l.host + targetUrl,
+            'optimistic-branch',
+            attemptCount + 1
+          );
+          
+          if (!canRedirect) {
+            showErrorPage('Too Many Redirects', 
+              'Exceeded maximum redirect attempts (7). This may indicate a routing configuration issue or the branch deployment does not exist.',
+              'redirect-limit');
+            return;
+          }
+          
+          // Record attempt
+          recordRedirectAttempt(currentPath);
+          
+          // Perform redirect
+          console.log('SGEX 404.html: Optimistic redirect to:', targetUrl);
+          l.replace(l.protocol + '//' + l.host + targetUrl);
         }
-
+        
         function redirectToSPA(basePath, routePath) {
           var url = basePath;
           if (routePath) {
             url += '?/' + routePath;
           }
           
-          // Preserve query parameters and hash
+          // Preserve query params
           if (l.search && !l.search.startsWith('?/')) {
-            url += (url.includes('?') ? '&' : '?') + l.search.slice(1);
+            var separator = url.includes('?') ? '&' : '?';
+            url += separator + l.search.substring(1);
           }
+          
+          // Preserve hash
           if (l.hash) {
             url += l.hash;
           }
           
-          console.log('SGEX 404.html: Redirecting to SPA:', url);
+          window.SGEX_ROUTING_LOGGER.logRedirect(
+            l.href,
+            l.protocol + '//' + l.host + url,
+            'spa-redirect',
+            1
+          );
+          
+          console.log('SGEX 404.html: SPA redirect to:', url);
           l.replace(l.protocol + '//' + l.host + url);
         }
-
-        function showBranchNotFoundError(path) {
-          var pathSegments = path.split('/').filter(Boolean);
-          if (pathSegments.length >= 2 && pathSegments[0] === 'sgex') {
-            var branch = pathSegments[1];
-            showErrorPage(
-              'Branch Deployment Not Found', 
-              'The branch "' + branch + '" does not appear to be deployed. This could mean:\n\n' +
-              '• The branch has not been deployed to GitHub Pages yet\n' +
-              '• The branch deployment is still in progress\n' +
-              '• The branch name was mistyped in the URL\n\n' +
-              'You can try accessing the main deployment instead.',
-              'branch-not-deployed'
-            );
-          } else {
-            showErrorPage('Route Not Found', 'The requested page could not be found.', 'not-found');
+        
+        function storeUrlContext(pathname, search, hash, branch) {
+          var segments = pathname.split('/').filter(Boolean);
+          
+          // Skip /sgex/ and branch to get route segments
+          var routeSegments = segments.slice(2);
+          
+          if (routeSegments.length === 0) return;
+          
+          var context = {
+            component: routeSegments[0] || null,
+            user: routeSegments[1] || null,
+            repo: routeSegments[2] || null,
+            branch: routeSegments[3] || null,
+            asset: routeSegments.length > 4 ? routeSegments.slice(4).join('/') : null,
+            deploymentBranch: branch,
+            intendedBranch: branch,
+            search: search,
+            hash: hash,
+            originalUrl: window.location.href,
+            timestamp: Date.now()
+          };
+          
+          try {
+            sessionStorage.setItem('sgex_url_context', JSON.stringify(context));
+            
+            // Store individual items for backward compatibility
+            if (context.component) sessionStorage.setItem('sgex_current_component', context.component);
+            if (context.user) sessionStorage.setItem('sgex_selected_user', context.user);
+            if (context.repo) sessionStorage.setItem('sgex_selected_repo', context.repo);
+            if (context.branch) sessionStorage.setItem('sgex_selected_branch', context.branch);
+            if (context.asset) sessionStorage.setItem('sgex_selected_asset', context.asset);
+            sessionStorage.setItem('sgex_deployment_branch', context.deploymentBranch);
+            sessionStorage.setItem('sgex_intended_branch', context.intendedBranch);
+            
+            console.log('SGEX 404.html: Stored URL context:', context);
+          } catch (e) {
+            console.warn('Failed to store URL context:', e);
           }
         }
-
+        
+        function getRedirectAttempts() {
+          try {
+            var stored = sessionStorage.getItem('sgex_redirect_attempts');
+            var attempts = stored ? JSON.parse(stored) : [];
+            
+            // Clean old attempts (older than 30 seconds)
+            var now = Date.now();
+            return attempts.filter(function(attempt) {
+              return now - attempt.timestamp < 30000;
+            });
+          } catch (e) {
+            return [];
+          }
+        }
+        
+        function recordRedirectAttempt(path) {
+          try {
+            var attempts = getRedirectAttempts();
+            attempts.push({
+              path: path,
+              timestamp: Date.now()
+            });
+            sessionStorage.setItem('sgex_redirect_attempts', JSON.stringify(attempts));
+          } catch (e) {
+            console.warn('Could not record redirect attempt:', e);
+          }
+        }
+        
         function showErrorPage(title, message, errorCode) {
           var bugReportUrl = 'https://github.com/litlfred/sgex/issues/new?title=' +
             encodeURIComponent('[Routing Error] ' + title + ' - ' + errorCode) +
@@ -187,49 +333,57 @@ potential blocking of copilot access to this repository.
               '**URL:** ' + window.location.href + '\n' +
               '**Error Code:** ' + errorCode + '\n' +
               '**User Agent:** ' + navigator.userAgent + '\n\n' +
+              '**Routing Log:**\n```json\n' +
+              JSON.stringify(window.SGEX_ROUTING_LOGGER.routeChain, null, 2) +
+              '\n```\n\n' +
               'Please describe what you were trying to do when this error occurred.'
             ) +
             '&labels=' + encodeURIComponent('bug,routing');
-
-          // Add dark mode styles
+          
           var styleTag = '<style>' +
-            'body { margin: 0; padding: 0; min-height: 100vh; background: #f8f9fa; }' +
-            '.error-container { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; text-align: center; }' +
-            '.error-title { color: #d73527; margin-bottom: 1rem; }' +
-            '.error-subtitle { color: #333; margin-bottom: 1rem; }' +
-            '.error-message { background: #f5f5f5; padding: 15px; border-radius: 5px; text-align: left; color: #333; margin-bottom: 1rem; }' +
-            '.error-code { color: #333; margin-bottom: 1rem; }' +
+            'body { margin: 0; padding: 0; min-height: 100vh; background: #f8f9fa; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }' +
+            '.error-container { max-width: 800px; margin: 50px auto; padding: 40px; text-align: center; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }' +
+            '.error-title { color: #d73527; margin-bottom: 1rem; font-size: 2rem; }' +
+            '.error-subtitle { color: #333; margin-bottom: 1rem; font-size: 1.5rem; }' +
+            '.error-message { background: #f5f5f5; padding: 20px; border-radius: 5px; text-align: left; color: #333; margin-bottom: 1.5rem; white-space: pre-wrap; }' +
+            '.error-code { color: #666; margin-bottom: 1rem; font-family: monospace; }' +
             '.error-actions { margin: 30px 0; }' +
-            '.error-btn { background: #0078d4; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 5px; display: inline-block; }' +
+            '.error-btn { background: #0078d4; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 5px; display: inline-block; transition: background 0.2s; }' +
+            '.error-btn:hover { background: #005a9e; }' +
             '.error-btn.report { background: #d73527; }' +
-            '.error-footer { color: #666; font-size: 12px; }' +
+            '.error-btn.report:hover { background: #a82820; }' +
+            '.error-footer { color: #666; font-size: 14px; margin-top: 30px; }' +
+            '.routing-log { background: #2d2d2d; color: #f8f8f2; padding: 15px; border-radius: 5px; text-align: left; font-family: monospace; font-size: 12px; max-height: 300px; overflow-y: auto; margin: 20px 0; }' +
             '@media (prefers-color-scheme: dark) {' +
               'body { background: #1f2937; }' +
+              '.error-container { background: #374151; }' +
               '.error-title { color: #f87171; }' +
               '.error-subtitle { color: #f9fafb; }' +
-              '.error-message { background: #374151; color: #e5e7eb; }' +
-              '.error-code { color: #f3f4f6; }' +
-              '.error-btn { background: #60a5fa; color: #ffffff; }' +
-              '.error-btn:hover { background: #3b82f6; }' +
-              '.error-btn.report { background: #ef4444; }' +
-              '.error-btn.report:hover { background: #dc2626; }' +
+              '.error-message { background: #4b5563; color: #e5e7eb; }' +
+              '.error-code { color: #9ca3af; }' +
               '.error-footer { color: #9ca3af; }' +
             '}' +
             '</style>';
-
+          
+          var routingLog = window.SGEX_ROUTING_LOGGER.routeChain.map(function(entry) {
+            return '[' + entry.elapsed + 'ms] ' + entry.type + ': ' + 
+              (entry.message || entry.from + ' → ' + entry.to || entry.url || JSON.stringify(entry));
+          }).join('\n');
+          
           var errorHTML = styleTag +
             '<div class="error-container">' +
-              '<h1 class="error-title">SGEX URL Routing Error</h1>' +
+              '<h1 class="error-title">⚠️ SGEX Routing Error</h1>' +
               '<h2 class="error-subtitle">' + title + '</h2>' +
-              '<p class="error-message">' + message + '</p>' +
+              '<div class="error-message">' + message + '</div>' +
               '<p class="error-code"><strong>Error Code:</strong> ' + errorCode + '</p>' +
+              '<div class="routing-log"><strong>Routing Timeline:</strong><br>' + routingLog + '</div>' +
               '<div class="error-actions">' +
-                '<a href="https://litlfred.github.io/sgex/" class="error-btn">Go to SGEX Home</a>' +
-                '<a href="' + bugReportUrl + '" target="_blank" class="error-btn report">Report Bug</a>' +
+                '<a href="https://litlfred.github.io/sgex/" class="error-btn">🏠 Go to SGEX Home</a>' +
+                '<a href="' + bugReportUrl + '" target="_blank" class="error-btn report">🐛 Report Bug</a>' +
               '</div>' +
-              '<p class="error-footer">If you think this is a bug, please use the "Report Bug" button to help us fix it.</p>' +
+              '<p class="error-footer">This routing error has been logged. Use the "Report Bug" button to help us fix it.</p>' +
             '</div>';
-
+          
           if (document.body) {
             document.body.innerHTML = errorHTML;
           } else {
@@ -238,21 +392,26 @@ potential blocking of copilot access to this repository.
             });
           }
         }
-
+        
         // Execute routing
         try {
           performRouting();
         } catch (error) {
           console.error('SGEX 404.html: Routing error:', error);
-          showErrorPage('Routing System Error', 'An error occurred in the routing system: ' + error.message, 'system-error');
+          window.SGEX_ROUTING_LOGGER.logError('Routing system error', {
+            error: error.message,
+            stack: error.stack
+          });
+          showErrorPage('Routing System Error', 
+            'An error occurred in the routing system: ' + error.message,
+            'system-error');
         }
-
+        
       })(window.location);
     </script>
   </head>
   <body>
     <!-- SGEX Simplified Optimistic Routing -->
-    <!-- Handles all GitHub Pages routing with clean, concise logic -->
-    <!-- Reduced from 651 lines to ~100 lines for maintainability -->
+    <!-- Deployment-agnostic 404 handler with comprehensive logging -->
   </body>
 </html>
