@@ -67,7 +67,7 @@ export const AuthProvider = ({ children }) => {
    * Initialize authentication from stored token
    * This is the SINGLE initialization point to prevent race conditions
    */
-  const initializeAuth = useCallback(async () => {
+  const initializeAuth = useCallback(() => {
     log.debug('Initializing authentication...');
     
     try {
