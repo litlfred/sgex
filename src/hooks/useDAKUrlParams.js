@@ -89,6 +89,36 @@ const useDAKUrlParams = () => {
               selectedBranch: branch || 'main'
             });
 
+            // Update session storage for public access navigation
+            try {
+              sessionStorage.setItem('sgex_selected_user', user);
+              sessionStorage.setItem('sgex_selected_repo', repo);
+              sessionStorage.setItem('sgex_selected_branch', branch || 'main');
+              
+              // Update structured context
+              const existingContext = sessionStorage.getItem('sgex_url_context');
+              const context = existingContext ? JSON.parse(existingContext) : {};
+              const updatedContext = {
+                ...context,
+                user: user,
+                repo: repo,
+                branch: branch || 'main',
+                timestamp: Date.now()
+              };
+              sessionStorage.setItem('sgex_url_context', JSON.stringify(updatedContext));
+              
+              // Log the session storage update
+              if (typeof window !== 'undefined' && window.SGEX_ROUTING_LOGGER) {
+                window.SGEX_ROUTING_LOGGER.logSessionStorageUpdate('sgex_selected_user', user);
+                window.SGEX_ROUTING_LOGGER.logSessionStorageUpdate('sgex_selected_repo', repo);
+                window.SGEX_ROUTING_LOGGER.logSessionStorageUpdate('sgex_selected_branch', branch || 'main');
+              }
+              
+              console.log('✅ useDAKUrlParams: Updated session storage for public access navigation');
+            } catch (storageErr) {
+              console.warn('Failed to update session storage:', storageErr);
+            }
+
             setProfile(publicProfile);
             setRepository(publicRepository);
             setSelectedBranch(branch || 'main');
@@ -181,6 +211,37 @@ const useDAKUrlParams = () => {
             },
             selectedBranch: branch || repoData.default_branch
           });
+
+          // Update session storage for SPA navigation consistency
+          // This ensures session storage stays in sync when navigating between repos
+          try {
+            sessionStorage.setItem('sgex_selected_user', userProfile.login);
+            sessionStorage.setItem('sgex_selected_repo', repoData.name);
+            sessionStorage.setItem('sgex_selected_branch', branch || repoData.default_branch);
+            
+            // Update structured context
+            const existingContext = sessionStorage.getItem('sgex_url_context');
+            const context = existingContext ? JSON.parse(existingContext) : {};
+            const updatedContext = {
+              ...context,
+              user: userProfile.login,
+              repo: repoData.name,
+              branch: branch || repoData.default_branch,
+              timestamp: Date.now()
+            };
+            sessionStorage.setItem('sgex_url_context', JSON.stringify(updatedContext));
+            
+            // Log the session storage update
+            if (typeof window !== 'undefined' && window.SGEX_ROUTING_LOGGER) {
+              window.SGEX_ROUTING_LOGGER.logSessionStorageUpdate('sgex_selected_user', userProfile.login);
+              window.SGEX_ROUTING_LOGGER.logSessionStorageUpdate('sgex_selected_repo', repoData.name);
+              window.SGEX_ROUTING_LOGGER.logSessionStorageUpdate('sgex_selected_branch', branch || repoData.default_branch);
+            }
+            
+            console.log('✅ useDAKUrlParams: Updated session storage for SPA navigation');
+          } catch (storageErr) {
+            console.warn('Failed to update session storage:', storageErr);
+          }
 
           setProfile(userProfile);
           setRepository(repoData);
