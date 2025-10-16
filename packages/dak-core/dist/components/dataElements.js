@@ -1,0 +1,98 @@
+"use strict";
+/**
+ * Core Data Element Component Object
+ * Handles retrieval, saving, and validation of Core Data Element instances
+ */
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.CoreDataElementComponent = void 0;
+const types_1 = require("../types");
+const dakComponentObject_1 = require("../dakComponentObject");
+class CoreDataElementComponent extends dakComponentObject_1.BaseDAKComponentObject {
+    constructor(repository, sourceResolver, stagingGroundService, onSourcesChanged) {
+        super(types_1.DAKComponentType.DATA_ELEMENTS, repository, sourceResolver, stagingGroundService, onSourcesChanged);
+    }
+    /**
+     * Determine file path for Core Data Element
+     * Core data elements reference FHIR resources by canonical URI
+     * For inline storage, we use a JSON format
+     */
+    async determineFilePath(data) {
+        const id = data.id || 'new-data-element';
+        return `input/vocabulary/${id}.json`;
+    }
+    /**
+     * Serialize Core Data Element to JSON format
+     */
+    serializeToFile(data) {
+        return JSON.stringify(data, null, 2);
+    }
+    /**
+     * Parse Core Data Element from JSON content
+     */
+    parseFromFile(content) {
+        return JSON.parse(content);
+    }
+    /**
+     * Validate Core Data Element instance
+     */
+    async validate(data) {
+        const errors = [];
+        const warnings = [];
+        // Required fields validation
+        if (!data.type) {
+            errors.push({
+                code: 'MISSING_TYPE',
+                message: 'Core Data Element must have a type (valueset, codesystem, conceptmap, or logicalmodel)'
+            });
+        }
+        else {
+            // Validate type is one of the allowed values
+            const validTypes = ['valueset', 'codesystem', 'conceptmap', 'logicalmodel'];
+            if (!validTypes.includes(data.type)) {
+                errors.push({
+                    code: 'INVALID_TYPE',
+                    message: `Invalid type: ${data.type}. Must be one of: ${validTypes.join(', ')}`
+                });
+            }
+        }
+        if (!data.canonical) {
+            errors.push({
+                code: 'MISSING_CANONICAL',
+                message: 'Core Data Element must have a canonical URI'
+            });
+        }
+        else {
+            // Validate canonical is a valid URI
+            try {
+                new URL(data.canonical);
+            }
+            catch {
+                errors.push({
+                    code: 'INVALID_CANONICAL',
+                    message: `Invalid canonical URI: ${data.canonical}`
+                });
+            }
+        }
+        // Optional fields warnings
+        if (!data.id) {
+            warnings.push({
+                code: 'MISSING_ID',
+                message: 'Core Data Element should have an id for better tracking'
+            });
+        }
+        if (!data.description) {
+            warnings.push({
+                code: 'MISSING_DESCRIPTION',
+                message: 'Core Data Element should have a description'
+            });
+        }
+        return {
+            isValid: errors.length === 0,
+            errors,
+            warnings,
+            timestamp: new Date()
+        };
+    }
+}
+exports.CoreDataElementComponent = CoreDataElementComponent;
+//# sourceMappingURL=dataElements.js.map
