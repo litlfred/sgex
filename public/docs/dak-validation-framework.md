@@ -42,6 +42,8 @@ This policy ensures better tooling support, type safety, and consistency across 
 - **WHO Enterprise Architecture**: http://smart.who.int/ra
 - **BPMN 2.0 Specification**: https://www.omg.org/spec/BPMN/2.0/
 - **DMN 1.3 Specification**: https://www.omg.org/spec/DMN/1.3/
+- **DAK Logical Model Implementation**: See `DAK_LOGICAL_MODEL_UPDATE_PLAN.md` and `DAK_IMPLEMENTATION_STATUS.md` in repository root
+- **DAK Core Package**: `packages/dak-core/` - TypeScript implementation of DAK Component Objects
 
 ## 2. Validation Rule Structure
 
@@ -364,6 +366,44 @@ The validation framework integrates with existing services:
 - **githubService**: Fetches repository files for validation
 - **stagingGroundService**: Validates staged files before commit
 - **i18n (react-i18next)**: Translates validation messages
+- **packages/dak-core**: Integrates with DAK Component Objects and Source resolution
+- **DAKObject/DAKFactory**: Validates dak.json structure and component sources
+
+### 3.4 DAK Core Package Integration
+
+The validation framework leverages the new **packages/dak-core** TypeScript implementation:
+
+```javascript
+import { DAKFactory, DAKComponentType } from 'dak-core';
+
+// Example: Validate DAK component sources
+async function validateDAKSources(owner, repo, branch) {
+  // Create DAK object from repository
+  const dak = await DAKFactory.createFromRepository(owner, repo, branch);
+  
+  // Validate each component's sources
+  const components = [
+    DAKComponentType.HEALTH_INTERVENTIONS,
+    DAKComponentType.BUSINESS_PROCESSES,
+    DAKComponentType.DATA_ELEMENTS,
+    // ... other components
+  ];
+  
+  const validationResults = [];
+  for (const componentType of components) {
+    const componentObject = dak.getComponent(componentType);
+    const sources = await componentObject.getSources();
+    
+    // Validate each source (canonical, url, instance)
+    for (const source of sources) {
+      const result = await validateComponentSource(source, componentType);
+      validationResults.push(result);
+    }
+  }
+  
+  return validationResults;
+}
+```
 
 ## 4. Validation Rules Specification
 
@@ -374,6 +414,24 @@ The validation framework integrates with existing services:
 - **Level**: error
 - **File**: sushi-config.yaml (required by FSH/SUSHI tooling)
 - **Implementation**: Check `dependencies` section for `smart.who.int.base` key
+
+#### DAK-JSON-STRUCTURE-001: dak.json Valid Structure
+- **Description**: dak.json SHALL conform to WHO SMART Base DAK logical model structure
+- **Level**: error
+- **Component**: All
+- **File**: dak.json
+- **Implementation**: Validate against DAK JSON schema from packages/dak-core
+
+#### DAK-COMPONENT-SOURCES-001: Valid Component Sources
+- **Description**: All DAK component sources SHALL use valid source types (canonical, url, or instance)
+- **Level**: error
+- **Component**: All
+- **File**: dak.json
+- **Implementation**: 
+  - Validate each component source has at least one: canonical, url, or instance
+  - Canonical URLs must be valid IRI format
+  - Relative URLs must be relative to input/ directory
+  - Absolute URLs must be valid HTTP/HTTPS URLs
 
 #### DAK-AUTHORING-CONVENTIONS: WHO Authoring Conventions
 - **Description**: Follow WHO SMART Guidelines authoring conventions from https://smart.who.int/ig-starter-kit/authoring_conventions.html
@@ -683,6 +741,28 @@ const handleOverrideSave = async (explanation) => {
 
 ```
 sgex/
+├── packages/
+│   └── dak-core/                                   (existing - TypeScript DAK implementation)
+│       ├── src/
+│       │   ├── dakObject.ts                        (DAK instance management)
+│       │   ├── dakFactory.ts                       (DAK creation factory)
+│       │   ├── dakComponentObject.ts               (Base component class)
+│       │   ├── sourceResolution.ts                 (Source type resolution)
+│       │   ├── stagingGroundIntegration.ts         (Staging ground bridge)
+│       │   ├── components/                         (9 Component Objects)
+│       │   │   ├── healthInterventions.ts
+│       │   │   ├── personas.ts
+│       │   │   ├── userScenarios.ts
+│       │   │   ├── businessProcesses.ts
+│       │   │   ├── dataElements.ts
+│       │   │   ├── decisionLogic.ts
+│       │   │   ├── indicators.ts
+│       │   │   ├── requirements.ts
+│       │   │   └── testScenarios.ts
+│       │   └── schemas/                            (JSON schemas)
+│       │       ├── dak-component-source.schema.json
+│       │       └── core-data-element.schema.json
+│       │
 ├── src/
 │   ├── services/
 │   │   ├── dakArtifactValidationService.js      (new - main service)
@@ -690,12 +770,16 @@ sgex/
 │   │   ├── validationContext.js                 (new - validation helpers)
 │   │   ├── xsdValidationService.js              (new - XSD validation)
 │   │   ├── dakComplianceService.js              (existing - extend)
-│   │   └── runtimeValidationService.ts          (existing - use)
+│   │   ├── runtimeValidationService.ts          (existing - use)
+│   │   ├── ComponentObjectProvider.js           (existing - DAK core integration)
+│   │   └── stagingGroundService.js              (existing - staging operations)
 │   │
 │   ├── validation/
 │   │   ├── rules/
 │   │   │   ├── dak/                             (DAK-level rules)
 │   │   │   │   ├── smartBaseDependency.js
+│   │   │   │   ├── dakJsonStructure.js          (new - validate dak.json)
+│   │   │   │   ├── componentSources.js          (new - validate sources)
 │   │   │   │   └── authoringConventions.js
 │   │   │   │
 │   │   │   ├── bpmn/                            (BPMN rules)
@@ -780,9 +864,12 @@ sgex/
 - [ ] Create DAKArtifactValidationService skeleton
 - [ ] Implement rule loading mechanism
 - [ ] Set up translation keys structure
+- [ ] Integrate with packages/dak-core DAKObject and Component Objects
 
 ### Phase 2: Basic Validation Rules (Week 2-3)
 - [ ] Implement DAK-level validations (sushi-config.yaml)
+- [ ] Implement dak.json structure validation using DAK core schemas
+- [ ] Implement component source validation (canonical, url, instance)
 - [ ] Implement XML well-formedness validation
 - [ ] Implement JSON syntax validation
 - [ ] Implement basic BPMN validations (namespace, start event)
@@ -793,7 +880,9 @@ sgex/
 - [ ] Implement DMN decision ID and label validation
 - [ ] Implement DMN-BPMN cross-reference validation
 - [ ] Implement FHIR resource type validation
+- [ ] Implement FSH syntax validation (using FHIR FSH rules)
 - [ ] Implement file size and naming validations
+- [ ] Add validation for component source URL resolution
 
 ### Phase 4: XSD Validation (Week 4-5)
 - [ ] Create XSDValidationService
@@ -848,15 +937,81 @@ sgex/
 
 ## 8. Technical Considerations
 
-### 8.1 Performance
+### 8.1 DAK Core Package Integration
+
+The validation framework integrates with the **packages/dak-core** TypeScript implementation:
+
+#### Using DAKObject for Validation
+```javascript
+import { DAKFactory, DAKComponentType } from 'dak-core';
+
+async function validateDAKRepository(owner, repo, branch) {
+  // Create DAK object from repository
+  const dak = await DAKFactory.createFromRepository(owner, repo, branch);
+  
+  // Validate dak.json structure
+  const dakJsonValid = await validateDAKJsonStructure(dak.toJSON());
+  
+  // Validate component sources
+  const sourceValidations = await validateComponentSources(dak);
+  
+  // Validate artifacts referenced by sources
+  const artifactValidations = await validateComponentArtifacts(dak);
+  
+  return {
+    dakJsonValid,
+    sourceValidations,
+    artifactValidations
+  };
+}
+```
+
+#### Source Type Validation
+The framework validates all three source types:
+
+1. **Canonical (IRI)**: Validate IRI format and accessibility
+2. **URL (Absolute/Relative)**: Validate URL format and file existence
+3. **Instance (Inline Data)**: Validate against component-specific schemas
+
+```javascript
+async function validateSource(source, componentType) {
+  if (source.canonical) {
+    // Validate canonical IRI format
+    if (!isValidIRI(source.canonical)) {
+      return { valid: false, error: 'Invalid canonical IRI format' };
+    }
+  }
+  
+  if (source.url) {
+    // Check if URL is absolute or relative
+    if (isAbsoluteURL(source.url)) {
+      // Validate absolute URL accessibility
+      return await validateAbsoluteURL(source.url);
+    } else {
+      // Validate relative URL points to existing file in input/
+      return await validateRelativeURL(source.url, componentType);
+    }
+  }
+  
+  if (source.instance) {
+    // Validate inline instance data against component schema
+    return await validateInstanceData(source.instance, componentType);
+  }
+  
+  return { valid: false, error: 'Source must have canonical, url, or instance' };
+}
+```
+
+### 8.2 Performance
 
 - **Lazy Loading**: Validation rules should be loaded on-demand
 - **Caching**: Cache validation results with file content hash
 - **Incremental Validation**: Only re-validate changed files
 - **Web Workers**: Consider using Web Workers for heavy XML/JSON parsing
 - **Pagination**: For large repositories, validate in batches
+- **DAK Object Caching**: Reuse DAKObject instances when validating multiple components
 
-### 8.2 Cross-File Validation
+### 8.3 Cross-File Validation
 
 Some validations require checking multiple files (e.g., DMN-BPMN linking):
 

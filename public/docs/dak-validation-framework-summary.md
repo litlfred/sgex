@@ -18,7 +18,7 @@ The **DAK Validation Framework** provides comprehensive validation of WHO SMART 
 
 | Category | Example Rules | File Types |
 |----------|---------------|------------|
-| **DAK-Level** | SMART Base dependency required | sushi-config.yaml |
+| **DAK-Level** | SMART Base dependency required, dak.json structure, component sources | sushi-config.yaml, dak.json |
 | **BPMN** | businessRuleTask ID required, Start events | .bpmn |
 | **DMN** | Decision ID/label required, Links to BPMN | .dmn |
 | **XML** | Well-formed, XSD schema validation | .xml, .bpmn, .dmn |

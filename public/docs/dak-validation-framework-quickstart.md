@@ -11,6 +11,18 @@ Before starting implementation:
 3. [GREEN] Implementation approved
 4. [GREEN] Team assigned to project
 5. [GREEN] Timeline agreed upon
+6. [GREEN] Familiarity with **packages/dak-core** TypeScript implementation (see DAK_LOGICAL_MODEL_UPDATE_PLAN.md)
+
+## Important: DAK Core Integration
+
+This validation framework integrates with the updated **WHO SMART Guidelines DAK logical model** implemented in `packages/dak-core/`. Key concepts:
+
+- **DAK Component Objects**: 9 component types (HealthInterventions, BusinessProcesses, etc.)
+- **Source Types**: Components reference artifacts via canonical IRI, URL, or inline instance
+- **dak.json Structure**: Central metadata file tracking all component sources
+- **Staging Ground Integration**: Automatic syncing between Component Objects and staging ground
+
+**Required Reading**: Review `DAK_LOGICAL_MODEL_UPDATE_PLAN.md` and `DAK_IMPLEMENTATION_STATUS.md` before starting implementation.
 
 ## Document Index
 
