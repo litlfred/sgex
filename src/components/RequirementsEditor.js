@@ -371,11 +371,6 @@ const RequirementsEditorContent = () => {
   const cancelDelete = () => {
     setShowDeleteConfirm(false);
   };
-    } catch (err) {
-      console.error('Error deleting requirement:', err);
-      setError('Failed to delete requirement');
-    }
-  };
 
   if (pageLoading || loading) {
     return (
