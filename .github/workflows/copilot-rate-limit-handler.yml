@@ -1,0 +1,254 @@
+name: Copilot Rate Limit Handler
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  detect-and-handle-rate-limit:
+    runs-on: ubuntu-latest
+    # Only run on PR comments
+    if: github.event.issue.pull_request != null
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          
+      - name: Install Python dependencies
+        run: |
+          pip install requests
+
+      - name: Check for Copilot rate limit error
+        id: check_rate_limit
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const comment = context.payload.comment;
+            const commentBody = comment.body.toLowerCase();
+            const commentAuthor = comment.user.login;
+            
+            // Check if comment is from Copilot and contains rate limit error
+            // Copilot appears as the comment author when rate limited
+            const isCopilotComment = commentAuthor.includes('copilot') || commentAuthor === 'github-actions[bot]';
+            
+            // Common rate limit error patterns
+            const rateLimitPatterns = [
+              'rate limit',
+              'rate-limit',
+              'too many requests',
+              'retry after',
+              'exceeded.*quota',
+              'api rate limit exceeded',
+              '429',
+              'requests per'
+            ];
+            
+            const hasRateLimitError = rateLimitPatterns.some(pattern => {
+              const regex = new RegExp(pattern, 'i');
+              return regex.test(commentBody);
+            });
+            
+            console.log(`Comment author: ${commentAuthor}`);
+            console.log(`Is Copilot comment: ${isCopilotComment}`);
+            console.log(`Has rate limit error: ${hasRateLimitError}`);
+            console.log(`Comment preview: ${commentBody.substring(0, 200)}`);
+            
+            if (hasRateLimitError) {
+              // Try to extract wait time from comment
+              // Look for patterns like "retry after 30 minutes", "wait 2 hours", "90 seconds"
+              const retryAfterMatch = commentBody.match(/retry\s+after\s+(\d+)\s*(minute|hour|second)/i);
+              const waitMatch = commentBody.match(/wait\s+(\d+)\s*(minute|hour|second)/i);
+              const timeMatch = commentBody.match(/(\d+)\s*(hour|minute|second)s?\s+before/i) || 
+                                commentBody.match(/(\d+)\s*(hour|minute|second)s?$/i);
+              
+              const match = retryAfterMatch || waitMatch || timeMatch;
+              let waitMinutes = 60; // Default to 60 minutes if not specified
+              
+              if (match) {
+                const time = parseInt(match[1]);
+                const unit = match[2].toLowerCase();
+                
+                if (unit.includes('hour')) {
+                  waitMinutes = time * 60;
+                } else if (unit.includes('second')) {
+                  waitMinutes = Math.ceil(time / 60);
+                } else {
+                  waitMinutes = time;
+                }
+              }
+              
+              // Cap at 360 minutes (6 hours - GitHub Actions timeout)
+              waitMinutes = Math.min(waitMinutes, 360);
+              
+              core.setOutput('rate_limit_detected', 'true');
+              core.setOutput('wait_minutes', waitMinutes.toString());
+              core.setOutput('original_comment_id', comment.id.toString());
+              
+              return {
+                detected: true,
+                waitMinutes,
+                commentId: comment.id
+              };
+            } else {
+              core.setOutput('rate_limit_detected', 'false');
+              return { detected: false };
+            }
+
+      - name: Create initial notification comment
+        if: steps.check_rate_limit.outputs.rate_limit_detected == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+          WAIT_MINUTES: ${{ steps.check_rate_limit.outputs.wait_minutes }}
+        run: |
+          python scripts/manage-pr-comment.py \
+            --token "$GITHUB_TOKEN" \
+            --repo "${{ github.repository }}" \
+            --pr "$PR_NUMBER" \
+            --action-id "copilot-rate-limit-${{ github.run_id }}" \
+            --workflow-name "Copilot Rate Limit Handler" \
+            --event-name "${{ github.event_name }}" \
+            --stage rate-limit-waiting \
+            --data "{
+              \"commit_sha\": \"${{ github.event.issue.pull_request.head.sha || 'unknown' }}\",
+              \"branch_name\": \"rate-limit-handler\",
+              \"commit_url\": \"${{ github.event.issue.pull_request.html_url || github.event.issue.html_url }}\",
+              \"workflow_url\": \"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\",
+              \"branch_url\": \"${{ github.event.issue.pull_request.html_url || github.event.issue.html_url }}\",
+              \"error_message\": \"Copilot rate limit detected. Waiting ${WAIT_MINUTES} minutes before retrying.\",
+              \"remaining_minutes\": \"${WAIT_MINUTES}\"
+            }"
+          
+          echo "Initial notification comment created"
+
+      - name: Wait and update status every 5 minutes
+        if: steps.check_rate_limit.outputs.rate_limit_detected == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+          WAIT_MINUTES: ${{ steps.check_rate_limit.outputs.wait_minutes }}
+        run: |
+          total_wait=$((WAIT_MINUTES * 60))  # Convert to seconds
+          elapsed=0
+          update_interval=300  # 5 minutes in seconds
+          
+          echo "Starting wait for ${WAIT_MINUTES} minutes (${total_wait} seconds)"
+          
+          while [ $elapsed -lt $total_wait ]; do
+            # Wait for update interval or remaining time, whichever is smaller
+            remaining=$((total_wait - elapsed))
+            wait_time=$((remaining < update_interval ? remaining : update_interval))
+            
+            echo "Waiting ${wait_time} seconds before next update..."
+            sleep $wait_time
+            
+            elapsed=$((elapsed + wait_time))
+            remaining_minutes=$(( (total_wait - elapsed) / 60 ))
+            
+            if [ $elapsed -lt $total_wait ]; then
+              echo "Updating status: ${remaining_minutes} minutes remaining"
+              
+              python scripts/manage-pr-comment.py \
+                --token "$GITHUB_TOKEN" \
+                --repo "${{ github.repository }}" \
+                --pr "$PR_NUMBER" \
+                --action-id "copilot-rate-limit-${{ github.run_id }}" \
+                --workflow-name "Copilot Rate Limit Handler" \
+                --event-name "${{ github.event_name }}" \
+                --stage rate-limit-waiting \
+                --data "{
+                  \"commit_sha\": \"${{ github.event.issue.pull_request.head.sha || 'unknown' }}\",
+                  \"branch_name\": \"rate-limit-handler\",
+                  \"commit_url\": \"${{ github.event.issue.pull_request.html_url || github.event.issue.html_url }}\",
+                  \"workflow_url\": \"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\",
+                  \"branch_url\": \"${{ github.event.issue.pull_request.html_url || github.event.issue.html_url }}\",
+                  \"error_message\": \"Yep, still here waiting. Will retry in ${remaining_minutes} minutes.\",
+                  \"remaining_minutes\": \"${remaining_minutes}\"
+                }"
+            fi
+          done
+          
+          echo "Wait complete!"
+
+      - name: Update comment - Done waiting
+        if: steps.check_rate_limit.outputs.rate_limit_detected == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          python scripts/manage-pr-comment.py \
+            --token "$GITHUB_TOKEN" \
+            --repo "${{ github.repository }}" \
+            --pr "$PR_NUMBER" \
+            --action-id "copilot-rate-limit-${{ github.run_id }}" \
+            --workflow-name "Copilot Rate Limit Handler" \
+            --event-name "${{ github.event_name }}" \
+            --stage rate-limit-complete \
+            --data "{
+              \"commit_sha\": \"${{ github.event.issue.pull_request.head.sha || 'unknown' }}\",
+              \"branch_name\": \"rate-limit-handler\",
+              \"commit_url\": \"${{ github.event.issue.pull_request.html_url || github.event.issue.html_url }}\",
+              \"workflow_url\": \"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\",
+              \"branch_url\": \"${{ github.event.issue.pull_request.html_url || github.event.issue.html_url }}\",
+              \"error_message\": \"Done waiting! Now triggering Copilot retry.\"
+            }"
+
+      - name: Post Copilot retry command
+        if: steps.check_rate_limit.outputs.rate_limit_detected == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.issue.number;
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: '@copilot review previous comments and try again.'
+            });
+            
+            console.log(`Posted Copilot retry command to PR #${prNumber}`);
+
+      - name: Handle timeout warning
+        if: steps.check_rate_limit.outputs.rate_limit_detected == 'true' && steps.check_rate_limit.outputs.wait_minutes >= 360
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.issue.number;
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: `⚠️ **Warning**: The wait time exceeds or is close to the GitHub Actions 6-hour timeout limit. If this workflow times out before completing, you may need to manually trigger Copilot with:\n\n\`@copilot review previous comments and try again.\`\n\nYou can also wait for the rate limit to reset naturally and then post the command yourself.`
+            });
+            
+            console.log(`Posted timeout warning to PR #${prNumber}`);
+
+      - name: Handle errors
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.issue.number;
+            
+            try {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: `❌ **Copilot Rate Limit Handler Error**: The automated rate limit handler encountered an error. Please check the [workflow logs](${context.payload.repository.html_url}/actions/runs/${context.runId}) for details.\n\nYou may need to manually trigger Copilot after the rate limit resets:\n\`@copilot review previous comments and try again.\``
+              });
+            } catch (error) {
+              console.error('Failed to post error comment:', error);
+            }
