@@ -1,0 +1,36 @@
+<svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+  <!-- Cat paw (dark mode - lighter colors) -->
+  <g fill="#D4A574" stroke="#B8926A" stroke-width="0.5">
+    <!-- Main paw pad -->
+    <ellipse cx="10" cy="14" rx="4" ry="2.5" />
+    
+    <!-- Toe pads -->
+    <circle cx="7" cy="10" r="1.5" />
+    <circle cx="10" cy="9" r="1.5" />
+    <circle cx="13" cy="10" r="1.5" />
+  </g>
+  
+  <!-- Document/scroll -->
+  <g fill="#3A3A3A" stroke="#999" stroke-width="0.5">
+    <!-- Document body -->
+    <rect x="6" y="2" width="8" height="6" rx="0.5" fill="#3A3A3A" />
+    
+    <!-- Document header/title area -->
+    <rect x="6" y="2" width="8" height="1.5" rx="0.5" fill="#6BB6FF" />
+    
+    <!-- Document content lines -->
+    <line x1="7" y1="4.5" x2="13" y2="4.5" stroke="#AAA" stroke-width="0.4" />
+    <line x1="7" y1="5.5" x2="12" y2="5.5" stroke="#AAA" stroke-width="0.4" />
+    <line x1="7" y1="6.5" x2="13" y2="6.5" stroke="#AAA" stroke-width="0.4" />
+    <line x1="7" y1="7.2" x2="11" y2="7.2" stroke="#AAA" stroke-width="0.4" />
+  </g>
+  
+  <!-- Bookmark ribbon effect -->
+  <path d="M 13.5 2 L 13.5 5 L 14.5 4.5 L 15.5 5 L 15.5 2" fill="#FF6B6B" stroke="#E74C3C" stroke-width="0.3" />
+  
+  <!-- Small sparkles -->
+  <g fill="#6BB6FF" opacity="0.5">
+    <circle cx="5" cy="3" r="0.3" />
+    <circle cx="16" cy="6" r="0.3" />
+  </g>
+</svg>
