@@ -7,8 +7,138 @@
  * - Support breadcrumb navigation for subdirectories
  * - Manage JSON schema access
  * - Integrate with i18n for documentation titles and descriptions
+ * 
+ * @module documentationService
+ */
+
+/**
+ * Documentation file metadata
+ * @example { "id": "requirements", "file": "requirements.md", "title": "Requirements" }
+ */
+export interface DocumentFile {
+  /** Unique document ID */
+  id: string;
+  /** File path */
+  file: string;
+  /** Document title */
+  title: string;
+  /** Subdirectory path */
+  path: string;
+  /** Full URL to document */
+  url: string;
+  /** Optional description */
+  description?: string;
+}
+
+/**
+ * Documentation category
+ */
+export interface DocumentCategory {
+  /** Category title */
+  title: string;
+  /** Files in category */
+  files: DocumentFile[];
+}
+
+/**
+ * Schema information
+ */
+export interface SchemaInfo {
+  /** Section title */
+  title: string;
+  /** Section description */
+  description: string;
+  /** Schema files */
+  files: DocumentFile[];
+}
+
+/**
+ * Documentation structure
+ */
+export interface DocumentationStructure {
+  /** Categories of documents */
+  categories: Record<string, DocumentCategory>;
+  /** JSON schemas section */
+  schemas: SchemaInfo;
+  /** Breadcrumb mappings */
+  breadcrumbs: Map<string, string>;
+}
+
+/**
+ * Breadcrumb item
+ */
+export interface Breadcrumb {
+  /** Breadcrumb label */
+  label: string;
+  /** Navigation path */
+  path?: string;
+  /** Whether this is current page */
+  current?: boolean;
+}
+
+/**
+ * Document with content
+ */
+export interface DocumentWithContent extends DocumentFile {
+  /** Document content */
+  content: string;
+  /** Breadcrumb trail */
+  breadcrumbs: Breadcrumb[];
+  /** Whether this is a schema */
+  isSchema?: boolean;
+}
+
+/**
+ * Menu item
+ */
+export interface MenuItem {
+  /** Item type */
+  type: 'category' | 'document' | 'schema';
+  /** Unique ID */
+  id: string;
+  /** Display title */
+  title: string;
+  /** Navigation path */
+  path?: string;
+  /** Description */
+  description?: string;
+  /** Child items */
+  items?: MenuItem[];
+  /** Has subpath */
+  hasSubpath?: boolean;
+}
+
+/**
+ * Cached data
+ */
+interface CachedData<T> {
+  /** Cached data */
+  data: T;
+  /** Cache timestamp */
+  timestamp: number;
+}
+
+/**
+ * Documentation Service class
+ * 
+ * Manages documentation structure and content.
+ * 
+ * @openapi
+ * components:
+ *   schemas:
+ *     DocumentFile:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *         title:
+ *           type: string
  */
 class DocumentationService {
+  private baseUrl: string;
+  private cache: Map<string, CachedData<any>>;
+  private cacheTimeout: number;
+
   constructor() {
     this.baseUrl = `${process.env.PUBLIC_URL}/docs`;
     this.cache = new Map();
@@ -17,9 +147,8 @@ class DocumentationService {
 
   /**
    * Get all available documentation files and organize by category
-   * @returns {Promise<Object>} Organized documentation structure
    */
-  async getDocumentationStructure() {
+  async getDocumentationStructure(): Promise<DocumentationStructure> {
     const cacheKey = 'doc-structure';
     const cached = this.cache.get(cacheKey);
     
@@ -43,8 +172,8 @@ class DocumentationService {
   /**
    * Scan the docs directory for files and subdirectories
    */
-  async scanDocumentationFiles() {
-    const structure = {
+  async scanDocumentationFiles(): Promise<DocumentationStructure> {
+    const structure: DocumentationStructure = {
       categories: {},
       schemas: {
         title: 'JSON Schemas',
@@ -55,7 +184,7 @@ class DocumentationService {
     };
 
     // Core documentation files (root level)
-    const coreFiles = [
+    const coreFiles: Array<{file: string; title: string; category: string}> = [
       { file: 'README.md', title: 'Documentation Overview', category: 'overview' },
       { file: 'requirements.md', title: 'Requirements', category: 'architecture' },
       { file: 'solution-architecture.md', title: 'Solution Architecture', category: 'architecture' },
@@ -108,16 +237,17 @@ class DocumentationService {
       ]
     };
 
-    // Set up breadcrumbs for subdirectories - will be made context-aware when accessed
+    // Set up breadcrumbs for subdirectories
     structure.breadcrumbs.set('workflows-overview', 'workflows');
 
     // Add JSON schemas
-    const schemaFiles = [
+    const schemaFiles: DocumentFile[] = [
       {
         id: 'schemas-tjs',
         file: 'schemas/generated-schemas-tjs.json',
         title: 'TypeScript JSON Schema Generated Schemas',
         description: 'Schemas generated using typescript-json-schema tool',
+        path: '',
         url: `${this.baseUrl}/schemas/generated-schemas-tjs.json`
       },
       {
@@ -125,6 +255,7 @@ class DocumentationService {
         file: 'schemas/generated-schemas-tsjsg.json', 
         title: 'TS JSON Schema Generator Schemas',
         description: 'Schemas generated using ts-json-schema-generator tool',
+        path: '',
         url: `${this.baseUrl}/schemas/generated-schemas-tsjsg.json`
       }
     ];
@@ -137,7 +268,7 @@ class DocumentationService {
   /**
    * Get a fallback structure when scanning fails
    */
-  getFallbackStructure() {
+  getFallbackStructure(): DocumentationStructure {
     return {
       categories: {
         overview: {
@@ -163,8 +294,8 @@ class DocumentationService {
   /**
    * Get category title for i18n
    */
-  getCategoryTitle(category) {
-    const titles = {
+  getCategoryTitle(category: string): string {
+    const titles: Record<string, string> = {
       overview: 'Overview',
       architecture: 'Architecture & Design',
       development: 'Development Guidelines',
@@ -180,7 +311,7 @@ class DocumentationService {
   /**
    * Generate document ID from file path
    */
-  getDocumentId(filePath) {
+  getDocumentId(filePath: string): string {
     let id = filePath
       .replace(/\.md$/, '')
       .replace(/\//g, '-')
@@ -199,10 +330,8 @@ class DocumentationService {
 
   /**
    * Get specific document content
-   * @param {string} docId - Document identifier
-   * @returns {Promise<Object>} Document content and metadata
    */
-  async getDocument(docId) {
+  async getDocument(docId: string): Promise<DocumentWithContent | null> {
     const structure = await this.getDocumentationStructure();
     const docsBasePath = this.getCurrentDocsBasePath();
     
@@ -212,11 +341,10 @@ class DocumentationService {
       if (doc) {
         const content = await this.fetchDocumentContent(doc.url);
         
-        // Generate breadcrumbs based on whether there's a stored breadcrumb context
-        let breadcrumbs;
+        // Generate breadcrumbs
+        let breadcrumbs: Breadcrumb[];
         const breadcrumbContext = structure.breadcrumbs.get(docId);
         if (breadcrumbContext && typeof breadcrumbContext === 'string') {
-          // Handle special cases like workflows
           breadcrumbs = [
             { label: 'Documentation', path: `${docsBasePath}/overview` },
             { label: breadcrumbContext.charAt(0).toUpperCase() + breadcrumbContext.slice(1), path: `${docsBasePath}/${docId}`, current: true }
@@ -249,27 +377,27 @@ class DocumentationService {
       };
     }
 
-    throw new Error(`Document not found: ${docId}`);
+    return null;
   }
 
   /**
    * Fetch document content from URL
    */
-  async fetchDocumentContent(url) {
+  async fetchDocumentContent(url: string): Promise<string> {
     const response = await fetch(url);
     if (!response.ok) {
-      throw new Error(`Failed to load document: ${response.status}`);
+      throw new Error(`Failed to fetch document: ${response.statusText}`);
     }
-    return await response.text();
+    return response.text();
   }
 
   /**
-   * Fetch and format schema content
+   * Fetch schema content from URL
    */
-  async fetchSchemaContent(url) {
+  async fetchSchemaContent(url: string): Promise<string> {
     const response = await fetch(url);
     if (!response.ok) {
-      throw new Error(`Failed to load schema: ${response.status}`);
+      throw new Error(`Failed to fetch schema: ${response.statusText}`);
     }
     const json = await response.json();
     return JSON.stringify(json, null, 2);
@@ -278,44 +406,47 @@ class DocumentationService {
   /**
    * Generate breadcrumbs for a document
    */
-  generateBreadcrumbs(doc) {
+  generateBreadcrumbs(doc: DocumentFile): Breadcrumb[] {
     const docsBasePath = this.getCurrentDocsBasePath();
-    const breadcrumbs = [{ label: 'Documentation', path: `${docsBasePath}/overview` }];
-    
+    const breadcrumbs: Breadcrumb[] = [
+      { label: 'Documentation', path: `${docsBasePath}/overview` }
+    ];
+
     if (doc.path) {
-      // Add path segments as breadcrumbs
-      const pathSegments = doc.path.split('/').filter(Boolean);
-      pathSegments.forEach((segment, index) => {
-        const path = pathSegments.slice(0, index + 1).join('-');
-        breadcrumbs.push({
-          label: segment.charAt(0).toUpperCase() + segment.slice(1),
-          path: `${docsBasePath}/${path}`
-        });
+      breadcrumbs.push({
+        label: doc.path.charAt(0).toUpperCase() + doc.path.slice(1),
+        path: `${docsBasePath}/${doc.path}`
       });
     }
-    
-    breadcrumbs.push({ label: doc.title, current: true });
+
+    breadcrumbs.push({
+      label: doc.title,
+      current: true
+    });
+
     return breadcrumbs;
   }
 
   /**
-   * Get the current documentation base path based on deployment context
+   * Get current docs base path from window location
    */
-  getCurrentDocsBasePath() {
-    // The docs component is configured as a DAK component in routes-config.json
-    // This means it follows the standard route pattern: /docs, /docs/:user/:repo, /docs/:user/:repo/:branch
-    // For SGEX documentation, we should use the simple /docs base path
-    return '/docs';
+  getCurrentDocsBasePath(): string {
+    if (typeof window !== 'undefined' && window.location) {
+      const path = window.location.pathname;
+      const docsMatch = path.match(/(.*)\/documentation/);
+      return docsMatch ? `${docsMatch[1]}/documentation` : '/sgex/documentation';
+    }
+    return '/sgex/documentation';
   }
 
   /**
-   * Get navigation menu structure for sidebar
+   * Generate navigation menu from documentation structure
    */
-  async getNavigationMenu() {
+  async getDocumentationMenu(): Promise<MenuItem[]> {
     const structure = await this.getDocumentationStructure();
     const docsBasePath = this.getCurrentDocsBasePath();
     
-    const menu = [];
+    const menu: MenuItem[] = [];
     
     // Add category sections
     Object.entries(structure.categories).forEach(([key, category]) => {
@@ -356,7 +487,7 @@ class DocumentationService {
   /**
    * Clear cache
    */
-  clearCache() {
+  clearCache(): void {
     this.cache.clear();
   }
 }
