@@ -1,13 +1,13 @@
 .persona-viewer {
-  background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+  background: linear-gradient(135deg, var(--who-blue) 0%, var(--who-blue-dark) 100%);
   min-height: 100vh;
-  color: white;
+  color: var(--who-text-on-primary);
   padding: 0;
   margin: 0;
 }
 
 .page-header {
-  background: rgb(4, 11, 118);
+  background: var(--who-navy);
   padding: 2rem;
   border-bottom: 2px solid rgba(255, 255, 255, 0.1);
 }
@@ -16,14 +16,14 @@
   margin: 0 0 0.5rem 0;
   font-size: 2.5rem;
   font-weight: bold;
-  color: white;
+  color: var(--who-text-on-primary);
 }
 
 .page-description {
   margin: 0.5rem 0 1rem 0;
   font-size: 1.2rem;
   opacity: 0.9;
-  color: white;
+  color: var(--who-text-on-primary);
 }
 
 .repository-info {
@@ -31,7 +31,7 @@
   padding: 1rem;
   border-radius: 8px;
   margin-top: 1rem;
-  color: white;
+  color: var(--who-text-on-primary);
 }
 
 .branch-info {
@@ -146,7 +146,7 @@
   padding: 0.2rem 0.4rem;
   border-radius: 3px;
   font-family: 'Courier New', monospace;
-  color: #ffeb3b;
+  color: var(--who-text-on-primary);
 }
 
 .actors-list {
@@ -232,14 +232,14 @@
 }
 
 .source-link {
-  color: #81d4fa;
+  color: var(--who-light-blue);
   text-decoration: none;
   font-family: 'Courier New', monospace;
   word-break: break-all;
 }
 
 .source-link:hover {
-  color: #4fc3f7;
+  color: var(--who-light-blue-dark);
   text-decoration: underline;
 }
 
@@ -277,12 +277,5 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 1rem;
-  }
-}
-
-/* Dark mode adjustments */
-@media (prefers-color-scheme: dark) {
-  .persona-viewer {
-    /* Already using dark theme */
   }
 }

@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldhealthorganization.github.io/smart-base/StructureDefinition-CoreDataElement.schema.json",
+  "title": "Core Data Element (DAK)",
+  "description": "Logical Model for representing Core Data Elements from a DAK. A core data element can be one of: a ValueSet, a CodeSystem, a ConceptMap, or a Logical Model adherent to SGLogicalModel.",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Identifier for the core data element"
+    },
+    "type": {
+      "type": "string",
+      "enum": ["valueset", "codesystem", "conceptmap", "logicalmodel"],
+      "description": "Type of core data element"
+    },
+    "canonical": {
+      "type": "string",
+      "format": "uri",
+      "description": "Canonical URI/IRI pointing to the ValueSet, CodeSystem, ConceptMap, or Logical Model definition"
+    },
+    "description": {
+      "oneOf": [
+        {
+          "type": "string",
+          "description": "Markdown content describing the element"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "uri": {
+              "type": "string",
+              "format": "uri",
+              "description": "URI to a Markdown file (absolute or relative to repository root)"
+            }
+          },
+          "required": ["uri"]
+        }
+      ],
+      "description": "Description of the core data element - either Markdown content or a URI to a Markdown file"
+    }
+  },
+  "required": ["type", "canonical"],
+  "additionalProperties": false
+}

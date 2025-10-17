@@ -72,6 +72,10 @@
       "^react-router-dom$": "<rootDir>/node_modules/react-router-dom/dist/index.js"
     }
   },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
   "browserslist": {
     "production": [
       ">0.2%",
@@ -97,7 +101,7 @@
     "@types/jest": "^30.0.0",
     "@types/node": "^24.5.2",
     "@types/react": "^19.2.2",
-    "@types/react-dom": "^19.2.0",
+    "@types/react-dom": "^19.2.2",
     "@typescript-eslint/eslint-plugin": "^8.44.1",
     "@typescript-eslint/parser": "^8.44.0",
     "buffer": "^6.0.3",

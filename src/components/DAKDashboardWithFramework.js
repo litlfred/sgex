@@ -22,6 +22,19 @@ const DAKDashboardContent = () => {
   const [activeTab, setActiveTab] = useState('core'); // 'core', 'additional', or 'publications'
   const [issueCounts, setIssueCounts] = useState({});
 
+  // Handle Escape key
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape' && showPermissionDialog) {
+        setShowPermissionDialog(false);
+      }
+    };
+    if (showPermissionDialog) {
+      document.addEventListener('keydown', handleEscape);
+      return () => document.removeEventListener('keydown', handleEscape);
+    }
+  }, [showPermissionDialog]);
+
   // Check write permissions
   useEffect(() => {
     const checkWritePermissions = async () => {
@@ -291,10 +304,11 @@ const DAKDashboardContent = () => {
           {activeTab === 'core' && (
             <div className="components-grid core-components">
               {coreComponents.map(component => (
-                <div 
+                <button 
                   key={component.id}
                   className="component-card"
                   onClick={() => handleComponentNavigate(component.path)}
+                  type="button"
                 >
                   <div className="component-icon">{component.icon}</div>
                   <h3>{component.title}</h3>
@@ -304,7 +318,7 @@ const DAKDashboardContent = () => {
                       {issueCounts[component.id]} issues
                     </div>
                   )}
-                </div>
+                </button>
               ))}
             </div>
           )}
@@ -312,10 +326,11 @@ const DAKDashboardContent = () => {
           {activeTab === 'additional' && (
             <div className="components-grid additional-components">
               {additionalComponents.map(component => (
-                <div 
+                <button 
                   key={component.id}
                   className="component-card"
                   onClick={() => handleComponentNavigate(component.path)}
+                  type="button"
                 >
                   <div className="component-icon">{component.icon}</div>
                   <h3>{component.title}</h3>
@@ -325,7 +340,7 @@ const DAKDashboardContent = () => {
                       {issueCounts[component.id]} issues
                     </div>
                   )}
-                </div>
+                </button>
               ))}
             </div>
           )}
@@ -344,8 +359,17 @@ const DAKDashboardContent = () => {
 
         {showPermissionDialog && (
           <div className="permission-dialog">
-            <div className="dialog-overlay" onClick={() => setShowPermissionDialog(false)}></div>
-            <div className="dialog-content">
+            <div 
+              className="dialog-overlay" 
+              onClick={(e) => e.target === e.currentTarget && setShowPermissionDialog(false)}
+              role="presentation"
+            ></div>
+            <div 
+              className="dialog-content"
+              role="dialog"
+              aria-modal="true"
+              tabIndex={-1}
+            >
               <h3>Repository Permissions</h3>
               <p>
                 You have {hasWriteAccess ? 'write' : 'read-only'} access to this repository.
