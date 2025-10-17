@@ -31,12 +31,18 @@ const PagesManager = () => {
       }
 
       // Try to restore authentication from secure token storage
-      console.log('Attempting to restore GitHub authentication from secure token storage');
+      console.log('[PagesManager] Attempting to restore GitHub authentication from secure token storage');
       const success = await githubService.initializeFromStoredToken();
+      
+      console.log('[PagesManager] Authentication initialization result:', {
+        success,
+        isAuthenticatedAfter: githubService.isAuth()
+      });
+      
       if (success) {
-        console.log('GitHub authentication restored successfully from secure token storage');
+        console.log('[PagesManager] GitHub authentication restored successfully from secure token storage');
       } else {
-        console.warn('No valid stored GitHub token found');
+        console.warn('[PagesManager] No valid stored GitHub token found');
       }
 
       setInitializingAuth(false);
