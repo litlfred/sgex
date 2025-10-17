@@ -109,14 +109,23 @@ body.theme-light .dak-selection {
 }
 
 .documentation-info .doc-link {
-  color: #90caf9;
+  color: var(--who-blue-light);
   text-decoration: none;
   font-weight: 500;
 }
 
 .documentation-info .doc-link:hover {
-  color: white;
+  color: var(--who-text-primary);
   text-decoration: underline;
+}
+
+/* Dark theme adjustments for doc links */
+body.theme-dark .documentation-info .doc-link {
+  color: var(--who-light-blue);
+}
+
+body.theme-dark .documentation-info .doc-link:hover {
+  color: var(--who-text-primary);
 }
 
 .loading {
