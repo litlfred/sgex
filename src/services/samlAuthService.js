@@ -5,15 +5,17 @@
  * Prevents console spam by tracking SAML errors and providing a single
  * modal interface for users to authorize their Personal Access Tokens.
  * 
- * Features:
+ * Base functionality from main branch with enhanced features:
  * - Cross-tab coordination for modal display
  * - Polling for authorization completion
  * - Automatic retry of failed requests
  * - Session state persistence
+ * 
+ * Supports cross-tab synchronization for SAML authentication state.
  */
 
 import logger from '../utils/logger';
-import crossTabSyncService from './crossTabSyncService';
+import crossTabSyncService, { CrossTabEventTypes } from './crossTabSyncService';
 import samlStateStorageService from './samlStateStorageService';
 
 class SAMLAuthService {
@@ -24,24 +26,49 @@ class SAMLAuthService {
     this.recentSAMLErrors = new Map(); // Track recent errors to prevent spam
     this.errorCooldownMs = 60000; // 1 minute cooldown per org
     
-    // Polling configuration
+    // Enhanced features: Polling configuration
     this.pollingIntervalMs = 3000; // 3 seconds
     this.pollingTimeoutMs = 5 * 60 * 1000; // 5 minutes
     this.pollingIntervals = new Map(); // Active polling intervals
     this.pollingRequests = new Map(); // Original requests to retry
     
-    // Cross-tab synchronization
+    // Enhanced features: Cross-tab synchronization
     this.tabId = `tab-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Set up cross-tab synchronization
     this.setupCrossTabSync();
     
     this.logger.debug('SAMLAuthService initialized', { tabId: this.tabId });
   }
 
+  // ========================================================================
+  // BASE METHODS (from main branch)
+  // ========================================================================
+
   /**
-   * Setup cross-tab synchronization
+   * Set up cross-tab synchronization for SAML authentication
+   * Enhanced to support both base SAML_AUTHENTICATED and detailed UI events
    */
   setupCrossTabSync() {
-    // Register handlers for SAML events from other tabs
+    if (!crossTabSyncService.isAvailable()) {
+      this.logger.warn('Cross-tab sync not available - SAML state will not sync across tabs');
+      return;
+    }
+
+    // Base: Listen for SAML authentication events from other tabs (main branch)
+    crossTabSyncService.on(CrossTabEventTypes.SAML_AUTHENTICATED, (data) => {
+      this.logger.debug('SAML authentication event received from another tab', { 
+        organization: data.organization 
+      });
+      
+      // Clear cooldown for this organization since auth was successful
+      if (data.organization) {
+        this.clearCooldown(data.organization);
+        this.resolvePendingRequest(data.organization, data.repository);
+      }
+    });
+
+    // Enhanced: Register handlers for detailed SAML UI coordination events
     crossTabSyncService.on('SAML_AUTHORIZATION_COMPLETE', (data) => {
       this.logger.debug('Received SAML authorization complete event', { data });
       this.handleAuthorizationComplete(data.organization);
@@ -61,6 +88,8 @@ class SAMLAuthService {
       this.logger.debug('Received SAML polling started event', { data });
       this.handlePollingStartedInOtherTab(data.organization, data.tabId);
     });
+
+    this.logger.debug('Cross-tab sync configured for SAML authentication');
   }
 
   /**
@@ -118,10 +147,11 @@ class SAMLAuthService {
 
   /**
    * Handle a SAML enforcement error
+   * Base method from main branch, enhanced with retry callback support
    * @param {Error} error - GitHub API error
    * @param {string} owner - Repository owner (organization)
    * @param {string} repo - Repository name (optional)
-   * @param {Function} retryCallback - Optional callback to retry the original request
+   * @param {Function} retryCallback - Optional callback to retry the original request (enhancement)
    * @returns {boolean} True if SAML error was handled
    */
   handleSAMLError(error, owner, repo = null, retryCallback = null) {
@@ -133,38 +163,27 @@ class SAMLAuthService {
 
     const organization = owner; // Use owner as the organization
     
-    this.logger.info('SAML error detected', {
-      type: 'saml-error-detected',
-      organization,
-      repository: repo,
-      hasRetryCallback: !!retryCallback
-    });
-    
-    // Check if we should handle this error (cooldown check)
-    const inCooldown = samlStateStorageService.isInCooldown(organization);
-    if (inCooldown) {
-      this.logger.debug('Skipping SAML error due to cooldown', { 
-        type: 'cooldown-active',
-        organization 
-      });
+    // Check if we should handle this error (cooldown check from main)
+    if (!this.shouldHandleSAMLError(organization)) {
+      this.logger.debug('Skipping SAML error due to cooldown', { organization });
       return true; // Still return true as it was a SAML error
     }
 
-    // Mark this organization as having a recent error
+    // Mark this organization as having a recent error (from main)
     this.recentSAMLErrors.set(organization, Date.now());
 
-    // Log the SAML error without spamming
+    // Log the SAML error without spamming (from main)
     this.logger.warn('SAML SSO authorization required', {
-      type: 'saml-authorization-required',
       organization,
       repository: repo,
       message: samlError.message
     });
 
-    // Add to pending requests with retry callback
+    // Add to pending requests (from main)
     const requestKey = repo ? `${organization}/${repo}` : organization;
     this.pendingSAMLRequests.add(requestKey);
     
+    // Enhancement: Store retry callback for automatic retry
     if (retryCallback) {
       this.pollingRequests.set(organization, {
         callback: retryCallback,
@@ -173,28 +192,27 @@ class SAMLAuthService {
       });
     }
     
-    // Store in session storage
+    // Enhancement: Store in session storage for cross-tab coordination
     samlStateStorageService.addPendingRequest(organization, {
       repository: repo,
       message: samlError.message,
       hasRetryCallback: !!retryCallback
     });
 
-    // Check if another tab already has a modal open for this org
+    // Enhancement: Check if another tab already has a modal open for this org
     if (samlStateStorageService.hasActiveModalInOtherTab(organization, this.tabId)) {
       this.logger.debug('Modal already active in another tab', {
-        type: 'modal-exists-other-tab',
         organization
       });
       return true;
     }
 
-    // Show modal if callback is registered
+    // Show modal if callback is registered (from main)
     if (this.modalCallback) {
-      // Register that this tab has the modal
+      // Enhancement: Register that this tab has the modal
       samlStateStorageService.registerActiveModal(organization, this.tabId);
       
-      // Broadcast modal opened event
+      // Enhancement: Broadcast modal opened event
       crossTabSyncService.broadcast('SAML_MODAL_OPENED', {
         organization,
         tabId: this.tabId,
@@ -207,15 +225,8 @@ class SAMLAuthService {
         authorizationUrl: this.getSAMLAuthorizationUrl(organization),
         message: samlError.message
       });
-      
-      this.logger.info('SAML modal opened', {
-        type: 'modal-opened',
-        organization,
-        repository: repo
-      });
     } else {
       this.logger.warn('No modal callback registered for SAML authorization', {
-        type: 'no-modal-callback',
         organization,
         repository: repo
       });
@@ -232,6 +243,67 @@ class SAMLAuthService {
   getSAMLAuthorizationUrl(organization) {
     return `https://github.com/orgs/${organization}/sso`;
   }
+
+  /**
+   * Clear cooldown for an organization (called after successful authorization)
+   * @param {string} organization - Organization name
+   */
+  clearCooldown(organization) {
+    this.recentSAMLErrors.delete(organization);
+    this.logger.debug('SAML error cooldown cleared', { organization });
+  }
+
+  /**
+   * Mark SAML authorization as successful and broadcast to other tabs
+   * @param {string} organization - Organization name
+   * @param {string} repo - Repository name (optional)
+   */
+  markSAMLAuthorized(organization, repo = null) {
+    this.clearCooldown(organization);
+    this.resolvePendingRequest(organization, repo);
+    
+    // Broadcast SAML authentication event to other tabs (main's base event)
+    if (crossTabSyncService.isAvailable()) {
+      crossTabSyncService.broadcast(CrossTabEventTypes.SAML_AUTHENTICATED, {
+        organization: organization,
+        repository: repo,
+        timestamp: Date.now()
+      });
+      this.logger.debug('SAML authentication broadcasted to other tabs', { organization });
+    }
+  }
+
+  /**
+   * Remove a pending SAML request
+   * @param {string} organization - Organization name
+   * @param {string} repo - Repository name (optional)
+   */
+  resolvePendingRequest(organization, repo = null) {
+    const requestKey = repo ? `${organization}/${repo}` : organization;
+    this.pendingSAMLRequests.delete(requestKey);
+    this.clearCooldown(organization);
+  }
+
+  /**
+   * Get all pending SAML requests
+   * @returns {Set} Set of pending request keys
+   */
+  getPendingRequests() {
+    return new Set(this.pendingSAMLRequests);
+  }
+
+  /**
+   * Clear all pending requests and cooldowns
+   */
+  reset() {
+    this.pendingSAMLRequests.clear();
+    this.recentSAMLErrors.clear();
+    this.logger.debug('SAML auth service reset');
+  }
+
+  // ========================================================================
+  // ENHANCED METHODS (polling, retry, state management, UI coordination)
+  // ========================================================================
 
   /**
    * Start polling for SAML authorization completion
