@@ -217,20 +217,22 @@ export const PageProvider = ({ children, pageName }) => {
           // For asset pages, validate the asset exists (when authenticated or public repo)
           if (pageState.type === PAGE_TYPES.ASSET && (asset || urlContext.asset)) {
             const effectiveAsset = asset || urlContext.asset;
+            // URL decode the asset path since it comes from URL parameters
+            const decodedAsset = decodeURIComponent(effectiveAsset);
             try {
-              await githubService.getFileContent(effectiveUser, effectiveRepo, effectiveAsset, selectedBranch);
+              await githubService.getFileContent(effectiveUser, effectiveRepo, decodedAsset, selectedBranch);
             } catch (err) {
               // For asset pages, set error state instead of redirecting  
               if (pageName === 'asset' || pageName.includes('editor') || pageName.includes('viewer')) {
                 setPageState(prev => ({
                   ...prev,
                   loading: false,
-                  error: `Asset '${effectiveAsset}' not found in repository '${effectiveUser}/${effectiveRepo}'. The file may have been moved or deleted.`,
+                  error: `Asset '${decodedAsset}' not found in repository '${effectiveUser}/${effectiveRepo}'. The file may have been moved or deleted.`,
                   user: effectiveUser,
                   profile,
                   repository,
                   branch: selectedBranch,
-                  asset: effectiveAsset
+                  asset: decodedAsset
                 }));
                 return;
               }
@@ -275,7 +277,7 @@ export const PageProvider = ({ children, pageName }) => {
           profile,
           repository,
           branch: selectedBranch,
-          asset: asset || urlContext.asset,
+          asset: asset ? decodeURIComponent(asset) : (urlContext.asset ? decodeURIComponent(urlContext.asset) : null),
           isAuthenticated: githubService.isAuth()
         }));
 
