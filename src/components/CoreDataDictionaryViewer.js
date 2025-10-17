@@ -28,6 +28,19 @@ const CoreDataDictionaryViewerContent = () => {
   const [branches, setBranches] = useState([]);
   const [hasGhPages, setHasGhPages] = useState(false);
   const [dakFshFile, setDakFshFile] = useState(null);
+
+  // Handle Escape key for modal
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape' && showModal) {
+        closeModal();
+      }
+    };
+    if (showModal) {
+      document.addEventListener('keydown', handleEscape);
+      return () => document.removeEventListener('keydown', handleEscape);
+    }
+  }, [showModal]); // eslint-disable-line react-hooks/exhaustive-deps
   const [dakConcepts, setDakConcepts] = useState([]);
   const [dakTableSearch, setDakTableSearch] = useState('');
   const [hasPublishedDak, setHasPublishedDak] = useState(false);
@@ -284,7 +297,14 @@ const CoreDataDictionaryViewerContent = () => {
     <div className="core-data-dictionary-viewer">
       <div className="viewer-header">
         <div className="who-branding">
-          <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
+          <button 
+            onClick={handleHomeNavigation} 
+            className="clickable-title"
+            type="button"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+          >
+            <h1 style={{ margin: 0 }}>SGEX Workbench</h1>
+          </button>
           <p className="subtitle">WHO SMART Guidelines Exchange</p>
         </div>
         <div className="context-info">
@@ -581,8 +601,17 @@ const CoreDataDictionaryViewerContent = () => {
 
       {/* Source Code Modal */}
       {showModal && selectedFile && (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div 
+          className="modal-overlay" 
+          onClick={(e) => e.target === e.currentTarget && closeModal()}
+          role="presentation"
+        >
+          <div 
+            className="modal-content"
+            role="dialog"
+            aria-modal="true"
+            tabIndex={-1}
+          >
             <div className="modal-header">
               <h3>{selectedFile.name}</h3>
               <button className="modal-close" onClick={closeModal}>×</button>

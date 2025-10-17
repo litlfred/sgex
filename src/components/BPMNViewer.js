@@ -205,51 +205,185 @@ const BPMNViewerContent = () => {
       setLoadingStep('centering');
       try {
         const canvas = viewerRef.current.get('canvas');
+        const elementRegistry = viewerRef.current.get('elementRegistry');
         
-        // Defer zoom to ensure container dimensions are available
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
+        console.log('🎯 BPMNViewer: Initializing viewport...');
+        
+        // Advanced initialization sequence following bpmn-js best practices
+        const initializeViewport = async () => {
+          // Wait for elements to be registered
+          const waitForElements = async (maxAttempts = 30) => {
+            for (let attempt = 0; attempt < maxAttempts; attempt++) {
+              const elements = elementRegistry.getAll();
+              const nonRootElements = elements.filter(el => el.type !== 'bpmn:Process' && el.type !== 'bpmn:Collaboration' && !el.labelTarget);
+              
+              console.log(`🔍 BPMNViewer: Element check ${attempt + 1}/${maxAttempts}: ${nonRootElements.length} elements`);
+              
+              if (nonRootElements.length > 0) {
+                return true;
+              }
+              
+              await new Promise(resolve => requestAnimationFrame(resolve));
+            }
+            return false;
+          };
+          
+          // Wait for canvas viewbox to have valid bounds
+          const waitForViewbox = async (maxAttempts = 30) => {
+            for (let attempt = 0; attempt < maxAttempts; attempt++) {
+              const viewbox = canvas.viewbox();
+              
+              if (viewbox?.outer && viewbox.outer.width > 0 && viewbox.outer.height > 0) {
+                console.log('✅ BPMNViewer: Canvas viewbox ready:', viewbox.outer);
+                return viewbox;
+              }
+              
+              await new Promise(resolve => requestAnimationFrame(resolve));
+            }
+            return null;
+          };
+          
+          const hasElements = await waitForElements();
+          if (!hasElements) {
+            console.error('❌ BPMNViewer: No elements found');
+            return false;
+          }
+          
+          const viewbox = await waitForViewbox();
+          if (!viewbox) {
+            console.error('❌ BPMNViewer: Invalid viewbox');
+            return false;
+          }
+          
+          // Get container dimensions
+          const container = containerRef.current;
+          if (!container) {
+            console.error('❌ BPMNViewer: Container not available');
+            return false;
+          }
+          
+          const containerWidth = container.offsetWidth || 0;
+          const containerHeight = container.offsetHeight || 0;
+          
+          if (containerWidth === 0 || containerHeight === 0) {
+            console.error('❌ BPMNViewer: Container has invalid dimensions');
+            return false;
+          }
+          
+          // Calculate bounds from actual elements for accurate viewport
+          const allElements = elementRegistry.getAll();
+          const visibleElements = allElements.filter(el => {
+            return el.x !== undefined && 
+                   el.y !== undefined && 
+                   el.width !== undefined && 
+                   el.height !== undefined &&
+                   el.width > 0 && 
+                   el.height > 0 &&
+                   !el.labelTarget;
+          });
+          
+          console.log('📐 BPMNViewer: Calculating viewport from element bounds...', {
+            totalElements: allElements.length,
+            visibleElements: visibleElements.length
+          });
+          
+          let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+          
+          visibleElements.forEach(element => {
+            minX = Math.min(minX, element.x);
+            minY = Math.min(minY, element.y);
+            maxX = Math.max(maxX, element.x + element.width);
+            maxY = Math.max(maxY, element.y + element.height);
+          });
+          
+          let diagramBounds;
+          if (minX !== Infinity && maxX !== -Infinity && minX < maxX && minY < maxY) {
+            diagramBounds = {
+              x: minX,
+              y: minY,
+              width: maxX - minX,
+              height: maxY - minY
+            };
+            console.log('✅ BPMNViewer: Calculated bounds from elements:', diagramBounds);
+          } else {
+            diagramBounds = {
+              x: viewbox.outer.x,
+              y: viewbox.outer.y,
+              width: viewbox.outer.width,
+              height: viewbox.outer.height
+            };
+            console.warn('⚠️ BPMNViewer: Using viewbox.outer as fallback:', diagramBounds);
+          }
+          
+          // Calculate manual viewport with padding
+          const padding = 20;
+          const scaleX = containerWidth / (diagramBounds.width + padding * 2);
+          const scaleY = containerHeight / (diagramBounds.height + padding * 2);
+          const scale = Math.min(scaleX, scaleY, 1);
+          
+          const x = diagramBounds.x - (containerWidth / scale - diagramBounds.width) / 2;
+          const y = diagramBounds.y - (containerHeight / scale - diagramBounds.height) / 2;
+          
+          const manualViewbox = {
+            x,
+            y,
+            width: containerWidth / scale,
+            height: containerHeight / scale
+          };
+          
+          console.log('📊 BPMNViewer: Calculated viewport:', { scale, diagramBounds, manualViewbox });
+          
+          // Use element-based manual viewbox directly for accurate scaling
+          try {
+            console.log('🎯 BPMNViewer: Applying element-based manual viewbox...');
+            canvas.viewbox(manualViewbox);
+            
+            await new Promise(resolve => requestAnimationFrame(resolve));
+            const appliedZoom = canvas.zoom();
+            const appliedViewbox = canvas.viewbox();
+            
+            console.log('✅ BPMNViewer: Manual viewbox applied:', {
+              zoom: appliedZoom,
+              viewbox: appliedViewbox
+            });
+            
+            return true;
+          } catch (viewboxError) {
+            console.error('❌ BPMNViewer: Manual viewbox failed, trying fit-viewport:', viewboxError);
             try {
               canvas.zoom('fit-viewport');
-              console.log('✅ BPMNViewer: Applied fit-viewport zoom');
-            } catch (error) {
-              console.error('❌ BPMNViewer: Error applying zoom:', error);
-            }
-          });
-        });
-        
-        // Force canvas update to ensure diagram is immediately visible
-        // This prevents the issue where diagram requires a drag/mouse interaction to appear
-        // Use multiple strategies to ensure rendering
-        const forceCanvasUpdate = () => {
-          if (viewerRef.current) {
-            try {
-              const canvas = viewerRef.current.get('canvas');
-              // Trigger a canvas update by getting the viewbox
-              canvas.viewbox();
-              
-              // Only get zoom value for validation - don't call canvas.zoom() with it
-              // as it can cause matrix inversion errors with invalid transforms
-              const currentZoom = canvas.zoom();
-              if (currentZoom && !isNaN(currentZoom) && isFinite(currentZoom) && currentZoom > 0) {
-                console.log('✅ BPMNViewer: Valid zoom level:', currentZoom);
-              }
-              
-              // Trigger a scroll event which can force repaints
-              const container = containerRef.current;
-              if (container) {
-                container.scrollTop = container.scrollTop;
-              }
-            } catch (canvasError) {
-              console.warn('⚠️ BPMNViewer: Could not force canvas update:', canvasError);
+              console.warn('⚠️ BPMNViewer: Used fit-viewport as fallback');
+              return true;
+            } catch (fallbackError) {
+              console.error('❌ BPMNViewer: All viewport methods failed:', fallbackError);
+              return false;
             }
           }
         };
         
-        // Apply multiple times with increasing delays to ensure it works
-        setTimeout(forceCanvasUpdate, 50);
-        setTimeout(forceCanvasUpdate, 150);
-        setTimeout(forceCanvasUpdate, 300);
+        // Run initialization with RAF
+        requestAnimationFrame(() => {
+          requestAnimationFrame(async () => {
+            await initializeViewport();
+            console.log('✅ BPMNViewer: Viewport initialization complete');
+          });
+        });
+        
+        // Ensure SVG visibility
+        const ensureVisibility = () => {
+          requestAnimationFrame(() => {
+            const svg = containerRef.current?.querySelector('svg');
+            if (svg) {
+              if (!svg.style.opacity || svg.style.opacity === '0') svg.style.opacity = '1';
+              if (svg.style.visibility === 'hidden') svg.style.visibility = 'visible';
+              if (svg.style.display === 'none') svg.style.display = 'block';
+              console.log('✅ BPMNViewer: SVG visibility ensured');
+            }
+          });
+        };
+        
+        setTimeout(ensureVisibility, 100);
+        setTimeout(ensureVisibility, 300);
         
         console.log('✅ BPMNViewer: Successfully loaded and centered BPMN diagram');
       } catch (centerError) {
