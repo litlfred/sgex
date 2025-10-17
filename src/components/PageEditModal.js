@@ -4,9 +4,19 @@ import stagingGroundService from '../services/stagingGroundService';
 // Lazy load MDEditor to improve initial page responsiveness
 const MDEditor = lazy(() => import('@uiw/react-md-editor'));
 
-const PageEditModal = ({ page, onClose, onSave }) => {
+const PageEditModal = ({ 
+  page, 
+  onClose, 
+  onSave,
+  title,
+  enablePreview = false,
+  variableHelper = null,
+  additionalMetadata = {},
+  onContentChange = null
+}) => {
   const [content, setContent] = useState(page?.content ? atob(page.content.content) : '');
   const [isSaving, setIsSaving] = useState(false);
+  const [previewMode, setPreviewMode] = useState('edit');
 
   // Handle Escape key
   useEffect(() => {
@@ -21,6 +31,14 @@ const PageEditModal = ({ page, onClose, onSave }) => {
 
   if (!page) return null;
 
+  const handleContentChange = (val) => {
+    const newContent = val || '';
+    setContent(newContent);
+    if (onContentChange) {
+      onContentChange(newContent);
+    }
+  };
+
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
       onClose();
@@ -31,15 +49,18 @@ const PageEditModal = ({ page, onClose, onSave }) => {
     setIsSaving(true);
     try {
       // Save content to staging ground instead of directly to GitHub
+      const metadata = {
+        title: page.title || title,
+        filename: page.filename,
+        tool: additionalMetadata.tool || 'PageEditor',
+        contentType: 'markdown',
+        ...additionalMetadata
+      };
+      
       const success = stagingGroundService.updateFile(
         page.path,
         content,
-        {
-          title: page.title,
-          filename: page.filename,
-          tool: 'PageEditor',
-          contentType: 'markdown'
-        }
+        metadata
       );
       
       if (success) {
@@ -72,8 +93,29 @@ const PageEditModal = ({ page, onClose, onSave }) => {
         tabIndex={-1}
       >
         <div className="page-edit-modal-header">
-          <h2>Edit {page.title}</h2>
+          <h2>{title || `Edit ${page.title}`}</h2>
           <div className="header-actions">
+            {enablePreview && (
+              <>
+                <button 
+                  className={`btn-toggle ${previewMode === 'edit' ? 'active' : ''}`}
+                  onClick={() => setPreviewMode('edit')}
+                  disabled={isSaving}
+                  title="Edit mode"
+                >
+                  ✏️ Edit
+                </button>
+                <button 
+                  className={`btn-toggle ${previewMode === 'preview' ? 'active' : ''}`}
+                  onClick={() => setPreviewMode('preview')}
+                  disabled={isSaving}
+                  title="Preview mode"
+                >
+                  👁️ Preview
+                </button>
+                <div className="toolbar-separator"></div>
+              </>
+            )}
             <button 
               className="btn-secondary"
               onClick={onClose}
@@ -97,12 +139,18 @@ const PageEditModal = ({ page, onClose, onSave }) => {
             <span className="page-path">{page.path}</span>
           </div>
           
+          {variableHelper && (
+            <div className="variable-helper-toolbar">
+              {variableHelper}
+            </div>
+          )}
+          
           <div className="md-editor-container">
             <Suspense fallback={<div className="loading-spinner">Loading editor...</div>}>
               <MDEditor
                 value={content}
-                onChange={(val) => setContent(val || '')}
-                preview="edit"
+                onChange={handleContentChange}
+                preview={enablePreview ? previewMode : 'edit'}
                 height={500}
                 visibleDragBar={false}
                 data-color-mode="light"
