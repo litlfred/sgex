@@ -1,0 +1,276 @@
+/* Program Indicator Editor Styles */
+
+.program-indicator-editor {
+  padding: 1rem;
+  max-width: 1800px;
+  margin: 0 auto;
+}
+
+.editor-header {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.editor-header h2 {
+  margin: 0 0 0.5rem 0;
+  color: #333;
+}
+
+.editor-header p {
+  margin: 0;
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.editor-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  min-height: 600px;
+}
+
+.editor-panel {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 1.5rem;
+  overflow-y: auto;
+  max-height: calc(100vh - 250px);
+}
+
+.editor-panel h3 {
+  margin: 0 0 1rem 0;
+  color: #0078d4;
+  font-size: 1.25rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #0078d4;
+}
+
+/* LM Fields Panel */
+.lm-fields-panel {
+  background: #f8f9fa;
+}
+
+.field-mapping-note {
+  background: #e7f3ff;
+  border-left: 4px solid #0078d4;
+  padding: 0.75rem;
+  margin-bottom: 1.5rem;
+  border-radius: 4px;
+}
+
+.field-mapping-note small {
+  color: #555;
+  font-size: 0.875rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.form-group label strong {
+  color: #0078d4;
+}
+
+.form-group label .required {
+  color: #d32f2f;
+  margin-left: 0.25rem;
+}
+
+.form-group label small {
+  display: block;
+  color: #666;
+  font-weight: normal;
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+}
+
+.form-control {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #0078d4;
+}
+
+.form-control:invalid {
+  border-color: #d32f2f;
+}
+
+textarea.form-control {
+  font-family: 'Courier New', monospace;
+  resize: vertical;
+}
+
+/* Field Mapping Help Table */
+.field-mapping-help {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid #ddd;
+}
+
+.field-mapping-help h4 {
+  margin: 0 0 1rem 0;
+  color: #333;
+  font-size: 1rem;
+}
+
+.mapping-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.mapping-table th,
+.mapping-table td {
+  padding: 0.5rem;
+  text-align: left;
+  border: 1px solid #ddd;
+}
+
+.mapping-table th {
+  background: #0078d4;
+  color: white;
+  font-weight: 600;
+}
+
+.mapping-table td {
+  background: white;
+}
+
+.mapping-table code {
+  background: #f5f5f5;
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.85rem;
+  color: #d32f2f;
+}
+
+/* FSH Preview Panel */
+.fsh-preview-panel {
+  background: #1e1e1e;
+  color: #d4d4d4;
+}
+
+.fsh-preview-panel h3 {
+  color: #4ec9b0;
+  border-bottom-color: #4ec9b0;
+}
+
+.fsh-preview {
+  font-family: 'Courier New', Consolas, monospace;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  overflow-x: auto;
+}
+
+.fsh-preview pre {
+  margin: 0;
+  padding: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.fsh-preview code {
+  color: #d4d4d4;
+}
+
+/* Loading and Error States */
+.editor-loading,
+.editor-error {
+  padding: 3rem;
+  text-align: center;
+}
+
+.editor-error {
+  background: #fff3cd;
+  border: 2px solid #ffc107;
+  border-radius: 8px;
+  color: #856404;
+}
+
+.editor-error h3 {
+  margin: 0 0 1rem 0;
+  color: #856404;
+}
+
+.editor-error button {
+  margin-top: 1rem;
+  padding: 0.6rem 1.5rem;
+  background: #0078d4;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.editor-error button:hover {
+  background: #005a9e;
+}
+
+.loading-spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #0078d4;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .editor-layout {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .editor-panel {
+    max-height: 500px;
+  }
+
+  .fsh-preview-panel {
+    order: -1; /* Show FSH preview first on mobile */
+  }
+}
+
+@media (max-width: 768px) {
+  .program-indicator-editor {
+    padding: 0.5rem;
+  }
+
+  .editor-panel {
+    padding: 1rem;
+  }
+
+  .mapping-table {
+    font-size: 0.75rem;
+  }
+
+  .mapping-table th,
+  .mapping-table td {
+    padding: 0.4rem;
+  }
+}
