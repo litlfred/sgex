@@ -91,7 +91,7 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose, tutorialId }) => {
         // For bug reports, show the new integrated form only if authenticated
         if (issueType === 'bug') {
           // Check if user is authenticated
-          const isAuthenticated = githubService.isAuthenticated;
+          const isAuthenticated = githubService.isAuth();
           console.log('[HelpModal] Bug report clicked. Authenticated:', isAuthenticated);
           
           if (isAuthenticated) {
@@ -157,6 +157,25 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose, tutorialId }) => {
         // If no DAK repository is selected, fall back to sgex repository for content issues
         if (!repository) {
           console.warn('No DAK repository specified, falling back to sgex repository');
+          
+          // Check if user is authenticated and should see the fancy bug report form
+          const isAuthenticated = githubService.isAuth();
+          console.log('[HelpModal] DAK issue clicked without repository. Authenticated:', isAuthenticated);
+          
+          if (isAuthenticated) {
+            console.log('[HelpModal] Showing bug report form for DAK issue via global handler');
+            // Call the global handler to show bug report form at ContextualHelpMascot level
+            if (window.helpModalInstance?.showBugReportForm) {
+              window.helpModalInstance.showBugReportForm();
+            } else {
+              // Fallback: try to show it at this level
+              setShowBugReportForm(true);
+            }
+            return;
+          }
+          
+          // If not authenticated, fall through to open GitHub issue page directly
+          console.log('[HelpModal] Not authenticated, opening GitHub issue page for DAK issue');
           
           // Redirect to sgex repository with appropriate labels
           const baseUrl = `${repositoryConfig.getGitHubUrl()}/issues/new`;
