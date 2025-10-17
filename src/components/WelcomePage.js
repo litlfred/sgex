@@ -34,17 +34,11 @@ const WelcomePage = () => {
 
   // Initial authentication check - runs once on mount
   useEffect(() => {
-    const initializeAuth = () => {
-      // Check if user is already authenticated from previous session
-      const token = sessionStorage.getItem('github_token') || localStorage.getItem('github_token');
-      if (token) {
-        const success = githubService.authenticate(token);
-        if (success) {
-          setIsAuthenticated(true);
-        } else {
-          sessionStorage.removeItem('github_token');
-          localStorage.removeItem('github_token');
-        }
+    const initializeAuth = async () => {
+      // Try to restore authentication from secure token storage
+      const success = await githubService.initializeFromStoredToken();
+      if (success) {
+        setIsAuthenticated(true);
       }
     };
 
