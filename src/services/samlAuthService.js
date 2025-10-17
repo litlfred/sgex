@@ -41,26 +41,25 @@ class SAMLAuthService {
    * Setup cross-tab synchronization
    */
   setupCrossTabSync() {
-    // Subscribe to SAML events from other tabs
-    this.crossTabUnsubscribe = crossTabSyncService.subscribe('saml-events', (data) => {
-      this.logger.debug('Received cross-tab SAML event', { data });
-      
-      switch (data.type) {
-        case 'authorization-complete':
-          this.handleAuthorizationComplete(data.organization);
-          break;
-        case 'modal-opened':
-          this.handleModalOpenedInOtherTab(data.organization, data.tabId);
-          break;
-        case 'modal-closed':
-          this.handleModalClosedInOtherTab(data.organization, data.tabId);
-          break;
-        case 'polling-started':
-          this.handlePollingStartedInOtherTab(data.organization, data.tabId);
-          break;
-        default:
-          this.logger.warn('Unknown cross-tab event type', { type: data.type });
-      }
+    // Register handlers for SAML events from other tabs
+    crossTabSyncService.on('SAML_AUTHORIZATION_COMPLETE', (data) => {
+      this.logger.debug('Received SAML authorization complete event', { data });
+      this.handleAuthorizationComplete(data.organization);
+    });
+    
+    crossTabSyncService.on('SAML_MODAL_OPENED', (data) => {
+      this.logger.debug('Received SAML modal opened event', { data });
+      this.handleModalOpenedInOtherTab(data.organization, data.tabId);
+    });
+    
+    crossTabSyncService.on('SAML_MODAL_CLOSED', (data) => {
+      this.logger.debug('Received SAML modal closed event', { data });
+      this.handleModalClosedInOtherTab(data.organization, data.tabId);
+    });
+    
+    crossTabSyncService.on('SAML_POLLING_STARTED', (data) => {
+      this.logger.debug('Received SAML polling started event', { data });
+      this.handlePollingStartedInOtherTab(data.organization, data.tabId);
     });
   }
 
@@ -196,8 +195,7 @@ class SAMLAuthService {
       samlStateStorageService.registerActiveModal(organization, this.tabId);
       
       // Broadcast modal opened event
-      crossTabSyncService.publish('saml-events', {
-        type: 'modal-opened',
+      crossTabSyncService.broadcast('SAML_MODAL_OPENED', {
         organization,
         tabId: this.tabId,
         timestamp: Date.now()
@@ -269,8 +267,7 @@ class SAMLAuthService {
     });
     
     // Broadcast polling started
-    crossTabSyncService.publish('saml-events', {
-      type: 'polling-started',
+    crossTabSyncService.broadcast('SAML_POLLING_STARTED', {
       organization,
       tabId: this.tabId,
       timestamp: Date.now()
@@ -397,8 +394,7 @@ class SAMLAuthService {
     }
     
     // Broadcast to other tabs
-    crossTabSyncService.publish('saml-events', {
-      type: 'authorization-complete',
+    crossTabSyncService.broadcast('SAML_AUTHORIZATION_COMPLETE', {
       organization,
       tabId: this.tabId,
       timestamp: Date.now()
@@ -511,8 +507,7 @@ class SAMLAuthService {
     }
     
     // Broadcast modal closed
-    crossTabSyncService.publish('saml-events', {
-      type: 'modal-closed',
+    crossTabSyncService.broadcast('SAML_MODAL_CLOSED', {
       organization,
       tabId: this.tabId,
       laterClicked,
@@ -612,9 +607,8 @@ class SAMLAuthService {
   destroy() {
     this.reset();
     
-    if (this.crossTabUnsubscribe) {
-      this.crossTabUnsubscribe();
-    }
+    // Note: crossTabSyncService manages its own cleanup
+    // No need to manually unregister handlers
     
     this.logger.debug('SAML auth service destroyed');
   }

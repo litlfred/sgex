@@ -19,7 +19,20 @@ const SAMLAuthModal = ({ isOpen, onClose, samlInfo }) => {
   const componentLogger = logger.getLogger('SAMLAuthModal');
   const [isPolling, setIsPolling] = useState(false);
   const ssoWindowRef = useRef(null);
-  const crossTabUnsubscribeRef = useRef(null);
+
+  // Handler for cross-tab authorization complete events
+  const handleAuthorizationComplete = useRef((data) => {
+    if (samlInfo && data.organization === samlInfo.organization) {
+      componentLogger.info('Authorization completed in another tab', {
+        organization: samlInfo.organization
+      });
+      
+      // Close this modal
+      if (onClose) {
+        onClose();
+      }
+    }
+  });
 
   useEffect(() => {
     if (isOpen && samlInfo) {
@@ -28,30 +41,15 @@ const SAMLAuthModal = ({ isOpen, onClose, samlInfo }) => {
         repository: samlInfo.repository 
       });
       
-      // Subscribe to cross-tab events for this modal
-      crossTabUnsubscribeRef.current = crossTabSyncService.subscribe('saml-events', (data) => {
-        if (data.organization === samlInfo.organization) {
-          if (data.type === 'authorization-complete') {
-            componentLogger.info('Authorization completed in another tab', {
-              organization: samlInfo.organization
-            });
-            
-            // Close this modal
-            handleClose();
-          }
-        }
-      });
-    }
-    
-    return () => {
-      if (isOpen) {
+      // Register handler for cross-tab authorization events
+      const handler = handleAuthorizationComplete.current;
+      crossTabSyncService.on('SAML_AUTHORIZATION_COMPLETE', handler);
+      
+      return () => {
         componentLogger.componentUnmount();
         
-        // Clean up cross-tab subscription
-        if (crossTabUnsubscribeRef.current) {
-          crossTabUnsubscribeRef.current();
-          crossTabUnsubscribeRef.current = null;
-        }
+        // Unregister handler when component unmounts or closes
+        crossTabSyncService.off('SAML_AUTHORIZATION_COMPLETE', handler);
         
         // Close SSO window if still open
         if (ssoWindowRef.current && !ssoWindowRef.current.closed) {
