@@ -444,3 +444,107 @@ body.theme-dark .bookmark-group-header {
 body.theme-dark .no-bookmarks {
   color: var(--who-text-muted, rgba(255, 255, 255, 0.6));
 }
+
+/* SAML Authorization Status Section */
+.saml-status-section {
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--who-border-color, rgba(0, 0, 0, 0.1));
+  border-bottom: 1px solid var(--who-border-color, rgba(0, 0, 0, 0.1));
+  margin: 0.5rem 0;
+}
+
+.dropdown-section-header {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--who-text-muted, rgba(0, 0, 0, 0.6));
+  padding: 0 1rem;
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.5px;
+}
+
+.saml-status-item {
+  padding: 0.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.saml-org-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.saml-org-name {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--who-text-primary, rgba(0, 0, 0, 0.9));
+  flex: 1;
+}
+
+.saml-status-badge {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.saml-status-badge.authorized {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.saml-status-badge.not-authorized {
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+}
+
+.saml-authorize-link {
+  font-size: 0.85rem;
+  color: var(--who-blue, #0078d4);
+  background: none;
+  border: none;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-align: left;
+  transition: opacity 0.2s;
+}
+
+.saml-authorize-link:hover {
+  opacity: 0.8;
+}
+
+/* Dark mode support for SAML status */
+body.theme-dark .saml-status-section {
+  border-color: var(--who-border-color, rgba(255, 255, 255, 0.1));
+}
+
+body.theme-dark .dropdown-section-header {
+  color: var(--who-text-muted, rgba(255, 255, 255, 0.6));
+}
+
+body.theme-dark .saml-org-name {
+  color: var(--who-text-primary, rgba(255, 255, 255, 0.9));
+}
+
+body.theme-dark .saml-status-badge.authorized {
+  background-color: rgba(40, 167, 69, 0.2);
+  color: #7ade8e;
+  border-color: rgba(40, 167, 69, 0.4);
+}
+
+body.theme-dark .saml-status-badge.not-authorized {
+  background-color: rgba(255, 193, 7, 0.2);
+  color: #ffc107;
+  border-color: rgba(255, 193, 7, 0.4);
+}
+
+body.theme-dark .saml-authorize-link {
+  color: var(--who-blue, #4a9eff);
+}

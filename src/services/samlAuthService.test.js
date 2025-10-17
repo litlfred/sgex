@@ -75,7 +75,8 @@ describe('SAMLAuthService', () => {
         organization: 'WorldHealthOrganization',
         repository: 'smart-trust',
         authorizationUrl: 'https://github.com/orgs/WorldHealthOrganization/sso',
-        message: error.message
+        message: error.message,
+        originalRequest: null
       });
     });
 
@@ -148,8 +149,9 @@ describe('SAMLAuthService', () => {
       samlAuthService.handleSAMLError(error, 'TestOrg', 'repo1');
       expect(mockCallback).toHaveBeenCalledTimes(1);
 
-      // Clear cooldown
+      // Clear cooldown and mark modal as closed
       samlAuthService.clearCooldown('TestOrg');
+      samlAuthService.markModalClosed('TestOrg');
 
       // Second call should now work
       samlAuthService.handleSAMLError(error, 'TestOrg', 'repo2');

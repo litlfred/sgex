@@ -1,11 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { usePage } from './PageProvider';
 import { useLocation } from 'react-router-dom';
 import githubService from '../../services/githubService';
 import userAccessService from '../../services/userAccessService';
 import bookmarkService from '../../services/bookmarkService';
+import samlAuthService from '../../services/samlAuthService';
+import SAMLAuthModal from '../SAMLAuthModal';
 import PreviewBadge from '../PreviewBadge';
 import { navigateToWelcomeWithFocus } from '../../utils/navigationUtils';
+import logger from '../../utils/logger';
 
 /**
  * Consistent header component for all pages
@@ -25,6 +28,23 @@ const PageHeader = () => {
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showBookmarkDropdown, setShowBookmarkDropdown] = useState(false);
   const [authenticatedUser, setAuthenticatedUser] = useState(null);
+  const [samlModalOpen, setSamlModalOpen] = useState(false);
+  const [samlModalInfo, setSamlModalInfo] = useState(null);
+  const [samlStatuses, setSamlStatuses] = useState({});
+  const [relevantOrgs, setRelevantOrgs] = useState([]);
+  const samlRefreshIntervalRef = useRef(null);
+  const componentLogger = logger.getLogger('PageHeader');
+
+  // Register SAML modal callback
+  useEffect(() => {
+    samlAuthService.registerModalCallback((samlInfo) => {
+      componentLogger.debug('SAML modal callback triggered', { 
+        organization: samlInfo.organization 
+      });
+      setSamlModalInfo(samlInfo);
+      setSamlModalOpen(true);
+    });
+  }, [componentLogger]);
 
   // Always fetch the authenticated user for login button display
   useEffect(() => {
@@ -51,9 +71,130 @@ const PageHeader = () => {
     }
   }, [isAuthenticated]);
 
+  // Check SAML authorization status for an organization
+  const checkSAMLStatus = useCallback(async (org) => {
+    try {
+      componentLogger.debug('Checking SAML status for organization', { org });
+      
+      // Try to fetch organization data as a test
+      const isAuthorized = await samlAuthService.checkAuthorizationStatus(
+        org,
+        async () => {
+          await githubService.getOrganization(org);
+        }
+      );
+      
+      return isAuthorized;
+    } catch (error) {
+      componentLogger.debug('Error checking SAML status', {
+        org,
+        error: error.message
+      });
+      return false;
+    }
+  }, [componentLogger]);
+
+  // Refresh SAML statuses for all relevant organizations
+  const refreshSAMLStatuses = useCallback(async () => {
+    if (!isAuthenticated || relevantOrgs.length === 0) return;
+
+    componentLogger.debug('Refreshing SAML statuses', {
+      organizations: relevantOrgs
+    });
+
+    const newStatuses = {};
+    
+    for (const org of relevantOrgs) {
+      const authorized = await checkSAMLStatus(org);
+      newStatuses[org] = authorized;
+    }
+
+    setSamlStatuses(newStatuses);
+    
+    componentLogger.debug('SAML statuses updated', { statuses: newStatuses });
+  }, [isAuthenticated, relevantOrgs, checkSAMLStatus, componentLogger]);
+
+  // Start/stop SAML status refresh when dropdown opens/closes
+  useEffect(() => {
+    if (showUserDropdown && relevantOrgs.length > 0) {
+      // Initial refresh
+      refreshSAMLStatuses();
+      
+      // Start 10-second refresh interval
+      samlRefreshIntervalRef.current = setInterval(() => {
+        refreshSAMLStatuses();
+      }, 10000);
+
+      componentLogger.debug('Started SAML status refresh interval');
+    } else {
+      // Stop refresh interval when dropdown closes
+      if (samlRefreshIntervalRef.current) {
+        clearInterval(samlRefreshIntervalRef.current);
+        samlRefreshIntervalRef.current = null;
+        componentLogger.debug('Stopped SAML status refresh interval');
+      }
+    }
+
+    return () => {
+      if (samlRefreshIntervalRef.current) {
+        clearInterval(samlRefreshIntervalRef.current);
+        samlRefreshIntervalRef.current = null;
+      }
+    };
+  }, [showUserDropdown, relevantOrgs, refreshSAMLStatuses, componentLogger]);
+
+  // Detect relevant organizations from user's context
+  useEffect(() => {
+    if (isAuthenticated && authenticatedUser) {
+      const orgs = new Set();
+      
+      // Add organization from current context
+      if (profile?.login && profile.type === 'Organization') {
+        orgs.add(profile.login);
+      }
+      
+      // Add WHO organization if accessing WHO repos
+      if (repository?.includes('who') || repository?.includes('WHO')) {
+        orgs.add('WorldHealthOrganization');
+      }
+      
+      // Add any pending SAML organizations
+      const pendingOrgs = samlAuthService.getPendingOrganizations();
+      pendingOrgs.forEach(org => orgs.add(org));
+
+      const orgList = Array.from(orgs);
+      setRelevantOrgs(orgList);
+      
+      componentLogger.debug('Relevant organizations detected', { 
+        organizations: orgList 
+      });
+    }
+  }, [isAuthenticated, authenticatedUser, profile, repository, componentLogger]);
+
   const handleLogout = () => {
+    // Stop SAML refresh interval
+    if (samlRefreshIntervalRef.current) {
+      clearInterval(samlRefreshIntervalRef.current);
+      samlRefreshIntervalRef.current = null;
+    }
+    
     githubService.logout();
     navigate('/');
+  };
+
+  const handleInitiateSAMLAuth = (org) => {
+    componentLogger.userAction('User initiated SAML authorization from dropdown', { 
+      organization: org 
+    });
+    
+    setSamlModalInfo({
+      organization: org,
+      repository: null,
+      authorizationUrl: samlAuthService.getSAMLAuthorizationUrl(org),
+      message: 'Manual SAML authorization requested'
+    });
+    setSamlModalOpen(true);
+    setShowUserDropdown(false);
   };
 
   const handleHomeNavigation = () => {
@@ -106,9 +247,28 @@ const PageHeader = () => {
   const bookmarksGrouped = getBookmarksGrouped();
 
   return (
-    <header className="page-header">
-      {/* Left side - Logo and context */}
-      <div className="page-header-left">
+    <>
+      {/* SAML Authorization Modal */}
+      <SAMLAuthModal
+        isOpen={samlModalOpen}
+        onClose={() => {
+          setSamlModalOpen(false);
+          setSamlModalInfo(null);
+          if (samlModalInfo?.organization) {
+            samlAuthService.markModalClosed(samlModalInfo.organization);
+          }
+        }}
+        samlInfo={samlModalInfo}
+        onAuthorizationComplete={(data) => {
+          componentLogger.info('SAML authorization completed', data);
+          // Refresh SAML statuses after successful authorization
+          refreshSAMLStatuses();
+        }}
+      />
+      
+      <header className="page-header">
+        {/* Left side - Logo and context */}
+        <div className="page-header-left">
         <button 
           className="sgex-logo" 
           onClick={handleHomeNavigation}
@@ -146,6 +306,32 @@ const PageHeader = () => {
                   </svg>
                   GitHub Profile
                 </button>
+                
+                {/* SAML Authorization Status */}
+                {relevantOrgs.length > 0 && (
+                  <div className="saml-status-section">
+                    <div className="dropdown-section-header">SAML Authorization</div>
+                    {relevantOrgs.map(org => (
+                      <div key={org} className="saml-status-item">
+                        <div className="saml-org-info">
+                          <span className="saml-org-name">{org}</span>
+                          <span className={`saml-status-badge ${samlStatuses[org] ? 'authorized' : 'not-authorized'}`}>
+                            {samlStatuses[org] === undefined ? '...' : 
+                             samlStatuses[org] ? '✓ Authorized' : '⚠ Not Authorized'}
+                          </span>
+                        </div>
+                        {!samlStatuses[org] && samlStatuses[org] !== undefined && (
+                          <button 
+                            className="saml-authorize-link"
+                            onClick={() => handleInitiateSAMLAuth(org)}
+                          >
+                            Authorize Now
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
                 
                 {/* Add/Remove current page bookmark - moved to same level as bookmarks */}
                 {currentBookmark ? (
@@ -228,7 +414,8 @@ const PageHeader = () => {
           </button>
         )}
       </div>
-    </header>
+      </header>
+    </>
   );
 };
 
