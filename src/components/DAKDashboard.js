@@ -603,7 +603,8 @@ const DAKDashboardContent = () => {
     );
   }
 
-  if (!profile || !repository) {
+  // Only redirect if we're not loading and still don't have required data
+  if (!loading && (!profile || !repository)) {
     navigate('/');
     return <div>Redirecting...</div>;
   }
