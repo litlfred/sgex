@@ -1,15 +1,3 @@
-import React, { Suspense } from 'react';
-
-// Lazy import Route to avoid issues during testing
-let Route;
-try {
-  const ReactRouterDom = require('react-router-dom');
-  Route = ReactRouterDom.Route;
-} catch (error) {
-  // Fallback for testing environments
-  Route = ({ children, element, ...props }) => element || children || null;
-}
-
 /**
  * SGEX Component Route Service
  * 
@@ -21,25 +9,75 @@ try {
  * 4. Component validation for routing
  * 
  * Split from lazyRouteUtils.js for better separation of concerns.
+ * 
+ * @module componentRouteService
  */
 
+import React, { Suspense } from 'react';
+
+// Lazy import Route to avoid issues during testing
+let Route: any;
+try {
+  const ReactRouterDom = require('react-router-dom');
+  Route = ReactRouterDom.Route;
+} catch (error) {
+  // Fallback for testing environments
+  Route = ({ children, element, ...props }: any) => element || children || null;
+}
+
+/**
+ * Route configuration for DAK components
+ */
+export interface DAKComponentConfig {
+  /** Component name */
+  component: string;
+  /** Whether to include branch parameter */
+  includeBranch?: boolean;
+}
+
+/**
+ * Route configuration for standard components
+ */
+export interface StandardComponentConfig {
+  /** Component name */
+  component: string;
+  /** Route path */
+  path?: string;
+}
+
+/**
+ * Main route configuration
+ */
+export interface RouteConfig {
+  /** Deployment type */
+  deployType: string;
+  /** DAK components configuration */
+  dakComponents?: Record<string, DAKComponentConfig>;
+  /** Standard components configuration */
+  standardComponents?: Record<string, StandardComponentConfig>;
+  /** Additional components */
+  components?: Record<string, StandardComponentConfig>;
+  /** Get DAK component names */
+  getDAKComponentNames?: () => string[];
+  /** Check if component is valid */
+  isValidComponent?: (componentName: string) => boolean;
+}
+
 // Cache for lazy-loaded components to avoid re-creating them
-const lazyComponentCache = new Map();
+const lazyComponentCache = new Map<string, React.ComponentType<any>>();
 
 /**
  * Create a lazy-loaded component with Suspense boundary
- * @param {string} componentName - Name of the component for debugging
- * @returns {React.Component} Lazy component wrapped in Suspense
  */
-function createLazyComponent(componentName) {
+function createLazyComponent(componentName: string): React.ComponentType<any> {
   const cacheKey = componentName;
   
   if (lazyComponentCache.has(cacheKey)) {
-    return lazyComponentCache.get(cacheKey);
+    return lazyComponentCache.get(cacheKey)!;
   }
 
   // Create lazy component with explicit imports to avoid webpack warnings
-  let LazyComponent;
+  let LazyComponent: React.LazyExoticComponent<React.ComponentType<any>>;
   
   switch (componentName) {
     case 'WelcomePage':
@@ -66,14 +104,12 @@ function createLazyComponent(componentName) {
     case 'DashboardRedirect':
       LazyComponent = React.lazy(() => import('../components/DashboardRedirect'));
       break;
-
     case 'DocumentationViewer':
       LazyComponent = React.lazy(() => import('../components/DocumentationViewer'));
       break;
     case 'PagesManager':
       LazyComponent = React.lazy(() => import('../components/PagesManager'));
       break;
-
     case 'BranchListingPage':
       LazyComponent = React.lazy(() => import('../components/BranchListingPage'));
       break;
@@ -83,15 +119,12 @@ function createLazyComponent(componentName) {
     case 'NotFound':
       LazyComponent = React.lazy(() => import('../components/NotFound'));
       break;
-    
-    // DAK Components
     case 'DAKDashboard':
       LazyComponent = React.lazy(() => import('../components/DAKDashboard'));
       break;
     case 'DAKDashboardWithFramework':
       LazyComponent = React.lazy(() => import('../components/DAKDashboardWithFramework'));
       break;
-
     case 'CoreDataDictionaryViewer':
       LazyComponent = React.lazy(() => import('../components/CoreDataDictionaryViewer'));
       break;
@@ -122,7 +155,6 @@ function createLazyComponent(componentName) {
     case 'PersonaViewer':
       LazyComponent = React.lazy(() => import('../components/PersonaViewer'));
       break;
-    
     default:
       console.warn(`Unknown component ${componentName}, using fallback`);
       LazyComponent = React.lazy(() => import('../components/NotFound'));
@@ -130,7 +162,7 @@ function createLazyComponent(componentName) {
   }
   
   // Wrap with Suspense and error boundary
-  const SuspenseWrapper = (props) => (
+  const SuspenseWrapper = (props: any) => (
     <Suspense fallback={
       <div className="loading-container">
         <div className="loading-spinner"></div>
@@ -149,88 +181,68 @@ function createLazyComponent(componentName) {
 }
 
 /**
- * Generate standard DAK component routes (/{component}/:user/:repo/:branch/*)
- * @param {string} routeName - DAK route name (e.g., 'dashboard')
- * @param {Object} dakComponent - DAK component configuration
- * @returns {Array} Array of Route elements
+ * Generate routes for a DAK component
  */
-function generateDAKRoutes(routeName, dakComponent) {
-  const componentName = dakComponent.component;
-  const LazyComponent = createLazyComponent(componentName);
-  
-  const basePath = `/${routeName}`;
-  
-  // Special case for documentation - use document-specific routes instead of user/repo patterns
-  if (routeName === 'docs') {
-    return [
-      <Route key={`${routeName}-base`} path={basePath} element={<LazyComponent />} />,
-      <Route key={`${routeName}-docid`} path={`${basePath}/:docId`} element={<LazyComponent />} />
-    ];
+function generateDAKRoutes(routeName: string, dakComponent: DAKComponentConfig): JSX.Element[] {
+  const Component = createLazyComponent(dakComponent.component);
+  const routes: JSX.Element[] = [];
+
+  if (dakComponent.includeBranch) {
+    routes.push(
+      <Route key={`${routeName}-full`} path={`/${routeName}/:user/:repo/:branch`} element={<Component />} />,
+      <Route key={`${routeName}-no-branch`} path={`/${routeName}/:user/:repo`} element={<Component />} />
+    );
+  } else {
+    routes.push(
+      <Route key={`${routeName}-full`} path={`/${routeName}/:user/:repo`} element={<Component />} />
+    );
   }
-  
+
+  return routes;
+}
+
+/**
+ * Generate routes for a standard component
+ */
+function generateStandardRoutes(componentName: string, componentConfig: StandardComponentConfig): JSX.Element[] {
+  const Component = createLazyComponent(componentConfig.component);
+  const path = componentConfig.path || `/${componentName}`;
+
   return [
-    <Route key={`${routeName}-base`} path={basePath} element={<LazyComponent />} />,
-    <Route key={`${routeName}-user`} path={`${basePath}/:user`} element={<LazyComponent />} />,
-    <Route key={`${routeName}-user-repo`} path={`${basePath}/:user/:repo`} element={<LazyComponent />} />,
-    <Route key={`${routeName}-user-repo-branch`} path={`${basePath}/:user/:repo/:branch`} element={<LazyComponent />} />,
-    <Route key={`${routeName}-user-repo-branch-asset`} path={`${basePath}/:user/:repo/:branch/*`} element={<LazyComponent />} />
+    <Route key={componentName} path={path} element={<Component />} />
   ];
 }
 
 /**
- * Generate routes for standard components
- * @param {string} componentName - Component name
- * @param {Object} componentConfig - Component configuration with routes
- * @returns {Array} Array of Route elements
+ * Generate lazy routes from configuration
  */
-function generateStandardRoutes(componentName, componentConfig) {
-  const LazyComponent = createLazyComponent(componentName);
-  
-  return componentConfig.routes.map((routeConfig, index) => (
-    <Route 
-      key={`${componentName}-${index}`}
-      path={routeConfig.path}
-      element={<LazyComponent />}
-    />
-  ));
-}
-
-/**
- * Generate all lazy-loaded routes based on configuration
- * @returns {Array} Array of all Route elements
- */
-export function generateLazyRoutes() {
-  let config = null;
-  
-  // Safely try to get the config, handling the case where the function doesn't exist yet
+export function generateLazyRoutes(): JSX.Element[] {
+  // Try to get route configuration from global
+  let config: RouteConfig | null = null;
   try {
-    if (typeof window.getSGEXRouteConfig === 'function') {
-      config = window.getSGEXRouteConfig();
+    if (typeof window !== 'undefined' && typeof (window as any).getSGEXRouteConfig === 'function') {
+      config = (window as any).getSGEXRouteConfig();
     }
   } catch (error) {
-    console.error('Error getting SGEX route configuration:', error);
+    console.error('Error loading route configuration:', error);
   }
-  
+
+  // If config loading failed, show error
   if (!config) {
-    // Create an error display component instead of falling back silently
     const ErrorDisplay = () => (
-      <div style={{
-        padding: '40px',
-        maxWidth: '800px',
-        margin: '40px auto',
+      <div style={{ 
+        padding: '40px 20px', 
+        maxWidth: '800px', 
+        margin: '0 auto',
         backgroundColor: '#fff3cd',
-        border: '2px solid #ffc107',
+        border: '1px solid #ffc107',
         borderRadius: '8px',
-        fontFamily: 'monospace'
+        color: '#856404'
       }}>
-        <h2 style={{ color: '#856404', marginTop: 0 }}>
-          ⚠️ SGEX Route Configuration Error
-        </h2>
-        <p style={{ color: '#856404' }}>
-          The route configuration could not be loaded. This typically happens when:
-        </p>
+        <h2 style={{ color: '#856404', marginTop: 0 }}>⚠️ Configuration Error</h2>
+        <p><strong>Failed to load route configuration.</strong></p>
+        <p>This usually means:</p>
         <ul style={{ color: '#856404' }}>
-          <li>The <code>routeConfig.js</code> file failed to load (check browser console for 404 errors)</li>
           <li>The <code>routes-config.json</code> file is missing from the build</li>
           <li>The deployment has not completed successfully</li>
         </ul>
@@ -261,8 +273,7 @@ export function generateLazyRoutes() {
     ];
   }
 
-
-  const routes = [];
+  const routes: JSX.Element[] = [];
 
   // Generate DAK component routes (main deployment only)
   if (config.deployType === 'main' && config.dakComponents) {
@@ -290,13 +301,12 @@ export function generateLazyRoutes() {
 
 /**
  * Get list of valid DAK components for URL validation
- * @returns {Array} Array of valid DAK component names
  */
-export function getValidDAKComponents() {
+export function getValidDAKComponents(): string[] {
   try {
-    if (typeof window.getSGEXRouteConfig === 'function') {
-      const config = window.getSGEXRouteConfig();
-      return config ? config.getDAKComponentNames() : [];
+    if (typeof window !== 'undefined' && typeof (window as any).getSGEXRouteConfig === 'function') {
+      const config: RouteConfig = (window as any).getSGEXRouteConfig();
+      return config && config.getDAKComponentNames ? config.getDAKComponentNames() : [];
     }
   } catch (error) {
     console.warn('Error getting DAK components:', error);
@@ -306,14 +316,12 @@ export function getValidDAKComponents() {
 
 /**
  * Check if a component is valid for routing
- * @param {string} componentName - Component name to validate
- * @returns {boolean} True if component is valid
  */
-export function isValidComponent(componentName) {
+export function isValidComponent(componentName: string): boolean {
   try {
-    if (typeof window.getSGEXRouteConfig === 'function') {
-      const config = window.getSGEXRouteConfig();
-      return config ? config.isValidComponent(componentName) : false;
+    if (typeof window !== 'undefined' && typeof (window as any).getSGEXRouteConfig === 'function') {
+      const config: RouteConfig = (window as any).getSGEXRouteConfig();
+      return config && config.isValidComponent ? config.isValidComponent(componentName) : false;
     }
   } catch (error) {
     console.warn('Error validating component:', error);
