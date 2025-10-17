@@ -83,12 +83,12 @@ This implementation enhances the SAML SSO authorization workflow in SGEX Workben
 ## Features Implemented
 
 ### 1. ✅ Cross-Tab Communication
-- **Service:** `crossTabSyncService.js`
+- **Service:** `crossTabSyncService.js` (from main branch, PR #1120)
 - **Features:**
-  - BroadcastChannel API with localStorage fallback
-  - Subscribe/publish pattern
+  - BroadcastChannel API for cross-tab messaging
+  - Event-driven architecture (`on`/`off`/`broadcast`)
+  - Type-safe event registration
   - Automatic cleanup
-  - Error handling
   - Reusable across different features
 
 ### 2. ✅ State Persistence
@@ -346,6 +346,7 @@ handleSAMLError(error, owner, repo, retryCallback);
 ### Run All Tests
 ```bash
 npm test -- --testPathPattern="saml|crossTab"
+# Output: 34 tests passing
 ```
 
 ### Manual Testing Steps

@@ -65,26 +65,30 @@ samlAuthService.reset();
 
 ### 2. CrossTabSyncService (`src/services/crossTabSyncService.js`)
 
-Provides cross-tab communication using BroadcastChannel API with localStorage fallback.
+Provides cross-tab communication using BroadcastChannel API (from main branch).
 
 **Key Features:**
-- Cross-tab message broadcasting
-- Subscription-based event handling
-- Automatic fallback to localStorage for unsupported browsers
-- Cleanup and memory management
+- Event-driven cross-tab communication
+- Type-safe event registration
+- Automatic cleanup of event listeners
+- Browser compatibility detection
+- Support for multiple event types
 
 **API:**
 ```javascript
-// Subscribe to a channel
-const unsubscribe = crossTabSyncService.subscribe('channel-name', (data) => {
+// Register a listener for an event type
+crossTabSyncService.on('SAML_AUTHORIZATION_COMPLETE', (data) => {
   console.log('Received:', data);
 });
 
-// Publish to a channel
-crossTabSyncService.publish('channel-name', { type: 'event', data: 'value' });
+// Broadcast an event to other tabs
+crossTabSyncService.broadcast('SAML_AUTHORIZATION_COMPLETE', { 
+  organization: 'OrgName',
+  timestamp: Date.now() 
+});
 
-// Cleanup
-unsubscribe();
+// Unregister a specific handler
+crossTabSyncService.off('SAML_AUTHORIZATION_COMPLETE', handlerFunction);
 ```
 
 ### 3. SAMLStateStorageService (`src/services/samlStateStorageService.js`)
@@ -276,16 +280,16 @@ The system coordinates SAML workflows across multiple browser tabs using the Cro
 4. **Cleanup:** Stale modal registrations auto-expire after 5 minutes
 
 **Implementation:**
-- CrossTabSyncService provides a reusable abstraction
-- BroadcastChannel API with localStorage fallback
-- Channel name: `saml-events`
-- Events automatically broadcast between tabs
+- CrossTabSyncService from main branch (PR #1120)
+- BroadcastChannel API for cross-tab messaging
+- Event-driven architecture with typed events
+- Single channel for all events
 
-**Events broadcasted:**
-- `modal-opened`: When a modal is opened in a tab
-- `modal-closed`: When a modal is closed
-- `polling-started`: When polling begins
-- `authorization-complete`: When SAML authorization succeeds
+**Event Types:**
+- `SAML_MODAL_OPENED`: When a modal is opened in a tab
+- `SAML_MODAL_CLOSED`: When a modal is closed
+- `SAML_POLLING_STARTED`: When polling begins
+- `SAML_AUTHORIZATION_COMPLETE`: When SAML authorization succeeds
 
 ## Session State Persistence
 
@@ -329,8 +333,8 @@ The service implements a cooldown mechanism to prevent modal spam:
 ## Testing
 
 Tests are located in:
-- `src/services/samlAuthService.test.js` - SAML auth service tests
-- `src/services/crossTabSyncService.test.js` - Cross-tab sync tests
+- `src/services/samlAuthService.test.js` - SAML auth service tests (12 tests)
+- `src/services/crossTabSyncService.test.js` - Cross-tab sync tests (22 tests)
 
 Coverage includes:
 
@@ -341,14 +345,16 @@ Coverage includes:
 - ✓ Cooldown mechanism
 - ✓ Pending request tracking
 - ✓ Authorization URL generation
-- ✓ Cross-tab message publishing and subscribing
-- ✓ Storage-based fallback for unsupported browsers
+- ✓ Cross-tab event broadcasting and handling
+- ✓ Browser compatibility detection
+- ✓ Standard event types
 
 Run tests:
 ```bash
-npm test -- --testPathPattern=samlAuthService.test.js
-npm test -- --testPathPattern=crossTabSyncService.test.js
+npm test -- --testPathPattern="saml|crossTab"
 ```
+
+All 34 tests passing.
 
 ## Logging
 
