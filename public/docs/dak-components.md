@@ -90,7 +90,12 @@ Digital Adaptation Kits (DAKs) are structured packages of clinical logic and imp
 - **L2 Representation**: Requirements specifications at https://worldhealthorganization.github.io/smart-base/StructureDefinition-FunctionalRequirement.html and https://worldhealthorganization.github.io/smart-base/StructureDefinition-NonFunctionalRequirement.html
 - **L3 Representation**: FHIR ImplementationGuide conformance rules
 - **Purpose**: Document system capabilities, performance requirements, and technical constraints
-- **Editor**: Requirements editor with structured templates
+- **Editor**: Requirements editor with FSH file management for creating, editing, and deleting functional and non-functional requirements
+- **File Location**: `input/fsh/requirements/*.fsh`
+- **Models**: Based on WHO smart-base logical models
+  - **FunctionalRequirement**: Defines system capabilities with id, activity, actor, capability ("I want"), benefit ("so that"), and classification
+  - **NonFunctionalRequirement**: Defines system qualities with id, requirement description, category, and classification
+- **Extraction Tool**: WHO smart-base provides `req_extractor.py` for processing requirements from Excel sheets
 
 ### 9. Test Scenarios
 
