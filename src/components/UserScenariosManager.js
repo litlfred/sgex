@@ -3,6 +3,7 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
 import stagingGroundService from '../services/stagingGroundService';
 import dakFrameworkService from '../services/dakFrameworkService';
+import dakIntegrationService from '../services/dakIntegrationService';
 import PageEditModal from './PageEditModal';
 import DAKStatusBox from './DAKStatusBox';
 import './UserScenariosManager.css';
@@ -74,8 +75,11 @@ const UserScenariosManager = () => {
         setLoading(true);
         setError(null);
 
-        // Load scenarios from input/pagecontent/
-        const scenarios = await loadUserScenarios(owner, repoName, currentBranch);
+        // Initialize DAK integration service
+        await dakIntegrationService.initialize(owner, repoName, currentBranch);
+
+        // Load scenarios using DAK framework
+        const scenarios = await dakIntegrationService.loadUserScenarios();
         setScenarios(scenarios);
 
         // Load personas/actors for variable substitution using DAK framework service
@@ -95,63 +99,9 @@ const UserScenariosManager = () => {
     }
   }, [owner, repoName, currentBranch]);
 
-  const loadUserScenarios = async (owner, repo, branch) => {
-    try {
-      const response = await githubService.octokit.rest.repos.getContent({
-        owner,
-        repo,
-        path: 'input/pagecontent',
-        ref: branch
-      });
-
-      const files = Array.isArray(response.data) ? response.data : [response.data];
-      const scenarioFiles = files.filter(file => 
-        file.type === 'file' && 
-        file.name.match(/^userscenario-[A-Za-z0-9-]+\.md$/)
-      );
-
-      const scenarios = await Promise.all(
-        scenarioFiles.map(async (file) => {
-          try {
-            const contentResponse = await githubService.octokit.rest.repos.getContent({
-              owner,
-              repo,
-              path: file.path,
-              ref: branch
-            });
-
-            return {
-              id: file.name.replace('.md', '').replace('userscenario-', ''),
-              name: file.name,
-              path: file.path,
-              sha: file.sha,
-              content: contentResponse.data
-            };
-          } catch (error) {
-            console.warn(`Failed to load content for ${file.name}:`, error);
-            return {
-              id: file.name.replace('.md', '').replace('userscenario-', ''),
-              name: file.name,
-              path: file.path,
-              sha: file.sha,
-              content: null
-            };
-          }
-        })
-      );
-
-      return scenarios;
-    } catch (error) {
-      if (error.status === 404) {
-        // Directory doesn't exist yet
-        return [];
-      }
-      throw error;
-    }
-  };
-
+  // Note: loadUserScenarios has been removed and replaced with dakIntegrationService.loadUserScenarios()
   // Note: loadPersonas has been removed and replaced with dakFrameworkService.getActors()
-  // This provides centralized actor loading with staging ground integration
+  // Both methods now use the new DAK framework from PR #1111 for consistent data access
 
   const validateScenarioId = (id) => {
     if (!id) {
@@ -215,81 +165,36 @@ const UserScenariosManager = () => {
   };
 
   const handleSave = async (scenario, content, status) => {
-    // Update DAK JSON with user scenario
-    await updateDAKJSON(scenario.id, content);
-    
-    // Reload scenarios
-    const scenarios = await loadUserScenarios(owner, repoName, currentBranch);
-    setScenarios(scenarios);
-  };
-
-  const updateDAKJSON = async (scenarioId, content) => {
     try {
-      // Extract personas referenced in the content
+      // Extract persona references from content
       const personaRefs = [...content.matchAll(/\{\{persona\.([A-Za-z0-9-]+)\./g)].map(m => m[1]);
       const uniquePersonaRefs = [...new Set(personaRefs)];
 
-      // Build UserScenario object
-      const userScenario = {
-        id: scenarioId,
-        title: scenarioId,
-        description: {
-          uri: `input/pagecontent/userscenario-${scenarioId}.md`
-        },
-        personas: uniquePersonaRefs.map(personaId => {
-          const persona = personas.find(p => p.id === personaId);
-          return {
-            id: personaId,
-            title: persona?.title || personaId
-          };
-        })
-      };
+      // Map persona IDs to actor objects
+      const referencedActors = uniquePersonaRefs
+        .map(personaId => personas.find(p => p.id === personaId))
+        .filter(Boolean)
+        .map(p => p.id);
 
-      // Load existing DAK JSON or create new
-      let dakData = null;
-      try {
-        const dakResponse = await githubService.octokit.rest.repos.getContent({
-          owner,
-          repo: repoName,
-          path: 'dak.json',
-          ref: currentBranch
-        });
-        dakData = JSON.parse(atob(dakResponse.data.content));
-      } catch (error) {
-        // DAK JSON doesn't exist, create minimal structure
-        dakData = {
-          resourceType: 'DAK',
-          id: repoName,
-          userScenarios: []
-        };
-      }
+      // Save using DAK integration service
+      // This will:
+      // 1. Save the markdown file to staging ground
+      // 2. Update dak.json with the scenario source
+      // 3. Save dak.json to staging ground
+      await dakIntegrationService.saveUserScenario({
+        id: scenario.id,
+        title: scenario.id,
+        markdown: content,
+        actors: referencedActors,
+        description: `User scenario for ${scenario.id}`
+      });
 
-      // Update or add user scenario
-      if (!dakData.userScenarios) {
-        dakData.userScenarios = [];
-      }
-
-      const existingIndex = dakData.userScenarios.findIndex(us => us.id === scenarioId);
-      if (existingIndex >= 0) {
-        dakData.userScenarios[existingIndex] = userScenario;
-      } else {
-        dakData.userScenarios.push(userScenario);
-      }
-
-      // Save to staging ground
-      stagingGroundService.updateFile(
-        'dak.json',
-        JSON.stringify(dakData, null, 2),
-        {
-          title: 'DAK Configuration',
-          filename: 'dak.json',
-          tool: 'UserScenarioEditor',
-          contentType: 'json'
-        }
-      );
-
+      // Reload scenarios
+      const updatedScenarios = await dakIntegrationService.loadUserScenarios();
+      setScenarios(updatedScenarios);
     } catch (error) {
-      console.error('Failed to update DAK JSON:', error);
+      console.error('Failed to save user scenario:', error);
+      alert(`Failed to save scenario: ${error.message}`);
     }
   };
 

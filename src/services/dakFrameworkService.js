@@ -8,10 +8,13 @@
  * 
  * This service abstracts away the complexity of loading DAK assets and provides
  * a consistent interface for all DAK component pages.
+ * 
+ * UPDATED: Now uses @sgex/dak-core framework from PR #1111 for persona loading
  */
 
 import githubService from './githubService';
 import stagingGroundService from './stagingGroundService';
+import dakIntegrationService from './dakIntegrationService';
 
 class DAKFrameworkService {
   constructor() {
@@ -27,6 +30,8 @@ class DAKFrameworkService {
    * This method provides a unified interface for loading actors that can be used
    * by any DAK component page (User Scenarios, BPMN Editor, etc.)
    * 
+   * UPDATED: Now uses @sgex/dak-core framework for persona loading
+   * 
    * @param {string} owner - Repository owner
    * @param {string} repo - Repository name
    * @param {string} branch - Branch name
@@ -36,7 +41,7 @@ class DAKFrameworkService {
    * @returns {Promise<Array>} Array of actor/persona objects
    */
   async getActors(owner, repo, branch, options = {}) {
-    const { useCache = true, includeStaging = true } = options;
+    const { useCache = true } = options;
 
     // Check cache first
     const cacheKey = `${owner}/${repo}/${branch}`;
@@ -46,6 +51,41 @@ class DAKFrameworkService {
         return cached.actors;
       }
     }
+
+    try {
+      // Use new DAK integration service
+      // Initialize if needed
+      if (!dakIntegrationService.isInitialized() || 
+          dakIntegrationService.getDAKObject().repository.owner !== owner ||
+          dakIntegrationService.getDAKObject().repository.repo !== repo ||
+          dakIntegrationService.getDAKObject().repository.branch !== branch) {
+        await dakIntegrationService.initialize(owner, repo, branch);
+      }
+
+      // Load personas using DAK framework
+      const actors = await dakIntegrationService.loadPersonas();
+
+      // Cache the results
+      this.actorCache.set(cacheKey, {
+        actors,
+        timestamp: Date.now()
+      });
+
+      return actors;
+    } catch (error) {
+      console.error('Error loading actors with DAK framework:', error);
+      // Fallback to old method for backwards compatibility
+      console.warn('Falling back to legacy actor loading method');
+      return await this.getActorsLegacy(owner, repo, branch, options);
+    }
+  }
+
+  /**
+   * Legacy actor loading method (fallback)
+   * Kept for backwards compatibility
+   */
+  async getActorsLegacy(owner, repo, branch, options = {}) {
+    const { includeStaging = true } = options;
 
     try {
       const actors = [];
@@ -69,15 +109,9 @@ class DAKFrameworkService {
         // If in staging ground, keep the staged version (already in array)
       });
 
-      // Cache the results
-      this.actorCache.set(cacheKey, {
-        actors,
-        timestamp: Date.now()
-      });
-
       return actors;
     } catch (error) {
-      console.error('Error loading actors:', error);
+      console.error('Error loading actors (legacy method):', error);
       return [];
     }
   }
