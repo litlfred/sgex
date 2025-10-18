@@ -231,7 +231,91 @@ const SAMLAuthModal = ({
     return null;
   }
 
-  const { organization, repository, authorizationUrl } = samlInfo;
+  const { organization, repository, authorizationUrl, isSPAMode } = samlInfo;
+
+  // Special rendering for SPA mode informational message
+  if (isSPAMode) {
+    return (
+      <div 
+        className="saml-modal-overlay" 
+        onClick={onClose}
+        onKeyDown={(e) => e.key === 'Escape' && onClose()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="saml-modal-title"
+        tabIndex={-1}
+      >
+        <div 
+          className="saml-modal" 
+          onClick={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.stopPropagation()}
+          role="document"
+        >
+          <div className="saml-modal-header">
+            <h2 id="saml-modal-title">ℹ️ SAML Authorization Not Supported</h2>
+            <button 
+              onClick={onClose}
+              className="close-button"
+              aria-label="Close"
+            >
+              ×
+            </button>
+          </div>
+          
+          <div className="saml-modal-content">
+            <div className="saml-info-section">
+              <div className="saml-icon">
+                <span role="img" aria-label="information">ℹ️</span>
+              </div>
+              
+              <h3>Feature Not Available in SPA Mode</h3>
+              <p className="saml-description">
+                SAML SSO authorization for the <strong>{organization}</strong> organization 
+                is not supported in the current deployment mode.
+              </p>
+            </div>
+
+            <div className="saml-note">
+              <span className="note-icon">🔧</span>
+              <p>
+                <strong>Why?</strong> SAML authorization requires a backend service to complete 
+                the authentication flow. This application is currently deployed as a Single Page 
+                Application (SPA) on GitHub Pages, which only serves static files.
+              </p>
+            </div>
+
+            <div className="saml-note">
+              <span className="note-icon">⚠️</span>
+              <p>
+                <strong>Impact:</strong> Access to some resources under the {organization} profile 
+                may be limited. You can still view and work with public repositories and any 
+                resources your Personal Access Token can already access.
+              </p>
+            </div>
+
+            <div className="saml-note">
+              <span className="note-icon">💡</span>
+              <p>
+                <strong>Solution:</strong> To use SAML authorization features, this application 
+                would need to be deployed on a hosted service with backend support (e.g., a Node.js 
+                server, cloud function, or authentication proxy).
+              </p>
+            </div>
+
+            <div className="saml-modal-actions">
+              <button 
+                onClick={onClose}
+                className="btn-primary"
+                autoFocus
+              >
+                Understood
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const handleAuthorize = () => {
     componentLogger.userAction('Authorize SAML clicked', { 

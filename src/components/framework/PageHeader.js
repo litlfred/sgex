@@ -8,6 +8,7 @@ import samlAuthService from '../../services/samlAuthService';
 import SAMLAuthModal from '../SAMLAuthModal';
 import PreviewBadge from '../PreviewBadge';
 import { navigateToWelcomeWithFocus } from '../../utils/navigationUtils';
+import repositoryConfig from '../../config/repositoryConfig';
 
 /**
  * Consistent header component for all pages
@@ -29,6 +30,10 @@ const PageHeader = () => {
   const [authenticatedUser, setAuthenticatedUser] = useState(null);
   const [samlModalOpen, setSamlModalOpen] = useState(false);
   const [samlModalInfo, setSamlModalInfo] = useState(null);
+  const [samlAlertShown, setSamlAlertShown] = useState(false);
+  
+  // Check if SAML is supported (not in GitHub Pages/SPA mode)
+  const isSAMLSupported = repositoryConfig.isSAMLSupported();
   
   // Use refs to ensure state setters are always current
   const setModalOpenRef = useRef(setSamlModalOpen);
@@ -44,7 +49,25 @@ const PageHeader = () => {
   // Use refs so the callback always has access to current state setters
   const [callbackRegistered] = useState(() => {
     samlAuthService.registerModalCallback((samlInfo) => {
-      // Use refs to ensure we're calling the latest state setters
+      // In SPA mode (GitHub Pages), show one-time alert instead of modal
+      if (!repositoryConfig.isSAMLSupported()) {
+        const storageKey = 'sgex_saml_alert_shown';
+        const alertShown = sessionStorage.getItem(storageKey);
+        
+        if (!alertShown) {
+          const org = samlInfo.organization || 'an organization';
+          alert(
+            `SAML Authorization Not Supported\n\n` +
+            `Access to resources under the ${org} profile may be limited.\n\n` +
+            `SAML SSO authorization requires a hosted service and is not supported ` +
+            `in the current SPA (GitHub Pages) deployment mode.`
+          );
+          sessionStorage.setItem(storageKey, 'true');
+        }
+        return;
+      }
+      
+      // In hosted mode, show the modal as before
       setModalInfoRef.current(samlInfo);
       setModalOpenRef.current(true);
     });
@@ -82,7 +105,22 @@ const PageHeader = () => {
   };
 
   const handleWHOSAMLAuth = () => {
-    // Simple handler to open WHO SAML authorization
+    // Check if SAML is supported
+    if (!isSAMLSupported) {
+      // Show informational modal for SPA mode
+      setSamlModalInfo({
+        organization: 'WorldHealthOrganization',
+        repository: null,
+        authorizationUrl: null,
+        message: 'SAML authorization is not supported in SPA mode',
+        isSPAMode: true
+      });
+      setSamlModalOpen(true);
+      setShowUserDropdown(false);
+      return;
+    }
+    
+    // Normal SAML authorization flow for hosted mode
     setSamlModalInfo({
       organization: 'WorldHealthOrganization',
       repository: null,
