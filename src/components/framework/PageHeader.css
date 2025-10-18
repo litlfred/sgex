@@ -444,3 +444,28 @@ body.theme-dark .bookmark-group-header {
 body.theme-dark .no-bookmarks {
   color: var(--who-text-muted, rgba(255, 255, 255, 0.6));
 }
+
+/* WHO SAML Badge */
+.who-saml-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--who-blue, #0078d4);
+  font-weight: 500;
+}
+
+.who-saml-badge .badge-icon {
+  font-size: 1.1rem;
+}
+
+.who-saml-badge:hover {
+  background: var(--who-hover-bg, rgba(0, 120, 212, 0.1));
+}
+
+body.theme-dark .who-saml-badge {
+  color: var(--who-blue, #4a9eff);
+}
+
+body.theme-dark .who-saml-badge:hover {
+  background: var(--who-hover-bg, rgba(74, 158, 255, 0.1));
+}
