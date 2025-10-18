@@ -5,6 +5,8 @@ import { generateLazyRoutes } from './services/componentRouteService';
 import { initializeTheme } from './utils/themeManager';
 import logger from './utils/logger';
 import { initializeRoutingContext } from './services/routingContextService';
+import { initializeGlobalNavigationSync } from './services/globalNavigationSync';
+import './services/routingLogger'; // Initialize routing logger early
 
 function App() {
   const appLogger = logger.getLogger('App');
@@ -22,6 +24,11 @@ function App() {
     // Initialize routing context to handle URL processing
     const urlContext = initializeRoutingContext();
     appLogger.info('Routing context initialized', urlContext);
+    
+    // Initialize global navigation synchronization
+    // This ensures all URL changes automatically update session storage
+    initializeGlobalNavigationSync();
+    appLogger.info('Global navigation synchronization initialized');
     
     // Initialize theme before any components render
     const appliedTheme = initializeTheme();
