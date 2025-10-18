@@ -68,6 +68,7 @@ describe('Logger', () => {
     logger.setLevel('WARN');
     const testLogger = logger.getLogger('TestComponent');
     
+    // eslint-disable-next-line testing-library/no-debugging-utils
     testLogger.debug('Debug message');
     testLogger.info('Info message');
     testLogger.warn('Warn message');
