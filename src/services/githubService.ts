@@ -403,6 +403,156 @@ class GitHubService {
     secureTokenStorage.clearToken();
   }
 
+  /**
+   * Get directory contents
+   * @param owner Repository owner
+   * @param repo Repository name
+   * @param path Directory path
+   * @param ref Branch or commit reference (default: 'main')
+   */
+  async getDirectoryContents(
+    owner: string,
+    repo: string,
+    path: string = '',
+    ref: string = 'main'
+  ): Promise<any[]> {
+    this.logger.debug('Getting directory contents', { owner, repo, path, ref });
+
+    try {
+      // Use authenticated octokit if available, otherwise create a public instance
+      const octokit = this.isAuthenticated ? this.octokit : await this.createOctokitInstance();
+      
+      const { data } = await octokit.rest.repos.getContent({
+        owner,
+        repo,
+        path,
+        ref
+      });
+
+      if (Array.isArray(data)) {
+        this.logger.debug('Directory contents retrieved', { count: data.length });
+        return data;
+      }
+
+      this.logger.warn('Expected directory but got file', { path, type: (data as any).type });
+      return [];
+    } catch (error) {
+      this.logger.error('Failed to get directory contents', {
+        owner,
+        repo,
+        path,
+        ref,
+        error: error instanceof Error ? error.message : String(error)
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Get file content from repository
+   * @param owner Repository owner
+   * @param repo Repository name
+   * @param path File path
+   * @param ref Branch or commit reference (default: 'main')
+   * @returns Decoded file content as string
+   */
+  async getFileContent(
+    owner: string,
+    repo: string,
+    path: string,
+    ref: string = 'main'
+  ): Promise<string> {
+    const timeoutMs = 15000; // 15 second timeout
+    
+    this.logger.debug('Getting file content', { owner, repo, path, ref });
+
+    try {
+      // Use authenticated octokit if available, otherwise create a public instance for public repos
+      const octokit = this.isAuthenticated ? this.octokit : await this.createOctokitInstance();
+      
+      // Create a promise that rejects after timeout
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => {
+          reject(new Error(`Request timeout after ${timeoutMs}ms`));
+        }, timeoutMs);
+      });
+      
+      // Race the GitHub API call against the timeout
+      const apiPromise = octokit.rest.repos.getContent({
+        owner,
+        repo,
+        path,
+        ref
+      });
+      
+      const startTime = Date.now();
+      const { data } = await Promise.race([apiPromise, timeoutPromise]);
+      const responseTime = Date.now() - startTime;
+      
+      this.logger.debug('API response received', { responseTime, type: (data as any).type });
+
+      // Handle file content
+      if ((data as any).type === 'file' && (data as any).content) {
+        // Decode base64 content
+        try {
+          // Use browser-compatible base64 decoding
+          const content = atob((data as any).content);
+          // Convert to UTF-8 (atob returns Latin-1)
+          const utf8Content = decodeURIComponent(escape(content));
+          
+          this.logger.debug('File content decoded', { 
+            contentLength: utf8Content.length,
+            responseTime 
+          });
+          
+          return utf8Content;
+        } catch (decodeError) {
+          this.logger.error('Base64 decoding failed', { 
+            error: decodeError instanceof Error ? decodeError.message : String(decodeError)
+          });
+          throw new Error(`Failed to decode file content: ${decodeError instanceof Error ? decodeError.message : String(decodeError)}`);
+        }
+      } else {
+        this.logger.error('Invalid response - not a file or no content', {
+          type: (data as any).type,
+          hasContent: !!(data as any).content
+        });
+        throw new Error('File not found or is not a file');
+      }
+    } catch (error: any) {
+      this.logger.error('Failed to fetch file content', {
+        owner,
+        repo,
+        path,
+        ref,
+        error: error instanceof Error ? error.message : String(error),
+        status: error.status
+      });
+      
+      // Provide more specific error messages
+      if (error.message.includes('timeout')) {
+        throw new Error(`GitHub API request timed out after ${timeoutMs / 1000} seconds. Please try again.`);
+      } else if (error.status === 403) {
+        // Check if this is a SAML error
+        const samlAuthService = await import('./samlAuthService');
+        const samlHandled = samlAuthService.default.handleSAMLError(error, owner, repo);
+        if (!samlHandled) {
+          throw new Error('Access denied. This repository may be private or you may have hit rate limits.');
+        } else {
+          throw new Error('SAML SSO authorization required. Please authorize your token and try again.');
+        }
+      } else if (error.status === 404) {
+        throw new Error('File not found in the repository.');
+      } else if (error.message.includes('rate limit')) {
+        throw new Error('GitHub API rate limit exceeded. Please try again later.');
+      } else if (error.message.includes('Network Error') || error.message.includes('Failed to fetch')) {
+        throw new Error('Network error occurred. Please check your internet connection and try again.');
+      }
+      
+      throw error;
+    }
+  }
+
   // TODO: Continue with repository methods, DAK validation, etc.
   // This is Part 1 of the GitHub Service migration - authentication and user management
 }
