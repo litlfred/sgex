@@ -268,6 +268,49 @@ class GitHubService {
   }
 
   /**
+   * Get directory contents from a GitHub repository
+   * 
+   * @param owner - Repository owner
+   * @param repo - Repository name
+   * @param path - Directory path (defaults to root '')
+   * @param ref - Branch/tag/commit reference (defaults to 'main')
+   * @returns Promise<any[]> Array of directory contents
+   * 
+   * @example
+   * const contents = await githubService.getDirectoryContents('who', 'anc-dak', 'input/fsh', 'main');
+   */
+  async getDirectoryContents(
+    owner: string,
+    repo: string,
+    path: string = '',
+    ref: string = 'main'
+  ): Promise<any[]> {
+    try {
+      // Create temporary Octokit instance for unauthenticated access if needed
+      const octokit = this.isAuthenticated && this.octokit ? this.octokit : await this.createOctokitInstance();
+      
+      const { data } = await octokit.rest.repos.getContent({
+        owner,
+        repo,
+        path,
+        ref
+      });
+
+      if (Array.isArray(data)) {
+        this.logger.apiSuccess('GET', `/repos/${owner}/${repo}/contents/${path}`);
+        return data;
+      } else {
+        throw new Error('Not a directory');
+      }
+    } catch (error) {
+      this.logger.apiError('GET', `/repos/${owner}/${repo}/contents/${path}`, error);
+      throw new Error(
+        `Failed to get directory contents for ${path}: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
+  }
+
+  /**
    * Update or create a file in a GitHub repository
    * 
    * @param owner - Repository owner
