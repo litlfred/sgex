@@ -28,7 +28,7 @@ import { initializeRoutingContext } from './services/routingContextService';
  * import App from './App';
  * root.render(<App />);
  */
-function App(): JSX.Element {
+function App(): React.JSX.Element {
   const appLogger = logger.getLogger('App');
   
   // Get basename from PUBLIC_URL or default to /sgex

@@ -1,17 +1,26 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import actorDefinitionService from '../services/actorDefinitionService';
 import { PageLayout, useDAKParams } from './framework';
+import { useDakComponent } from '../services/ComponentObjectProvider';
 
+/**
+ * Actor Editor - Uses DAK Component Objects
+ * 
+ * This editor uses GenericPersonaComponent for all data operations
+ * instead of direct staging ground access.
+ * 
+ * Key features:
+ * - Uses useDakComponent('personas') hook for Component Object access
+ * - Saves via component.save() which automatically updates dak.json
+ * - Loads via component.retrieveAll() for consistent data access
+ * - No direct actorDefinitionService or staging ground calls
+ */
 const ActorEditor = () => {
   const navigate = useNavigate();
   const pageParams = useDAKParams();
+  const component = useDakComponent('personas');
   
-  // For now, we'll set editActorId to null since it's not in URL params
-  // This could be enhanced later to support URL-based actor editing
-  const editActorId = null;
-
-  // State management - ALL HOOKS MUST BE AT THE TOP
+  // State management
   const [actorDefinition, setActorDefinition] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -22,51 +31,74 @@ const ActorEditor = () => {
   const [showActorList, setShowActorList] = useState(false);
   const [activeTab, setActiveTab] = useState('basic');
 
-  // Initialize component
+  // Handle Escape key
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape' && showPreview) {
+        setShowPreview(false);
+      }
+    };
+    if (showPreview) {
+      document.addEventListener('keydown', handleEscape);
+      return () => document.removeEventListener('keydown', handleEscape);
+    }
+  }, [showPreview]);
+
+  // Initialize editor using Component Object
   const initializeEditor = useCallback(async () => {
     setLoading(true);
     
+    if (!component) {
+      console.log('Component Object not yet available, waiting...');
+      return;
+    }
+    
     try {
-      if (editActorId) {
-        // Load existing actor definition from staging ground
-        const actorData = actorDefinitionService.getFromStagingGround(editActorId);
-        if (actorData) {
-          setActorDefinition(actorData.actorDefinition);
-        } else {
-          setActorDefinition(actorDefinitionService.createEmptyActorDefinition());
-        }
-      } else {
-        // Create new actor definition
-        setActorDefinition(actorDefinitionService.createEmptyActorDefinition());
-      }
+      // Create new empty actor definition
+      setActorDefinition(createEmptyActorDefinition());
       
-      // Load staged actors list
-      const staged = actorDefinitionService.listStagedActors();
-      setStagedActors(staged);
+      // Load all staged actors via Component Object
+      const personas = await component.retrieveAll();
+      setStagedActors(personas.map(p => ({
+        id: p.id,
+        name: p.name || p.title,
+        definition: p
+      })));
       
+      console.log(`Loaded ${personas.length} personas via Component Object`);
     } catch (error) {
       console.error('Error initializing actor editor:', error);
       setErrors({ initialization: 'Failed to initialize editor' });
     } finally {
       setLoading(false);
     }
-  }, [editActorId]);
+  }, [component]);
 
   useEffect(() => {
-    // Only initialize if we have valid page parameters
-    if (!pageParams.error && !pageParams.loading) {
+    if (!pageParams.error && !pageParams.loading && component) {
       initializeEditor();
     }
-  }, [pageParams.error, pageParams.loading, initializeEditor]);
+  }, [pageParams.error, pageParams.loading, component, initializeEditor]);
 
-  // Handle form field changes
+  // Create empty actor definition
+  const createEmptyActorDefinition = () => ({
+    id: `actor-${Date.now()}`,
+    name: '',
+    title: '',
+    description: '',
+    type: 'Person',
+    roles: [],
+    qualifications: [],
+    responsibilities: []
+  });
+
+  // Handle field changes
   const handleFieldChange = useCallback((field, value) => {
     setActorDefinition(prev => ({
       ...prev,
       [field]: value
     }));
     
-    // Clear field-specific errors
     if (errors[field]) {
       setErrors(prev => {
         const newErrors = { ...prev };
@@ -76,82 +108,18 @@ const ActorEditor = () => {
     }
   }, [errors]);
 
-  // Handle nested field changes
-  const handleNestedFieldChange = useCallback((parentField, index, field, value) => {
-    setActorDefinition(prev => {
-      const newDefinition = { ...prev };
-      if (!newDefinition[parentField]) {
-        newDefinition[parentField] = [];
-      }
-      if (!newDefinition[parentField][index]) {
-        newDefinition[parentField][index] = {};
-      }
-      newDefinition[parentField][index][field] = value;
-      return newDefinition;
-    });
-  }, []);
-
-  // Add new item to array field
-  const addArrayItem = useCallback((field, defaultItem = {}) => {
-    setActorDefinition(prev => ({
-      ...prev,
-      [field]: [...(prev[field] || []), defaultItem]
-    }));
-  }, []);
-
-  // Remove item from array field
-  const removeArrayItem = useCallback((field, index) => {
-    setActorDefinition(prev => ({
-      ...prev,
-      [field]: prev[field].filter((_, i) => i !== index)
-    }));
-  }, []);
-
-  // Validate form data
+  // Validate form
   const validateForm = useCallback(() => {
     const newErrors = {};
-    
-    if (!actorDefinition?.id) {
-      newErrors.id = 'Actor ID is required';
-    }
     
     if (!actorDefinition?.name) {
       newErrors.name = 'Actor name is required';
     }
-    
-    if (!actorDefinition?.description) {
-      newErrors.description = 'Actor description is required';
+    if (!actorDefinition?.title) {
+      newErrors.title = 'Actor title is required';
     }
-    
     if (!actorDefinition?.type) {
       newErrors.type = 'Actor type is required';
-    }
-    
-    // Validate roles
-    if (actorDefinition?.roles) {
-      actorDefinition.roles.forEach((role, index) => {
-        if (!role.code) {
-          newErrors[`roles.${index}.code`] = 'Role code is required';
-        }
-        if (!role.display) {
-          newErrors[`roles.${index}.display`] = 'Role display name is required';
-        }
-        if (!role.system) {
-          newErrors[`roles.${index}.system`] = 'Role system is required';
-        }
-      });
-    }
-    
-    // Validate qualifications
-    if (actorDefinition?.qualifications) {
-      actorDefinition.qualifications.forEach((qual, index) => {
-        if (!qual.code) {
-          newErrors[`qualifications.${index}.code`] = 'Qualification code is required';
-        }
-        if (!qual.display) {
-          newErrors[`qualifications.${index}.display`] = 'Qualification display name is required';
-        }
-      });
     }
     
     setErrors(newErrors);
@@ -159,829 +127,429 @@ const ActorEditor = () => {
   }, [actorDefinition]);
 
   // Generate FSH preview
-  const generatePreview = useCallback(() => {
-    if (!actorDefinition) return;
+  const generatePreview = useCallback(async () => {
+    if (!actorDefinition || !component) return;
     
     try {
-      const fsh = actorDefinitionService.generateFSH(actorDefinition);
-      setFshPreview(fsh);
+      // Use Component Object's validation which includes FSH generation
+      const validationResult = await component.validate(actorDefinition);
+      
+      if (validationResult.isValid) {
+        // Generate FSH representation
+        const fsh = generateFSH(actorDefinition);
+        setFshPreview(fsh);
+      } else {
+        setErrors({ general: validationResult.errors.join(', ') });
+      }
     } catch (error) {
       console.error('Error generating FSH preview:', error);
       setErrors({ general: 'Failed to generate FSH preview' });
     }
-  }, [actorDefinition]);
+  }, [actorDefinition, component]);
 
-  // Save actor definition to staging ground
+  // Generate FSH
+  const generateFSH = (actor) => {
+    let fsh = `Instance: ${actor.id}\n`;
+    fsh += `InstanceOf: GenericPersona\n`;
+    fsh += `Title: "${actor.title}"\n`;
+    fsh += `Description: "${actor.description || actor.title}"\n`;
+    fsh += `* name = "${actor.name}"\n`;
+    fsh += `* type = #${actor.type}\n`;
+    
+    if (actor.roles && actor.roles.length > 0) {
+      actor.roles.forEach(role => {
+        fsh += `* role = "${role.display || role.code}"\n`;
+      });
+    }
+    
+    if (actor.qualifications && actor.qualifications.length > 0) {
+      actor.qualifications.forEach(qual => {
+        fsh += `* qualification = "${qual.display || qual.code}"\n`;
+      });
+    }
+    
+    return fsh;
+  };
+
+  // Save actor definition using Component Object
   const handleSave = useCallback(async () => {
     if (!validateForm()) {
+      return;
+    }
+    
+    if (!component) {
+      setErrors({ general: 'Component Object not available' });
       return;
     }
     
     setSaving(true);
     
     try {
-      actorDefinitionService.saveToStagingGround(actorDefinition, {
-        type: 'actor-definition',
-        actorId: actorDefinition.id,
-        actorName: actorDefinition.name,
-        branch: branch,
-        repository: repository?.name,
-        owner: profile?.login
-      });
+      // Save using Component Object
+      // This automatically creates/updates the source in dak.json
+      await component.save(
+        actorDefinition,
+        {
+          saveType: 'file', // Save as FSH file
+          path: `input/fsh/actors/${actorDefinition.id}.fsh`,
+          commit: false // Don't commit yet, just stage
+        }
+      );
       
       // Refresh staged actors list
-      const staged = actorDefinitionService.listStagedActors();
-      setStagedActors(staged);
+      const personas = await component.retrieveAll();
+      setStagedActors(personas.map(p => ({
+        id: p.id,
+        name: p.name || p.title,
+        definition: p
+      })));
       
       setErrors({});
+      console.log('Actor saved successfully via Component Object');
+      console.log('dak.json automatically updated with source reference');
+      
+      // Show success message
+      alert('Actor saved successfully!');
     } catch (error) {
       console.error('Error saving actor definition:', error);
-      setErrors({ general: 'Failed to save actor definition' });
+      setErrors({ general: `Failed to save actor definition: ${error.message}` });
     } finally {
       setSaving(false);
     }
-  }, [actorDefinition, validateForm, branch, repository, profile]);
-
-  // Load template
-  const loadTemplate = useCallback((templateId) => {
-    const templates = actorDefinitionService.getActorTemplates();
-    const template = templates.find(t => t.id === templateId);
-    if (template) {
-      setActorDefinition(template);
-    }
-  }, []);
+  }, [actorDefinition, validateForm, component]);
 
   // Load staged actor
   const loadStagedActor = useCallback((actorId) => {
-    const actorData = actorDefinitionService.getFromStagingGround(actorId);
-    if (actorData) {
-      setActorDefinition(actorData.actorDefinition);
+    const actor = stagedActors.find(a => a.id === actorId);
+    if (actor) {
+      setActorDefinition(actor.definition);
       setShowActorList(false);
     }
-  }, []);
+  }, [stagedActors]);
 
-  // Delete staged actor
-  const deleteStagedActor = useCallback((actorId) => {
-    if (window.confirm('Are you sure you want to delete this staged actor?')) {
-      actorDefinitionService.removeFromStagingGround(actorId);
-      const staged = actorDefinitionService.listStagedActors();
-      setStagedActors(staged);
-    }
-  }, []);
-
-  // Handle PageProvider initialization issues - AFTER all hooks
+  // Handle page provider issues
   if (pageParams.error) {
     return (
-      <PageLayout pageName="actor-editor">
+      <PageLayout pageName="actor-editor-integrated">
         <div className="actor-editor-container">
           <div className="error-message">
-            <h2>Page Context Error</h2>
             <p>{pageParams.error}</p>
-            <p>This component requires a DAK repository context to function properly.</p>
           </div>
         </div>
       </PageLayout>
     );
   }
-  
-  if (pageParams.loading) {
+
+  if (loading || !actorDefinition) {
     return (
-      <PageLayout pageName="actor-editor">
+      <PageLayout pageName="actor-editor-integrated">
         <div className="actor-editor-container">
           <div className="loading-message">
-            <h2>Loading...</h2>
-            <p>Initializing page context...</p>
+            <p>Loading Actor Editor...</p>
           </div>
         </div>
       </PageLayout>
     );
   }
-  
-  const { profile, repository, branch } = pageParams;
+
+  // Component status message
+  const componentStatus = component ? 
+    'Using Component Object for data operations' : 
+    'Waiting for Component Object initialization...';
 
   return (
-    <PageLayout pageName="actor-editor">
-      <div className="actor-editor">
-        {!profile || !repository ? (
-          <div className="redirecting-state">
-            <h2>Redirecting...</h2>
-            <p>Missing required context. Redirecting to home page...</p>
-          </div>
-        ) : loading ? (
-          <div className="loading-state">
-            <div className="loading-content">
-              <h2>Loading Actor Editor...</h2>
-              <p>Initializing editor and loading data...</p>
-            </div>
-          </div>
-        ) : (
-          <div className="editor-content">
-
-        <div className="editor-toolbar">
-          <div className="toolbar-left">
-            <button 
-              onClick={() => setShowActorList(!showActorList)}
-              className="toolbar-btn"
-              title="Browse staged actors"
-            >
-              📋 Staged Actors ({stagedActors.length})
-            </button>
-            <button 
-              onClick={generatePreview}
-              className="toolbar-btn"
-              disabled={!actorDefinition?.id}
-              title="Preview FSH output"
-            >
-              👁️ Preview FSH
-            </button>
-          </div>
-          <div className="toolbar-right">
-            <button 
-              onClick={handleSave}
-              disabled={saving || !actorDefinition?.id}
-              className="toolbar-btn primary"
-              title="Save to staging ground"
-            >
-              {saving ? '💾 Saving...' : '💾 Save'}
-            </button>
-          </div>
+    <PageLayout pageName="actor-editor-integrated">
+      <div className="actor-editor-container">
+        <div className="actor-editor-header">
+          <h1>Generic Persona Editor (Integrated)</h1>
+          <p className="integration-note">
+            ✅ This editor uses Component Objects - all changes automatically update dak.json
+          </p>
+          <p className="component-status">{componentStatus}</p>
         </div>
 
         {errors.general && (
           <div className="error-message">
-            <strong>Error:</strong> {errors.general}
+            <p>{errors.general}</p>
           </div>
         )}
 
-        <div className="editor-layout">
-          {/* Staged Actors Sidebar */}
-          {showActorList && (
-            <div className="actor-list-sidebar">
-              <div className="sidebar-header">
-                <h3>Staged Actors</h3>
-                <button 
-                  onClick={() => setShowActorList(false)}
-                  className="close-btn"
-                >
-                  ✕
-                </button>
+        <div className="editor-actions">
+          <button onClick={() => setShowActorList(!showActorList)}>
+            {showActorList ? 'Hide' : 'Show'} Staged Actors ({stagedActors.length})
+          </button>
+          <button onClick={generatePreview}>Generate FSH Preview</button>
+          <button onClick={handleSave} disabled={saving || !component}>
+            {saving ? 'Saving...' : 'Save Actor'}
+          </button>
+        </div>
+
+        {showActorList && (
+          <div className="staged-actors-list">
+            <h3>Staged Actors</h3>
+            <ul>
+              {stagedActors.map(actor => (
+                <li key={actor.id} onClick={() => loadStagedActor(actor.id)}>
+                  {actor.name}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <div className="editor-tabs">
+          <button
+            className={activeTab === 'basic' ? 'active' : ''}
+            onClick={() => setActiveTab('basic')}
+          >
+            Basic Info
+          </button>
+          <button
+            className={activeTab === 'roles' ? 'active' : ''}
+            onClick={() => setActiveTab('roles')}
+          >
+            Roles
+          </button>
+          <button
+            className={activeTab === 'qualifications' ? 'active' : ''}
+            onClick={() => setActiveTab('qualifications')}
+          >
+            Qualifications
+          </button>
+        </div>
+
+        <div className="editor-content">
+          {activeTab === 'basic' && (
+            <div className="basic-info">
+              <div className="form-field">
+                <label>Name *</label>
+                <input
+                  type="text"
+                  value={actorDefinition.name}
+                  onChange={(e) => handleFieldChange('name', e.target.value)}
+                  placeholder="e.g., community-health-worker"
+                />
+                {errors.name && <span className="field-error">{errors.name}</span>}
               </div>
-              <div className="sidebar-content">
-                <div className="templates-section">
-                  <h4>Templates</h4>
-                  {actorDefinitionService.getActorTemplates().map(template => (
-                    <div key={template.id} className="template-item">
-                      <span className="template-name">{template.name}</span>
-                      <button 
-                        onClick={() => loadTemplate(template)}
-                        className="load-btn"
-                      >
-                        Use
-                      </button>
-                    </div>
-                  ))}
-                </div>
-                
-                {stagedActors.length > 0 && (
-                  <div className="staged-actors-section">
-                    <h4>Staged Actors</h4>
-                    {stagedActors.map(actor => (
-                      <div key={actor.id} className="staged-actor-item">
-                        <div className="actor-info">
-                          <span className="actor-name">{actor.name}</span>
-                          <span className="actor-id">{actor.id}</span>
-                          <span className="actor-modified">
-                            {new Date(actor.lastModified).toLocaleDateString()}
-                          </span>
-                        </div>
-                        <div className="actor-actions">
-                          <button 
-                            onClick={() => loadStagedActor(actor.id)}
-                            className="load-btn"
-                          >
-                            Edit
-                          </button>
-                          <button 
-                            onClick={() => deleteStagedActor(actor.id)}
-                            className="delete-btn"
-                          >
-                            🗑️
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+
+              <div className="form-field">
+                <label>Title *</label>
+                <input
+                  type="text"
+                  value={actorDefinition.title}
+                  onChange={(e) => handleFieldChange('title', e.target.value)}
+                  placeholder="e.g., Community Health Worker"
+                />
+                {errors.title && <span className="field-error">{errors.title}</span>}
+              </div>
+
+              <div className="form-field">
+                <label>Description</label>
+                <textarea
+                  value={actorDefinition.description}
+                  onChange={(e) => handleFieldChange('description', e.target.value)}
+                  placeholder="Describe the actor's role and responsibilities..."
+                  rows="4"
+                />
+              </div>
+
+              <div className="form-field">
+                <label>Type *</label>
+                <select
+                  value={actorDefinition.type}
+                  onChange={(e) => handleFieldChange('type', e.target.value)}
+                >
+                  <option value="Person">Person</option>
+                  <option value="Organization">Organization</option>
+                  <option value="Device">Device</option>
+                  <option value="System">System</option>
+                </select>
               </div>
             </div>
           )}
 
-          {/* Main Editor */}
-          <div className={`main-editor ${showActorList ? 'with-sidebar' : ''}`}>
-            {actorDefinition && (
-              <>
-                <div className="editor-tabs">
-                  <button 
-                    className={`tab ${activeTab === 'basic' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('basic')}
-                  >
-                    Basic Info
-                  </button>
-                  <button 
-                    className={`tab ${activeTab === 'roles' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('roles')}
-                  >
-                    Roles & Qualifications
-                  </button>
-                  <button 
-                    className={`tab ${activeTab === 'context' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('context')}
-                  >
-                    Context & Access
-                  </button>
-                  <button 
-                    className={`tab ${activeTab === 'metadata' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('metadata')}
-                  >
-                    Metadata
-                  </button>
-                </div>
+          {activeTab === 'roles' && (
+            <div className="roles-section">
+              <p>Roles management coming soon...</p>
+            </div>
+          )}
 
-                <div className="tab-content">
-                  {activeTab === 'basic' && (
-                    <BasicInfoTab
-                      actorDefinition={actorDefinition}
-                      errors={errors}
-                      onFieldChange={handleFieldChange}
-                    />
-                  )}
-                  
-                  {activeTab === 'roles' && (
-                    <RolesTab
-                      actorDefinition={actorDefinition}
-                      errors={errors}
-                      onNestedFieldChange={handleNestedFieldChange}
-                      onAddItem={addArrayItem}
-                      onRemoveItem={removeArrayItem}
-                    />
-                  )}
-                  
-                  {activeTab === 'context' && (
-                    <ContextTab
-                      actorDefinition={actorDefinition}
-                      errors={errors}
-                      onFieldChange={handleFieldChange}
-                      onNestedFieldChange={handleNestedFieldChange}
-                      onAddItem={addArrayItem}
-                      onRemoveItem={removeArrayItem}
-                    />
-                  )}
-                  
-                  {activeTab === 'metadata' && (
-                    <MetadataTab
-                      actorDefinition={actorDefinition}
-                      errors={errors}
-                      onFieldChange={handleFieldChange}
-                      onNestedFieldChange={handleNestedFieldChange}
-                      onAddItem={addArrayItem}
-                      onRemoveItem={removeArrayItem}
-                    />
-                  )}
-                </div>
-              </>
-            )}
-          </div>
+          {activeTab === 'qualifications' && (
+            <div className="qualifications-section">
+              <p>Qualifications management coming soon...</p>
+            </div>
+          )}
         </div>
-      </div>
-        )}
 
-        {/* FSH Preview Modal */}
         {showPreview && (
-          <div 
-            className="modal-overlay" 
-            onClick={() => setShowPreview(false)}
-            role="presentation"
-          >
-            <div 
-              className="modal-content" 
-              onClick={e => e.stopPropagation()}
-              role="dialog"
-              aria-labelledby="fsh-preview-title"
-              aria-modal="true"
-            >
-              <div className="modal-header">
-                <h3 id="fsh-preview-title">FSH Preview</h3>
-                <button 
-                  onClick={() => setShowPreview(false)}
-                  className="close-btn"
-                >
-                  ✕
-                </button>
+          <div className="preview-modal" onClick={() => setShowPreview(false)}>
+            <div className="preview-content" onClick={(e) => e.stopPropagation()}>
+              <div className="preview-header">
+                <h3>FSH Preview</h3>
+                <button onClick={() => setShowPreview(false)}>×</button>
               </div>
-              <div className="modal-body">
-                <pre className="fsh-preview">{fshPreview}</pre>
-              </div>
-              <div className="modal-footer">
-                <button 
-                  onClick={() => {
-                    navigator.clipboard.writeText(fshPreview);
-                    alert('FSH copied to clipboard!');
-                  }}
-                  className="copy-btn"
-                >
-                  📋 Copy to Clipboard
-                </button>
-              </div>
+              <pre className="fsh-code">{fshPreview}</pre>
             </div>
           </div>
         )}
+
+        <style jsx>{`
+          .actor-editor-container {
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+          }
+          .actor-editor-header {
+            margin-bottom: 20px;
+          }
+          .integration-note {
+            color: #0078d4;
+            font-weight: 500;
+            margin-top: 8px;
+          }
+          .component-status {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 4px;
+          }
+          .editor-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+          }
+          .editor-actions button {
+            padding: 10px 20px;
+            background: #0078d4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+          }
+          .editor-actions button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+          }
+          .editor-actions button:hover:not(:disabled) {
+            background: #005a9e;
+          }
+          .staged-actors-list {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+          }
+          .staged-actors-list ul {
+            list-style: none;
+            padding: 0;
+          }
+          .staged-actors-list li {
+            padding: 8px;
+            background: white;
+            margin: 5px 0;
+            border-radius: 4px;
+            cursor: pointer;
+          }
+          .staged-actors-list li:hover {
+            background: #e8e8e8;
+          }
+          .editor-tabs {
+            display: flex;
+            gap: 5px;
+            border-bottom: 2px solid #ddd;
+            margin-bottom: 20px;
+          }
+          .editor-tabs button {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+          }
+          .editor-tabs button.active {
+            border-bottom-color: #0078d4;
+            color: #0078d4;
+            font-weight: bold;
+          }
+          .editor-content {
+            background: white;
+            padding: 20px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          }
+          .form-field {
+            margin-bottom: 20px;
+          }
+          .form-field label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+          }
+          .form-field input,
+          .form-field textarea,
+          .form-field select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+          }
+          .field-error {
+            color: #d32f2f;
+            font-size: 0.9em;
+            display: block;
+            margin-top: 5px;
+          }
+          .preview-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+          }
+          .preview-content {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 800px;
+            width: 90%;
+            max-height: 80vh;
+            overflow: auto;
+          }
+          .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+          }
+          .preview-header button {
+            font-size: 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+          }
+          .fsh-code {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+          }
+          .error-message, .loading-message {
+            padding: 20px;
+            text-align: center;
+          }
+          .error-message {
+            background: #ffe6e6;
+            color: #d32f2f;
+            border-radius: 4px;
+          }
+        `}</style>
       </div>
     </PageLayout>
   );
 };
-
-// Basic Info Tab Component
-const BasicInfoTab = ({ actorDefinition, errors, onFieldChange }) => (
-  <div className="form-section">
-    <h3>Basic Information</h3>
-    
-    <div className="form-group">
-      <label htmlFor="id">Actor ID *</label>
-      <input
-        type="text"
-        id="id"
-        value={actorDefinition.id}
-        onChange={(e) => onFieldChange('id', e.target.value)}
-        className={errors.id ? 'error' : ''}
-        placeholder="e.g., primary-care-physician"
-        pattern="[a-zA-Z][a-zA-Z0-9_-]*"
-      />
-      {errors.id && <span className="error-text">{errors.id}</span>}
-      <span className="help-text">Unique identifier (letters, numbers, underscores, hyphens only)</span>
-    </div>
-
-    <div className="form-group">
-      <label htmlFor="name">Display Name *</label>
-      <input
-        type="text"
-        id="name"
-        value={actorDefinition.name}
-        onChange={(e) => onFieldChange('name', e.target.value)}
-        className={errors.name ? 'error' : ''}
-        placeholder="e.g., Primary Care Physician"
-      />
-      {errors.name && <span className="error-text">{errors.name}</span>}
-    </div>
-
-    <div className="form-group">
-      <label htmlFor="description">Description *</label>
-      <textarea
-        id="description"
-        value={actorDefinition.description}
-        onChange={(e) => onFieldChange('description', e.target.value)}
-        className={errors.description ? 'error' : ''}
-        placeholder="Detailed description of the actor's role and responsibilities..."
-        rows={4}
-      />
-      {errors.description && <span className="error-text">{errors.description}</span>}
-    </div>
-
-    <div className="form-group">
-      <label htmlFor="type">Actor Type *</label>
-      <select
-        id="type"
-        value={actorDefinition.type}
-        onChange={(e) => onFieldChange('type', e.target.value)}
-        className={errors.type ? 'error' : ''}
-      >
-        <option value="person">Person</option>
-        <option value="practitioner">Practitioner</option>
-        <option value="patient">Patient</option>
-        <option value="relatedperson">Related Person</option>
-        <option value="organization">Organization</option>
-        <option value="device">Device</option>
-        <option value="system">System</option>
-      </select>
-      {errors.type && <span className="error-text">{errors.type}</span>}
-    </div>
-  </div>
-);
-
-// Roles Tab Component
-const RolesTab = ({ actorDefinition, errors, onNestedFieldChange, onAddItem, onRemoveItem }) => (
-  <div className="form-section">
-    <h3>Roles & Qualifications</h3>
-    
-    <div className="subsection">
-      <div className="subsection-header">
-        <h4>Roles *</h4>
-        <button 
-          type="button"
-          onClick={() => onAddItem('roles', { code: '', display: '', system: 'http://snomed.info/sct' })}
-          className="add-btn"
-        >
-          + Add Role
-        </button>
-      </div>
-      {errors.roles && <span className="error-text">{errors.roles}</span>}
-      
-      {actorDefinition.roles && actorDefinition.roles.map((role, index) => (
-        <div key={index} className="array-item">
-          <div className="array-item-header">
-            <span>Role {index + 1}</span>
-            <button 
-              type="button"
-              onClick={() => onRemoveItem('roles', index)}
-              className="remove-btn"
-            >
-              Remove
-            </button>
-          </div>
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor={`role-code-${index}`}>Code</label>
-              <input
-                id={`role-code-${index}`}
-                type="text"
-                value={role.code}
-                onChange={(e) => onNestedFieldChange('roles', index, 'code', e.target.value)}
-                placeholder="Role code"
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor={`role-display-${index}`}>Display Name</label>
-              <input
-                id={`role-display-${index}`}
-                type="text"
-                value={role.display}
-                onChange={(e) => onNestedFieldChange('roles', index, 'display', e.target.value)}
-                placeholder="Human-readable role name"
-              />
-            </div>
-          </div>
-          <div className="form-group">
-            <label htmlFor={`role-system-${index}`}>Code System</label>
-            <input
-              id={`role-system-${index}`}
-              type="text"
-              value={role.system || ''}
-              onChange={(e) => onNestedFieldChange('roles', index, 'system', e.target.value)}
-              placeholder="http://snomed.info/sct"
-            />
-          </div>
-        </div>
-      ))}
-    </div>
-
-    <div className="subsection">
-      <div className="subsection-header">
-        <h4>Qualifications</h4>
-        <button 
-          type="button"
-          onClick={() => onAddItem('qualifications', { code: '', display: '', issuer: '' })}
-          className="add-btn"
-        >
-          + Add Qualification
-        </button>
-      </div>
-      
-      {actorDefinition.qualifications && actorDefinition.qualifications.map((qual, index) => (
-        <div key={index} className="array-item">
-          <div className="array-item-header">
-            <span>Qualification {index + 1}</span>
-            <button 
-              type="button"
-              onClick={() => onRemoveItem('qualifications', index)}
-              className="remove-btn"
-            >
-              Remove
-            </button>
-          </div>
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor={`qualification-code-${index}`}>Code</label>
-              <input
-                id={`qualification-code-${index}`}
-                type="text"
-                value={qual.code}
-                onChange={(e) => onNestedFieldChange('qualifications', index, 'code', e.target.value)}
-                placeholder="Qualification code"
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor={`qualification-display-${index}`}>Display Name</label>
-              <input
-                id={`qualification-display-${index}`}
-                type="text"
-                value={qual.display}
-                onChange={(e) => onNestedFieldChange('qualifications', index, 'display', e.target.value)}
-                placeholder="Qualification name"
-              />
-            </div>
-          </div>
-          <div className="form-group">
-            <label htmlFor={`qualification-issuer-${index}`}>Issuing Organization</label>
-            <input
-              id={`qualification-issuer-${index}`}
-              type="text"
-              value={qual.issuer || ''}
-              onChange={(e) => onNestedFieldChange('qualifications', index, 'issuer', e.target.value)}
-              placeholder="Organization that issued this qualification"
-            />
-          </div>
-        </div>
-      ))}
-    </div>
-
-    <div className="subsection">
-      <div className="subsection-header">
-        <h4>Specialties</h4>
-        <button 
-          type="button"
-          onClick={() => onAddItem('specialties', { code: '', display: '', system: 'http://snomed.info/sct' })}
-          className="add-btn"
-        >
-          + Add Specialty
-        </button>
-      </div>
-      
-      {actorDefinition.specialties && actorDefinition.specialties.map((specialty, index) => (
-        <div key={index} className="array-item">
-          <div className="array-item-header">
-            <span>Specialty {index + 1}</span>
-            <button 
-              type="button"
-              onClick={() => onRemoveItem('specialties', index)}
-              className="remove-btn"
-            >
-              Remove
-            </button>
-          </div>
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor={`specialty-code-${index}`}>Code</label>
-              <input
-                id={`specialty-code-${index}`}
-                type="text"
-                value={specialty.code}
-                onChange={(e) => onNestedFieldChange('specialties', index, 'code', e.target.value)}
-                placeholder="Specialty code"
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor={`specialty-display-${index}`}>Display Name</label>
-              <input
-                id={`specialty-display-${index}`}
-                type="text"
-                value={specialty.display}
-                onChange={(e) => onNestedFieldChange('specialties', index, 'display', e.target.value)}
-                placeholder="Specialty name"
-              />
-            </div>
-          </div>
-          <div className="form-group">
-            <label htmlFor={`specialty-system-${index}`}>Code System</label>
-            <input
-              id={`specialty-system-${index}`}
-              type="text"
-              value={specialty.system || ''}
-              onChange={(e) => onNestedFieldChange('specialties', index, 'system', e.target.value)}
-              placeholder="http://snomed.info/sct"
-            />
-          </div>
-        </div>
-      ))}
-    </div>
-  </div>
-);
-
-// Context Tab Component
-const ContextTab = ({ actorDefinition, errors, onFieldChange, onNestedFieldChange, onAddItem, onRemoveItem }) => (
-  <div className="form-section">
-    <h3>Context & Access</h3>
-    
-    <div className="subsection">
-      <h4>Typical Location</h4>
-      <div className="form-row">
-        <div className="form-group">
-          <label htmlFor="location-type">Location Type</label>
-          <select
-            id="location-type"
-            value={actorDefinition.location?.type || ''}
-            onChange={(e) => onFieldChange('location', { ...actorDefinition.location, type: e.target.value })}
-          >
-            <option value="facility">Healthcare Facility</option>
-            <option value="community">Community</option>
-            <option value="home">Home</option>
-            <option value="mobile">Mobile</option>
-            <option value="virtual">Virtual/Remote</option>
-          </select>
-        </div>
-        <div className="form-group">
-          <label htmlFor="location-description">Description</label>
-          <input
-            id="location-description"
-            type="text"
-            value={actorDefinition.location?.description || ''}
-            onChange={(e) => onFieldChange('location', { ...actorDefinition.location, description: e.target.value })}
-            placeholder="Describe the typical location"
-          />
-        </div>
-      </div>
-    </div>
-
-    <div className="subsection">
-      <h4>System Access Level</h4>
-      <div className="form-group">
-        <select
-          value={actorDefinition.accessLevel || 'standard'}
-          onChange={(e) => onFieldChange('accessLevel', e.target.value)}
-        >
-          <option value="read-only">Read-Only</option>
-          <option value="standard">Standard</option>
-          <option value="administrative">Administrative</option>
-          <option value="system">System</option>
-        </select>
-      </div>
-    </div>
-
-    <div className="subsection">
-      <div className="subsection-header">
-        <h4>Key Interactions</h4>
-        <button 
-          type="button"
-          onClick={() => onAddItem('interactions', { type: 'reads', target: '', description: '' })}
-          className="add-btn"
-        >
-          + Add Interaction
-        </button>
-      </div>
-      
-      {actorDefinition.interactions && actorDefinition.interactions.map((interaction, index) => (
-        <div key={index} className="array-item">
-          <div className="array-item-header">
-            <span>Interaction {index + 1}</span>
-            <button 
-              type="button"
-              onClick={() => onRemoveItem('interactions', index)}
-              className="remove-btn"
-            >
-              Remove
-            </button>
-          </div>
-          <div className="form-row">
-            <div className="form-group">
-              <label>Type</label>
-              <select
-                value={interaction.type}
-                onChange={(e) => onNestedFieldChange('interactions', index, 'type', e.target.value)}
-              >
-                <option value="creates">Creates</option>
-                <option value="reads">Reads</option>
-                <option value="updates">Updates</option>
-                <option value="deletes">Deletes</option>
-                <option value="approves">Approves</option>
-                <option value="reviews">Reviews</option>
-                <option value="monitors">Monitors</option>
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Target</label>
-              <input
-                type="text"
-                value={interaction.target}
-                onChange={(e) => onNestedFieldChange('interactions', index, 'target', e.target.value)}
-                placeholder="What the actor interacts with"
-              />
-            </div>
-          </div>
-          <div className="form-group">
-            <label>Description</label>
-            <input
-              type="text"
-              value={interaction.description || ''}
-              onChange={(e) => onNestedFieldChange('interactions', index, 'description', e.target.value)}
-              placeholder="Describe this interaction"
-            />
-          </div>
-        </div>
-      ))}
-    </div>
-  </div>
-);
-
-// Metadata Tab Component
-const MetadataTab = ({ actorDefinition, errors, onFieldChange, onNestedFieldChange, onAddItem, onRemoveItem }) => (
-  <div className="form-section">
-    <h3>Metadata</h3>
-    
-    <div className="form-row">
-      <div className="form-group">
-        <label>Version</label>
-        <input
-          type="text"
-          value={actorDefinition.metadata?.version || ''}
-          onChange={(e) => onFieldChange('metadata', { ...actorDefinition.metadata, version: e.target.value })}
-          placeholder="1.0.0"
-        />
-      </div>
-      <div className="form-group">
-        <label>Status</label>
-        <select
-          value={actorDefinition.metadata?.status || 'draft'}
-          onChange={(e) => onFieldChange('metadata', { ...actorDefinition.metadata, status: e.target.value })}
-        >
-          <option value="draft">Draft</option>
-          <option value="active">Active</option>
-          <option value="retired">Retired</option>
-        </select>
-      </div>
-    </div>
-
-    <div className="form-group">
-      <label>Publisher</label>
-      <input
-        type="text"
-        value={actorDefinition.metadata?.publisher || ''}
-        onChange={(e) => onFieldChange('metadata', { ...actorDefinition.metadata, publisher: e.target.value })}
-        placeholder="Organization or person responsible"
-      />
-    </div>
-
-    <div className="subsection">
-      <div className="subsection-header">
-        <h4>Contact Information</h4>
-        <button 
-          type="button"
-          onClick={() => onAddItem('metadata.contact', { name: '', email: '' })}
-          className="add-btn"
-        >
-          + Add Contact
-        </button>
-      </div>
-      
-      {actorDefinition.metadata?.contact && actorDefinition.metadata.contact.map((contact, index) => (
-        <div key={index} className="array-item">
-          <div className="array-item-header">
-            <span>Contact {index + 1}</span>
-            <button 
-              type="button"
-              onClick={() => {
-                const newContacts = [...(actorDefinition.metadata.contact || [])];
-                newContacts.splice(index, 1);
-                onFieldChange('metadata', { ...actorDefinition.metadata, contact: newContacts });
-              }}
-              className="remove-btn"
-            >
-              Remove
-            </button>
-          </div>
-          <div className="form-row">
-            <div className="form-group">
-              <label>Name</label>
-              <input
-                type="text"
-                value={contact.name || ''}
-                onChange={(e) => {
-                  const newContacts = [...(actorDefinition.metadata.contact || [])];
-                  newContacts[index] = { ...contact, name: e.target.value };
-                  onFieldChange('metadata', { ...actorDefinition.metadata, contact: newContacts });
-                }}
-                placeholder="Contact name"
-              />
-            </div>
-            <div className="form-group">
-              <label>Email</label>
-              <input
-                type="email"
-                value={contact.email || ''}
-                onChange={(e) => {
-                  const newContacts = [...(actorDefinition.metadata.contact || [])];
-                  newContacts[index] = { ...contact, email: e.target.value };
-                  onFieldChange('metadata', { ...actorDefinition.metadata, contact: newContacts });
-                }}
-                placeholder="contact@example.com"
-              />
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-
-    <div className="form-group">
-      <label>Tags</label>
-      <input
-        type="text"
-        value={actorDefinition.metadata?.tags?.join(', ') || ''}
-        onChange={(e) => onFieldChange('metadata', { 
-          ...actorDefinition.metadata, 
-          tags: e.target.value.split(',').map(tag => tag.trim()).filter(tag => tag) 
-        })}
-        placeholder="Enter tags separated by commas"
-      />
-      <span className="help-text">Comma-separated tags for categorization</span>
-    </div>
-  </div>
-);
 
 export default ActorEditor;

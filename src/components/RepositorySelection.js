@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import githubService from '../services/githubService';
 import repositoryCacheService from '../services/repositoryCacheService';
+import samlAuthService from '../services/samlAuthService';
+import SAMLAuthModal from './SAMLAuthModal';
 import { PageLayout } from './framework';
 
 const RepositorySelection = () => {
@@ -11,6 +13,8 @@ const RepositorySelection = () => {
   const [repositories, setRepositories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [samlModalOpen, setSamlModalOpen] = useState(false);
+  const [samlModalInfo, setSamlModalInfo] = useState(null);
   
   // Get profile from location state or fetch from GitHub using user param
   const [profile, setProfile] = useState(location.state?.profile);
@@ -43,6 +47,12 @@ const RepositorySelection = () => {
         }
       }
     };
+    
+    // Register SAML modal callback
+    samlAuthService.registerModalCallback((samlInfo) => {
+      setSamlModalInfo(samlInfo);
+      setSamlModalOpen(true);
+    });
 
     fetchProfile();
   }, [user, profile, navigate]);
@@ -204,6 +214,16 @@ const RepositorySelection = () => {
         </div>
         </div>
       )}
+      
+      {/* SAML Authorization Modal */}
+      <SAMLAuthModal
+        isOpen={samlModalOpen}
+        onClose={() => {
+          setSamlModalOpen(false);
+          setSamlModalInfo(null);
+        }}
+        samlInfo={samlModalInfo}
+      />
     </PageLayout>
   );
 };

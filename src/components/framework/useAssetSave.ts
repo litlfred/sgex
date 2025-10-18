@@ -138,7 +138,7 @@ export const useAssetSave = ({
 
   // Derived states
   const hasChanges = content !== originalContent;
-  const canSaveToGitHub = githubService.isAuth();
+  const canSaveToGitHub = githubService.authenticated;
 
   // Check if there's a local version of this file
   useEffect(() => {
@@ -178,22 +178,18 @@ export const useAssetSave = ({
         timestamp: new Date().toISOString()
       };
 
-      const saved = localStorageService.saveLocal(file.path, content, metadata);
+      localStorageService.saveLocal(file.path, content, metadata);
       
-      if (saved) {
-        setSavedLocally(true);
-        setLocalSaveSuccess(true);
-        onSave && onSave(content, 'local');
+      setSavedLocally(true);
+      setLocalSaveSuccess(true);
+      onSave && onSave(content, 'local');
+      
+      // Auto-hide success message after 3 seconds
+      setTimeout(() => {
+        setLocalSaveSuccess(false);
+      }, 3000);
         
-        // Auto-hide success message after 3 seconds
-        setTimeout(() => {
-          setLocalSaveSuccess(false);
-        }, 3000);
-        
-        return true;
-      } else {
-        throw new Error('Failed to save to local storage');
-      }
+      return true;
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -282,8 +278,9 @@ export const useAssetSave = ({
   // Export local changes
   const exportLocalChanges = useCallback((): boolean => {
     try {
-      const exportData = localStorageService.exportLocalChanges('json');
-      const url = URL.createObjectURL(exportData);
+      const exportDataString = localStorageService.exportLocalChanges();
+      const blob = new Blob([exportDataString], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
       link.download = `sgex-local-changes-${new Date().toISOString().split('T')[0]}.json`;

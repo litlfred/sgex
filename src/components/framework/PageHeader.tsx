@@ -8,10 +8,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { usePage } from './PageProvider';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import githubService from '../../services/githubService';
 import userAccessService from '../../services/userAccessService';
-import bookmarkService from '../../services/bookmarkService';
+import bookmarkService, { Bookmark, BookmarkContext } from '../../services/bookmarkService';
+import secureTokenStorage from '../../services/secureTokenStorage';
 import PreviewBadge from '../PreviewBadge';
 import { navigateToWelcomeWithFocus } from '../../utils/navigationUtils';
 
@@ -28,23 +29,6 @@ export interface UserInfo {
   avatar_url: string;
   /** GitHub profile URL */
   html_url?: string;
-}
-
-/**
- * Bookmark information
- * @example { id: "bookmark-1", title: "Business Processes", url: "/business-process/who/anc-dak/main", pageName: "Business Processes" }
- */
-export interface Bookmark {
-  /** Unique bookmark ID */
-  id: string;
-  /** Bookmark title */
-  title: string;
-  /** Bookmark URL */
-  url: string;
-  /** Page name */
-  pageName: string;
-  /** Context information */
-  context?: Record<string, unknown>;
 }
 
 /**
@@ -82,11 +66,11 @@ const PageHeader: React.FC = () => {
     repository, 
     branch, 
     asset,
-    isAuthenticated,
-    navigate 
+    isAuthenticated
   } = usePage();
 
   const location = useLocation();
+  const navigate = useNavigate();
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showBookmarkDropdown, setShowBookmarkDropdown] = useState(false);
   const [authenticatedUser, setAuthenticatedUser] = useState<UserInfo | null>(null);
@@ -102,8 +86,10 @@ const PageHeader: React.FC = () => {
             setAuthenticatedUser(user as UserInfo);
           } else {
             // Fallback to githubService for backwards compatibility
-            const githubUser = await githubService.getCurrentUser();
-            setAuthenticatedUser(githubUser as UserInfo);
+            const githubUserResponse = await githubService.getCurrentUser();
+            if (githubUserResponse.success && githubUserResponse.data) {
+              setAuthenticatedUser(githubUserResponse.data as unknown as UserInfo);
+            }
           }
         } catch (error) {
           console.debug('Could not fetch authenticated user:', error);
@@ -117,7 +103,7 @@ const PageHeader: React.FC = () => {
   }, [isAuthenticated]);
 
   const handleLogout = (): void => {
-    githubService.logout();
+    secureTokenStorage.clearToken();
     navigate('/');
   };
 
@@ -137,9 +123,9 @@ const PageHeader: React.FC = () => {
   const handleBookmarkCurrentPage = (): void => {
     const context = {
       user: authenticatedUser?.login, // Use authenticated user for bookmarks
-      repository,
-      branch,
-      asset
+      repository: repository ?? undefined,
+      branch: branch ?? undefined,
+      asset: asset ?? undefined
     };
     
     const currentUrl = window.location.pathname;
@@ -159,12 +145,26 @@ const PageHeader: React.FC = () => {
     setShowBookmarkDropdown(false);
   };
 
-  const getCurrentPageBookmark = (): Bookmark | null => {
+  const getCurrentPageBookmark = (): Bookmark | undefined => {
     return bookmarkService.getBookmarkByUrl(window.location.pathname);
   };
 
   const getBookmarksGrouped = (): BookmarkGroup[] => {
-    return bookmarkService.getBookmarksGroupedByPage();
+    const bookmarks = bookmarkService.getBookmarks();
+    const grouped: Record<string, Bookmark[]> = {};
+    
+    bookmarks.forEach(bookmark => {
+      const key = bookmark.pageName || 'Other';
+      if (!grouped[key]) {
+        grouped[key] = [];
+      }
+      grouped[key].push(bookmark);
+    });
+    
+    return Object.entries(grouped).map(([pageName, bookmarks]) => ({
+      pageName,
+      bookmarks
+    }));
   };
 
   const currentBookmark = getCurrentPageBookmark();
@@ -191,7 +191,7 @@ const PageHeader: React.FC = () => {
       {/* Right side - Navigation and user controls */}
       <div className="page-header-right">
         {/* User info and controls */}
-        {(isAuthenticated || profile?.isDemo) && authenticatedUser ? (
+        {(isAuthenticated || (profile as any)?.isDemo) && authenticatedUser ? (
           <div className="user-controls">
             <button 
               className="user-info" 
