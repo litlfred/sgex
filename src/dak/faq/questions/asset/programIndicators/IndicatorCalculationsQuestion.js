@@ -244,7 +244,7 @@ function isIndicatorObject(obj) {
  */
 function extractIndicatorInfo(obj, path) {
   return {
-    id: obj.id || obj.name || obj.title || `indicator_${result.indicators.length}`,
+    id: obj.id || obj.name || obj.title || `indicator_${Date.now()}`,
     name: obj.name || obj.title || obj.label,
     description: obj.description || obj.definition,
     type: obj.type || determineIndicatorType(obj),

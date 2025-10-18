@@ -47,7 +47,7 @@ const BranchListing = () => {
     setIsRefreshing(true);
     
     // Clear the cache to force fresh data
-    branchListingCacheService.forceRefresh(GITHUB_OWNER, GITHUB_REPO);
+    branchListingCacheService.forceRefresh(repositoryConfig.getOwner(), repositoryConfig.getName());
     
     // The fetchData function will be called by the useEffect when isRefreshing changes
   }, []);
@@ -493,13 +493,13 @@ const BranchListing = () => {
             </div>
             <h3>🚀 Ready to Contribute?</h3>
             <div class="action-buttons">
-              <a href={`${repositoryConfig.getGitHubUrl()}/issues/new`} target="_blank" class="contribute-btn primary">
+              <a href="${repositoryConfig.getGitHubUrl()}/issues/new" target="_blank" class="contribute-btn primary">
                 🐛 Report a Bug
               </a>
-              <a href={`${repositoryConfig.getGitHubUrl()}/issues/new?template=feature_request.md`} target="_blank" class="contribute-btn secondary">
+              <a href="${repositoryConfig.getGitHubUrl()}/issues/new?template=feature_request.md" target="_blank" class="contribute-btn secondary">
                 ✨ Request a Feature  
               </a>
-              <a href={`${repositoryConfig.getGitHubUrl()}/tree/main/public/docs`} target="_blank" class="contribute-btn tertiary-alt">
+              <a href="${repositoryConfig.getGitHubUrl()}/tree/main/public/docs" target="_blank" class="contribute-btn tertiary-alt">
                 📖 Docs on GitHub
               </a>
             </div>
@@ -517,15 +517,18 @@ const BranchListing = () => {
     try {
       setLoading(true);
       
+      const owner = repositoryConfig.getOwner();
+      const repo = repositoryConfig.getName();
+      
       // Check cache first
-      const cachedData = branchListingCacheService.getCachedData(GITHUB_OWNER, GITHUB_REPO);
+      const cachedData = branchListingCacheService.getCachedData(owner, repo);
       if (cachedData && !isRefreshing) {
         console.log('Using cached branch listing data');
         setBranches(cachedData.branches);
         setPullRequests(cachedData.pullRequests);
         
         // Update cache info for display
-        setCacheInfo(branchListingCacheService.getCacheInfo(GITHUB_OWNER, GITHUB_REPO));
+        setCacheInfo(branchListingCacheService.getCacheInfo(owner, repo));
         
         // Still check deployment statuses and other real-time data
         await checkAllDeploymentStatuses(cachedData.branches, cachedData.pullRequests);
@@ -553,11 +556,11 @@ const BranchListing = () => {
       
       // Use githubService instead of direct GitHub API calls
       // Fetch branches
-      const branchData = await githubService.getBranches(GITHUB_OWNER, GITHUB_REPO);
+      const branchData = await githubService.getBranches(owner, repo);
       
       // Fetch pull requests based on filter
       const prState = prFilter === 'all' ? 'all' : prFilter;
-      const prData = await githubService.getPullRequests(GITHUB_OWNER, GITHUB_REPO, {
+      const prData = await githubService.getPullRequests(owner, repo, {
         state: prState,
         sort: 'updated',
         per_page: 100
@@ -599,10 +602,10 @@ const BranchListing = () => {
       });
       
       // Cache the fetched data
-      branchListingCacheService.setCachedData(GITHUB_OWNER, GITHUB_REPO, filteredBranches, formattedPRs);
+      branchListingCacheService.setCachedData(owner, repo, filteredBranches, formattedPRs);
       
       // Update cache info for display
-      setCacheInfo(branchListingCacheService.getCacheInfo(GITHUB_OWNER, GITHUB_REPO));
+      setCacheInfo(branchListingCacheService.getCacheInfo(owner, repo));
       
       setBranches(filteredBranches);
       setPullRequests(formattedPRs);
