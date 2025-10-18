@@ -185,7 +185,7 @@ class UserAccessService {
    */
   async detectUserType(): Promise<void> {
     try {
-      if (githubService.isAuth()) {
+      if (githubService.authenticated) {
         this.userType = USER_TYPES.AUTHENTICATED;
         this.currentUser = await githubService.getCurrentUser();
       } else {

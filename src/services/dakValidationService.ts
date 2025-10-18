@@ -145,7 +145,7 @@ class DAKValidationService {
   async checkRepositoryExists(owner: string, repo: string): Promise<boolean> {
     try {
       // Use the same approach as githubService - get the octokit instance
-      const octokit = githubService.isAuth() ? githubService.octokit : null;
+      const octokit = githubService.authenticated ? githubService.octokit : null;
       
       if (!octokit) {
         // In unauthenticated mode, we can't reliably check repository existence
@@ -178,7 +178,7 @@ class DAKValidationService {
   async fetchSushiConfig(owner: string, repo: string, branch: string = 'main'): Promise<string | null> {
     try {
       // Use the same approach as githubService - get the octokit instance
-      const octokit = githubService.isAuth() ? githubService.octokit : null;
+      const octokit = githubService.authenticated ? githubService.octokit : null;
       
       if (!octokit) {
         // In unauthenticated mode, we can't fetch file contents reliably
