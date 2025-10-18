@@ -183,9 +183,9 @@ function createLazyComponent(componentName: string): React.ComponentType<any> {
 /**
  * Generate routes for a DAK component
  */
-function generateDAKRoutes(routeName: string, dakComponent: DAKComponentConfig): JSX.Element[] {
+function generateDAKRoutes(routeName: string, dakComponent: DAKComponentConfig): React.JSX.Element[] {
   const Component = createLazyComponent(dakComponent.component);
-  const routes: JSX.Element[] = [];
+  const routes: React.JSX.Element[] = [];
 
   if (dakComponent.includeBranch) {
     routes.push(
@@ -204,7 +204,7 @@ function generateDAKRoutes(routeName: string, dakComponent: DAKComponentConfig):
 /**
  * Generate routes for a standard component
  */
-function generateStandardRoutes(componentName: string, componentConfig: StandardComponentConfig): JSX.Element[] {
+function generateStandardRoutes(componentName: string, componentConfig: StandardComponentConfig): React.JSX.Element[] {
   const Component = createLazyComponent(componentConfig.component);
   const path = componentConfig.path || `/${componentName}`;
 
@@ -216,7 +216,7 @@ function generateStandardRoutes(componentName: string, componentConfig: Standard
 /**
  * Generate lazy routes from configuration
  */
-export function generateLazyRoutes(): JSX.Element[] {
+export function generateLazyRoutes(): React.JSX.Element[] {
   // Try to get route configuration from global
   let config: RouteConfig | null = null;
   try {
@@ -273,7 +273,7 @@ export function generateLazyRoutes(): JSX.Element[] {
     ];
   }
 
-  const routes: JSX.Element[] = [];
+  const routes: React.JSX.Element[] = [];
 
   // Generate DAK component routes (main deployment only)
   if (config.deployType === 'main' && config.dakComponents) {

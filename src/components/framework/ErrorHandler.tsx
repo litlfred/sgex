@@ -133,7 +133,7 @@ ${error}
     
     // Extract user/repo from URL or page context
     const user = pageContext?.user;
-    const repo = pageContext?.repository?.name;
+    const repo = (pageContext?.repository as any)?.name;
     
     if (lowercaseError.includes('not found') || lowercaseError.includes('not accessible')) {
       if (lowercaseError.includes('user')) {
@@ -210,6 +210,7 @@ ${error}
       <div className="error-content">
         <div className="error-mascot-container">
           <ContextualHelpMascot
+            pageId={pageName || 'error-handler'}
             helpContent={
               <div className="error-help-content">
                 <div className="error-mascot-large">

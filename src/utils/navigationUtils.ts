@@ -3,6 +3,16 @@
  */
 
 /**
+ * React Router location object type
+ */
+export interface Location {
+  pathname: string;
+  search?: string;
+  hash?: string;
+  state?: any;
+}
+
+/**
  * Detects if a click event should open in a new tab
  * @param event - The click event
  * @returns True if should open in new tab (Ctrl/Cmd+click)
@@ -32,6 +42,43 @@ export const constructFullUrl = (relativePath: string): string => {
   const cleanBasePath = basePath.endsWith('/') ? basePath : basePath + '/';
   
   return `${baseUrl}${cleanBasePath}${cleanPath}`;
+};
+
+/**
+ * Check if current location is the welcome page
+ * @param location - React Router location object
+ * @returns True if currently on welcome page
+ */
+export const isOnWelcomePage = (location: Location): boolean => {
+  // Check if on root path (/) which is the welcome page in main deployment
+  return location.pathname === '/' || location.pathname === '';
+};
+
+/**
+ * Navigate to welcome page and focus PAT input, or just focus if already there
+ * @param navigate - React Router navigate function
+ * @param location - React Router location object
+ * @param patTokenInputRef - Ref to PAT token input element (optional, for same-page focus)
+ */
+export const navigateToWelcomeWithFocus = (
+  navigate: NavigateFunction, 
+  location: Location, 
+  patTokenInputRef: React.RefObject<HTMLInputElement> | null = null
+): void => {
+  if (isOnWelcomePage(location)) {
+    // Already on welcome page, either focus directly or dispatch event
+    if (patTokenInputRef?.current) {
+      patTokenInputRef.current.focus();
+    } else {
+      // Dispatch custom event for WelcomePage to listen to
+      window.dispatchEvent(new CustomEvent('focusPATInput'));
+    }
+  } else {
+    // Navigate to welcome page with focus parameter
+    navigate('/', {
+      state: { focusPATInput: true }
+    });
+  }
 };
 
 /**
