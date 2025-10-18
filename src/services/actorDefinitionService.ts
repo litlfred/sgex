@@ -247,7 +247,7 @@ class ActorDefinitionService {
       }
       
       // Extract roles
-      const roleMatches = fshContent.matchAll(/\*\s+role\s+=\s+([^\s]+)#([^\s]+)\s+"([^"]+)"/g);
+      const roleMatches = Array.from(fshContent.matchAll(/\*\s+role\s+=\s+([^\s]+)#([^\s]+)\s+"([^"]+)"/g));
       const roles: ActorRole[] = [];
       for (const match of roleMatches) {
         roles.push({

@@ -268,6 +268,73 @@ class GitHubService {
   }
 
   /**
+   * Update or create a file in a GitHub repository
+   * 
+   * @param owner - Repository owner
+   * @param repo - Repository name
+   * @param path - File path in the repository
+   * @param content - New file content
+   * @param message - Commit message
+   * @param branch - Branch name (defaults to 'main')
+   * @returns Promise<void>
+   * 
+   * @example
+   * await githubService.updateFile('who', 'anc-dak', 'input/fsh/models/ANC.fsh', '...content...', 'Update ANC model', 'main');
+   */
+  async updateFile(
+    owner: string,
+    repo: string,
+    path: string,
+    content: string,
+    message: string,
+    branch: string = 'main'
+  ): Promise<void> {
+    if (!this.isAuthenticated || !this.octokit) {
+      throw new Error('Not authenticated');
+    }
+
+    try {
+      // Get the current file SHA if it exists
+      let sha: string | undefined;
+      try {
+        const { data } = await this.octokit.rest.repos.getContent({
+          owner,
+          repo,
+          path,
+          ref: branch
+        });
+        
+        if ('sha' in data) {
+          sha = data.sha;
+        }
+      } catch (error: any) {
+        // File doesn't exist, that's okay for creation
+        if (error.status !== 404) {
+          throw error;
+        }
+      }
+
+      // Create or update the file
+      await this.octokit.rest.repos.createOrUpdateFileContents({
+        owner,
+        repo,
+        path,
+        message,
+        content: Buffer.from(content).toString('base64'),
+        branch,
+        ...(sha && { sha })
+      });
+      
+      this.logger.apiSuccess('PUT', `/repos/${owner}/${repo}/contents/${path}`);
+    } catch (error) {
+      this.logger.apiError('PUT', `/repos/${owner}/${repo}/contents/${path}`, error);
+      throw new Error(
+        `Failed to update file: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
+  }
+
+  /**
    * Check if service is authenticated
    */
   get authenticated(): boolean {

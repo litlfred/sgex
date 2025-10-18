@@ -278,8 +278,9 @@ export const useAssetSave = ({
   // Export local changes
   const exportLocalChanges = useCallback((): boolean => {
     try {
-      const exportData = localStorageService.exportLocalChanges('json');
-      const url = URL.createObjectURL(exportData);
+      const exportDataString = localStorageService.exportLocalChanges();
+      const blob = new Blob([exportDataString], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
       link.download = `sgex-local-changes-${new Date().toISOString().split('T')[0]}.json`;

@@ -109,21 +109,21 @@ export const usePageParams = (): PageParams => {
           // Branch exists, replace it
           pathParts[5] = newBranch;
         }
-        navigate(pathParts.join('/'));
+        (navigate as (path: string) => void)(pathParts.join('/'));
       }
     }
   };
 
   const navigateToUser = (userLogin: string): void => {
-    navigate(`/${params.page || 'dak-action'}/${userLogin}`);
+    (navigate as (path: string) => void)(`/${(params as any).page || 'dak-action'}/${userLogin}`);
   };
 
   const navigateToDAK = (userLogin: string, repoName: string, branchName: string = 'main'): void => {
-    navigate(`/${params.page || 'dashboard'}/${userLogin}/${repoName}/${branchName}`);
+    (navigate as (path: string) => void)(`/${(params as any).page || 'dashboard'}/${userLogin}/${repoName}/${branchName}`);
   };
 
   const navigateToAsset = (userLogin: string, repoName: string, branchName: string, assetPath: string): void => {
-    navigate(`/${params.page || 'editor'}/${userLogin}/${repoName}/${branchName}/${assetPath}`);
+    (navigate as (path: string) => void)(`/${(params as any).page || 'editor'}/${userLogin}/${repoName}/${branchName}/${assetPath}`);
   };
 
   return {
