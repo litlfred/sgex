@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { usePage } from './PageProvider';
 import { useLocation } from 'react-router-dom';
 import githubService from '../../services/githubService';
@@ -29,13 +29,24 @@ const PageHeader = () => {
   const [authenticatedUser, setAuthenticatedUser] = useState(null);
   const [samlModalOpen, setSamlModalOpen] = useState(false);
   const [samlModalInfo, setSamlModalInfo] = useState(null);
+  
+  // Use refs to ensure state setters are always current
+  const setModalOpenRef = useRef(setSamlModalOpen);
+  const setModalInfoRef = useRef(setSamlModalInfo);
+  
+  // Keep refs updated
+  useEffect(() => {
+    setModalOpenRef.current = setSamlModalOpen;
+    setModalInfoRef.current = setSamlModalInfo;
+  });
 
   // Register SAML modal callback IMMEDIATELY (before any effects run)
-  // This ensures the callback is ready when early API calls trigger SAML errors
+  // Use refs so the callback always has access to current state setters
   const [callbackRegistered] = useState(() => {
     samlAuthService.registerModalCallback((samlInfo) => {
-      setSamlModalInfo(samlInfo);
-      setSamlModalOpen(true);
+      // Use refs to ensure we're calling the latest state setters
+      setModalInfoRef.current(samlInfo);
+      setModalOpenRef.current(true);
     });
     return true;
   });
