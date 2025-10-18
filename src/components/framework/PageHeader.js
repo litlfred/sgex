@@ -30,6 +30,16 @@ const PageHeader = () => {
   const [samlModalOpen, setSamlModalOpen] = useState(false);
   const [samlModalInfo, setSamlModalInfo] = useState(null);
 
+  // Register SAML modal callback IMMEDIATELY (before any effects run)
+  // This ensures the callback is ready when early API calls trigger SAML errors
+  const [callbackRegistered] = useState(() => {
+    samlAuthService.registerModalCallback((samlInfo) => {
+      setSamlModalInfo(samlInfo);
+      setSamlModalOpen(true);
+    });
+    return true;
+  });
+
   // Always fetch the authenticated user for login button display
   useEffect(() => {
     if (isAuthenticated) {
@@ -54,14 +64,6 @@ const PageHeader = () => {
       setAuthenticatedUser(null);
     }
   }, [isAuthenticated]);
-
-  // Register SAML modal callback (single registration, no per-page logic)
-  useEffect(() => {
-    samlAuthService.registerModalCallback((samlInfo) => {
-      setSamlModalInfo(samlInfo);
-      setSamlModalOpen(true);
-    });
-  }, []);
 
   const handleLogout = () => {
     githubService.logout();
