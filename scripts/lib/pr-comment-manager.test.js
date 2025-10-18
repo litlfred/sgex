@@ -54,6 +54,58 @@ describe('PRCommentManager', () => {
         owner: 'test-owner',
         repo: 'test-repo',
         issue_number: 123,
+        per_page: 100,
+        page: 1,
+      });
+    });
+
+    it('should handle pagination and find comment across multiple pages', async () => {
+      // Create 3 pages of comments (100, 100, 50 comments)
+      const page1Comments = Array.from({ length: 100 }, (_, i) => ({
+        id: i + 1,
+        body: `Comment ${i + 1}`,
+      }));
+
+      const page2Comments = Array.from({ length: 100 }, (_, i) => ({
+        id: i + 101,
+        body: `Comment ${i + 101}`,
+      }));
+
+      const page3Comments = [
+        { id: 201, body: 'Comment 201' },
+        { id: 202, body: '<!-- test-marker -->\nMarked comment on page 3' },
+        { id: 203, body: 'Comment 203' },
+      ];
+
+      mockGithub.rest.issues.listComments
+        .mockResolvedValueOnce({ data: page1Comments })
+        .mockResolvedValueOnce({ data: page2Comments })
+        .mockResolvedValueOnce({ data: page3Comments });
+
+      const result = await manager.findExistingComment(123);
+
+      expect(result).toEqual(page3Comments[1]);
+      expect(mockGithub.rest.issues.listComments).toHaveBeenCalledTimes(3);
+      expect(mockGithub.rest.issues.listComments).toHaveBeenNthCalledWith(1, {
+        owner: 'test-owner',
+        repo: 'test-repo',
+        issue_number: 123,
+        per_page: 100,
+        page: 1,
+      });
+      expect(mockGithub.rest.issues.listComments).toHaveBeenNthCalledWith(2, {
+        owner: 'test-owner',
+        repo: 'test-repo',
+        issue_number: 123,
+        per_page: 100,
+        page: 2,
+      });
+      expect(mockGithub.rest.issues.listComments).toHaveBeenNthCalledWith(3, {
+        owner: 'test-owner',
+        repo: 'test-repo',
+        issue_number: 123,
+        per_page: 100,
+        page: 3,
       });
     });
 
