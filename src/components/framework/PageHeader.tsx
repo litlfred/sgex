@@ -8,10 +8,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { usePage } from './PageProvider';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import githubService from '../../services/githubService';
 import userAccessService from '../../services/userAccessService';
 import bookmarkService from '../../services/bookmarkService';
+import secureTokenStorage from '../../services/secureTokenStorage';
 import PreviewBadge from '../PreviewBadge';
 import { navigateToWelcomeWithFocus } from '../../utils/navigationUtils';
 
@@ -82,11 +83,11 @@ const PageHeader: React.FC = () => {
     repository, 
     branch, 
     asset,
-    isAuthenticated,
-    navigate 
+    isAuthenticated
   } = usePage();
 
   const location = useLocation();
+  const navigate = useNavigate();
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showBookmarkDropdown, setShowBookmarkDropdown] = useState(false);
   const [authenticatedUser, setAuthenticatedUser] = useState<UserInfo | null>(null);
@@ -102,8 +103,10 @@ const PageHeader: React.FC = () => {
             setAuthenticatedUser(user as UserInfo);
           } else {
             // Fallback to githubService for backwards compatibility
-            const githubUser = await githubService.getCurrentUser();
-            setAuthenticatedUser(githubUser as UserInfo);
+            const githubUserResponse = await githubService.getCurrentUser();
+            if (githubUserResponse.success && githubUserResponse.data) {
+              setAuthenticatedUser(githubUserResponse.data as unknown as UserInfo);
+            }
           }
         } catch (error) {
           console.debug('Could not fetch authenticated user:', error);
@@ -117,7 +120,7 @@ const PageHeader: React.FC = () => {
   }, [isAuthenticated]);
 
   const handleLogout = (): void => {
-    githubService.logout();
+    secureTokenStorage.clearToken();
     navigate('/');
   };
 
