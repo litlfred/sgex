@@ -124,6 +124,24 @@ class RepositoryConfig {
     this._config = null;
     this._initialized = false;
   }
+
+  /**
+   * Check if running in GitHub Pages (SPA) mode
+   * Returns true if deployed as a static site on GitHub Pages
+   */
+  isGitHubPages() {
+    // Check if hostname ends with .github.io
+    return typeof window !== 'undefined' && 
+           window.location.hostname.endsWith('.github.io');
+  }
+
+  /**
+   * Check if SAML authorization is supported
+   * SAML requires a backend service, not supported in SPA mode
+   */
+  isSAMLSupported() {
+    return !this.isGitHubPages();
+  }
 }
 
 // Create and export singleton instance

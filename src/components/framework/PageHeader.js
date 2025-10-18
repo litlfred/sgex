@@ -1,11 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { usePage } from './PageProvider';
 import { useLocation } from 'react-router-dom';
 import githubService from '../../services/githubService';
 import userAccessService from '../../services/userAccessService';
 import bookmarkService from '../../services/bookmarkService';
+import samlAuthService from '../../services/samlAuthService';
+import SAMLAuthModal from '../SAMLAuthModal';
 import PreviewBadge from '../PreviewBadge';
 import { navigateToWelcomeWithFocus } from '../../utils/navigationUtils';
+import repositoryConfig from '../../config/repositoryConfig';
 
 /**
  * Consistent header component for all pages
@@ -25,6 +28,51 @@ const PageHeader = () => {
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showBookmarkDropdown, setShowBookmarkDropdown] = useState(false);
   const [authenticatedUser, setAuthenticatedUser] = useState(null);
+  const [samlModalOpen, setSamlModalOpen] = useState(false);
+  const [samlModalInfo, setSamlModalInfo] = useState(null);
+  const [samlAlertShown, setSamlAlertShown] = useState(false);
+  
+  // Check if SAML is supported (not in GitHub Pages/SPA mode)
+  const isSAMLSupported = repositoryConfig.isSAMLSupported();
+  
+  // Use refs to ensure state setters are always current
+  const setModalOpenRef = useRef(setSamlModalOpen);
+  const setModalInfoRef = useRef(setSamlModalInfo);
+  
+  // Keep refs updated
+  useEffect(() => {
+    setModalOpenRef.current = setSamlModalOpen;
+    setModalInfoRef.current = setSamlModalInfo;
+  });
+
+  // Register SAML modal callback IMMEDIATELY (before any effects run)
+  // Use refs so the callback always has access to current state setters
+  const [callbackRegistered] = useState(() => {
+    samlAuthService.registerModalCallback((samlInfo) => {
+      // In SPA mode (GitHub Pages), show one-time alert instead of modal
+      if (!repositoryConfig.isSAMLSupported()) {
+        const storageKey = 'sgex_saml_alert_shown';
+        const alertShown = sessionStorage.getItem(storageKey);
+        
+        if (!alertShown) {
+          const org = samlInfo.organization || 'an organization';
+          alert(
+            `SAML Authorization Not Supported\n\n` +
+            `Access to resources under the ${org} profile may be limited.\n\n` +
+            `SAML SSO authorization requires a hosted service and is not supported ` +
+            `in the current SPA (GitHub Pages) deployment mode.`
+          );
+          sessionStorage.setItem(storageKey, 'true');
+        }
+        return;
+      }
+      
+      // In hosted mode, show the modal as before
+      setModalInfoRef.current(samlInfo);
+      setModalOpenRef.current(true);
+    });
+    return true;
+  });
 
   // Always fetch the authenticated user for login button display
   useEffect(() => {
@@ -54,6 +102,33 @@ const PageHeader = () => {
   const handleLogout = () => {
     githubService.logout();
     navigate('/');
+  };
+
+  const handleWHOSAMLAuth = () => {
+    // Check if SAML is supported
+    if (!isSAMLSupported) {
+      // Show informational modal for SPA mode
+      setSamlModalInfo({
+        organization: 'WorldHealthOrganization',
+        repository: null,
+        authorizationUrl: null,
+        message: 'SAML authorization is not supported in SPA mode',
+        isSPAMode: true
+      });
+      setSamlModalOpen(true);
+      setShowUserDropdown(false);
+      return;
+    }
+    
+    // Normal SAML authorization flow for hosted mode
+    setSamlModalInfo({
+      organization: 'WorldHealthOrganization',
+      repository: null,
+      authorizationUrl: samlAuthService.getSAMLAuthorizationUrl('WorldHealthOrganization'),
+      message: 'Manual WHO SAML authorization requested'
+    });
+    setSamlModalOpen(true);
+    setShowUserDropdown(false);
   };
 
   const handleHomeNavigation = () => {
@@ -106,9 +181,23 @@ const PageHeader = () => {
   const bookmarksGrouped = getBookmarksGrouped();
 
   return (
-    <header className="page-header">
-      {/* Left side - Logo and context */}
-      <div className="page-header-left">
+    <>
+      {/* SAML Authorization Modal */}
+      <SAMLAuthModal
+        isOpen={samlModalOpen}
+        onClose={() => {
+          setSamlModalOpen(false);
+          setSamlModalInfo(null);
+          if (samlModalInfo?.organization) {
+            samlAuthService.markModalClosed(samlModalInfo.organization);
+          }
+        }}
+        samlInfo={samlModalInfo}
+      />
+      
+      <header className="page-header">
+        {/* Left side - Logo and context */}
+        <div className="page-header-left">
         <button 
           className="sgex-logo" 
           onClick={handleHomeNavigation}
@@ -145,6 +234,12 @@ const PageHeader = () => {
                     <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
                   </svg>
                   GitHub Profile
+                </button>
+                
+                {/* WHO SAML Authorization Badge */}
+                <button className="dropdown-item who-saml-badge" onClick={handleWHOSAMLAuth}>
+                  <span className="badge-icon">🔐</span>
+                  WHO SAML Authorization
                 </button>
                 
                 {/* Add/Remove current page bookmark - moved to same level as bookmarks */}
@@ -229,6 +324,7 @@ const PageHeader = () => {
         )}
       </div>
     </header>
+    </>
   );
 };
 

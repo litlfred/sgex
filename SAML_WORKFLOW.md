@@ -20,37 +20,70 @@ A centralized service that manages SAML enforcement error detection and handling
 ```javascript
 // Register a callback to show the modal
 samlAuthService.registerModalCallback((samlInfo) => {
-  // Show modal with organization and authorization URL
+  // Show modal with organization, authorization URL, and optional originalRequest
 });
 
-// Handle a potential SAML error
-const handled = samlAuthService.handleSAMLError(error, 'OrgName', 'repo-name');
+// Handle a potential SAML error with optional original request for retry
+const handled = samlAuthService.handleSAMLError(
+  error, 
+  'OrgName', 
+  'repo-name',
+  originalRequestFunction // Optional function to retry after authorization
+);
+
+// Check authorization status for an organization
+const isAuthorized = await samlAuthService.checkAuthorizationStatus(
+  'OrgName',
+  async () => {
+    // Test function that makes a SAML-protected API call
+    await githubService.getOrganization('OrgName');
+  }
+);
+
+// Get list of organizations with pending SAML requests
+const orgs = samlAuthService.getPendingOrganizations();
+// Returns: ['WorldHealthOrganization', 'OtherOrg']
 
 // Get authorization URL for an organization
 const url = samlAuthService.getSAMLAuthorizationUrl('WorldHealthOrganization');
 // Returns: https://github.com/orgs/WorldHealthOrganization/sso
 
+// Mark SAML authorization as successful (also broadcasts to other tabs)
+samlAuthService.markSAMLAuthorized('OrgName', 'repo-name');
+
+// Mark modal as opened/closed for an organization
+samlAuthService.markModalOpened('OrgName');
+samlAuthService.markModalClosed('OrgName');
+
 // Clear cooldown after successful authorization
 samlAuthService.clearCooldown('OrgName');
 
-// Reset all state
+// Reset all state (including session storage)
 samlAuthService.reset();
 ```
 
 ### 2. SAMLAuthModal Component (`src/components/SAMLAuthModal.js`)
 
-A modal dialog that guides users through the SAML SSO authorization process.
+An enhanced modal dialog that guides users through the SAML SSO authorization process with automatic polling and retry.
 
 **Props:**
 - `isOpen` (boolean): Controls modal visibility
 - `onClose` (function): Called when modal is closed
-- `samlInfo` (object): Contains organization, repository, and authorization URL
+- `samlInfo` (object): Contains organization, repository, authorization URL, and optional originalRequest
+- `onAuthorizationComplete` (function, optional): Called when authorization is successfully detected
+- `pollingInterval` (number, optional): Polling interval in ms (default: 3000)
+- `pollingTimeout` (number, optional): Polling timeout in ms (default: 300000 - 5 minutes)
 
 **Features:**
 - Clear step-by-step instructions
 - Direct link to GitHub SSO authorization page
+- **Automatic polling** for authorization status
+- **Automatic retry** of original request on authorization
+- **Live status indicator** showing polling progress
+- **Cross-tab coordination** to prevent duplicate modals
 - Responsive design with dark mode support
 - WHO branding consistent with the rest of the application
+- Configurable polling parameters
 
 ### 3. GitHub Service Integration (`src/services/githubService.js`)
 
@@ -68,21 +101,44 @@ The GitHub service has been updated to use the SAML auth service instead of cons
 
 ## User Flow
 
+### Automatic Flow (Default)
+
 1. **User triggers a GitHub API call** (e.g., fetching WHO organization data)
 2. **GitHub returns 403 with SAML enforcement message**
-3. **SAMLAuthService detects the error** and checks cooldown
-4. **If not in cooldown:**
+3. **SAMLAuthService detects the error** and checks:
+   - If modal already open for this org (skip if yes)
+   - If organization in cooldown period (skip if yes)
+4. **If not skipped:**
    - Logs a single warning (not spam)
+   - Stores pending request in sessionStorage
+   - Broadcasts modal open event to other tabs
    - Calls the registered modal callback
 5. **SAMLAuthModal displays** with:
    - Organization name
    - Clear instructions
-   - "Authorize on GitHub" button
+   - "Authorize on GitHub" and "Later" buttons
 6. **User clicks "Authorize on GitHub":**
    - Opens GitHub SSO page in new tab
-   - User authorizes their PAT on GitHub
-7. **User returns to SGEX** and tries the action again
-8. **Success!** The token now has SAML SSO authorization
+   - Modal starts **automatic polling** every 3 seconds
+   - Shows live status: "Waiting for authorization..."
+7. **User authorizes on GitHub** in the SSO tab
+8. **Modal automatically detects authorization:**
+   - Original request is **automatically retried**
+   - Modal shows "Authorization successful!"
+   - Modal closes after 1 second
+   - Success event broadcasted to all tabs
+9. **All tabs update** their SAML status and clear pending requests
+10. **Success!** The token now has SAML SSO authorization
+
+### Manual Flow (From User Dropdown)
+
+1. **User opens dropdown menu** in page header
+2. **SAML status section shows** for relevant organizations:
+   - "✓ Authorized" for authorized orgs
+   - "⚠ Not Authorized" for unauthorized orgs
+3. **Status auto-refreshes** every 10 seconds while dropdown is visible
+4. **User clicks "Authorize Now"** for an unauthorized org
+5. **SAMLAuthModal opens** and proceeds with automatic flow (steps 6-10 above)
 
 ## Integration Example
 
@@ -130,6 +186,11 @@ The following components have been integrated with the SAML workflow:
 1. **LandingPage** - Fetches user data and organizations
 2. **OrganizationSelection** - Fetches organization list
 3. **RepositorySelection** - Fetches repositories for a profile
+4. **PageHeader** (NEW) - Displays SAML authorization status in user dropdown with:
+   - Real-time status for relevant organizations
+   - 10-second auto-refresh when dropdown is visible
+   - Manual authorization initiation
+   - Smart organization detection
 
 ## Cooldown Mechanism
 
@@ -157,19 +218,56 @@ Run tests:
 npm test -- --testPathPattern=samlAuthService.test.js
 ```
 
+## Enhanced Features (Latest Update)
+
+### Automatic Polling and Retry ✅
+
+The SAML authorization modal now includes:
+
+1. **Automatic Status Polling**: After clicking "Authorize on GitHub", the modal starts polling every 3 seconds to check if authorization is complete
+2. **Automatic Request Retry**: When authorization is detected, the original failed request is automatically retried
+3. **Configurable Timeouts**: Polling timeout defaults to 5 minutes but can be configured
+4. **Visual Feedback**: Users see a live status indicator showing "Waiting for authorization..."
+
+### Cross-Tab Coordination ✅
+
+Enhanced cross-tab synchronization ensures:
+
+1. **Single Modal Per Organization**: Only one tab shows the modal for a given organization at a time
+2. **Polling Coordination**: Only one tab polls for a given organization to avoid rate limiting
+3. **State Broadcasting**: When authorization completes in any tab, all tabs are notified and updated
+4. **Session Persistence**: SAML state persists across page reloads via sessionStorage
+
+### User Dropdown SAML Status ✅
+
+The user dropdown menu now displays:
+
+1. **Authorization Status**: Shows "✓ Authorized" or "⚠ Not Authorized" for each relevant organization
+2. **Dynamic Refresh**: Status updates every 10 seconds when dropdown is visible
+3. **Manual Authorization**: Users can initiate SAML authorization for any organization from the dropdown
+4. **Smart Organization Detection**: Automatically detects relevant organizations from:
+   - Current repository context
+   - Pending SAML requests
+   - WHO organization when accessing WHO repos
+
+### Session Storage Management ✅
+
+The service now persists state in sessionStorage:
+
+1. **Pending Requests**: Tracks which organizations need authorization
+2. **Cooldown Timers**: Prevents modal spam with 1-minute cooldown per org
+3. **Reload Recovery**: Restores state after page reload to resume polling if needed
+
 ## Known Limitations
 
-1. **Manual refresh required:** After authorizing on GitHub, users must manually refresh or retry their action
-2. **No automatic retry:** The service doesn't automatically retry failed requests after authorization
-3. **Single callback:** Only one modal callback can be registered at a time (singleton pattern)
+1. **Single callback:** Only one modal callback can be registered at a time (singleton pattern)
+2. **Session-based:** sessionStorage is tab-specific; cross-tab sync uses BroadcastChannel API
 
 ## Future Enhancements
 
-1. **Automatic retry** after successful authorization
-2. **Session storage** to remember which organizations have been authorized
-3. **Batch authorization** for multiple organizations at once
-4. **Authorization status indicator** in the UI
-5. **Integration with other GitHub API error types** (rate limiting, permissions)
+1. **Batch authorization** for multiple organizations at once
+2. **Custom redirect** if GitHub allows, return user directly to SGEX after SSO
+3. **Integration with other GitHub API error types** (rate limiting, permissions)
 
 ## Troubleshooting
 
