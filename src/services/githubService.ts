@@ -612,9 +612,6 @@ class GitHubService {
       throw error;
     }
   }
-
-  // TODO: Continue with repository methods, DAK validation, etc.
-  // This is Part 1 of the GitHub Service migration - authentication and user management
 }
 
 // Export singleton instance to maintain backward compatibility
