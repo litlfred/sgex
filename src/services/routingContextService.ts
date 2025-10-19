@@ -1,15 +1,6 @@
 /**
  * SGEX Routing Context Service
  * 
-<<<<<<< HEAD:src/services/routingContextService.ts
- * 🔒 MIGRATION CONSENT DOCUMENTED 🔒
- * This file was migrated to TypeScript with explicit written consent from @litlfred
- * on 2025-10-16 in PR comment #3407195807.
-=======
->>>>>>> 4ef585dd7c088df63d464a4d76f4f704e363e808:src/services/routingContextService.js
- * EXPLICIT CONSENT GRANTED: PR #1114, comment #3411556175
- * Changes authorized by @litlfred on 2025-10-16
- * 
  * Lightweight service that reads structured routing context prepared by 404.html.
  * Replaces the heavy urlProcessorService.js with minimal parsing logic.
  * 
@@ -19,11 +10,8 @@
  * - Clean URL restoration
  * - Backward compatibility with individual storage items
  * - Comprehensive logging integration
-<<<<<<< HEAD:src/services/routingContextService.ts
  * 
  * @module routingContextService
-=======
->>>>>>> 4ef585dd7c088df63d464a4d76f4f704e363e808:src/services/routingContextService.js
  */
 
 /**
@@ -154,14 +142,9 @@ class SGEXRoutingContext {
       console.error('Error initializing SGEX routing context:', error);
       if (typeof window !== 'undefined' && window.SGEX_ROUTING_LOGGER) {
         window.SGEX_ROUTING_LOGGER.logError('Failed to initialize routing context', {
-<<<<<<< HEAD:src/services/routingContextService.ts
           error: error instanceof Error ? error.message : String(error),
           stack: error instanceof Error ? error.stack : undefined,
           timestamp: Date.now()
-=======
-          error: error.message,
-          stack: error.stack
->>>>>>> 4ef585dd7c088df63d464a4d76f4f704e363e808:src/services/routingContextService.js
         });
       }
       return this.getFallbackContext();
