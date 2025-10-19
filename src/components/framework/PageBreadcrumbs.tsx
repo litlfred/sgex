@@ -2,9 +2,44 @@ import React from 'react';
 import { usePage, PAGE_TYPES } from './PageProvider';
 
 /**
- * Unified breadcrumb component for consistent navigation across all pages
+ * Breadcrumb item interface
  */
-const PageBreadcrumbs = ({ customBreadcrumbs }) => {
+interface BreadcrumbItem {
+  /** Display label for the breadcrumb */
+  label: string;
+  /** Navigation path */
+  path?: string;
+  /** Click handler (overrides path navigation) */
+  onClick?: () => void;
+  /** Whether this is the current page */
+  current?: boolean;
+}
+
+/**
+ * Props for PageBreadcrumbs component
+ */
+interface PageBreadcrumbsProps {
+  /** Custom breadcrumbs to override automatic generation */
+  customBreadcrumbs?: BreadcrumbItem[];
+}
+
+/**
+ * Unified breadcrumb component for consistent navigation across all pages
+ * 
+ * @example
+ * // Automatic breadcrumbs based on page context
+ * <PageBreadcrumbs />
+ * 
+ * @example
+ * // Custom breadcrumbs
+ * <PageBreadcrumbs 
+ *   customBreadcrumbs={[
+ *     { label: 'Home', path: '/' },
+ *     { label: 'Settings', current: true }
+ *   ]} 
+ * />
+ */
+const PageBreadcrumbs: React.FC<PageBreadcrumbsProps> = ({ customBreadcrumbs }) => {
   const { 
     type, 
     pageName, 
@@ -25,7 +60,7 @@ const PageBreadcrumbs = ({ customBreadcrumbs }) => {
                 <>
                   <button 
                     className="breadcrumb-link" 
-                    onClick={() => crumb.onClick ? crumb.onClick() : navigate(crumb.path)}
+                    onClick={() => crumb.onClick ? crumb.onClick() : navigate(crumb.path || '/')}
                     aria-label={`Navigate to ${crumb.label}`}
                   >
                     {crumb.label}
@@ -45,7 +80,7 @@ const PageBreadcrumbs = ({ customBreadcrumbs }) => {
   }
 
   // Generate automatic breadcrumbs based on page type
-  const breadcrumbs = [];
+  const breadcrumbs: BreadcrumbItem[] = [];
 
   // Always start with home
   breadcrumbs.push({
@@ -77,7 +112,7 @@ const PageBreadcrumbs = ({ customBreadcrumbs }) => {
   }
 
   // Add current page context
-  const pageLabels = {
+  const pageLabels: Record<string, string> = {
     'landing': 'Home',
     'landing-unauthenticated': 'Home',
     'repositories': 'Select Repository', 
@@ -123,7 +158,7 @@ const PageBreadcrumbs = ({ customBreadcrumbs }) => {
               <>
                 <button 
                   className="breadcrumb-link" 
-                  onClick={() => crumb.onClick ? crumb.onClick() : navigate(crumb.path)}
+                  onClick={() => crumb.onClick ? crumb.onClick() : navigate(crumb.path || '/')}
                   aria-label={`Navigate to ${crumb.label}`}
                 >
                   {crumb.label}
