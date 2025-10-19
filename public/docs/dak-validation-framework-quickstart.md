@@ -34,28 +34,43 @@ This validation framework integrates with the updated **WHO SMART Guidelines DAK
 
 ## Phase 1: Core Infrastructure (Week 1-2)
 
-### Step 1.1: Create Validation Rule Registry
+### Step 1.1: Create Validation Rule Registry (TypeScript)
 
 ```bash
 # Create the service file
-touch src/services/validationRuleRegistry.js
+touch src/services/validationRuleRegistry.ts
 ```
 
-**File**: `src/services/validationRuleRegistry.js`
+**File**: `src/services/validationRuleRegistry.ts`
 
-```javascript
+```typescript
 /**
  * Validation Rule Registry
  * Central registry for managing all DAK validation rules
+ * 
+ * @example
+ * const registry = new ValidationRuleRegistry();
+ * registry.register(myRule);
  */
-class ValidationRuleRegistry {
+
+import { ValidationRule } from '../types';
+
+export class ValidationRuleRegistry {
+  private rules: Map<string, ValidationRule>;
+  private rulesByComponent: Map<string, ValidationRule[]>;
+  private rulesByFileType: Map<string, ValidationRule[]>;
+  
   constructor() {
     this.rules = new Map();
     this.rulesByComponent = new Map();
     this.rulesByFileType = new Map();
   }
   
-  register(rule) {
+  /**
+   * Register a validation rule
+   * @param rule - The validation rule to register
+   */
+  register(rule: ValidationRule): void {
     // Validate rule structure
     if (!rule.code || !rule.validate) {
       throw new Error('Invalid rule: missing required fields');

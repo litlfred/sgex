@@ -22,9 +22,49 @@ This framework enables:
 4. **Authoritative Standards**: References WHO SMART Base logical models at https://worldhealthorganization.github.io/smart-base/
 5. **Progressive Enhancement**: Works for both staging ground uploads and existing repository artifacts
 6. **Composability**: Individual validators can be combined and configured per DAK component
-7. **JSON-First Configuration**: Strongly prefers JSON over YAML for configuration files
+7. **TypeScript-First Development**: All validation code MUST be written in TypeScript (see Section 1.2.1)
+8. **JSON Schema Validation**: All TypeScript types MUST be exported for JSON Schema generation
+9. **OpenAPI Documentation**: All validation services MUST include OpenAPI-compatible documentation
 
-### 1.2.1 Important Note on Configuration File Formats
+### 1.2.1 🔒 TypeScript-First Development Policy
+
+**MANDATORY**: All new validation framework code MUST be written in TypeScript. This aligns with the project-wide TypeScript migration plan documented in `TYPESCRIPT_MIGRATION_PLAN.md`.
+
+#### Requirements for All Validation Code:
+- ✅ **Use TypeScript** (`.ts`/`.tsx` files only) - JavaScript requires explicit approval from @litlfred
+- ✅ **Export all interfaces and types** for JSON Schema generation
+- ✅ **Include JSDoc comments** with `@example` tags for better schema documentation
+- ✅ **Use `RuntimeValidationService`** for runtime data validation
+- ✅ **Document with OpenAPI annotations** for all validation service methods
+- ✅ **Run `npm run generate-schemas`** after adding or modifying types
+
+#### Example TypeScript Validation Rule:
+```typescript
+/**
+ * Validation rule metadata
+ * @example
+ * {
+ *   "code": "BPMN-BUSINESS-RULE-TASK-ID-001",
+ *   "level": "error",
+ *   "component": "business-processes"
+ * }
+ */
+export interface ValidationRuleMetadata {
+  /** Unique validation rule code */
+  code: string;
+  /** Validation level */
+  level: 'error' | 'warning' | 'info';
+  /** Associated DAK component */
+  component: string;
+}
+```
+
+For more details, see:
+- **TypeScript Migration Plan**: `TYPESCRIPT_MIGRATION_PLAN.md`
+- **Copilot Instructions**: `.github/copilot-instructions.md`
+- **Contributing Guide**: `CONTRIBUTING.md`
+
+### 1.2.2 Important Note on Configuration File Formats
 
 **⚠️ YAML Usage Policy for SGeX Application:**
 - **YAML configuration files (.yaml, .yml) are strongly discouraged for SGeX application features** without explicit stakeholder consent
@@ -47,14 +87,42 @@ This policy ensures better tooling support, type safety, and consistency across 
 
 ## 2. Validation Rule Structure
 
-### 2.1 Validation Rule File Format
+### 2.1 Validation Rule File Format (TypeScript)
 
-Each validation rule SHALL be defined in its own file following this structure:
+**Important**: All validation rules MUST be written in TypeScript with exported interfaces.
 
-```javascript
-// File: src/validation/rules/bpmn/businessRuleTaskIdRequired.js
+Each validation rule SHALL be defined in its own TypeScript file following this structure:
 
-export default {
+```typescript
+// File: src/validation/rules/bpmn/businessRuleTaskIdRequired.ts
+
+import { ValidationRule, ValidationResult, ValidationContext } from '../../types';
+
+/**
+ * Metadata for BPMN Business Rule Task ID validation
+ * @example
+ * {
+ *   "code": "BPMN-BUSINESS-RULE-TASK-ID-001",
+ *   "level": "error",
+ *   "dakComponent": "business-processes"
+ * }
+ */
+export interface BPMNBusinessRuleTaskIdMetadata {
+  code: string;
+  category: string;
+  level: 'error' | 'warning' | 'info';
+  labelKey: string;
+  descriptionKey: string;
+  suggestionKey: string;
+  dakComponent: string;
+  fileTypes: string[];
+}
+
+/**
+ * BPMN Business Rule Task ID validation rule
+ * Ensures all businessRuleTask elements have an @id attribute
+ */
+export const rule: ValidationRule = {
   // Metadata
   code: 'BPMN-BUSINESS-RULE-TASK-ID-001',
   category: 'bpmn',
@@ -72,15 +140,19 @@ export default {
   fileTypes: ['bpmn'], // File extensions this validator applies to
   
   // Validation logic (completely separate from metadata)
-  validate: async (fileContent, filePath, context) => {
+  validate: async (
+    fileContent: string, 
+    filePath: string, 
+    context: ValidationContext
+  ): Promise<ValidationResult> => {
     // Returns { valid: boolean, violations: [] }
     const parser = await context.getXMLParser();
     const doc = parser.parseFromString(fileContent, 'text/xml');
     
     const businessRuleTasks = doc.querySelectorAll('bpmn\\:businessRuleTask, businessRuleTask');
-    const violations = [];
+    const violations: ValidationViolation[] = [];
     
-    businessRuleTasks.forEach(task => {
+    businessRuleTasks.forEach((task: Element) => {
       if (!task.getAttribute('id')) {
         violations.push({
           line: context.getLineNumber(task),
@@ -100,6 +172,8 @@ export default {
     };
   }
 };
+
+export default rule;
 ```
 
 ### 2.2 Translation File Structure
@@ -132,14 +206,26 @@ Corresponding translations in `public/locales/en_US/translation.json`:
 }
 ```
 
-### 2.3 Validation Rule Registry
+### 2.3 Validation Rule Registry (TypeScript)
 
 A central registry manages all validation rules:
 
-```javascript
-// File: src/services/validationRuleRegistry.js
+```typescript
+// File: src/services/validationRuleRegistry.ts
 
-class ValidationRuleRegistry {
+import { ValidationRule } from '../types';
+
+/**
+ * Registry for managing validation rules
+ * @example
+ * const registry = new ValidationRuleRegistry();
+ * registry.register(myRule);
+ */
+export class ValidationRuleRegistry {
+  private rules: Map<string, ValidationRule>;
+  private rulesByComponent: Map<string, ValidationRule[]>;
+  private rulesByFileType: Map<string, ValidationRule[]>;
+  
   constructor() {
     this.rules = new Map();
     this.rulesByComponent = new Map();
@@ -148,36 +234,41 @@ class ValidationRuleRegistry {
   
   /**
    * Register a validation rule
+   * @param rule - The validation rule to register
    */
-  register(rule) {
+  register(rule: ValidationRule): void {
     this.rules.set(rule.code, rule);
     
     // Index by component
     if (!this.rulesByComponent.has(rule.dakComponent)) {
       this.rulesByComponent.set(rule.dakComponent, []);
     }
-    this.rulesByComponent.get(rule.dakComponent).push(rule);
+    this.rulesByComponent.get(rule.dakComponent)!.push(rule);
     
     // Index by file type
     rule.fileTypes.forEach(fileType => {
       if (!this.rulesByFileType.has(fileType)) {
         this.rulesByFileType.set(fileType, []);
       }
-      this.rulesByFileType.get(fileType).push(rule);
+      this.rulesByFileType.get(fileType)!.push(rule);
     });
   }
   
   /**
    * Get rules for a specific DAK component
+   * @param componentName - Name of the DAK component
+   * @returns Array of validation rules for the component
    */
-  getByComponent(componentName) {
+  getByComponent(componentName: string): ValidationRule[] {
     return this.rulesByComponent.get(componentName) || [];
   }
   
   /**
    * Get rules for a specific file type
+   * @param fileType - File extension (e.g., 'bpmn', 'dmn')
+   * @returns Array of validation rules for the file type
    */
-  getByFileType(fileType) {
+  getByFileType(fileType: string): ValidationRule[] {
     return this.rulesByFileType.get(fileType) || [];
   }
   
@@ -192,14 +283,27 @@ class ValidationRuleRegistry {
 
 ## 3. Validation Service Architecture
 
-### 3.1 Core Validation Service
+### 3.1 Core Validation Service (TypeScript)
 
 The framework extends the existing `dakComplianceService` with enhanced capabilities:
 
-```javascript
-// File: src/services/dakArtifactValidationService.js
+```typescript
+// File: src/services/dakArtifactValidationService.ts
 
-class DAKArtifactValidationService {
+import { ValidationRuleRegistry } from './validationRuleRegistry';
+import { ValidationResult, ValidationReport, ValidationOptions } from '../types';
+
+/**
+ * Main DAK artifact validation service
+ * Orchestrates validation across multiple rule types and file formats
+ * 
+ * @example
+ * const service = new DAKArtifactValidationService();
+ * const result = await service.validateArtifact(filePath, content);
+ */
+export class DAKArtifactValidationService {
+  private ruleRegistry: ValidationRuleRegistry;
+  
   constructor() {
     this.ruleRegistry = new ValidationRuleRegistry();
     this.loadValidationRules();
@@ -207,12 +311,16 @@ class DAKArtifactValidationService {
   
   /**
    * Validate a single artifact file
-   * @param {string} filePath - Path to the file
-   * @param {string|Buffer} content - File content
-   * @param {Object} options - Validation options
-   * @returns {Promise<ValidationResult>}
+   * @param filePath - Path to the file
+   * @param content - File content
+   * @param options - Validation options
+   * @returns Promise<ValidationResult>
    */
-  async validateArtifact(filePath, content, options = {}) {
+  async validateArtifact(
+    filePath: string, 
+    content: string | Buffer, 
+    options: ValidationOptions = {}
+  ): Promise<ValidationResult> {
     const {
       dakComponent = null,
       includeWarnings = true,
@@ -241,12 +349,12 @@ class DAKArtifactValidationService {
   
   /**
    * Validate all artifacts in staging ground
-   * @param {Object} stagingGround - Staging ground object
-   * @returns {Promise<ValidationReport>}
+   * @param stagingGround - Staging ground object
+   * @returns Promise<ValidationReport>
    */
-  async validateStagingGround(stagingGround) {
+  async validateStagingGround(stagingGround: any): Promise<ValidationReport> {
     const fileValidations = await Promise.all(
-      stagingGround.files.map(file => 
+      stagingGround.files.map((file: any) => 
         this.validateArtifact(file.path, file.content, {
           dakComponent: this.detectComponent(file.path)
         })
@@ -258,13 +366,18 @@ class DAKArtifactValidationService {
   
   /**
    * Validate artifacts in GitHub repository
-   * @param {string} owner - Repository owner
-   * @param {string} repo - Repository name
-   * @param {string} branch - Branch name
-   * @param {Object} options - Validation options
-   * @returns {Promise<ValidationReport>}
+   * @param owner - Repository owner
+   * @param repo - Repository name
+   * @param branch - Branch name
+   * @param options - Validation options
+   * @returns Promise<ValidationReport>
    */
-  async validateRepository(owner, repo, branch, options = {}) {
+  async validateRepository(
+    owner: string, 
+    repo: string, 
+    branch: string, 
+    options: { components?: string[] | null; pathPatterns?: string[] | null } = {}
+  ): Promise<ValidationReport> {
     const {
       components = null, // Array of component names, or null for all
       pathPatterns = null // Array of glob patterns to filter files
@@ -765,64 +878,67 @@ sgex/
 │       │
 ├── src/
 │   ├── services/
-│   │   ├── dakArtifactValidationService.js      (new - main service)
-│   │   ├── validationRuleRegistry.js            (new - rule management)
-│   │   ├── validationContext.js                 (new - validation helpers)
-│   │   ├── xsdValidationService.js              (new - XSD validation)
-│   │   ├── dakComplianceService.js              (existing - extend)
+│   │   ├── dakArtifactValidationService.ts      (new - main service)
+│   │   ├── validationRuleRegistry.ts            (new - rule management)
+│   │   ├── validationContext.ts                 (new - validation helpers)
+│   │   ├── xsdValidationService.ts              (new - XSD validation)
+│   │   ├── dakComplianceService.ts              (existing - extend, migrated to TypeScript)
 │   │   ├── runtimeValidationService.ts          (existing - use)
 │   │   ├── ComponentObjectProvider.js           (existing - DAK core integration)
-│   │   └── stagingGroundService.js              (existing - staging operations)
+│   │   └── stagingGroundService.ts              (existing - staging operations, migrated to TypeScript)
 │   │
 │   ├── validation/
 │   │   ├── rules/
 │   │   │   ├── dak/                             (DAK-level rules)
-│   │   │   │   ├── smartBaseDependency.js
-│   │   │   │   ├── dakJsonStructure.js          (new - validate dak.json)
-│   │   │   │   ├── componentSources.js          (new - validate sources)
-│   │   │   │   └── authoringConventions.js
+│   │   │   │   ├── smartBaseDependency.ts
+│   │   │   │   ├── dakJsonStructure.ts          (new - validate dak.json)
+│   │   │   │   ├── componentSources.ts          (new - validate sources)
+│   │   │   │   └── authoringConventions.ts
 │   │   │   │
 │   │   │   ├── bpmn/                            (BPMN rules)
-│   │   │   │   ├── businessRuleTaskIdRequired.js
-│   │   │   │   ├── startEventRequired.js
-│   │   │   │   └── namespaceRequired.js
+│   │   │   │   ├── businessRuleTaskIdRequired.ts
+│   │   │   │   ├── startEventRequired.ts
+│   │   │   │   └── namespaceRequired.ts
 │   │   │   │
 │   │   │   ├── dmn/                             (DMN rules)
-│   │   │   │   ├── decisionIdRequired.js
-│   │   │   │   ├── decisionLinkedToBpmn.js
-│   │   │   │   └── namespaceRequired.js
+│   │   │   │   ├── decisionIdRequired.ts
+│   │   │   │   ├── decisionLinkedToBpmn.ts
+│   │   │   │   └── namespaceRequired.ts
 │   │   │   │
 │   │   │   ├── xml/                             (XML rules)
-│   │   │   │   ├── wellFormed.js
-│   │   │   │   └── schemaValidation.js
+│   │   │   │   ├── wellFormed.ts
+│   │   │   │   └── schemaValidation.ts
 │   │   │   │
 │   │   │   ├── json/                            (JSON rules)
-│   │   │   │   └── syntaxValid.js
+│   │   │   │   └── syntaxValid.ts
 │   │   │   │
 │   │   │   ├── fhir/                            (FHIR rules)
-│   │   │   │   ├── resourceTypeValid.js
-│   │   │   │   └── profileStructure.js
+│   │   │   │   ├── resourceTypeValid.ts
+│   │   │   │   ├── profileStructure.ts
+│   │   │   │   ├── fshSyntax.ts                 (FSH syntax validation)
+│   │   │   │   └── fshConventions.ts            (FSH naming conventions)
 │   │   │   │
 │   │   │   └── general/                         (General rules)
-│   │   │       ├── fileSize.js
-│   │   │       └── namingConventions.js
+│   │   │       ├── fileSize.ts
+│   │   │       └── namingConventions.ts
 │   │   │
-│   │   └── index.js                             (Rule loader/exporter)
+│   │   ├── types.ts                             (TypeScript type definitions)
+│   │   └── index.ts                             (Rule loader/exporter)
 │   │
 │   ├── components/
-│   │   ├── ValidationReport.js                  (new - validation report modal)
-│   │   ├── ValidationButton.js                  (new - trigger validation)
-│   │   ├── ValidationSummary.js                 (new - summary display)
+│   │   ├── ValidationReport.tsx                  (new - validation report modal)
+│   │   ├── ValidationButton.tsx                  (new - trigger validation)
+│   │   ├── ValidationSummary.tsx                 (new - summary display)
 │   │   └── DAKDashboard.js                      (existing - add validation section)
 │   │
 │   └── tests/
 │       └── validation/
-│           ├── dakArtifactValidationService.test.js
-│           ├── validationRuleRegistry.test.js
+│           ├── dakArtifactValidationService.test.ts
+│           ├── validationRuleRegistry.test.ts
 │           └── rules/
-│               ├── bpmn.test.js
-│               ├── dmn.test.js
-│               └── dak.test.js
+│               ├── bpmn.test.ts
+│               ├── dmn.test.ts
+│               └── dak.test.ts
 │
 ├── public/
 │   ├── locales/
