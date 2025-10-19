@@ -7,8 +7,6 @@
  * @module editorIntegrationService
  */
 
-import { logger } from './githubService';
-
 /**
  * DAK Component Object interface representing a reusable DAK component
  * @interface DakComponentObject
