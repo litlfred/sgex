@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/sgex/copilot-finalize-typescript-migration-again/static/css/main.323c6dfe.css",
-    "main.js": "/sgex/copilot-finalize-typescript-migration-again/static/js/main.fe32a7ee.js",
+    "main.js": "/sgex/copilot-finalize-typescript-migration-again/static/js/main.19a07458.js",
     "static/js/228.6b83cdb4.chunk.js": "/sgex/copilot-finalize-typescript-migration-again/static/js/228.6b83cdb4.chunk.js",
     "static/css/8700.247e7b29.chunk.css": "/sgex/copilot-finalize-typescript-migration-again/static/css/8700.247e7b29.chunk.css",
     "static/js/8700.a0dbf3dd.chunk.js": "/sgex/copilot-finalize-typescript-migration-again/static/js/8700.a0dbf3dd.chunk.js",
@@ -70,6 +70,6 @@
   },
   "entrypoints": [
     "static/css/main.323c6dfe.css",
-    "static/js/main.fe32a7ee.js"
+    "static/js/main.19a07458.js"
   ]
 }
