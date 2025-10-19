@@ -297,16 +297,16 @@ class DataAccessLayer {
       }
 
       // For authenticated users with write access, save to GitHub
-      const result = await githubService.updateFileContent(
-        owner, 
-        repo, 
-        assetPath, 
-        content, 
-        commitMessage, 
-        branch
-      );
+      try {
+        await githubService.updateFile(
+          owner, 
+          repo, 
+          assetPath, 
+          content, 
+          commitMessage, 
+          branch
+        );
 
-      if (result.success) {
         // Remove from staging ground since it's now committed
         stagingGroundService.removeFile(assetPath);
         
@@ -315,18 +315,16 @@ class DataAccessLayer {
         this.assetCache.delete(cacheKey);
 
         this.logger.info('Asset saved to GitHub', { 
-          owner, repo, branch, assetPath, commit: result.data?.commit?.sha 
+          owner, repo, branch, assetPath
         });
 
         return {
           result: OPERATION_RESULTS.SUCCESS,
           message: 'Changes successfully committed to GitHub',
-          target: SAVE_TARGETS.GITHUB,
-          commitSha: result.data?.commit?.sha,
-          commitUrl: result.data?.commit?.html_url
+          target: SAVE_TARGETS.GITHUB
         };
-      } else {
-        throw new Error(result.error || 'GitHub commit failed');
+      } catch (error) {
+        throw new Error(error instanceof Error ? error.message : 'GitHub commit failed');
       }
 
     } catch (error) {

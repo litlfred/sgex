@@ -187,7 +187,8 @@ class UserAccessService {
     try {
       if (githubService.authenticated) {
         this.userType = USER_TYPES.AUTHENTICATED;
-        this.currentUser = await githubService.getCurrentUser();
+        const response = await githubService.getCurrentUser();
+        this.currentUser = (response.success && response.data) ? response.data : null;
       } else {
         this.userType = USER_TYPES.UNAUTHENTICATED;
         this.currentUser = null;
@@ -421,7 +422,7 @@ class UserAccessService {
   async getAccessBadge(owner: string, repo: string, branch: string = 'main'): Promise<AccessBadge> {
     const access = await this.getRepositoryAccess(owner, repo, branch);
     
-    const badges: Record<AccessLevel, AccessBadge> = {
+    const badges = {
       [ACCESS_LEVELS.WRITE]: {
         text: 'Write Access',
         icon: '✏️',
@@ -440,7 +441,7 @@ class UserAccessService {
         color: 'red',
         description: 'You do not have access to this repository'
       }
-    };
+    } as Record<AccessLevel, AccessBadge>;
 
     return badges[access] || badges[ACCESS_LEVELS.NONE];
   }

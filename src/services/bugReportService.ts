@@ -165,7 +165,7 @@ class BugReportService {
 
       // Parse YAML front matter for .md files
       if (path.endsWith('.md')) {
-        return this._parseMarkdownTemplate(content);
+        return await this._parseMarkdownTemplate(content);
       } else if (path.endsWith('.yml') || path.endsWith('.yaml')) {
         return this._parseYAMLTemplate(content);
       }
@@ -180,7 +180,7 @@ class BugReportService {
   /**
    * Parse markdown template with YAML front matter
    */
-  _parseMarkdownTemplate(content: string): IssueTemplate | null {
+  async _parseMarkdownTemplate(content: string): Promise<IssueTemplate | null> {
     try {
       const frontMatterMatch = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
       
@@ -188,7 +188,7 @@ class BugReportService {
         return null;
       }
 
-      const yaml = lazyLoadYaml();
+      const yaml = await lazyLoadYaml();
       const frontMatter = yaml.load(frontMatterMatch[1]) as any;
       const body = frontMatterMatch[2];
 

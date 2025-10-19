@@ -268,6 +268,111 @@ class GitHubService {
   }
 
   /**
+   * Get issue details
+   */
+  async getIssue(owner: string, repo: string, issue_number: number): Promise<any> {
+    if (!this.isAuthenticated || !this.octokit) {
+      throw new Error('Not authenticated');
+    }
+
+    try {
+      const { data } = await this.octokit.rest.issues.get({
+        owner,
+        repo,
+        issue_number
+      });
+      return data;
+    } catch (error) {
+      this.logger.error('Failed to get issue', { owner, repo, issue_number, error });
+      throw error;
+    }
+  }
+
+  /**
+   * Get pull request details
+   */
+  async getPullRequest(owner: string, repo: string, pull_number: number): Promise<any> {
+    if (!this.isAuthenticated || !this.octokit) {
+      throw new Error('Not authenticated');
+    }
+
+    try {
+      const { data } = await this.octokit.rest.pulls.get({
+        owner,
+        repo,
+        pull_number
+      });
+      return data;
+    } catch (error) {
+      this.logger.error('Failed to get pull request', { owner, repo, pull_number, error });
+      throw error;
+    }
+  }
+
+  /**
+   * Create a new issue
+   */
+  async createIssue(owner: string, repo: string, issueData: any): Promise<any> {
+    if (!this.isAuthenticated || !this.octokit) {
+      throw new Error('Not authenticated');
+    }
+
+    try {
+      const { data } = await this.octokit.rest.issues.create({
+        owner,
+        repo,
+        title: issueData.title,
+        body: issueData.body,
+        labels: issueData.labels,
+        assignees: issueData.assignees
+      });
+      return data;
+    } catch (error) {
+      this.logger.error('Failed to create issue', { owner, repo, error });
+      throw error;
+    }
+  }
+
+  /**
+   * Get repository information
+   */
+  async getRepository(owner: string, repo: string): Promise<any> {
+    try {
+      const octokit = this.isAuthenticated && this.octokit ? this.octokit : await this.createOctokitInstance();
+      const { data } = await octokit.rest.repos.get({
+        owner,
+        repo
+      });
+      return data;
+    } catch (error) {
+      this.logger.error('Failed to get repository', { owner, repo, error });
+      throw error;
+    }
+  }
+
+  /**
+   * Check if user has write access to repository
+   */
+  async hasRepositoryWriteAccess(owner: string, repo: string): Promise<boolean> {
+    if (!this.isAuthenticated || !this.octokit) {
+      return false;
+    }
+
+    try {
+      const { data } = await this.octokit.rest.repos.get({
+        owner,
+        repo
+      });
+      
+      // Check if user has push/write permissions
+      return data.permissions?.push === true || data.permissions?.admin === true;
+    } catch (error) {
+      this.logger.debug('Failed to check write access', { owner, repo, error });
+      return false;
+    }
+  }
+
+  /**
    * Get directory contents from a GitHub repository
    * 
    * @param owner - Repository owner
@@ -297,7 +402,7 @@ class GitHubService {
       });
 
       if (Array.isArray(data)) {
-        this.logger.apiSuccess('GET', `/repos/${owner}/${repo}/contents/${path}`);
+        this.logger.debug('GET directory contents success', { path: `/repos/${owner}/${repo}/contents/${path}` });
         return data;
       } else {
         throw new Error('Not a directory');
@@ -368,7 +473,7 @@ class GitHubService {
         ...(sha && { sha })
       });
       
-      this.logger.apiSuccess('PUT', `/repos/${owner}/${repo}/contents/${path}`);
+      this.logger.debug('PUT file success', { path: `/repos/${owner}/${repo}/contents/${path}` });
     } catch (error) {
       this.logger.apiError('PUT', `/repos/${owner}/${repo}/contents/${path}`, error);
       throw new Error(
@@ -401,51 +506,6 @@ class GitHubService {
     this.permissions = null;
     this.tokenType = null;
     secureTokenStorage.clearToken();
-  }
-
-  /**
-   * Get directory contents
-   * @param owner Repository owner
-   * @param repo Repository name
-   * @param path Directory path
-   * @param ref Branch or commit reference (default: 'main')
-   */
-  async getDirectoryContents(
-    owner: string,
-    repo: string,
-    path: string = '',
-    ref: string = 'main'
-  ): Promise<any[]> {
-    this.logger.debug('Getting directory contents', { owner, repo, path, ref });
-
-    try {
-      // Use authenticated octokit if available, otherwise create a public instance
-      const octokit = this.isAuthenticated ? this.octokit : await this.createOctokitInstance();
-      
-      const { data } = await octokit.rest.repos.getContent({
-        owner,
-        repo,
-        path,
-        ref
-      });
-
-      if (Array.isArray(data)) {
-        this.logger.debug('Directory contents retrieved', { count: data.length });
-        return data;
-      }
-
-      this.logger.warn('Expected directory but got file', { path, type: (data as any).type });
-      return [];
-    } catch (error) {
-      this.logger.error('Failed to get directory contents', {
-        owner,
-        repo,
-        path,
-        ref,
-        error: error instanceof Error ? error.message : String(error)
-      });
-      throw error;
-    }
   }
 
   /**
@@ -552,9 +612,6 @@ class GitHubService {
       throw error;
     }
   }
-
-  // TODO: Continue with repository methods, DAK validation, etc.
-  // This is Part 1 of the GitHub Service migration - authentication and user management
 }
 
 // Export singleton instance to maintain backward compatibility

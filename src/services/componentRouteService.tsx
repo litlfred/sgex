@@ -39,8 +39,8 @@ export interface DAKComponentConfig {
  * Route configuration for standard components
  */
 export interface StandardComponentConfig {
-  /** Component name */
-  component: string;
+  /** Component name (optional - defaults to the key name if not specified) */
+  component?: string;
   /** Route path */
   path?: string;
 }
@@ -155,6 +155,11 @@ function createLazyComponent(componentName: string): React.ComponentType<any> {
     case 'PersonaViewer':
       LazyComponent = React.lazy(() => import('../components/PersonaViewer'));
       break;
+    case 'DAKFAQDemo':
+      // FAQ Demo component - use NotFound as placeholder until component is implemented
+      console.warn(`DAKFAQDemo component not yet implemented, using NotFound`);
+      LazyComponent = React.lazy(() => import('../components/NotFound'));
+      break;
     default:
       console.warn(`Unknown component ${componentName}, using fallback`);
       LazyComponent = React.lazy(() => import('../components/NotFound'));
@@ -205,7 +210,9 @@ function generateDAKRoutes(routeName: string, dakComponent: DAKComponentConfig):
  * Generate routes for a standard component
  */
 function generateStandardRoutes(componentName: string, componentConfig: StandardComponentConfig): React.JSX.Element[] {
-  const Component = createLazyComponent(componentConfig.component);
+  // Use componentName (the key) as the component to load, unless component is explicitly specified
+  const actualComponentName = componentConfig.component || componentName;
+  const Component = createLazyComponent(actualComponentName);
   const path = componentConfig.path || `/${componentName}`;
 
   return [

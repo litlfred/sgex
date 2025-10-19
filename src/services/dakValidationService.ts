@@ -144,24 +144,20 @@ class DAKValidationService {
    */
   async checkRepositoryExists(owner: string, repo: string): Promise<boolean> {
     try {
-      // Use the same approach as githubService - get the octokit instance
-      const octokit = githubService.authenticated ? githubService.octokit : null;
-      
-      if (!octokit) {
+      if (!githubService.authenticated) {
         // In unauthenticated mode, we can't reliably check repository existence
         console.log(`Cannot check repository existence for ${owner}/${repo} - not authenticated`);
         return false;
       }
 
-      await octokit.rest.repos.get({
-        owner,
-        repo
-      });
+      // Try to access the repository by getting its root directory contents
+      // This will throw an error if the repository doesn't exist
+      await githubService.getDirectoryContents(owner, repo, '', 'main');
       
       console.log(`Repository ${owner}/${repo} exists on GitHub`);
       return true;
     } catch (error: any) {
-      if (error.status === 404) {
+      if (error.message?.includes('404') || error.status === 404) {
         console.log(`Repository ${owner}/${repo} does not exist on GitHub`);
         return false;
       }
@@ -177,10 +173,7 @@ class DAKValidationService {
    */
   async fetchSushiConfig(owner: string, repo: string, branch: string = 'main'): Promise<string | null> {
     try {
-      // Use the same approach as githubService - get the octokit instance
-      const octokit = githubService.authenticated ? githubService.octokit : null;
-      
-      if (!octokit) {
+      if (!githubService.authenticated) {
         // In unauthenticated mode, we can't fetch file contents reliably
         console.log(`Cannot fetch sushi-config.yaml for ${owner}/${repo} - not authenticated`);
         return null;
@@ -191,16 +184,9 @@ class DAKValidationService {
       
       for (const branchName of branchesToTry) {
         try {
-          const { data } = await octokit.rest.repos.getContent({
-            owner,
-            repo,
-            path: 'sushi-config.yaml',
-            ref: branchName
-          });
+          const content = await githubService.getFileContent(owner, repo, 'sushi-config.yaml', branchName);
           
-          if ('type' in data && data.type === 'file' && 'content' in data && data.content) {
-            // Decode base64 content
-            const content = decodeURIComponent(escape(atob(data.content)));
+          if (content) {
             console.log(`Found sushi-config.yaml in ${owner}/${repo} on branch ${branchName}`);
             return content;
           }

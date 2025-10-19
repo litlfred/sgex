@@ -8,7 +8,9 @@
  */
 
 import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
-import editorIntegrationService from './editorIntegrationService';
+import { DAKFactory, SourceResolutionService, DAKObject as CoreDAKObject } from '@sgex/dak-core';
+import stagingGroundService from './stagingGroundService';
+import githubService from './githubService';
 
 /**
  * DAK Component Object interface
@@ -99,11 +101,31 @@ export const ComponentObjectProvider: React.FC<ComponentObjectProviderProps> = (
         setLoading(true);
         setError(null);
         
-        // Initialize through integration service
-        const dak = await editorIntegrationService.initializeForRepository(
-          repository,
-          branch || 'main'
-        );
+        // Parse repository string (format: "owner/repo")
+        const [owner, repo] = repository.split('/');
+        if (!owner || !repo) {
+          throw new Error(`Invalid repository format: ${repository}. Expected format: owner/repo`);
+        }
+        
+        // Initialize DAK Factory with source resolver and staging ground service
+        const sourceResolver = new SourceResolutionService(githubService as any);
+        const dakFactory = new DAKFactory(sourceResolver, stagingGroundService as any);
+        
+        // Create DAK object from repository
+        const coreDakObject = await dakFactory.createFromRepository(owner, repo, branch || 'main');
+        
+        // Map core DAK object to provider interface
+        const dak: DakObject = {
+          healthInterventions: coreDakObject.healthInterventions,
+          personas: coreDakObject.personas,
+          userScenarios: coreDakObject.userScenarios,
+          businessProcesses: coreDakObject.businessProcesses,
+          dataElements: coreDakObject.dataElements,
+          decisionLogic: coreDakObject.decisionLogic,
+          indicators: coreDakObject.indicators,
+          requirements: coreDakObject.requirements,
+          testScenarios: coreDakObject.testScenarios
+        };
         
         setDakObject(dak);
       } catch (err) {
@@ -124,10 +146,33 @@ export const ComponentObjectProvider: React.FC<ComponentObjectProviderProps> = (
     
     try {
       setLoading(true);
-      const dak = await editorIntegrationService.initializeForRepository(
-        repository,
-        branch || 'main'
-      );
+      
+      // Parse repository string (format: "owner/repo")
+      const [owner, repo] = repository.split('/');
+      if (!owner || !repo) {
+        throw new Error(`Invalid repository format: ${repository}. Expected format: owner/repo`);
+      }
+      
+      // Initialize DAK Factory with source resolver and staging ground service
+      const sourceResolver = new SourceResolutionService(githubService as any);
+      const dakFactory = new DAKFactory(sourceResolver, stagingGroundService as any);
+      
+      // Create DAK object from repository
+      const coreDakObject = await dakFactory.createFromRepository(owner, repo, branch || 'main');
+      
+      // Map core DAK object to provider interface
+      const dak: DakObject = {
+        healthInterventions: coreDakObject.healthInterventions,
+        personas: coreDakObject.personas,
+        userScenarios: coreDakObject.userScenarios,
+        businessProcesses: coreDakObject.businessProcesses,
+        dataElements: coreDakObject.dataElements,
+        decisionLogic: coreDakObject.decisionLogic,
+        indicators: coreDakObject.indicators,
+        requirements: coreDakObject.requirements,
+        testScenarios: coreDakObject.testScenarios
+      };
+      
       setDakObject(dak);
       setError(null);
     } catch (err) {

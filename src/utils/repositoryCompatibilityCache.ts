@@ -150,7 +150,8 @@ export class RepositoryCompatibilityCache {
    */
   cleanup(): void {
     const now = Date.now();
-    for (const [key, entry] of this.cache.entries()) {
+    const entries = Array.from(this.cache.entries());
+    for (const [key, entry] of entries) {
       if (now - entry.timestamp >= this.ttl) {
         this.cache.delete(key);
       }

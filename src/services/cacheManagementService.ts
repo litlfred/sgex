@@ -159,7 +159,7 @@ class CacheManagementService {
       this.logger.debug('Repository cache cleared', { success: repoCacheCleared });
 
       // Clear branch context
-      branchContextService.clearAllBranchContext();
+      branchContextService.clearAll();
       this.logger.debug('Branch context cleared');
 
       // Clear staging ground data
