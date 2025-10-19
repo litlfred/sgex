@@ -58,6 +58,7 @@ describe('TypeScript Interoperability Tests', () => {
       // These should not throw and should be callable from JavaScript
       expect(() => {
         componentLogger.info('Test message');
+        // eslint-disable-next-line testing-library/no-debugging-utils
         componentLogger.debug('Debug message');
         componentLogger.error('Error message');
         componentLogger.apiCall('GET', '/api/test', { data: 'test' });

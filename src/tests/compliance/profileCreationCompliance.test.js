@@ -19,7 +19,7 @@ describe('Profile Creation Compliance', () => {
     
     if (!passed) {
       const violationSummary = status.violationTypes.join(', ');
-      fail(`Profile creation compliance failed with ${status.violations} violations. Types: ${violationSummary}. See test output for details.`);
+      throw new Error(`Profile creation compliance failed with ${status.violations} violations. Types: ${violationSummary}. See test output for details.`);
     }
     
     expect(passed).toBe(true);

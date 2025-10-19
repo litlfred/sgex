@@ -4,6 +4,8 @@
  * 🔒 MIGRATION CONSENT DOCUMENTED 🔒
  * This file was migrated to TypeScript with explicit written consent from @litlfred
  * on 2025-10-16 in PR comment #3407195807.
+ * EXPLICIT CONSENT GRANTED: PR #1114, comment #3411556175
+ * Changes authorized by @litlfred on 2025-10-16
  * 
  * Lightweight service that reads structured routing context prepared by 404.html.
  * Replaces the heavy urlProcessorService.js with minimal parsing logic.
@@ -13,6 +15,7 @@
  * - No URL re-parsing needed (done by 404.html)
  * - Clean URL restoration
  * - Backward compatibility with individual storage items
+ * - Comprehensive logging integration
  * 
  * @module routingContextService
  */
@@ -117,6 +120,14 @@ class SGEXRoutingContext {
     if (this.initialized) return this.context!;
     
     try {
+      // Log initialization
+      if (typeof window !== 'undefined' && window.SGEX_ROUTING_LOGGER) {
+        window.SGEX_ROUTING_LOGGER.logAccess(window.location.href, {
+          handler: 'routingContextService',
+          event: 'initialize'
+        });
+      }
+      
       this.context = this.restoreContext();
       this.cleanURL();
       this.initialized = true;
@@ -135,9 +146,10 @@ class SGEXRoutingContext {
       return this.context;
     } catch (error) {
       console.error('Error initializing SGEX routing context:', error);
-      if (typeof window !== 'undefined') {
-        window.SGEX_ROUTING_LOGGER?.logError('Failed to initialize routing context', {
+      if (typeof window !== 'undefined' && window.SGEX_ROUTING_LOGGER) {
+        window.SGEX_ROUTING_LOGGER.logError('Failed to initialize routing context', {
           error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
           timestamp: Date.now()
         });
       }
@@ -327,6 +339,11 @@ export function storeStructuredContext(routePath: string, branch: string): Routi
   // Store structured context for React app
   if (typeof sessionStorage !== 'undefined') {
     sessionStorage.setItem('sgex_url_context', JSON.stringify(context));
+    
+    // Log session storage update
+    if (typeof window !== 'undefined' && window.SGEX_ROUTING_LOGGER) {
+      window.SGEX_ROUTING_LOGGER.logSessionStorageUpdate('sgex_url_context', context);
+    }
     
     // Store individual items for backward compatibility
     sessionStorage.setItem('sgex_current_component', context.component || '');

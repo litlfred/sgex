@@ -13,17 +13,54 @@ class PRCommentManager {
   }
   
   /**
+   * List all comments for a PR using pagination
+   * @param {number} prNumber
+   * @returns {Promise<Array>} - Array of all comments
+   */
+  async listAllComments(prNumber) {
+    const allComments = [];
+    let page = 1;
+    const perPage = 100;
+    
+    try {
+      while (true) {
+        const { data: comments } = await this.github.rest.issues.listComments({
+          owner: this.context.repo.owner,
+          repo: this.context.repo.repo,
+          issue_number: prNumber,
+          per_page: perPage,
+          page: page,
+        });
+        
+        if (comments.length === 0) {
+          break;
+        }
+        
+        allComments.push(...comments);
+        
+        // If we got fewer comments than perPage, we've reached the last page
+        if (comments.length < perPage) {
+          break;
+        }
+        
+        page++;
+      }
+      
+      return allComments;
+    } catch (error) {
+      console.error('Error listing comments:', error);
+      return [];
+    }
+  }
+  
+  /**
    * Find existing comment with the given marker
    * @param {number} prNumber - Pull request number
    * @returns {Promise<object|null>} - Existing comment or null
    */
   async findExistingComment(prNumber) {
     try {
-      const { data: comments } = await this.github.rest.issues.listComments({
-        owner: this.context.repo.owner,
-        repo: this.context.repo.repo,
-        issue_number: prNumber,
-      });
+      const comments = await this.listAllComments(prNumber);
       
       return comments.find(comment => 
         comment.body && comment.body.includes(this.commentMarker)
