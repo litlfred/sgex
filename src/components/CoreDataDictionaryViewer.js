@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageLayout, usePage } from './framework';
-import { useDakComponent } from '../services/ComponentObjectProvider';
+import { useDakComponent } from '../services/ComponentObjectProvider.tsx';
 import './CoreDataDictionaryViewer.css';
 
 /**
