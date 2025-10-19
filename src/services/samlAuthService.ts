@@ -234,7 +234,7 @@ class SAMLAuthService {
    * @param {string} organization - Organization name
    * @param {string} repo - Repository name (optional)
    */
-  markSAMLAuthorized(organization, repo = null) {
+  markSAMLAuthorized(organization: string, repo: string | null = null): void {
     this.clearCooldown(organization);
     this.resolvePendingRequest(organization, repo);
     

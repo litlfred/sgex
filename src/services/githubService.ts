@@ -268,6 +268,111 @@ class GitHubService {
   }
 
   /**
+   * Get issue details
+   */
+  async getIssue(owner: string, repo: string, issue_number: number): Promise<any> {
+    if (!this.isAuthenticated || !this.octokit) {
+      throw new Error('Not authenticated');
+    }
+
+    try {
+      const { data } = await this.octokit.rest.issues.get({
+        owner,
+        repo,
+        issue_number
+      });
+      return data;
+    } catch (error) {
+      this.logger.error('Failed to get issue', { owner, repo, issue_number, error });
+      throw error;
+    }
+  }
+
+  /**
+   * Get pull request details
+   */
+  async getPullRequest(owner: string, repo: string, pull_number: number): Promise<any> {
+    if (!this.isAuthenticated || !this.octokit) {
+      throw new Error('Not authenticated');
+    }
+
+    try {
+      const { data } = await this.octokit.rest.pulls.get({
+        owner,
+        repo,
+        pull_number
+      });
+      return data;
+    } catch (error) {
+      this.logger.error('Failed to get pull request', { owner, repo, pull_number, error });
+      throw error;
+    }
+  }
+
+  /**
+   * Create a new issue
+   */
+  async createIssue(owner: string, repo: string, issueData: any): Promise<any> {
+    if (!this.isAuthenticated || !this.octokit) {
+      throw new Error('Not authenticated');
+    }
+
+    try {
+      const { data } = await this.octokit.rest.issues.create({
+        owner,
+        repo,
+        title: issueData.title,
+        body: issueData.body,
+        labels: issueData.labels,
+        assignees: issueData.assignees
+      });
+      return data;
+    } catch (error) {
+      this.logger.error('Failed to create issue', { owner, repo, error });
+      throw error;
+    }
+  }
+
+  /**
+   * Get repository information
+   */
+  async getRepository(owner: string, repo: string): Promise<any> {
+    try {
+      const octokit = this.isAuthenticated && this.octokit ? this.octokit : await this.createOctokitInstance();
+      const { data } = await octokit.rest.repos.get({
+        owner,
+        repo
+      });
+      return data;
+    } catch (error) {
+      this.logger.error('Failed to get repository', { owner, repo, error });
+      throw error;
+    }
+  }
+
+  /**
+   * Check if user has write access to repository
+   */
+  async hasRepositoryWriteAccess(owner: string, repo: string): Promise<boolean> {
+    if (!this.isAuthenticated || !this.octokit) {
+      return false;
+    }
+
+    try {
+      const { data } = await this.octokit.rest.repos.get({
+        owner,
+        repo
+      });
+      
+      // Check if user has push/write permissions
+      return data.permissions?.push === true || data.permissions?.admin === true;
+    } catch (error) {
+      this.logger.debug('Failed to check write access', { owner, repo, error });
+      return false;
+    }
+  }
+
+  /**
    * Get directory contents from a GitHub repository
    * 
    * @param owner - Repository owner
