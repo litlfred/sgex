@@ -1,0 +1,1287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DAK FAQ MCP Service Documentation</title>
+    <style>
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f8f9fa;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+        
+        .timestamp {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+        
+        .toc {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .toc h2 {
+            color: #005a9e;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 10px;
+        }
+        
+        .toc ul {
+            list-style: none;
+        }
+        
+        .toc li {
+            margin: 10px 0;
+        }
+        
+        .toc a {
+            color: #0078d4;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .toc a:hover {
+            text-decoration: underline;
+        }
+        
+        .content {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .section {
+            margin-bottom: 50px;
+        }
+        
+        .section h2 {
+            color: #005a9e;
+            font-size: 2em;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #0078d4;
+            padding-bottom: 10px;
+        }
+        
+        .section h3 {
+            color: #333;
+            margin: 30px 0 15px 0;
+            font-size: 1.4em;
+        }
+        
+        .section h4 {
+            color: #555;
+            margin: 20px 0 10px 0;
+            font-size: 1.2em;
+        }
+        
+        .api-endpoint {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .endpoint-method {
+            display: inline-block;
+            background: #0078d4;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.9em;
+            margin-right: 10px;
+        }
+        
+        .endpoint-path {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .question-item {
+            background: #f8f9fa;
+            border-left: 4px solid #0078d4;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 0 6px 6px 0;
+        }
+        
+        .question-id {
+            font-family: 'Courier New', monospace;
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: bold;
+            color: #005a9e;
+        }
+        
+        .question-description {
+            font-weight: bold;
+            color: #333;
+            margin: 5px 0;
+        }
+        
+        .question-details {
+            margin-top: 10px;
+        }
+        
+        .question-details ul {
+            margin-left: 20px;
+        }
+        
+        pre {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 20px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+        
+        code {
+            background: #f8f9fa;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        
+        .source-file {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .source-file h4 {
+            color: #005a9e;
+            margin-bottom: 15px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .comment-block {
+            background: white;
+            border-left: 3px solid #0078d4;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .footer p {
+            margin: 5px 0;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+        }
+    
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>DAK FAQ MCP Service Documentation</h1>
+            <p class="subtitle">Comprehensive API and Question Reference</p>
+            <p class="timestamp">Generated: 2025-08-31T11:53:32.517Z</p>
+        </header>
+        
+        <nav class="toc">
+            <h2>Table of Contents</h2>
+            <ul>
+                <li><a href="#overview">Overview</a></li>
+                <li><a href="#architecture">System Architecture</a></li>
+                <li><a href="#api-endpoints">API Endpoints</a></li>
+                <li><a href="#question-catalog">Question Catalog</a></li>
+                <li><a href="#implementation-examples">Implementation Examples</a></li>
+                <li><a href="#source-documentation">Source Documentation</a></li>
+                <li><a href="#openapi-schema">OpenAPI Schema</a></li>
+            </ul>
+        </nav>
+        
+        <main class="content">
+            
+        <section class="section" id="overview">
+            <h2>Overview</h2>
+            <p>The DAK FAQ (Frequently Asked Questions) system provides a dynamic, internationalized, and extensible framework for answering questions about WHO SMART Guidelines Digital Adaptation Kits (DAKs). The system supports three hierarchical levels of questions and can be accessed both through React components in the UI and via a local MCP (Model Context Protocol) server API.</p>
+        </section>
+    
+            
+        <section class="section" id="architecture">
+            <h2>System Architecture</h2>
+            <p><h4>Core Components</h4></p>
+<p>1. <strong>Question Types & Definitions</strong> (<code>src/dak/faq/types/</code>)<br>   - Type definitions for questions, parameters, contexts, and results<br>   - Support for three hierarchy levels: DAK, Component, Asset</p>
+<p>2. <strong>Storage Abstraction</strong> (<code>src/dak/faq/storage/</code>)<br>   - Unified interface for file access across GitHub and local environments<br>   - GitHubStorage for browser-based access via GitHub API<br>   - MockStorage for testing and development</p>
+<p>3. <strong>Parameter Registry</strong> (<code>src/dak/faq/registry/</code>)<br>   - YAML-based parameter configuration<br>   - Type validation and default value application<br>   - Extensible parameter definitions per question type</p>
+<p>4. <strong>Execution Engine</strong> (<code>src/dak/faq/engine/</code>)<br>   - Batch question processing<br>   - Template question instantiation for asset-level queries<br>   - Caching and error handling</p>
+<p>5. <strong>Question Components</strong> (<code>src/dak/faq/questions/</code>)<br>   - React components that define and execute specific questions<br>   - Internationalized responses with structured and narrative outputs<br>   - Self-contained with metadata, validation, and rendering</p>
+<p>6. <strong>UI Components</strong> (<code>src/dak/faq/components/</code>)<br>   - React components for rendering FAQ answers<br>   - Integration with existing i18n system<br>   - Sanitized HTML rendering for security</p>
+<p>7. <strong>MCP Server</strong> (<code>services/dak-faq-mcp/</code>)<br>   - Local-only Express server (127.0.0.1 binding)<br>   - REST API for programmatic access<br>   - Question catalog and batch execution endpoints</p>
+        </section>
+    
+            
+        <section class="section" id="api-endpoints">
+            <h2>API Endpoints</h2>
+            <p>The DAK FAQ MCP Server provides the following REST API endpoints:</p>
+            
+        <div class="api-endpoint">
+            <span class="endpoint-method">GET</span>
+            <span class="endpoint-path">GET /health</span>
+            <p>Health check</p>
+        </div>
+    
+        <div class="api-endpoint">
+            <span class="endpoint-method">GET</span>
+            <span class="endpoint-path">GET /faq/questions/catalog</span>
+            <p>List available FAQ questions</p>
+        </div>
+    
+        <div class="api-endpoint">
+            <span class="endpoint-method">POST</span>
+            <span class="endpoint-path">POST /faq/questions/execute</span>
+            <p>Execute FAQ questions in batch</p>
+        </div>
+    
+        <div class="api-endpoint">
+            <span class="endpoint-method">POST</span>
+            <span class="endpoint-path">POST /faq/execute/:questionId</span>
+            <p>Execute a specific FAQ question by ID</p>
+        </div>
+    
+        <div class="api-endpoint">
+            <span class="endpoint-method">POST</span>
+            <span class="endpoint-path">POST /faq/execute</span>
+            <p>Execute a single FAQ question (alternative endpoint)</p>
+        </div>
+    
+        <div class="api-endpoint">
+            <span class="endpoint-method">GET</span>
+            <span class="endpoint-path">GET /faq/schemas</span>
+            <p>Get all question schemas</p>
+        </div>
+    
+        <div class="api-endpoint">
+            <span class="endpoint-method">GET</span>
+            <span class="endpoint-path">GET /faq/schemas/:questionId</span>
+            <p>Get schema for specific question</p>
+        </div>
+    
+        <div class="api-endpoint">
+            <span class="endpoint-method">GET</span>
+            <span class="endpoint-path">GET /faq/openapi</span>
+            <p>Get OpenAPI schema for all questions</p>
+        </div>
+    
+        <div class="api-endpoint">
+            <span class="endpoint-method">POST</span>
+            <span class="endpoint-path">POST /faq/validate</span>
+            <p>Validate question parameters</p>
+        </div>
+    
+        </section>
+    
+            
+        <section class="section" id="question-catalog">
+            <h2>Question Catalog</h2>
+            <p>Available questions organized by DAK component type:</p>
+            
+        <h3>Health Interventions and Recommendations</h3>
+        
+            <div class="question-item">
+                <span class="question-id">publication-references</span>
+                <div class="question-description">What WHO publications are referenced in this intervention?</div>
+                
+                    <div class="question-details">
+                        <ul>
+                            <li>Analyzes intervention files for IRIS URLs and publication IDs</li><li>Extracts publication metadata from embedded references</li><li>Validates publication accessibility and status</li>
+                        </ul>
+                    </div>
+                
+            </div>
+        
+            <div class="question-item">
+                <span class="question-id">guideline-sections</span>
+                <div class="question-description">What sections are defined in this clinical guideline?</div>
+                
+                    <div class="question-details">
+                        <ul>
+                            <li>Parses guideline documents for section structure</li><li>Extracts recommendation hierarchies</li><li>Identifies evidence levels and recommendation strengths</li>
+                        </ul>
+                    </div>
+                
+            </div>
+        
+            <div class="question-item">
+                <span class="question-id">intervention-scope</span>
+                <div class="question-description">What health conditions does this intervention address?</div>
+                
+                    <div class="question-details">
+                        <ul>
+                            <li>Analyzes intervention definitions for scope and coverage</li><li>Extracts target populations and health conditions</li><li>Identifies intervention types and classifications</li>
+                        </ul>
+                    </div>
+                
+            </div>
+        
+    
+        <h3>Generic Personas</h3>
+        
+            <div class="question-item">
+                <span class="question-id">actor-roles</span>
+                <div class="question-description">What roles and responsibilities are defined for this actor?</div>
+                
+                    <div class="question-details">
+                        <ul>
+                            <li>Parses actor definition files for role specifications</li><li>Extracts capabilities, permissions, and responsibilities</li><li>Identifies system interactions and access patterns</li>
+                        </ul>
+                    </div>
+                
+            </div>
+        
+            <div class="question-item">
+                <span class="question-id">actor-qualifications</span>
+                <div class="question-description">What qualifications are required for this actor?</div>
+                
+                    <div class="question-details">
+                        <ul>
+                            <li>Analyzes qualification requirements and training needs</li><li>Extracts certification requirements and competency levels</li><li>Identifies skill prerequisites and experience requirements</li>
+                        </ul>
+                    </div>
+                
+            </div>
+        
+            <div class="question-item">
+                <span class="question-id">actor-workflows</span>
+                <div class="question-description">Which workflows does this actor participate in?</div>
+                
+                    <div class="question-details">
+                        <ul>
+                            <li>Cross-references actor with business process definitions</li><li>Identifies actor touchpoints in clinical workflows</li><li>Analyzes actor decision points and data interactions</li>
+                        </ul>
+                    </div>
+                
+            </div>
+        
+    
+        <h3>User Scenarios</h3>
+        
+            <div class="question-item">
+                <span class="question-id">scenario-steps</span>
+                <div class="question-description">What are the main steps in this user scenario?</div>
+                
+                    <div class="question-details">
+                        <ul>
+                            <li>Parses scenario narratives for step-by-step processes</li><li>Extracts decision points and alternative paths</li><li>Identifies prerequisites and outcome conditions</li>
+                        </ul>
+                    </div>
+                
+            </div>
+        
+            <div class="question-item">
+                <span class="question-id">scenario-actors</span>
+                <div class="question-description">Which actors are involved in this scenario?</div>
+                
+                    <div class="question-details">
+                        <ul>
+                            <li>Analyzes scenario files for actor references</li><li>Extracts actor interactions and collaboration patterns</li><li>Identifies primary and secondary actor roles</li>
+                        </ul>
+                    </div>
+                
+            </div>
+        
+            <div class="question-item">
+                <span class="question-id">scenario-data-flow</span>
+                <div class="question-description">What data is exchanged in this scenario?</div>
+                
+                    <div class="question-details">
+                        <ul>
+                            <li>Analyzes information flow between scenario steps</li><li>Extracts data inputs, outputs, and transformations</li><li>Identifies data validation and quality requirements</li>
+                        </ul>
+                    </div>
+                
+            </div>
+        
+    
+        <h3>Generic Business Processes and Workflows</h3>
+        
+            <div class="question-item">
+                <span class="question-id">process-participants</span>
+                <div class="question-description">Who are the participants in this business process?</div>
+                
+                    <div class="question-details">
+                        <ul>
+                            <li>Analyzes BPMN files for lane assignments and participant roles</li><li>Extracts swimlane definitions and responsibility assignments</li><li>Identifies external system integrations</li>
+                        </ul>
+                    </div>
+                
+            </div>
+        
+            <div class="question-item">
+                <span class="question-id">process-decision-points</span>
+                <div class="question-description">What are the decision points in this process?</div>
+                
+                    <div class="question-details">
+                        <ul>
+                            <li>Parses BPMN for gateway elements and decision logic</li><li>Extracts branching conditions and routing rules</li><li>Identifies escalation paths and exception handling</li>
+                        </ul>
+                    </div>
+                
+            </div>
+        
+            <div class="question-item">
+                <span class="question-id">process-duration</span>
+                <div class="question-description">What is the expected duration of this process?</div>
+                
+                    <div class="question-details">
+                        <ul>
+                            <li>Analyzes process elements for timing annotations</li><li>Extracts service level agreements and timing constraints</li><li>Calculates critical path and bottleneck identification</li>
+                        </ul>
+                    </div>
+                
+            </div>
+        
+    
+        <h3>Core Data Elements</h3>
+        
+            <div class="question-item">
+                <span class="question-id">terminology-coverage</span>
+                <div class="question-description">What terminology standards are used in this data element?</div>
+                
+                    <div class="question-details">
+                        <ul>
+                            <li>Analyzes data element files for coding system references</li><li>Extracts value set definitions and concept mappings</li><li>Validates terminology binding strength and coverage</li>
+                        </ul>
+                    </div>
+                
+            </div>
+        
+            <div class="question-item">
+                <span class="question-id">data-constraints</span>
+                <div class="question-description">What validation rules apply to this data element?</div>
+                
+                    <div class="question-details">
+                        <ul>
+                            <li>Parses data element definitions for constraint specifications</li><li>Extracts cardinality, format, and range validations</li><li>Identifies business rules and data quality requirements</li>
+                        </ul>
+                    </div>
+                
+            </div>
+        
+            <div class="question-item">
+                <span class="question-id">element-relationships</span>
+                <div class="question-description">How does this data element relate to other elements?</div>
+                
+                    <div class="question-details">
+                        <ul>
+                            <li>Analyzes dependencies and relationships between data elements</li><li>Extracts hierarchical structures and composition patterns</li><li>Identifies mandatory groupings and optional components</li>
+                        </ul>
+                    </div>
+                
+            </div>
+        
+    
+        <h3>Decision-Support Logic</h3>
+        
+            <div class="question-item">
+                <span class="question-id">decision-table-inputs</span>
+                <div class="question-description">What are the inputs required for this decision table?</div>
+                
+            </div>
+        
+            <div class="question-item">
+                <span class="question-id">decision-table-rules</span>
+                <div class="question-description">How many rules are defined in this decision table?</div>
+                
+                    <div class="question-details">
+                        <ul>
+                            <li>Analyzes DMN files for rule count and complexity</li><li>Extracts rule conditions and action specifications</li><li>Identifies rule conflicts and coverage gaps</li>
+                        </ul>
+                    </div>
+                
+            </div>
+        
+            <div class="question-item">
+                <span class="question-id">decision-dependencies</span>
+                <div class="question-description">What other decisions does this decision depend on?</div>
+                
+                    <div class="question-details">
+                        <ul>
+                            <li>Analyzes DMN decision requirement diagrams</li><li>Extracts decision dependencies and information flows</li><li>Identifies circular dependencies and optimization opportunities</li>
+                        </ul>
+                    </div>
+                
+            </div>
+        
+    
+        <h3>Program Indicators</h3>
+        
+            <div class="question-item">
+                <span class="question-id">indicator-calculations</span>
+                <div class="question-description">How is this indicator calculated?</div>
+                
+                    <div class="question-details">
+                        <ul>
+                            <li>Parses indicator definitions for calculation formulas</li><li>Extracts numerator and denominator specifications</li><li>Identifies data sources and aggregation methods</li>
+                        </ul>
+                    </div>
+                
+            </div>
+        
+            <div class="question-item">
+                <span class="question-id">indicator-targets</span>
+                <div class="question-description">What are the target values for this indicator?</div>
+                
+                    <div class="question-details">
+                        <ul>
+                            <li>Analyzes indicator files for performance targets</li><li>Extracts baseline values and improvement goals</li><li>Identifies benchmarking standards and thresholds</li>
+                        </ul>
+                    </div>
+                
+            </div>
+        
+            <div class="question-item">
+                <span class="question-id">indicator-reporting</span>
+                <div class="question-description">How often should this indicator be reported?</div>
+                
+                    <div class="question-details">
+                        <ul>
+                            <li>Analyzes reporting frequency and schedule requirements</li><li>Extracts reporting formats and presentation requirements</li><li>Identifies stakeholder reporting responsibilities</li>
+                        </ul>
+                    </div>
+                
+            </div>
+        
+    
+        <h3>Functional and Non-Functional Requirements</h3>
+        
+            <div class="question-item">
+                <span class="question-id">requirement-categories</span>
+                <div class="question-description">What categories of requirements are defined?</div>
+                
+                    <div class="question-details">
+                        <ul>
+                            <li>Parses requirement files for functional/non-functional classifications</li><li>Extracts requirement hierarchies and groupings</li><li>Identifies priority levels and implementation phases</li>
+                        </ul>
+                    </div>
+                
+            </div>
+        
+            <div class="question-item">
+                <span class="question-id">requirement-traceability</span>
+                <div class="question-description">How do requirements trace to implementation?</div>
+                
+                    <div class="question-details">
+                        <ul>
+                            <li>Analyzes requirement traceability matrices</li><li>Extracts forward and backward traceability links</li><li>Identifies gaps in requirement coverage</li>
+                        </ul>
+                    </div>
+                
+            </div>
+        
+            <div class="question-item">
+                <span class="question-id">requirement-acceptance</span>
+                <div class="question-description">What are the acceptance criteria for this requirement?</div>
+                
+                    <div class="question-details">
+                        <ul>
+                            <li>Parses requirement definitions for acceptance criteria</li><li>Extracts test scenarios and validation methods</li><li>Identifies verification and validation approaches</li>
+                        </ul>
+                    </div>
+                
+            </div>
+        
+    
+        <h3>Test Scenarios</h3>
+        
+            <div class="question-item">
+                <span class="question-id">test-coverage</span>
+                <div class="question-description">What functionality is covered by this test scenario?</div>
+                
+                    <div class="question-details">
+                        <ul>
+                            <li>Analyzes feature files for functional coverage</li><li>Extracts test scenarios and acceptance criteria</li><li>Identifies gaps in test coverage</li>
+                        </ul>
+                    </div>
+                
+            </div>
+        
+            <div class="question-item">
+                <span class="question-id">test-data-requirements</span>
+                <div class="question-description">What test data is required for this scenario?</div>
+                
+                    <div class="question-details">
+                        <ul>
+                            <li>Parses test files for data setup requirements</li><li>Extracts test fixture definitions and dependencies</li><li>Identifies data privacy and anonymization needs</li>
+                        </ul>
+                    </div>
+                
+            </div>
+        
+            <div class="question-item">
+                <span class="question-id">test-automation</span>
+                <div class="question-description">Can this test scenario be automated?</div>
+                
+                    <div class="question-details">
+                        <ul>
+                            <li>Analyzes test definitions for automation potential</li><li>Extracts automation hooks and technical requirements</li><li>Identifies manual testing dependencies</li><li>**Text-based assets**: Markdown, YAML, JSON, XML parsing</li><li>**Binary assets**: PDF parsing (limited), image metadata extraction</li><li>**Structured formats**: DMN, BPMN, FHIR JSON/XML</li><li>"Which decisions reference this data element?"</li><li>"What test scenarios validate this business process?"</li><li>"Which indicators measure this intervention outcome?"</li><li>en_US, fr_FR, es_ES, ar_AR, zh_CN, ru_RU</li><li>Narrative responses in multiple languages</li><li>Error messages and warnings localized</li><li>File-level caching for individual asset analysis</li><li>Component-level caching for cross-file relationships</li><li>Repository-level caching for summary statistics</li>
+                        </ul>
+                    </div>
+                
+            </div>
+        
+    
+        </section>
+    
+            
+        <section class="section" id="implementation-examples">
+            <h2>Implementation Examples</h2>
+            
+        <h3>Usage Examples</h3>
+        <p><h4>React Component Usage</h4><br><pre><code>// DMN rule analysis
+&lt;FAQAnswer 
+  questionId=&quot;decision-table-rules&quot; 
+  parameters={{repository: &quot;owner/repo&quot;, assetFile: &quot;input/cql/IMMZ.D2.DT.BCG.dmn&quot;}} 
+/&gt;
+
+// Terminology analysis
+&lt;FAQAnswer 
+  questionId=&quot;terminology-coverage&quot; 
+  parameters={{repository: &quot;owner/repo&quot;, assetFile: &quot;input/profiles/patient-profile.json&quot;}} 
+/&gt;
+
+// Indicator calculation analysis
+&lt;FAQAnswer 
+  questionId=&quot;indicator-calculations&quot; 
+  parameters={{repository: &quot;owner/repo&quot;, assetFile: &quot;input/measures/vaccination-coverage.json&quot;}} 
+/&gt;</code></pre></p>
+<p><h4>MCP Server API Usage</h4><br><pre><code>curl -X POST http://127.0.0.1:3001/faq/questions/execute \
+  -H &quot;Content-Type: application/json&quot; \
+  -d &#39;{
+    &quot;requests&quot;: [
+      {
+        &quot;questionId&quot;: &quot;decision-table-rules&quot;,
+        &quot;parameters&quot;: {
+          &quot;repository&quot;: &quot;owner/repo&quot;,
+          &quot;assetFile&quot;: &quot;input/cql/example.dmn&quot;
+        }
+      }
+    ]
+  }&#39;</code></pre></p>
+    
+        </section>
+    
+            
+        <section class="section" id="source-documentation">
+            <h2>Source Documentation</h2>
+            <p>JSDoc comments and metadata extracted from question source files:</p>
+            
+        <div class="source-file">
+            <h4>asset/coreDataElements/TerminologyCoverageQuestion.js</h4>
+            
+                <div class="comment-block">
+                    <p><strong>Question Metadata:</strong><br><pre><code>export const metadata = new QuestionDefinition({
+  id: &#39;terminology-coverage&#39;,
+  level: QuestionLevel.ASSET,
+  title: &#39;Terminology Coverage&#39;,
+  description: &#39;What terminology standards are used in this data element?&#39;,
+  parameters: [
+    new ParameterDefinition({
+      name: &#39;assetFile&#39;,
+      type: &#39;string&#39;,
+      required: true,
+      description: &#39;Path to the data element file to analyze&#39;
+    })
+  ],
+  tags: [&#39;asset&#39;, &#39;core-data-elements&#39;, &#39;terminology&#39;, &#39;standards&#39;],
+  version: &#39;1.0.0&#39;,
+  assetTypes: [&#39;json&#39;, &#39;yaml&#39;, &#39;xml&#39;],
+  isTemplate: true
+});</code></pre></p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Terminology Coverage Question Component<br>Analyzes data element files for terminology standards and value set references</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Execute the terminology coverage question<br>@param {Object} input - Question input parameters<br>@param {string} input.repository - Repository identifier<br>@param {string} input.locale - Locale for response<br>@param {string} input.branch - Git branch<br>@param {string} input.assetFile - Path to the data element file<br>@param {Storage} input.storage - Storage interface<br>@returns {Promise<QuestionResult>} - Question result</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Analyze file content for terminology usage<br>@param {string} content - File content<br>@param {string} fileName - File name for reference<br>@returns {Object} - Analysis result with terminology information</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Extract terminology references from parsed data<br>@param {Object} data - Parsed file data<br>@param {Object} result - Result object to populate</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Search for binding strength information<br>@param {Object} data - Parsed data<br>@param {Object} result - Result object</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Extract name from URL<br>@param {string} url - URL to extract name from<br>@returns {string} - Extracted name</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Basic YAML-like parsing for terminology extraction<br>@param {string} content - YAML content<br>@returns {Object} - Parsed object</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Parse XML content for terminology references<br>@param {string} content - XML content<br>@returns {Object} - Extracted terminology data</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Parse text content for terminology references<br>@param {string} content - Text content<br>@returns {Object} - Extracted terminology data</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>React component for rendering terminology coverage narrative</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Get localized narrative text</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Get localized error message</p>
+                </div>
+            
+        </div>
+    
+        <div class="source-file">
+            <h4>asset/decisionSupportLogic/DecisionTableInputsQuestion.js</h4>
+            
+                <div class="comment-block">
+                    <p><strong>Question Metadata:</strong><br><pre><code>export const metadata = new QuestionDefinition({
+  id: &#39;decision-table-inputs&#39;,
+  level: QuestionLevel.ASSET,
+  title: &#39;Decision Table Inputs&#39;,
+  description: &#39;What are the inputs required for this decision table?&#39;,
+  parameters: [
+    new ParameterDefinition({
+      name: &#39;assetFile&#39;,
+      type: &#39;string&#39;,
+      required: true,
+      description: &#39;Path to the DMN file to analyze&#39;
+    })
+  ],
+  tags: [&#39;asset&#39;, &#39;decision-support&#39;, &#39;dmn&#39;, &#39;inputs&#39;],
+  version: &#39;1.0.0&#39;,
+  assetTypes: [&#39;dmn&#39;],
+  isTemplate: true
+});</code></pre></p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Decision Table Inputs Question Component<br>Analyzes DMN files and extracts input requirements for decision tables</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Execute the decision table inputs question<br>@param {Object} input - Question input parameters<br>@param {string} input.repository - Repository identifier<br>@param {string} input.locale - Locale for response<br>@param {string} input.branch - Git branch<br>@param {string} input.assetFile - Path to the DMN file<br>@param {Storage} input.storage - Storage interface<br>@returns {Promise<QuestionResult>} - Question result</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Analyze DMN file and extract input requirements<br>@param {string} dmnContent - DMN XML content<br>@param {string} fileName - File name for reference<br>@returns {Object} - Analysis result with inputs and decision tables</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>React component for rendering decision table inputs narrative</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Get localized narrative text</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Get localized error message</p>
+                </div>
+            
+        </div>
+    
+        <div class="source-file">
+            <h4>asset/decisionSupportLogic/DecisionTableRulesQuestion.js</h4>
+            
+                <div class="comment-block">
+                    <p><strong>Question Metadata:</strong><br><pre><code>export const metadata = new QuestionDefinition({
+  id: &#39;decision-table-rules&#39;,
+  level: QuestionLevel.ASSET,
+  title: &#39;Decision Table Rules&#39;,
+  description: &#39;How many rules are defined in this decision table?&#39;,
+  parameters: [
+    new ParameterDefinition({
+      name: &#39;assetFile&#39;,
+      type: &#39;string&#39;,
+      required: true,
+      description: &#39;Path to the DMN file to analyze&#39;
+    })
+  ],
+  tags: [&#39;asset&#39;, &#39;decision-support&#39;, &#39;dmn&#39;, &#39;rules&#39;],
+  version: &#39;1.0.0&#39;,
+  assetTypes: [&#39;dmn&#39;],
+  isTemplate: true
+});</code></pre></p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Decision Table Rules Question Component<br>Analyzes DMN files and counts rules in decision tables</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Execute the decision table rules question<br>@param {Object} input - Question input parameters<br>@param {string} input.repository - Repository identifier<br>@param {string} input.locale - Locale for response<br>@param {string} input.branch - Git branch<br>@param {string} input.assetFile - Path to the DMN file<br>@param {Storage} input.storage - Storage interface<br>@returns {Promise<QuestionResult>} - Question result</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Analyze DMN file and extract rule information<br>@param {string} dmnContent - DMN XML content<br>@param {string} fileName - File name for reference<br>@returns {Object} - Analysis result with rules and decision tables</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Find decision parent element for a decision table<br>@param {Element} decisionTable - Decision table element<br>@returns {Element|null} - Decision parent element</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>React component for rendering decision table rules narrative</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Get localized narrative text</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Get localized error message</p>
+                </div>
+            
+        </div>
+    
+        <div class="source-file">
+            <h4>asset/programIndicators/IndicatorCalculationsQuestion.js</h4>
+            
+                <div class="comment-block">
+                    <p><strong>Question Metadata:</strong><br><pre><code>export const metadata = new QuestionDefinition({
+  id: &#39;indicator-calculations&#39;,
+  level: QuestionLevel.ASSET,
+  title: &#39;Indicator Calculations&#39;,
+  description: &#39;How is this indicator calculated?&#39;,
+  parameters: [
+    new ParameterDefinition({
+      name: &#39;assetFile&#39;,
+      type: &#39;string&#39;,
+      required: true,
+      description: &#39;Path to the indicator definition file to analyze&#39;
+    })
+  ],
+  tags: [&#39;asset&#39;, &#39;program-indicators&#39;, &#39;calculations&#39;, &#39;measures&#39;],
+  version: &#39;1.0.0&#39;,
+  assetTypes: [&#39;json&#39;, &#39;yaml&#39;, &#39;xml&#39;],
+  isTemplate: true
+});</code></pre></p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Indicator Calculations Question Component<br>Analyzes indicator definition files for calculation formulas and methods</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Execute the indicator calculations question<br>@param {Object} input - Question input parameters<br>@param {string} input.repository - Repository identifier<br>@param {string} input.locale - Locale for response<br>@param {string} input.branch - Git branch<br>@param {string} input.assetFile - Path to the indicator file<br>@param {Storage} input.storage - Storage interface<br>@returns {Promise<QuestionResult>} - Question result</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Analyze file content for indicator calculations<br>@param {string} content - File content<br>@param {string} fileName - File name for reference<br>@returns {Object} - Analysis result with calculation information</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Extract indicator calculations from parsed data<br>@param {Object} data - Parsed file data<br>@param {Object} result - Result object to populate</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Check if an object represents an indicator<br>@param {Object} obj - Object to check<br>@returns {boolean} - True if object appears to be an indicator</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Extract indicator information from object<br>@param {Object} obj - Indicator object<br>@param {string} path - Object path<br>@returns {Object} - Indicator information</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Extract calculation information from indicator object<br>@param {Object} obj - Indicator object<br>@param {string} indicatorId - Indicator ID<br>@param {string} path - Object path<br>@returns {Object|null} - Calculation information</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Determine indicator type from object properties<br>@param {Object} obj - Indicator object<br>@returns {string} - Indicator type</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Determine calculation type<br>@param {Object} obj - Object containing calculation info<br>@returns {string} - Calculation type</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Analyze formula complexity<br>@param {string} formula - Formula string<br>@returns {string} - Complexity level</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Extract parameters from parameters object<br>@param {Object|Array} params - Parameters object or array<br>@returns {Array} - Array of parameter objects</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Extract FHIR Measure information<br>@param {Object} measure - FHIR Measure resource<br>@returns {Object} - Indicator information</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Extract FHIR Measure calculation<br>@param {Object} measure - FHIR Measure resource<br>@returns {Object|null} - Calculation information</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Basic YAML-like parsing for indicators<br>@param {string} content - YAML content<br>@returns {Object} - Parsed object</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Parse XML content for indicators<br>@param {string} content - XML content<br>@returns {Object} - Extracted indicator data</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Parse text content for indicators<br>@param {string} content - Text content<br>@returns {Object} - Extracted indicator data</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>React component for rendering indicator calculations narrative</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Get localized narrative text</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Get localized error message</p>
+                </div>
+            
+        </div>
+    
+        <div class="source-file">
+            <h4>component/businessProcess/BusinessProcessWorkflowsQuestion.js</h4>
+            
+                <div class="comment-block">
+                    <p><strong>Question Metadata:</strong><br><pre><code>export const metadata = new QuestionDefinition({
+  id: &#39;business-process-workflows&#39;,
+  level: QuestionLevel.COMPONENT,
+  title: &#39;Business Process Workflows&#39;,
+  description: &#39;Scans BPMN diagrams and extracts workflow definitions with @name attributes&#39;,
+  parameters: [
+    new ParameterDefinition({
+      name: &#39;bpmnDirectory&#39;,
+      type: &#39;string&#39;,
+      required: false,
+      defaultValue: &#39;input/images&#39;,
+      description: &#39;Directory containing BPMN files&#39;
+    }),
+    new ParameterDefinition({
+      name: &#39;includeSubprocesses&#39;,
+      type: &#39;boolean&#39;,
+      required: false,
+      defaultValue: true,
+      description: &#39;Whether to include subprocess definitions&#39;
+    })
+  ],
+  tags: [&#39;component&#39;, &#39;business-process&#39;, &#39;workflows&#39;, &#39;bpmn&#39;],
+  version: &#39;1.0.0&#39;,
+  componentTypes: [&#39;businessProcess&#39;]
+});</code></pre></p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Business Process Workflows Question Component<br>Scans BPMN diagrams and extracts workflow information</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Execute the business process workflows question<br>@param {Object} input - Question input parameters<br>@param {string} input.repository - Repository identifier<br>@param {string} input.locale - Locale for response<br>@param {string} input.branch - Git branch<br>@param {string} input.bpmnDirectory - Directory containing BPMN files<br>@param {boolean} input.includeSubprocesses - Whether to include subprocesses<br>@param {Storage} input.storage - Storage interface<br>@returns {Promise<QuestionResult>} - Question result</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Parse BPMN workflow from XML content<br>@param {string} bpmnContent - BPMN XML content<br>@param {string} fileName - File name for reference<br>@param {boolean} includeSubprocesses - Whether to include subprocesses<br>@returns {Object} - Parsed workflow information</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Extract name from documentation element<br>@param {Element} element - BPMN element<br>@returns {string|null} - Extracted name or null</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>React component for rendering workflows narrative</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Get localized narrative text</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Get localized error message</p>
+                </div>
+            
+        </div>
+    
+        <div class="source-file">
+            <h4>dak/DakNameQuestion.js</h4>
+            
+                <div class="comment-block">
+                    <p><strong>Question Metadata:</strong><br><pre><code>export const metadata = new QuestionDefinition({
+  id: &#39;dak-name&#39;,
+  level: QuestionLevel.DAK,
+  title: &#39;DAK Name&#39;,
+  description: &#39;Extracts the name of the DAK from sushi-config.yaml&#39;,
+  parameters: [],
+  tags: [&#39;dak&#39;, &#39;metadata&#39;, &#39;name&#39;],
+  version: &#39;1.0.0&#39;
+});</code></pre></p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>DAK Name Question Component<br>Returns the name of the DAK from sushi-config.yaml</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Execute the DAK name question<br>@param {Object} input - Question input parameters<br>@param {string} input.repository - Repository identifier<br>@param {string} input.locale - Locale for response<br>@param {string} input.branch - Git branch<br>@param {Storage} input.storage - Storage interface<br>@returns {Promise<QuestionResult>} - Question result</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>React component for rendering DAK name narrative</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Get localized narrative text</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Get localized error message</p>
+                </div>
+            
+        </div>
+    
+        <div class="source-file">
+            <h4>dak/DakVersionQuestion.js</h4>
+            
+                <div class="comment-block">
+                    <p><strong>Question Metadata:</strong><br><pre><code>export const metadata = new QuestionDefinition({
+  id: &#39;dak-version&#39;,
+  level: QuestionLevel.DAK,
+  title: &#39;DAK Version&#39;,
+  description: &#39;Extracts the version of the DAK from sushi-config.yaml&#39;,
+  parameters: [],
+  tags: [&#39;dak&#39;, &#39;metadata&#39;, &#39;version&#39;],
+  version: &#39;1.0.0&#39;
+});</code></pre></p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>DAK Version Question Component<br>Returns the version of the DAK from sushi-config.yaml</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Execute the DAK version question<br>@param {Object} input - Question input parameters<br>@param {string} input.repository - Repository identifier<br>@param {string} input.locale - Locale for response<br>@param {string} input.branch - Git branch<br>@param {Storage} input.storage - Storage interface<br>@returns {Promise<QuestionResult>} - Question result</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>React component for rendering DAK version narrative</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Get localized narrative text</p>
+                </div>
+            
+                <div class="comment-block">
+                    <p>Get localized error message</p>
+                </div>
+            
+        </div>
+    
+        </section>
+    
+            
+        <section class="section" id="openapi-schema">
+            <h2>OpenAPI Schema</h2>
+            <p>Complete OpenAPI 3.0 schema for the DAK FAQ MCP API:</p>
+            <pre><code>{
+  &quot;openapi&quot;: &quot;3.0.0&quot;,
+  &quot;info&quot;: {
+    &quot;title&quot;: &quot;DAK FAQ Questions API&quot;,
+    &quot;version&quot;: &quot;1.0.0&quot;,
+    &quot;description&quot;: &quot;API schema for WHO SMART Guidelines DAK FAQ questions&quot;
+  },
+  &quot;paths&quot;: {
+    &quot;/faq/questions/execute&quot;: {
+      &quot;post&quot;: {
+        &quot;summary&quot;: &quot;Execute FAQ questions&quot;,
+        &quot;requestBody&quot;: {
+          &quot;required&quot;: true,
+          &quot;content&quot;: {
+            &quot;application/json&quot;: {
+              &quot;schema&quot;: {
+                &quot;type&quot;: &quot;object&quot;,
+                &quot;properties&quot;: {
+                  &quot;requests&quot;: {
+                    &quot;type&quot;: &quot;array&quot;,
+                    &quot;items&quot;: {
+                      &quot;type&quot;: &quot;object&quot;,
+                      &quot;properties&quot;: {
+                        &quot;questionId&quot;: {
+                          &quot;type&quot;: &quot;string&quot;,
+                          &quot;enum&quot;: []
+                        },
+                        &quot;parameters&quot;: {
+                          &quot;type&quot;: &quot;object&quot;
+                        },
+                        &quot;assetFiles&quot;: {
+                          &quot;type&quot;: &quot;array&quot;,
+                          &quot;items&quot;: {
+                            &quot;type&quot;: &quot;string&quot;
+                          }
+                        }
+                      },
+                      &quot;required&quot;: [
+                        &quot;questionId&quot;
+                      ]
+                    }
+                  },
+                  &quot;context&quot;: {
+                    &quot;type&quot;: &quot;object&quot;,
+                    &quot;properties&quot;: {
+                      &quot;repositoryPath&quot;: {
+                        &quot;type&quot;: &quot;string&quot;
+                      }
+                    }
+                  }
+                },
+                &quot;required&quot;: [
+                  &quot;requests&quot;
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  &quot;components&quot;: {
+    &quot;schemas&quot;: {
+      &quot;Question&quot;: {
+        &quot;type&quot;: &quot;object&quot;,
+        &quot;properties&quot;: {
+          &quot;id&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;level&quot;: {
+            &quot;type&quot;: &quot;string&quot;,
+            &quot;enum&quot;: [
+              &quot;dak&quot;,
+              &quot;component&quot;,
+              &quot;asset&quot;
+            ]
+          },
+          &quot;title&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;description&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;parameters&quot;: {
+            &quot;type&quot;: &quot;array&quot;,
+            &quot;items&quot;: {
+              &quot;type&quot;: &quot;object&quot;,
+              &quot;properties&quot;: {
+                &quot;name&quot;: {
+                  &quot;type&quot;: &quot;string&quot;
+                },
+                &quot;type&quot;: {
+                  &quot;type&quot;: &quot;string&quot;
+                },
+                &quot;required&quot;: {
+                  &quot;type&quot;: &quot;boolean&quot;
+                },
+                &quot;description&quot;: {
+                  &quot;type&quot;: &quot;string&quot;
+                }
+              }
+            }
+          },
+          &quot;tags&quot;: {
+            &quot;type&quot;: &quot;array&quot;,
+            &quot;items&quot;: {
+              &quot;type&quot;: &quot;string&quot;
+            }
+          }
+        }
+      }
+    }
+  }
+}</code></pre>
+        </section>
+    
+        </main>
+        
+        <footer class="footer">
+            <p>Generated by SGeX Workbench DAK FAQ Documentation Generator</p>
+            <p>WHO SMART Guidelines Exchange - Digital Adaptation Kit FAQ System</p>
+        </footer>
+    </div>
+</body>
+</html>
