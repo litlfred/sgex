@@ -2,11 +2,10 @@
  * Integration test for DAK Selection with caching improvements
  */
 
+import repositoryCacheService from './repositoryCacheService';
+
 describe('DAK Selection Caching Integration', () => {
   it('should demonstrate that cache service is properly integrated', () => {
-    // This test verifies that the cache service exports are working
-    const repositoryCacheService = require('./repositoryCacheService').default;
-    
     expect(repositoryCacheService).toBeDefined();
     expect(typeof repositoryCacheService.getCachedRepositories).toBe('function');
     expect(typeof repositoryCacheService.setCachedRepositories).toBe('function');
@@ -24,8 +23,6 @@ describe('DAK Selection Caching Integration', () => {
   });
 
   it('should validate cache key generation', () => {
-    const repositoryCacheService = require('./repositoryCacheService').default;
-    
     const userKey = repositoryCacheService.getCacheKey('testuser', 'user');
     const orgKey = repositoryCacheService.getCacheKey('testorg', 'org');
     

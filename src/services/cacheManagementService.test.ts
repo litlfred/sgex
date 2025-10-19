@@ -3,22 +3,34 @@ import repositoryCacheService from './repositoryCacheService';
 import branchContextService from './branchContextService';
 
 // Mock localStorage and sessionStorage
-const localStorageMock = {
+interface MockStorage {
+  store: Record<string, string>;
+  getItem: jest.Mock;
+  setItem: jest.Mock;
+  removeItem: jest.Mock;
+  clear: jest.Mock;
+  key: jest.Mock;
+  readonly length: number;
+}
+
+const localStorageMock: MockStorage = {
   store: {},
-  getItem: jest.fn((key) => localStorageMock.store[key] || null),
-  setItem: jest.fn((key, value) => { localStorageMock.store[key] = value; }),
-  removeItem: jest.fn((key) => { delete localStorageMock.store[key]; }),
+  getItem: jest.fn((key: string) => localStorageMock.store[key] || null),
+  setItem: jest.fn((key: string, value: string) => { localStorageMock.store[key] = value; }),
+  removeItem: jest.fn((key: string) => { delete localStorageMock.store[key]; }),
   clear: jest.fn(() => { localStorageMock.store = {}; }),
-  key: jest.fn((index) => Object.keys(localStorageMock.store)[index]),
+  key: jest.fn((index: number) => Object.keys(localStorageMock.store)[index]),
   get length() { return Object.keys(localStorageMock.store).length; }
 };
 
-const sessionStorageMock = {
+const sessionStorageMock: MockStorage = {
   store: {},
-  getItem: jest.fn((key) => sessionStorageMock.store[key] || null),
-  setItem: jest.fn((key, value) => { sessionStorageMock.store[key] = value; }),
-  removeItem: jest.fn((key) => { delete sessionStorageMock.store[key]; }),
-  clear: jest.fn(() => { sessionStorageMock.store = {}; })
+  getItem: jest.fn((key: string) => sessionStorageMock.store[key] || null),
+  setItem: jest.fn((key: string, value: string) => { sessionStorageMock.store[key] = value; }),
+  removeItem: jest.fn((key: string) => { delete sessionStorageMock.store[key]; }),
+  clear: jest.fn(() => { sessionStorageMock.store = {}; }),
+  key: jest.fn((index: number) => Object.keys(sessionStorageMock.store)[index]),
+  get length() { return Object.keys(sessionStorageMock.store).length; }
 };
 
 Object.defineProperty(window, 'localStorage', { value: localStorageMock });
@@ -26,7 +38,7 @@ Object.defineProperty(window, 'sessionStorage', { value: sessionStorageMock });
 
 // Mock Object.keys to work with our mock storage
 const originalObjectKeys = Object.keys;
-Object.keys = jest.fn((obj) => {
+Object.keys = jest.fn((obj: any) => {
   if (obj === localStorage) {
     return Object.keys(localStorageMock.store);
   }
@@ -34,15 +46,19 @@ Object.keys = jest.fn((obj) => {
     return Object.keys(sessionStorageMock.store);
   }
   return originalObjectKeys(obj);
-});
+}) as any;
 
 // Mock services
 jest.mock('./repositoryCacheService', () => ({
-  clearAllCaches: jest.fn(() => true)
+  default: {
+    clearAllCaches: jest.fn(() => true)
+  }
 }));
 
 jest.mock('./branchContextService', () => ({
-  clearAllBranchContext: jest.fn()
+  default: {
+    clearAllBranchContext: jest.fn()
+  }
 }));
 
 // Mock logger

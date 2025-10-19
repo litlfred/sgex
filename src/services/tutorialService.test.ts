@@ -26,7 +26,7 @@ describe('TutorialService', () => {
 
     const retrieved = tutorialService.getTutorial('test-tutorial');
     expect(retrieved).toBeDefined();
-    expect(retrieved.title).toBe('Test Tutorial');
+    expect(retrieved?.title).toBe('Test Tutorial');
   });
 
   test('should reject invalid tutorial IDs', () => {
@@ -42,9 +42,7 @@ describe('TutorialService', () => {
 
   test('should reject tutorials missing required fields', () => {
     expect(() => {
-      tutorialService.registerTutorial('test-tutorial', {
-        // Missing title and steps
-      });
+      tutorialService.registerTutorial('test-tutorial', {} as any);
     }).toThrow('Tutorial definition missing required field: title');
   });
 
