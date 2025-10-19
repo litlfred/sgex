@@ -188,6 +188,57 @@ export class ValidationContext implements IValidationContext {
   }
 
   /**
+   * Parse YAML content and return object
+   * 
+   * @param content - YAML content as string
+   * @returns Parsed YAML object
+   * @throws Error if YAML is malformed
+   * 
+   * Note: This is a simplified YAML parser for basic sushi-config.yaml validation.
+   * In production, use a proper YAML parsing library.
+   */
+  parseYAML<T = any>(content: string): T {
+    try {
+      // Simple YAML parsing - for production use a proper YAML parser library
+      const lines = content.split('\n');
+      const result: any = {};
+      
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith('#')) continue;
+        
+        const colonIndex = trimmed.indexOf(':');
+        if (colonIndex > 0) {
+          const key = trimmed.substring(0, colonIndex).trim();
+          const value = trimmed.substring(colonIndex + 1).trim();
+          
+          if (value) {
+            // Simple key-value pair
+            if (value.startsWith('[') && value.endsWith(']')) {
+              // Array notation
+              result[key] = value.slice(1, -1).split(',').map(v => v.trim().replace(/^["']|["']$/g, ''));
+            } else if (value.startsWith('{') && value.endsWith('}')) {
+              // Object notation - attempt JSON parse
+              try {
+                result[key] = JSON.parse(value);
+              } catch {
+                result[key] = value;
+              }
+            } else {
+              // String value - remove quotes
+              result[key] = value.replace(/^["']|["']$/g, '');
+            }
+          }
+        }
+      }
+      
+      return result as T;
+    } catch (error) {
+      throw new Error(`YAML parsing error: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  /**
    * Check if content is well-formed XML
    * 
    * @param content - XML content as string

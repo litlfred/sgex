@@ -16,6 +16,7 @@ export {
   DAKArtifactValidationService,
   createDAKArtifactValidationService 
 } from './DAKArtifactValidationService';
+export { XSDValidationService, xsdValidationService } from './XSDValidationService';
 
 // Export validation rules
 export * from './rules';
