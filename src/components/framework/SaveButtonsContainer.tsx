@@ -1,10 +1,55 @@
 import React from 'react';
 
 /**
+ * Props for SaveButtonsContainer component
+ */
+interface SaveButtonsContainerProps {
+  // States
+  /** Whether there are unsaved changes */
+  hasChanges?: boolean;
+  /** Whether local save is in progress */
+  isSavingLocal?: boolean;
+  /** Whether GitHub save is in progress */
+  isSavingGitHub?: boolean;
+  /** Whether user can save to GitHub */
+  canSaveToGitHub?: boolean;
+  /** Whether local save was successful */
+  localSaveSuccess?: boolean;
+  /** Whether GitHub save was successful */
+  githubSaveSuccess?: boolean;
+  /** Whether changes are saved locally */
+  savedLocally?: boolean;
+  
+  // Handlers
+  /** Handler for local save */
+  onSaveLocal?: () => void;
+  /** Handler for GitHub save */
+  onSaveGitHub?: () => void;
+  
+  // Configuration
+  /** Whether to show local button */
+  showLocalButton?: boolean;
+  /** Whether to show GitHub button */
+  showGitHubButton?: boolean;
+  /** Button size */
+  buttonSize?: 'small' | 'medium' | 'large';
+  /** Layout direction */
+  layout?: 'horizontal' | 'vertical';
+}
+
+/**
  * Container for save buttons with independent states
  * Provides consistent UI for local and GitHub save operations
+ * 
+ * @example
+ * <SaveButtonsContainer
+ *   hasChanges={true}
+ *   canSaveToGitHub={true}
+ *   onSaveLocal={handleLocalSave}
+ *   onSaveGitHub={handleGitHubSave}
+ * />
  */
-const SaveButtonsContainer = ({
+const SaveButtonsContainer: React.FC<SaveButtonsContainerProps> = ({
   // States
   hasChanges = false,
   isSavingLocal = false,
@@ -21,8 +66,8 @@ const SaveButtonsContainer = ({
   // Configuration
   showLocalButton = true,
   showGitHubButton = true,
-  buttonSize = 'medium', // 'small', 'medium', 'large'
-  layout = 'horizontal' // 'horizontal', 'vertical'
+  buttonSize = 'medium',
+  layout = 'horizontal'
 }) => {
   
   // Determine button states
@@ -30,13 +75,13 @@ const SaveButtonsContainer = ({
   const githubButtonDisabled = !hasChanges || isSavingGitHub || githubSaveSuccess || !canSaveToGitHub;
   
   // Button text based on state
-  const getLocalButtonText = () => {
+  const getLocalButtonText = (): string => {
     if (localSaveSuccess) return 'Saved Locally ✓';
     if (isSavingLocal) return 'Saving...';
     return 'Save Local';
   };
   
-  const getGitHubButtonText = () => {
+  const getGitHubButtonText = (): string => {
     if (githubSaveSuccess) return 'Committed ✓';
     if (isSavingGitHub) return 'Committing...';
     return 'Save to GitHub';
@@ -49,7 +94,7 @@ const SaveButtonsContainer = ({
     `size-${buttonSize}`
   ].join(' ');
 
-  const getButtonClasses = (type, disabled, success) => {
+  const getButtonClasses = (type: string, disabled: boolean, success: boolean): string => {
     const classes = ['save-button', `save-button-${type}`];
     if (disabled) classes.push('disabled');
     if (success) classes.push('success');
