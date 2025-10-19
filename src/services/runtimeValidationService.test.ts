@@ -2,7 +2,7 @@
  * Tests for Runtime Validation Service
  */
 
-import { runtimeValidator, validateData, validateAndCast } from '../services/runtimeValidationService';
+import { runtimeValidator, validateData, validateAndCast } from './runtimeValidationService';
 import { GitHubUser, GitHubRepository, DAKValidationResult } from '../types/core';
 
 describe('RuntimeValidationService', () => {

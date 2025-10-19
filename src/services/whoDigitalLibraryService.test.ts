@@ -1,4 +1,4 @@
-import whoDigitalLibraryService from '../services/whoDigitalLibraryService';
+import whoDigitalLibraryService from './whoDigitalLibraryService';
 
 // Mock fetch globally
 global.fetch = jest.fn();

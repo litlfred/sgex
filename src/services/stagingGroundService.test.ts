@@ -1,4 +1,4 @@
-import stagingGroundService from '../services/stagingGroundService';
+import stagingGroundService from './stagingGroundService';
 
 // Mock localStorage
 const localStorageMock = {

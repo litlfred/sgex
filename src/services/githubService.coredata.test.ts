@@ -1,4 +1,4 @@
-import githubService from '../services/githubService';
+import githubService from './githubService';
 
 // Mock the Octokit rest API
 const mockGetContent = jest.fn();

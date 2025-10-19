@@ -1,4 +1,4 @@
-import tutorialService from '../services/tutorialService';
+import tutorialService from './tutorialService';
 
 describe('TutorialService', () => {
   beforeEach(() => {

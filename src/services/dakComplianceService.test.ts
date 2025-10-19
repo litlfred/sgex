@@ -1,4 +1,4 @@
-import dakComplianceService from '../services/dakComplianceService';
+import dakComplianceService from './dakComplianceService';
 
 describe('DAKComplianceService', () => {
   test('validates XML well-formed content', async () => {

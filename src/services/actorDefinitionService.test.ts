@@ -1,5 +1,5 @@
-import actorDefinitionService from '../services/actorDefinitionService';
-import stagingGroundService from '../services/stagingGroundService';
+import actorDefinitionService from './actorDefinitionService';
+import stagingGroundService from './stagingGroundService';
 
 // Mock staging ground service
 jest.mock('../services/stagingGroundService', () => ({

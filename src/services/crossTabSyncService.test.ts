@@ -2,7 +2,7 @@
  * Tests for CrossTabSyncService
  */
 
-import crossTabSyncService, { CrossTabEventTypes } from '../crossTabSyncService';
+import crossTabSyncService, { CrossTabEventTypes } from './crossTabSyncService';
 
 describe('CrossTabSyncService', () => {
   beforeEach(() => {

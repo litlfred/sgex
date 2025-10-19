@@ -1,4 +1,4 @@
-import profileSubscriptionService from '../services/profileSubscriptionService';
+import profileSubscriptionService from './profileSubscriptionService';
 
 // Mock localStorage
 const localStorageMock = {
