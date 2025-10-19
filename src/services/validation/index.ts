@@ -17,6 +17,12 @@ export {
   createDAKArtifactValidationService 
 } from './DAKArtifactValidationService';
 
+// Export validation rules
+export * from './rules';
+
+// Export integration functions
+export * from './integration';
+
 // Create and export default validation service instance
 import { ValidationRuleRegistry } from './ValidationRuleRegistry';
 import { validationContext } from './ValidationContext';

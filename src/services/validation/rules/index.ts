@@ -11,7 +11,21 @@ import { ValidationRuleRegistry } from '../ValidationRuleRegistry';
 import { ValidationRule } from '../types';
 
 // Import validation rules
+
+// BPMN Rules
 import businessRuleTaskIdRule from './bpmn/businessRuleTaskId';
+
+// DMN Rules
+import decisionIdAndLabelRule from './dmn/decisionIdAndLabel';
+import dmnBpmnLinkRule from './dmn/bpmnLink';
+
+// DAK-Level Rules
+import smartBaseDependencyRule from './dak/smartBaseDependency';
+import dakJsonStructureRule from './dak/dakJsonStructure';
+
+// FHIR FSH Rules
+import fshSyntaxRule from './fhir/fshSyntax';
+import fshConventionsRule from './fhir/fshConventions';
 
 /**
  * Register all validation rules
@@ -22,12 +36,17 @@ export function registerAllRules(registry: ValidationRuleRegistry): void {
   // BPMN Rules
   registry.register(businessRuleTaskIdRule);
 
-  // TODO: Add more rules as they are implemented
-  // registry.register(bpmnStartEventRule);
-  // registry.register(dmnDecisionIdRule);
-  // registry.register(dmnBpmnLinkRule);
-  // registry.register(dakDependencyRule);
-  // registry.register(fshSyntaxRule);
+  // DMN Rules
+  registry.register(decisionIdAndLabelRule);
+  registry.register(dmnBpmnLinkRule);
+  
+  // DAK-Level Rules
+  registry.register(smartBaseDependencyRule);
+  registry.register(dakJsonStructureRule);
+  
+  // FHIR FSH Rules
+  registry.register(fshSyntaxRule);
+  registry.register(fshConventionsRule);
 }
 
 /**
@@ -37,8 +56,20 @@ export function registerAllRules(registry: ValidationRuleRegistry): void {
  */
 export function getAllAvailableRules(): ValidationRule[] {
   return [
+    // BPMN Rules (1)
     businessRuleTaskIdRule,
-    // Add more rules here as they are implemented
+    
+    // DMN Rules (2)
+    decisionIdAndLabelRule,
+    dmnBpmnLinkRule,
+    
+    // DAK-Level Rules (2)
+    smartBaseDependencyRule,
+    dakJsonStructureRule,
+    
+    // FHIR FSH Rules (2)
+    fshSyntaxRule,
+    fshConventionsRule
   ];
 }
 
@@ -46,5 +77,18 @@ export function getAllAvailableRules(): ValidationRule[] {
  * Export individual rules for testing
  */
 export {
-  businessRuleTaskIdRule
+  // BPMN
+  businessRuleTaskIdRule,
+  
+  // DMN
+  decisionIdAndLabelRule,
+  dmnBpmnLinkRule,
+  
+  // DAK-Level
+  smartBaseDependencyRule,
+  dakJsonStructureRule,
+  
+  // FHIR FSH
+  fshSyntaxRule,
+  fshConventionsRule
 };
