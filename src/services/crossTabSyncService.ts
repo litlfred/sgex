@@ -92,6 +92,12 @@ export const CrossTabEventTypes = {
   PAT_AUTHENTICATED: 'PAT_AUTHENTICATED',
   /** SAML authentication completed */
   SAML_AUTHENTICATED: 'SAML_AUTHENTICATED',
+  /** SAML polling started for an organization */
+  SAML_POLLING_STARTED: 'SAML_POLLING_STARTED',
+  /** SAML modal opened for an organization */
+  SAML_MODAL_OPENED: 'SAML_MODAL_OPENED',
+  /** SAML modal closed for an organization */
+  SAML_MODAL_CLOSED: 'SAML_MODAL_CLOSED',
   /** User logged out */
   LOGOUT: 'LOGOUT',
   /** Authentication token refreshed */

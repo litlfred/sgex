@@ -37,12 +37,38 @@ export interface SAMLModalInfo {
   authorizationUrl: string;
   /** Error message */
   message: string;
+  /** Original request to retry after authorization */
+  originalRequest?: () => Promise<any>;
+  /** Whether running in SPA mode (GitHub Pages) */
+  isSPAMode?: boolean;
 }
 
 /**
  * SAML modal callback function
  */
 export type SAMLModalCallback = (info: SAMLModalInfo) => void;
+
+/**
+ * Active modal state
+ */
+interface SAMLModalState {
+  /** Tab ID that opened the modal */
+  tabId: string;
+  /** Timestamp when modal was opened */
+  timestamp: number;
+}
+
+/**
+ * Session storage state
+ */
+interface SAMLSessionState {
+  /** Organizations with pending SAML requests */
+  pendingRequests: string[];
+  /** Cooldown timestamps by organization */
+  cooldowns: Record<string, number>;
+  /** Last update timestamp */
+  timestamp: number;
+}
 
 /**
  * SAML Authorization Service class
@@ -66,6 +92,8 @@ class SAMLAuthService {
   private modalCallback: SAMLModalCallback | null;
   private recentSAMLErrors: Map<string, number>;
   private errorCooldownMs: number;
+  private sessionStorageKey: string;
+  private activeModals: Map<string, SAMLModalState>;
 
   constructor() {
     this.logger = logger.getLogger('SAMLAuthService');
@@ -73,6 +101,11 @@ class SAMLAuthService {
     this.modalCallback = null;
     this.recentSAMLErrors = new Map(); // Track recent errors to prevent spam
     this.errorCooldownMs = 60000; // 1 minute cooldown per org
+    this.sessionStorageKey = 'sgex_saml_state';
+    this.activeModals = new Map<string, SAMLModalState>();
+    
+    // Load state from session storage
+    this.loadStateFromStorage();
     
     // Set up cross-tab synchronization
     this.setupCrossTabSync();
@@ -97,6 +130,25 @@ class SAMLAuthService {
       if (data.organization) {
         this.clearCooldown(data.organization);
         this.resolvePendingRequest(data.organization, data.repository);
+      }
+    });
+
+    // Listen for modal open events from other tabs
+    crossTabSyncService.on(CrossTabEventTypes.SAML_MODAL_OPENED, (data) => {
+      if (data.organization) {
+        this.activeModals.set(data.organization, {
+          tabId: data.tabId,
+          timestamp: data.timestamp
+        });
+        this.logger.debug('SAML modal opened in another tab', { organization: data.organization });
+      }
+    });
+
+    // Listen for modal close events from other tabs
+    crossTabSyncService.on(CrossTabEventTypes.SAML_MODAL_CLOSED, (data) => {
+      if (data.organization) {
+        this.activeModals.delete(data.organization);
+        this.logger.debug('SAML modal closed in another tab', { organization: data.organization });
       }
     });
 
@@ -167,7 +219,7 @@ class SAMLAuthService {
    *       200:
    *         description: SAML error handled
    */
-  handleSAMLError(error: any, owner: string, repo: string | null = null): boolean {
+  handleSAMLError(error: any, owner: string, repo: string | null = null, originalRequest?: () => Promise<any>): boolean {
     const samlError = this.detectSAMLError(error);
     
     if (!samlError) {
@@ -195,6 +247,7 @@ class SAMLAuthService {
     // Add to pending requests
     const requestKey = repo ? `${organization}/${repo}` : organization;
     this.pendingSAMLRequests.add(requestKey);
+    this.saveStateToStorage();
 
     // Show modal if callback is registered
     if (this.modalCallback) {
@@ -202,7 +255,8 @@ class SAMLAuthService {
         organization,
         repository: repo,
         authorizationUrl: this.getSAMLAuthorizationUrl(organization),
-        message: samlError.message
+        message: samlError.message,
+        originalRequest
       });
     } else {
       this.logger.warn('No modal callback registered for SAML authorization', {
@@ -271,7 +325,134 @@ class SAMLAuthService {
   reset(): void {
     this.pendingSAMLRequests.clear();
     this.recentSAMLErrors.clear();
+    this.activeModals.clear();
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.removeItem(this.sessionStorageKey);
+    }
     this.logger.debug('SAML auth service reset');
+  }
+
+  /**
+   * Load state from session storage
+   */
+  private loadStateFromStorage(): void {
+    if (typeof sessionStorage === 'undefined') {
+      return;
+    }
+
+    try {
+      const stored = sessionStorage.getItem(this.sessionStorageKey);
+      if (stored) {
+        const state: SAMLSessionState = JSON.parse(stored);
+        
+        // Restore pending requests
+        state.pendingRequests.forEach(org => {
+          this.pendingSAMLRequests.add(org);
+        });
+        
+        // Restore cooldowns (only if not expired)
+        const now = Date.now();
+        Object.entries(state.cooldowns).forEach(([org, timestamp]) => {
+          if (now - timestamp < this.errorCooldownMs) {
+            this.recentSAMLErrors.set(org, timestamp);
+          }
+        });
+        
+        this.logger.debug('Loaded SAML state from storage', {
+          pendingCount: state.pendingRequests.length,
+          cooldownCount: Object.keys(state.cooldowns).length
+        });
+      }
+    } catch (error) {
+      this.logger.error('Failed to load SAML state from storage', error);
+    }
+  }
+
+  /**
+   * Save state to session storage
+   */
+  private saveStateToStorage(): void {
+    if (typeof sessionStorage === 'undefined') {
+      return;
+    }
+
+    try {
+      const state: SAMLSessionState = {
+        pendingRequests: Array.from(this.pendingSAMLRequests),
+        cooldowns: Object.fromEntries(this.recentSAMLErrors),
+        timestamp: Date.now()
+      };
+      
+      sessionStorage.setItem(this.sessionStorageKey, JSON.stringify(state));
+      this.logger.debug('Saved SAML state to storage');
+    } catch (error) {
+      this.logger.error('Failed to save SAML state to storage', error);
+    }
+  }
+
+  /**
+   * Check if a modal is already open for an organization (in any tab)
+   */
+  isModalOpenForOrg(organization: string): boolean {
+    return this.activeModals.has(organization);
+  }
+
+  /**
+   * Mark modal as opened for an organization and broadcast to other tabs
+   */
+  markModalOpened(organization: string): void {
+    const tabId = `tab_${Date.now()}_${Math.random()}`;
+    this.activeModals.set(organization, {
+      tabId,
+      timestamp: Date.now()
+    });
+
+    if (crossTabSyncService.isAvailable()) {
+      crossTabSyncService.broadcast(CrossTabEventTypes.SAML_MODAL_OPENED, {
+        organization,
+        tabId,
+        timestamp: Date.now()
+      });
+    }
+
+    this.logger.debug('Marked SAML modal as opened', { organization });
+  }
+
+  /**
+   * Mark modal as closed for an organization and broadcast to other tabs
+   */
+  markModalClosed(organization: string): void {
+    this.activeModals.delete(organization);
+
+    if (crossTabSyncService.isAvailable()) {
+      crossTabSyncService.broadcast(CrossTabEventTypes.SAML_MODAL_CLOSED, {
+        organization,
+        timestamp: Date.now()
+      });
+    }
+
+    this.logger.debug('Marked SAML modal as closed', { organization });
+  }
+
+  /**
+   * Check authorization status for an organization
+   */
+  async checkAuthorizationStatus(org: string, testFn: () => Promise<any>): Promise<boolean> {
+    try {
+      await testFn();
+      this.logger.debug('SAML authorization check passed', { organization: org });
+      return true;
+    } catch (error) {
+      this.logger.debug('SAML authorization check failed', { organization: org });
+      return false;
+    }
+  }
+
+  /**
+   * Get list of pending organizations
+   */
+  getPendingOrganizations(): string[] {
+    return Array.from(this.pendingSAMLRequests);
   }
 }
 
