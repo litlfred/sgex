@@ -297,7 +297,7 @@ class GitHubService {
       });
 
       if (Array.isArray(data)) {
-        this.logger.apiSuccess('GET', `/repos/${owner}/${repo}/contents/${path}`);
+        this.logger.debug('GET directory contents success', { path: `/repos/${owner}/${repo}/contents/${path}` });
         return data;
       } else {
         throw new Error('Not a directory');
@@ -368,7 +368,7 @@ class GitHubService {
         ...(sha && { sha })
       });
       
-      this.logger.apiSuccess('PUT', `/repos/${owner}/${repo}/contents/${path}`);
+      this.logger.debug('PUT file success', { path: `/repos/${owner}/${repo}/contents/${path}` });
     } catch (error) {
       this.logger.apiError('PUT', `/repos/${owner}/${repo}/contents/${path}`, error);
       throw new Error(
@@ -401,51 +401,6 @@ class GitHubService {
     this.permissions = null;
     this.tokenType = null;
     secureTokenStorage.clearToken();
-  }
-
-  /**
-   * Get directory contents
-   * @param owner Repository owner
-   * @param repo Repository name
-   * @param path Directory path
-   * @param ref Branch or commit reference (default: 'main')
-   */
-  async getDirectoryContents(
-    owner: string,
-    repo: string,
-    path: string = '',
-    ref: string = 'main'
-  ): Promise<any[]> {
-    this.logger.debug('Getting directory contents', { owner, repo, path, ref });
-
-    try {
-      // Use authenticated octokit if available, otherwise create a public instance
-      const octokit = this.isAuthenticated ? this.octokit : await this.createOctokitInstance();
-      
-      const { data } = await octokit.rest.repos.getContent({
-        owner,
-        repo,
-        path,
-        ref
-      });
-
-      if (Array.isArray(data)) {
-        this.logger.debug('Directory contents retrieved', { count: data.length });
-        return data;
-      }
-
-      this.logger.warn('Expected directory but got file', { path, type: (data as any).type });
-      return [];
-    } catch (error) {
-      this.logger.error('Failed to get directory contents', {
-        owner,
-        repo,
-        path,
-        ref,
-        error: error instanceof Error ? error.message : String(error)
-      });
-      throw error;
-    }
   }
 
   /**

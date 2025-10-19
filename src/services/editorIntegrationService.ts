@@ -7,6 +7,8 @@
  * @module editorIntegrationService
  */
 
+import logger from '../utils/logger';
+
 /**
  * DAK Component Object interface representing a reusable DAK component
  * @interface DakComponentObject
