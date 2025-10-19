@@ -72,6 +72,12 @@ declare global {
     };
     /** Store structured context function */
     SGEX_storeStructuredContext?: (routePath: string, branch: string) => RoutingContext;
+    /** Routing logger for instrumentation */
+    SGEX_ROUTING_LOGGER?: {
+      logAccess: (url: string, metadata: Record<string, any>) => void;
+      logError: (message: string, metadata: Record<string, any>) => void;
+      logSessionStorageUpdate: (key: string, value: any) => void;
+    };
   }
 }
 
@@ -118,11 +124,23 @@ class SGEXRoutingContext {
       // Make context globally available
       if (typeof window !== 'undefined') {
         window.SGEX_URL_CONTEXT = this.context;
+        
+        // Log initialization for instrumentation
+        window.SGEX_ROUTING_LOGGER?.logAccess(window.location.href, {
+          context: this.context,
+          timestamp: Date.now()
+        });
       }
       
       return this.context;
     } catch (error) {
       console.error('Error initializing SGEX routing context:', error);
+      if (typeof window !== 'undefined') {
+        window.SGEX_ROUTING_LOGGER?.logError('Failed to initialize routing context', {
+          error: error instanceof Error ? error.message : String(error),
+          timestamp: Date.now()
+        });
+      }
       return this.getFallbackContext();
     }
   }
@@ -318,6 +336,11 @@ export function storeStructuredContext(routePath: string, branch: string): Routi
     if (context.asset) sessionStorage.setItem('sgex_selected_asset', context.asset);
     sessionStorage.setItem('sgex_deployment_branch', context.deploymentBranch || '');
     sessionStorage.setItem('sgex_intended_branch', context.intendedBranch || '');
+    
+    // Log sessionStorage updates for instrumentation
+    if (typeof window !== 'undefined' && window.SGEX_ROUTING_LOGGER) {
+      window.SGEX_ROUTING_LOGGER.logSessionStorageUpdate('sgex_url_context', context);
+    }
   }
   
   return context;
