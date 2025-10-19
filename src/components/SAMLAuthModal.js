@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import logger from '../utils/logger';
 import crossTabSyncService, { CrossTabEventTypes } from '../services/crossTabSyncService';
 import samlAuthService from '../services/samlAuthService';
+import repositoryConfig from '../config/repositoryConfig';
 import './SAMLAuthModal.css';
 
 /**
@@ -232,9 +233,13 @@ const SAMLAuthModal = ({
   }
 
   const { organization, repository, authorizationUrl, isSPAMode } = samlInfo;
+  
+  // Always check if we're in SPA mode, even if flag isn't set
+  // This provides a fallback in case the flag wasn't properly set
+  const isInSPAMode = isSPAMode || !repositoryConfig.isSAMLSupported();
 
   // Special rendering for SPA mode informational message
-  if (isSPAMode) {
+  if (isInSPAMode) {
     return (
       <div 
         className="saml-modal-overlay" 

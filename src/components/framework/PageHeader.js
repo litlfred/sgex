@@ -68,7 +68,12 @@ const PageHeader = () => {
       }
       
       // In hosted mode, show the modal as before
-      setModalInfoRef.current(samlInfo);
+      // Add isSPAMode flag to ensure modal knows the deployment mode
+      const enrichedSamlInfo = {
+        ...samlInfo,
+        isSPAMode: !repositoryConfig.isSAMLSupported()
+      };
+      setModalInfoRef.current(enrichedSamlInfo);
       setModalOpenRef.current(true);
     });
     return true;
