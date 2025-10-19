@@ -14,9 +14,8 @@
  * - Cross-tab synchronization support
  * - React hooks for easy consumption
  * 
- * Usage:
- * ```javascript
- * // In your App.js
+ * @example
+ * // In your App.tsx
  * import { AuthProvider } from './contexts/AuthContext';
  * 
  * function App() {
@@ -27,6 +26,7 @@
  *   );
  * }
  * 
+ * @example
  * // In any component
  * import { useAuth } from './contexts/AuthContext';
  * 
@@ -37,23 +37,92 @@
  *   if (!isAuthenticated) return <div>Please log in</div>;
  *   return <div>Welcome! Token: {token.type}</div>;
  * }
- * ```
  */
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import secureTokenStorage from '../services/secureTokenStorage';
-import crossTabSyncService, { CrossTabEventTypes } from '../services/crossTabSyncService.ts';
+import crossTabSyncService, { CrossTabEventTypes } from '../services/crossTabSyncService';
 import logger from '../utils/logger';
 
+/**
+ * Token information structure
+ * @example { "type": "pat", "created": Date, "expires": Date, "timeRemaining": 3600000, "isExpired": false, "isValid": true }
+ */
+export interface TokenInfo {
+  /** Token type */
+  type: string;
+  /** Creation timestamp */
+  created: Date;
+  /** Expiration timestamp */
+  expires: Date;
+  /** Time remaining in milliseconds */
+  timeRemaining: number;
+  /** Whether token is expired */
+  isExpired: boolean;
+  /** Whether token is valid */
+  isValid: boolean;
+}
+
+/**
+ * Authentication state structure
+ * @example { "isAuthenticated": true, "token": "ghp_...", "tokenInfo": { "isValid": true }, "isLoading": false, "error": null }
+ */
+export interface AuthState {
+  /** Whether user is authenticated */
+  isAuthenticated: boolean;
+  /** Stored token string */
+  token: string | null;
+  /** Token validation info */
+  tokenInfo: TokenInfo | null;
+  /** Loading state during initialization */
+  isLoading: boolean;
+  /** Error message if any */
+  error: string | null;
+}
+
+/**
+ * Authentication context value
+ * @example { "isAuthenticated": true, "token": {...}, "login": (token) => {...}, "logout": () => {...} }
+ */
+export interface AuthContextValue extends AuthState {
+  /** Login with a PAT token */
+  login: (token: string) => boolean;
+  /** Logout and clear authentication */
+  logout: () => void;
+  /** Refresh token info */
+  refreshTokenInfo: () => TokenInfo | null;
+  /** Check token validity */
+  checkTokenValidity: () => boolean;
+  /** Re-initialize authentication */
+  initializeAuth: () => void;
+}
+
+/**
+ * Props for AuthProvider component
+ * @example { "children": <App /> }
+ */
+export interface AuthProviderProps {
+  /** Child components */
+  children: ReactNode;
+}
+
 // Create the authentication context
-const AuthContext = createContext(null);
+const AuthContext = createContext<AuthContextValue | null>(null);
 
 /**
  * Authentication Provider Component
  * Wraps the application and provides authentication state to all children
+ * 
+ * @param props - Component props
+ * @returns AuthProvider component
+ * 
+ * @example
+ * <AuthProvider>
+ *   <App />
+ * </AuthProvider>
  */
-export const AuthProvider = ({ children }) => {
-  const [authState, setAuthState] = useState({
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const [authState, setAuthState] = useState<AuthState>({
     isAuthenticated: false,
     token: null,
     tokenInfo: null,
@@ -85,8 +154,8 @@ export const AuthProvider = ({ children }) => {
         });
         
         log.debug('Authentication initialized successfully', {
-          type: tokenData.type,
-          expires: tokenData.expires
+          type: tokenInfo?.type,
+          expires: tokenInfo?.expires
         });
       } else {
         setAuthState({
@@ -100,24 +169,31 @@ export const AuthProvider = ({ children }) => {
         log.debug('No valid token found during initialization');
       }
     } catch (error) {
-      log.error('Error initializing authentication', { error: error.message });
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      log.error('Error initializing authentication', { error: errorMessage });
       
       setAuthState({
         isAuthenticated: false,
         token: null,
         tokenInfo: null,
         isLoading: false,
-        error: error.message
+        error: errorMessage
       });
     }
   }, [log]);
 
   /**
    * Login with a PAT token
-   * @param {string} token - GitHub Personal Access Token
-   * @returns {boolean} Success status
+   * @param token - GitHub Personal Access Token
+   * @returns Success status
+   * 
+   * @example
+   * const success = login('ghp_xxxxxxxxxxxxxxxxxxxx');
+   * if (success) {
+   *   console.log('Login successful');
+   * }
    */
-  const login = useCallback((token) => {
+  const login = useCallback((token: string): boolean => {
     log.debug('Login initiated');
     
     const success = secureTokenStorage.storeToken(token);
@@ -126,30 +202,35 @@ export const AuthProvider = ({ children }) => {
       const tokenData = secureTokenStorage.retrieveToken();
       const tokenInfo = secureTokenStorage.getTokenInfo();
       
-      setAuthState({
-        isAuthenticated: true,
-        token: tokenData,
-        tokenInfo: tokenInfo,
-        isLoading: false,
-        error: null
-      });
-      
-      log.debug('Login successful', { type: tokenData.type });
-      return true;
-    } else {
-      log.warn('Login failed - token validation error');
-      
-      setAuthState(prev => ({
-        ...prev,
-        error: 'Invalid token format'
-      }));
-      
-      return false;
+      if (tokenData) {
+        setAuthState({
+          isAuthenticated: true,
+          token: tokenData,
+          tokenInfo: tokenInfo,
+          isLoading: false,
+          error: null
+        });
+        
+        log.debug('Login successful', { type: tokenInfo?.type });
+        return true;
+      }
     }
+    
+    log.warn('Login failed - token validation error');
+    
+    setAuthState((prev: AuthState) => ({
+      ...prev,
+      error: 'Invalid token format'
+    }));
+    
+    return false;
   }, [log]);
 
   /**
    * Logout and clear authentication state
+   * 
+   * @example
+   * logout();
    */
   const logout = useCallback(() => {
     log.debug('Logout initiated');
@@ -169,13 +250,19 @@ export const AuthProvider = ({ children }) => {
 
   /**
    * Refresh token info (check expiration, etc.)
-   * @returns {object|null} Updated token info or null
+   * @returns Updated token info or null
+   * 
+   * @example
+   * const tokenInfo = refreshTokenInfo();
+   * if (tokenInfo && !tokenInfo.isValid) {
+   *   console.log('Token expired');
+   * }
    */
-  const refreshTokenInfo = useCallback(() => {
+  const refreshTokenInfo = useCallback((): TokenInfo | null => {
     const tokenInfo = secureTokenStorage.getTokenInfo();
     
     if (tokenInfo) {
-      setAuthState(prev => ({
+      setAuthState((prev: AuthState) => ({
         ...prev,
         tokenInfo: tokenInfo,
         isAuthenticated: tokenInfo.isValid
@@ -201,9 +288,14 @@ export const AuthProvider = ({ children }) => {
 
   /**
    * Check if token is still valid
-   * @returns {boolean} True if token is valid
+   * @returns True if token is valid
+   * 
+   * @example
+   * if (!checkTokenValidity()) {
+   *   console.log('Token is invalid');
+   * }
    */
-  const checkTokenValidity = useCallback(() => {
+  const checkTokenValidity = useCallback((): boolean => {
     const isValid = secureTokenStorage.hasValidToken();
     
     if (!isValid && authState.isAuthenticated) {
@@ -230,7 +322,7 @@ export const AuthProvider = ({ children }) => {
     log.debug('Setting up cross-tab synchronization');
 
     // Handle PAT authentication events from other tabs
-    const handlePATAuth = (data) => {
+    const handlePATAuth = () => {
       log.debug('PAT authentication event received from another tab');
       
       // Reinitialize auth to pick up the synced token
@@ -281,7 +373,7 @@ export const AuthProvider = ({ children }) => {
   }, [authState.isAuthenticated, checkTokenValidity, log]);
 
   // Context value
-  const value = {
+  const value: AuthContextValue = {
     // State
     isAuthenticated: authState.isAuthenticated,
     token: authState.token,
@@ -306,10 +398,17 @@ export const AuthProvider = ({ children }) => {
 
 /**
  * Hook to access authentication context
- * @returns {object} Authentication context value
- * @throws {Error} If used outside of AuthProvider
+ * @returns Authentication context value
+ * @throws Error if used outside of AuthProvider
+ * 
+ * @example
+ * const { isAuthenticated, login, logout } = useAuth();
+ * 
+ * if (!isAuthenticated) {
+ *   return <LoginForm onLogin={login} />;
+ * }
  */
-export const useAuth = () => {
+export const useAuth = (): AuthContextValue => {
   const context = useContext(AuthContext);
   
   if (!context) {
