@@ -18,18 +18,80 @@
  *   // Component wants to navigate? Use syncStorageToNavigation(user, repo, branch)
  */
 
+import { NavigateFunction } from 'react-router-dom';
+
+/**
+ * Navigation context extracted from URL
+ * @example { "deploymentBranch": "main", "component": "dak", "user": "who", "repo": "anc-dak", "branch": "main" }
+ */
+export interface NavigationContext {
+  /** Deployment branch (from URL path) */
+  deploymentBranch: string | null;
+  /** Component name */
+  component: string | null;
+  /** GitHub user or organization */
+  user: string | null;
+  /** Repository name */
+  repo: string | null;
+  /** DAK branch (optional) */
+  branch: string | null;
+  /** Asset path (optional) */
+  asset: string | null;
+  /** Intended branch */
+  intendedBranch: string | null;
+  /** URL hash */
+  hash: string;
+  /** URL search parameters */
+  search: string;
+  /** Context timestamp */
+  timestamp: number;
+}
+
+/**
+ * Callback function for navigation changes
+ */
+export type NavigationListener = (context: NavigationContext) => void;
+
+/**
+ * Navigation parameters for DAK navigation
+ * @example { "deploymentBranch": "main", "component": "dak", "user": "who", "repo": "anc-dak", "dakBranch": "main" }
+ */
+export interface NavigationParams {
+  /** Deployment branch */
+  deploymentBranch: string;
+  /** Component name */
+  component: string;
+  /** GitHub user or organization */
+  user: string;
+  /** Repository name */
+  repo: string;
+  /** DAK branch (optional) */
+  dakBranch?: string | null;
+  /** Asset path (optional) */
+  asset?: string | null;
+  /** URL hash (optional) */
+  hash?: string;
+}
+
+/**
+ * Global Navigation Synchronization Service
+ * 
+ * @openapi
+ * /global-navigation-sync:
+ *   description: Service for synchronizing URL navigation with session storage
+ */
 class GlobalNavigationSync {
-  constructor() {
-    this.initialized = false;
-    this.lastUrl = null;
-    this.listeners = [];
-  }
+  private initialized: boolean = false;
+  private lastUrl: string | null = null;
+  private listeners: NavigationListener[] = [];
 
   /**
    * Initialize the global navigation synchronization
    * Should be called once in App.js
+   * @example
+   * initializeGlobalNavigationSync();
    */
-  initialize() {
+  initialize(): void {
     if (this.initialized) return;
     
     console.log('🌐 GlobalNavigationSync: Initializing global navigation synchronization');
@@ -56,8 +118,9 @@ class GlobalNavigationSync {
   /**
    * Set up listener for URL changes
    * Works with both React Router navigation and browser back/forward
+   * @private
    */
-  setupUrlChangeListener() {
+  private setupUrlChangeListener(): void {
     // Listen for popstate (browser back/forward)
     window.addEventListener('popstate', () => {
       const newUrl = window.location.pathname + window.location.search + window.location.hash;
@@ -70,15 +133,15 @@ class GlobalNavigationSync {
     
     const self = this;
     
-    window.history.pushState = function(...args) {
-      const result = originalPushState.apply(this, args);
+    window.history.pushState = function(data: any, unused: string, url?: string | URL | null) {
+      const result = originalPushState.call(this, data, unused, url);
       const newUrl = window.location.pathname + window.location.search + window.location.hash;
       self.syncFromUrl(newUrl);
       return result;
     };
     
-    window.history.replaceState = function(...args) {
-      const result = originalReplaceState.apply(this, args);
+    window.history.replaceState = function(data: any, unused: string, url?: string | URL | null) {
+      const result = originalReplaceState.call(this, data, unused, url);
       const newUrl = window.location.pathname + window.location.search + window.location.hash;
       self.syncFromUrl(newUrl);
       return result;
@@ -90,8 +153,11 @@ class GlobalNavigationSync {
   /**
    * Extract parameters from URL path and sync to session storage
    * URL pattern: /sgex/{deploymentBranch}/{component}/{user}/{repo}/{dakBranch?}/{asset...}
+   * @param url - URL to sync from
+   * @example
+   * syncFromUrl('/sgex/main/dak/who/anc-dak/main/process.bpmn');
    */
-  syncFromUrl(url) {
+  private syncFromUrl(url: string): void {
     // Skip if URL hasn't changed
     if (url === this.lastUrl) return;
     
@@ -126,7 +192,7 @@ class GlobalNavigationSync {
       
       // Extract context from URL structure
       // Pattern: [{deploymentBranch}, {component}, {user}, {repo}, {dakBranch?}, ...{asset}]
-      const context = {
+      const context: NavigationContext = {
         deploymentBranch: segments[0] || null,
         component: segments[1] || null,
         user: segments[2] || null,
@@ -160,8 +226,8 @@ class GlobalNavigationSync {
       if (typeof window !== 'undefined' && window.SGEX_ROUTING_LOGGER) {
         window.SGEX_ROUTING_LOGGER.logError('Failed to sync from URL', {
           url: url,
-          error: error.message,
-          stack: error.stack
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined
         });
       }
     }
@@ -169,8 +235,10 @@ class GlobalNavigationSync {
 
   /**
    * Update session storage with context
+   * @param context - Navigation context to store
+   * @private
    */
-  updateSessionStorage(context) {
+  private updateSessionStorage(context: NavigationContext): void {
     if (typeof sessionStorage === 'undefined') {
       console.warn('⚠️  GlobalNavigationSync: sessionStorage not available');
       return;
@@ -239,8 +307,15 @@ class GlobalNavigationSync {
   /**
    * Add a listener for navigation changes
    * Useful for components that need to react to navigation
+   * @param callback - Callback function to invoke on navigation change
+   * @returns Cleanup function to remove listener
+   * @example
+   * const removeListener = addNavigationListener((context) => {
+   *   console.log('Navigation changed:', context);
+   * });
+   * // Later: removeListener();
    */
-  addListener(callback) {
+  addListener(callback: NavigationListener): () => void {
     this.listeners.push(callback);
     return () => {
       this.listeners = this.listeners.filter(cb => cb !== callback);
@@ -249,8 +324,10 @@ class GlobalNavigationSync {
 
   /**
    * Notify all listeners of context change
+   * @param context - Navigation context
+   * @private
    */
-  notifyListeners(context) {
+  private notifyListeners(context: NavigationContext): void {
     this.listeners.forEach(callback => {
       try {
         callback(context);
@@ -262,8 +339,12 @@ class GlobalNavigationSync {
 
   /**
    * Get current context from session storage
+   * @returns Current navigation context
+   * @example
+   * const context = getCurrentNavigationContext();
+   * // Returns: { component: 'dak', user: 'who', repo: 'anc-dak', ... }
    */
-  getCurrentContext() {
+  getCurrentContext(): Partial<NavigationContext> {
     if (typeof sessionStorage === 'undefined') {
       return {};
     }
@@ -279,38 +360,77 @@ class GlobalNavigationSync {
     
     // Fallback to individual items
     return {
-      component: sessionStorage.getItem('sgex_current_component'),
-      user: sessionStorage.getItem('sgex_selected_user'),
-      repo: sessionStorage.getItem('sgex_selected_repo'),
-      branch: sessionStorage.getItem('sgex_selected_branch'),
-      asset: sessionStorage.getItem('sgex_selected_asset'),
-      deploymentBranch: sessionStorage.getItem('sgex_deployment_branch'),
-      intendedBranch: sessionStorage.getItem('sgex_intended_branch')
-    };
+      component: sessionStorage.getItem('sgex_current_component') || undefined,
+      user: sessionStorage.getItem('sgex_selected_user') || undefined,
+      repo: sessionStorage.getItem('sgex_selected_repo') || undefined,
+      branch: sessionStorage.getItem('sgex_selected_branch') || undefined,
+      asset: sessionStorage.getItem('sgex_selected_asset') || undefined,
+      deploymentBranch: sessionStorage.getItem('sgex_deployment_branch') || undefined,
+      intendedBranch: sessionStorage.getItem('sgex_intended_branch') || undefined
+    } as Partial<NavigationContext>;
   }
 }
 
 // Create singleton instance
 const globalNavigationSync = new GlobalNavigationSync();
 
-// Export initialization function
-export const initializeGlobalNavigationSync = () => {
+/**
+ * Initialize the global navigation synchronization
+ * @example
+ * initializeGlobalNavigationSync();
+ */
+export const initializeGlobalNavigationSync = (): void => {
   globalNavigationSync.initialize();
 };
 
-// Export helper to add listeners
-export const addNavigationListener = (callback) => {
+/**
+ * Add a listener for navigation changes
+ * @param callback - Callback function to invoke on navigation change
+ * @returns Cleanup function to remove listener
+ * @example
+ * const removeListener = addNavigationListener((context) => {
+ *   console.log('Navigation changed:', context);
+ * });
+ */
+export const addNavigationListener = (callback: NavigationListener): (() => void) => {
   return globalNavigationSync.addListener(callback);
 };
 
-// Export helper to get current context
-export const getCurrentNavigationContext = () => {
+/**
+ * Get current navigation context from session storage
+ * @returns Current navigation context
+ * @example
+ * const context = getCurrentNavigationContext();
+ * // Returns: { component: 'dak', user: 'who', repo: 'anc-dak', ... }
+ */
+export const getCurrentNavigationContext = (): Partial<NavigationContext> => {
   return globalNavigationSync.getCurrentContext();
 };
 
-// Export helper for components to trigger navigation updates
-// This updates the URL, which then triggers session storage update automatically
-export const navigateToDAK = (navigate, deploymentBranch, component, user, repo, dakBranch = null, asset = null, hash = '') => {
+/**
+ * Navigate to a DAK page with proper URL structure
+ * @param navigate - React Router navigate function
+ * @param deploymentBranch - Deployment branch name
+ * @param component - Component name
+ * @param user - GitHub user or organization
+ * @param repo - Repository name
+ * @param dakBranch - DAK branch name (optional)
+ * @param asset - Asset path (optional)
+ * @param hash - URL hash (optional)
+ * @example
+ * navigateToDAK(navigate, 'main', 'dak', 'who', 'anc-dak', 'main', 'process.bpmn');
+ * // Navigates to: /sgex/main/dak/who/anc-dak/main/process.bpmn
+ */
+export const navigateToDAK = (
+  navigate: NavigateFunction,
+  deploymentBranch: string,
+  component: string,
+  user: string,
+  repo: string,
+  dakBranch: string | null = null,
+  asset: string | null = null,
+  hash: string = ''
+): void => {
   let path = `/sgex/${deploymentBranch}/${component}/${user}/${repo}`;
   
   if (dakBranch) {
@@ -344,6 +464,15 @@ export const navigateToDAK = (navigate, deploymentBranch, component, user, repo,
 };
 
 // Make globally available for debugging
+declare global {
+  interface Window {
+    SGEX_GLOBAL_NAV_SYNC: {
+      getCurrentContext: typeof getCurrentNavigationContext;
+      addListener: typeof addNavigationListener;
+    };
+  }
+}
+
 if (typeof window !== 'undefined') {
   window.SGEX_GLOBAL_NAV_SYNC = {
     getCurrentContext: getCurrentNavigationContext,
