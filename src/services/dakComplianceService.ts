@@ -366,7 +366,7 @@ class DAKComplianceService {
     const validators = this.validators.get(fileType);
     
     if (validators) {
-      for (const [, config] of validators) {
+      for (const config of validators.values()) {
         const result = await config.validator(content, filePath);
         results.push(result);
       }

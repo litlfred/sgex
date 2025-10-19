@@ -161,8 +161,9 @@ class CrossTabSyncService {
         this.handleMessage(event.data);
       };
       
-      this.channel.onerror = (error: Event) => {
-        this.logger.error('BroadcastChannel error', { error: (error as any).message });
+      // Handle message errors (malformed messages, etc.)
+      this.channel.onmessageerror = (event: MessageEvent) => {
+        this.logger.error('BroadcastChannel message error', { event });
       };
       
       this.logger.debug('CrossTabSyncService initialized successfully');

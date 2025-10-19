@@ -8,7 +8,6 @@
  */
 
 import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
-import editorIntegrationService from './editorIntegrationService';
 
 /**
  * DAK Component Object interface
@@ -99,11 +98,9 @@ export const ComponentObjectProvider: React.FC<ComponentObjectProviderProps> = (
         setLoading(true);
         setError(null);
         
-        // Initialize through integration service
-        const dak = await editorIntegrationService.initializeForRepository(
-          repository,
-          branch || 'main'
-        );
+        // TODO: Initialize through DAK Factory once integrated
+        // For now, create an empty stub DAK object
+        const dak: DakObject = {};
         
         setDakObject(dak);
       } catch (err) {
@@ -124,10 +121,11 @@ export const ComponentObjectProvider: React.FC<ComponentObjectProviderProps> = (
     
     try {
       setLoading(true);
-      const dak = await editorIntegrationService.initializeForRepository(
-        repository,
-        branch || 'main'
-      );
+      
+      // TODO: Initialize through DAK Factory once integrated
+      // For now, create an empty stub DAK object
+      const dak: DakObject = {};
+      
       setDakObject(dak);
       setError(null);
     } catch (err) {

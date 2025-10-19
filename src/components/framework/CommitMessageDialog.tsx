@@ -84,17 +84,26 @@ const CommitMessageDialog: React.FC<CommitMessageDialogProps> = ({
     }
   }, [isOpen, commitMessage, suggestedMessage, fileName, setCommitMessage]);
 
-  // Handle key presses
-  const handleKeyDown = (e: React.KeyboardEvent): void => {
-    if (e.key === 'Escape' && !isSaving) {
-      onCancel();
-    } else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-      // Ctrl/Cmd + Enter to commit
-      if (commitMessage.trim() && !isSaving) {
-        onCommit(commitMessage.trim());
+  // Handle keyboard shortcuts at document level
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleDocumentKeyDown = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape' && !isSaving) {
+        onCancel();
+      } else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        // Ctrl/Cmd + Enter to commit
+        if (commitMessage.trim() && !isSaving) {
+          onCommit(commitMessage.trim());
+        }
       }
-    }
-  };
+    };
+
+    document.addEventListener('keydown', handleDocumentKeyDown);
+    return () => document.removeEventListener('keydown', handleDocumentKeyDown);
+  }, [isOpen, isSaving, commitMessage, onCancel, onCommit]);
+
+
 
   // Handle commit button click
   const handleCommit = (): void => {
@@ -120,7 +129,6 @@ const CommitMessageDialog: React.FC<CommitMessageDialogProps> = ({
     >
       <div 
         className="commit-dialog" 
-        onKeyDown={handleKeyDown}
         role="dialog"
         aria-labelledby="commit-dialog-title"
         aria-modal="true"
