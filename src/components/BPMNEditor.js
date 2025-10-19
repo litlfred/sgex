@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AssetEditorLayout, usePage } from './framework';
-import { useDakComponent } from '../services/ComponentObjectProvider';
+import { useDakComponent } from '../services/ComponentObjectProvider.tsx';
 import { createLazyBpmnModeler } from '../services/lazyFactoryService';
 
 /**
