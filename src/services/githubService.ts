@@ -268,6 +268,221 @@ class GitHubService {
   }
 
   /**
+   * Get issue details
+   */
+  async getIssue(owner: string, repo: string, issue_number: number): Promise<any> {
+    if (!this.isAuthenticated || !this.octokit) {
+      throw new Error('Not authenticated');
+    }
+
+    try {
+      const { data } = await this.octokit.rest.issues.get({
+        owner,
+        repo,
+        issue_number
+      });
+      return data;
+    } catch (error) {
+      this.logger.error('Failed to get issue', { owner, repo, issue_number, error });
+      throw error;
+    }
+  }
+
+  /**
+   * Get pull request details
+   */
+  async getPullRequest(owner: string, repo: string, pull_number: number): Promise<any> {
+    if (!this.isAuthenticated || !this.octokit) {
+      throw new Error('Not authenticated');
+    }
+
+    try {
+      const { data } = await this.octokit.rest.pulls.get({
+        owner,
+        repo,
+        pull_number
+      });
+      return data;
+    } catch (error) {
+      this.logger.error('Failed to get pull request', { owner, repo, pull_number, error });
+      throw error;
+    }
+  }
+
+  /**
+   * Create a new issue
+   */
+  async createIssue(owner: string, repo: string, issueData: any): Promise<any> {
+    if (!this.isAuthenticated || !this.octokit) {
+      throw new Error('Not authenticated');
+    }
+
+    try {
+      const { data } = await this.octokit.rest.issues.create({
+        owner,
+        repo,
+        title: issueData.title,
+        body: issueData.body,
+        labels: issueData.labels,
+        assignees: issueData.assignees
+      });
+      return data;
+    } catch (error) {
+      this.logger.error('Failed to create issue', { owner, repo, error });
+      throw error;
+    }
+  }
+
+  /**
+   * Get repository information
+   */
+  async getRepository(owner: string, repo: string): Promise<any> {
+    try {
+      const octokit = this.isAuthenticated && this.octokit ? this.octokit : await this.createOctokitInstance();
+      const { data } = await octokit.rest.repos.get({
+        owner,
+        repo
+      });
+      return data;
+    } catch (error) {
+      this.logger.error('Failed to get repository', { owner, repo, error });
+      throw error;
+    }
+  }
+
+  /**
+   * Check if user has write access to repository
+   */
+  async hasRepositoryWriteAccess(owner: string, repo: string): Promise<boolean> {
+    if (!this.isAuthenticated || !this.octokit) {
+      return false;
+    }
+
+    try {
+      const { data } = await this.octokit.rest.repos.get({
+        owner,
+        repo
+      });
+      
+      // Check if user has push/write permissions
+      return data.permissions?.push === true || data.permissions?.admin === true;
+    } catch (error) {
+      this.logger.debug('Failed to check write access', { owner, repo, error });
+      return false;
+    }
+  }
+
+  /**
+   * Get directory contents from a GitHub repository
+   * 
+   * @param owner - Repository owner
+   * @param repo - Repository name
+   * @param path - Directory path (defaults to root '')
+   * @param ref - Branch/tag/commit reference (defaults to 'main')
+   * @returns Promise<any[]> Array of directory contents
+   * 
+   * @example
+   * const contents = await githubService.getDirectoryContents('who', 'anc-dak', 'input/fsh', 'main');
+   */
+  async getDirectoryContents(
+    owner: string,
+    repo: string,
+    path: string = '',
+    ref: string = 'main'
+  ): Promise<any[]> {
+    try {
+      // Create temporary Octokit instance for unauthenticated access if needed
+      const octokit = this.isAuthenticated && this.octokit ? this.octokit : await this.createOctokitInstance();
+      
+      const { data } = await octokit.rest.repos.getContent({
+        owner,
+        repo,
+        path,
+        ref
+      });
+
+      if (Array.isArray(data)) {
+        this.logger.debug('GET directory contents success', { path: `/repos/${owner}/${repo}/contents/${path}` });
+        return data;
+      } else {
+        throw new Error('Not a directory');
+      }
+    } catch (error) {
+      this.logger.apiError('GET', `/repos/${owner}/${repo}/contents/${path}`, error);
+      throw new Error(
+        `Failed to get directory contents for ${path}: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
+  }
+
+  /**
+   * Update or create a file in a GitHub repository
+   * 
+   * @param owner - Repository owner
+   * @param repo - Repository name
+   * @param path - File path in the repository
+   * @param content - New file content
+   * @param message - Commit message
+   * @param branch - Branch name (defaults to 'main')
+   * @returns Promise<void>
+   * 
+   * @example
+   * await githubService.updateFile('who', 'anc-dak', 'input/fsh/models/ANC.fsh', '...content...', 'Update ANC model', 'main');
+   */
+  async updateFile(
+    owner: string,
+    repo: string,
+    path: string,
+    content: string,
+    message: string,
+    branch: string = 'main'
+  ): Promise<void> {
+    if (!this.isAuthenticated || !this.octokit) {
+      throw new Error('Not authenticated');
+    }
+
+    try {
+      // Get the current file SHA if it exists
+      let sha: string | undefined;
+      try {
+        const { data } = await this.octokit.rest.repos.getContent({
+          owner,
+          repo,
+          path,
+          ref: branch
+        });
+        
+        if ('sha' in data) {
+          sha = data.sha;
+        }
+      } catch (error: any) {
+        // File doesn't exist, that's okay for creation
+        if (error.status !== 404) {
+          throw error;
+        }
+      }
+
+      // Create or update the file
+      await this.octokit.rest.repos.createOrUpdateFileContents({
+        owner,
+        repo,
+        path,
+        message,
+        content: Buffer.from(content).toString('base64'),
+        branch,
+        ...(sha && { sha })
+      });
+      
+      this.logger.debug('PUT file success', { path: `/repos/${owner}/${repo}/contents/${path}` });
+    } catch (error) {
+      this.logger.apiError('PUT', `/repos/${owner}/${repo}/contents/${path}`, error);
+      throw new Error(
+        `Failed to update file: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
+  }
+
+  /**
    * Check if service is authenticated
    */
   get authenticated(): boolean {
@@ -293,8 +508,110 @@ class GitHubService {
     secureTokenStorage.clearToken();
   }
 
-  // TODO: Continue with repository methods, DAK validation, etc.
-  // This is Part 1 of the GitHub Service migration - authentication and user management
+  /**
+   * Get file content from repository
+   * @param owner Repository owner
+   * @param repo Repository name
+   * @param path File path
+   * @param ref Branch or commit reference (default: 'main')
+   * @returns Decoded file content as string
+   */
+  async getFileContent(
+    owner: string,
+    repo: string,
+    path: string,
+    ref: string = 'main'
+  ): Promise<string> {
+    const timeoutMs = 15000; // 15 second timeout
+    
+    this.logger.debug('Getting file content', { owner, repo, path, ref });
+
+    try {
+      // Use authenticated octokit if available, otherwise create a public instance for public repos
+      const octokit = this.isAuthenticated ? this.octokit : await this.createOctokitInstance();
+      
+      // Create a promise that rejects after timeout
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => {
+          reject(new Error(`Request timeout after ${timeoutMs}ms`));
+        }, timeoutMs);
+      });
+      
+      // Race the GitHub API call against the timeout
+      const apiPromise = octokit.rest.repos.getContent({
+        owner,
+        repo,
+        path,
+        ref
+      });
+      
+      const startTime = Date.now();
+      const { data } = await Promise.race([apiPromise, timeoutPromise]);
+      const responseTime = Date.now() - startTime;
+      
+      this.logger.debug('API response received', { responseTime, type: (data as any).type });
+
+      // Handle file content
+      if ((data as any).type === 'file' && (data as any).content) {
+        // Decode base64 content
+        try {
+          // Use browser-compatible base64 decoding
+          const content = atob((data as any).content);
+          // Convert to UTF-8 (atob returns Latin-1)
+          const utf8Content = decodeURIComponent(escape(content));
+          
+          this.logger.debug('File content decoded', { 
+            contentLength: utf8Content.length,
+            responseTime 
+          });
+          
+          return utf8Content;
+        } catch (decodeError) {
+          this.logger.error('Base64 decoding failed', { 
+            error: decodeError instanceof Error ? decodeError.message : String(decodeError)
+          });
+          throw new Error(`Failed to decode file content: ${decodeError instanceof Error ? decodeError.message : String(decodeError)}`);
+        }
+      } else {
+        this.logger.error('Invalid response - not a file or no content', {
+          type: (data as any).type,
+          hasContent: !!(data as any).content
+        });
+        throw new Error('File not found or is not a file');
+      }
+    } catch (error: any) {
+      this.logger.error('Failed to fetch file content', {
+        owner,
+        repo,
+        path,
+        ref,
+        error: error instanceof Error ? error.message : String(error),
+        status: error.status
+      });
+      
+      // Provide more specific error messages
+      if (error.message.includes('timeout')) {
+        throw new Error(`GitHub API request timed out after ${timeoutMs / 1000} seconds. Please try again.`);
+      } else if (error.status === 403) {
+        // Check if this is a SAML error
+        const samlAuthService = await import('./samlAuthService');
+        const samlHandled = samlAuthService.default.handleSAMLError(error, owner, repo);
+        if (!samlHandled) {
+          throw new Error('Access denied. This repository may be private or you may have hit rate limits.');
+        } else {
+          throw new Error('SAML SSO authorization required. Please authorize your token and try again.');
+        }
+      } else if (error.status === 404) {
+        throw new Error('File not found in the repository.');
+      } else if (error.message.includes('rate limit')) {
+        throw new Error('GitHub API rate limit exceeded. Please try again later.');
+      } else if (error.message.includes('Network Error') || error.message.includes('Failed to fetch')) {
+        throw new Error('Network error occurred. Please check your internet connection and try again.');
+      }
+      
+      throw error;
+    }
+  }
 }
 
 // Export singleton instance to maintain backward compatibility

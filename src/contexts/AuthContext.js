@@ -42,7 +42,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import secureTokenStorage from '../services/secureTokenStorage';
-import crossTabSyncService, { CrossTabEventTypes } from '../services/crossTabSyncService';
+import crossTabSyncService, { CrossTabEventTypes } from '../services/crossTabSyncService.ts';
 import logger from '../utils/logger';
 
 // Create the authentication context

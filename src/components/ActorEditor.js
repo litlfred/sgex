@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageLayout, useDAKParams } from './framework';
-import { useDakComponent } from '../services/ComponentObjectProvider';
+import { useDakComponent } from '../services/ComponentObjectProvider.tsx';
 
 /**
  * Actor Editor - Uses DAK Component Objects
