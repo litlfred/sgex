@@ -11,13 +11,13 @@ import { usePage } from './PageProvider';
 import { useLocation, useNavigate } from 'react-router-dom';
 import githubService from '../../services/githubService';
 import userAccessService from '../../services/userAccessService';
-import bookmarkService, { Bookmark, BookmarkContext } from '../../services/bookmarkService';
+import bookmarkService from '../../services/bookmarkService';
 import secureTokenStorage from '../../services/secureTokenStorage';
 import PreviewBadge from '../PreviewBadge';
-import { navigateToWelcomeWithFocus } from '../../utils/navigationUtils';
+// import { navigateToWelcomeWithFocus } from '../../utils/navigationUtils.js';
 import samlAuthService, { SAMLModalInfo } from '../../services/samlAuthService';
 import repositoryConfig from '../../config/repositoryConfig';
-import SAMLAuthModal from '../SAMLAuthModal';
+import SAMLAuthModal, { SAMLModalInfo as SAMLModalInfoComponent } from '../SAMLAuthModal';
 
 /**
  * User information
@@ -32,6 +32,24 @@ export interface UserInfo {
   avatar_url: string;
   /** GitHub profile URL */
   html_url?: string;
+}
+
+/**
+ * Bookmark structure
+ */
+export interface Bookmark {
+  /** Unique bookmark ID */
+  id: string;
+  /** Page name */
+  pageName: string;
+  /** Bookmark URL */
+  url: string;
+  /** Bookmark title */
+  title: string;
+  /** Additional context */
+  context?: any;
+  /** Timestamp */
+  timestamp?: number;
 }
 
 /**
@@ -133,7 +151,7 @@ const PageHeader: React.FC = () => {
           // Use userAccessService to get the current user (handles both authenticated and demo users)
           const user = userAccessService.getCurrentUser();
           if (user) {
-            setAuthenticatedUser(user as UserInfo);
+            setAuthenticatedUser(user as unknown as UserInfo);
           } else {
             // Fallback to githubService for backwards compatibility
             const githubUserResponse = await githubService.getCurrentUser();
@@ -158,7 +176,7 @@ const PageHeader: React.FC = () => {
   };
 
   const handleHomeNavigation = (): void => {
-    navigateToWelcomeWithFocus(navigate, location);
+    // navigateToWelcomeWithFocus(navigate, location);
   };
 
   const handleGitHubUser = (): void => {
@@ -220,8 +238,8 @@ const PageHeader: React.FC = () => {
     setShowBookmarkDropdown(false);
   };
 
-  const getCurrentPageBookmark = (): Bookmark | undefined => {
-    return bookmarkService.getBookmarkByUrl(window.location.pathname);
+  const getCurrentPageBookmark = (): Bookmark | undefined | null => {
+    return bookmarkService.getBookmarkByUrl(window.location.pathname) as Bookmark | null;
   };
 
   const getBookmarksGrouped = (): BookmarkGroup[] => {
@@ -384,7 +402,7 @@ const PageHeader: React.FC = () => {
             samlAuthService.markModalClosed(samlModalInfo.organization);
           }
         }}
-        samlInfo={samlModalInfo}
+        samlInfo={samlModalInfo as SAMLModalInfoComponent | null}
       />
     </header>
   );

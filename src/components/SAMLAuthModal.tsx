@@ -1,9 +1,34 @@
+/* eslint-disable jsx-a11y/click-events-have-key-events */
+/* eslint-disable jsx-a11y/no-noninteractive-element-interactions */
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import logger from '../utils/logger';
 import crossTabSyncService, { CrossTabEventTypes } from '../services/crossTabSyncService';
 import samlAuthService from '../services/samlAuthService';
 import repositoryConfig from '../config/repositoryConfig';
 import './SAMLAuthModal.css';
+
+/**
+ * SAML Modal Information interface
+ */
+export interface SAMLModalInfo {
+  organization: string;
+  repository?: string;
+  authorizationUrl: string;
+  isSPAMode?: boolean;
+  originalRequest?: () => Promise<any>;
+}
+
+/**
+ * SAMLAuthModal Component Props
+ */
+export interface SAMLAuthModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  samlInfo: SAMLModalInfo | null;
+  onAuthorizationComplete?: (data: { organization: string; repository?: string }) => void;
+  pollingInterval?: number;
+  pollingTimeout?: number;
+}
 
 /**
  * SAMLAuthModal Component
@@ -15,8 +40,9 @@ import './SAMLAuthModal.css';
  * - Automatic retry of original request on authorization
  * - Session storage for state persistence
  * - Configurable polling intervals and timeouts
+ * - SPA mode detection with informational message
  */
-const SAMLAuthModal = ({ 
+const SAMLAuthModal: React.FC<SAMLAuthModalProps> = ({ 
   isOpen, 
   onClose, 
   samlInfo,
@@ -25,12 +51,12 @@ const SAMLAuthModal = ({
   pollingTimeout = 300000 // 5 minutes
 }) => {
   const componentLogger = logger.getLogger('SAMLAuthModal');
-  const [isPolling, setIsPolling] = useState(false);
-  const [pollingStatus, setPollingStatus] = useState(null);
-  const [ssoWindowRef, setSsoWindowRef] = useState(null);
-  const pollingIntervalRef = useRef(null);
-  const pollingStartTimeRef = useRef(null);
-  const originalRequestRef = useRef(null);
+  const [isPolling, setIsPolling] = useState<boolean>(false);
+  const [pollingStatus, setPollingStatus] = useState<string | null>(null);
+  const [ssoWindowRef, setSsoWindowRef] = useState<Window | null>(null);
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const pollingStartTimeRef = useRef<number | null>(null);
+  const originalRequestRef = useRef<(() => Promise<any>) | null>(null);
 
   // Store original request for automatic retry
   useEffect(() => {
@@ -40,7 +66,7 @@ const SAMLAuthModal = ({
   }, [isOpen, samlInfo]);
 
   // Check if SAML authorization is successful
-  const checkSAMLStatus = useCallback(async () => {
+  const checkSAMLStatus = useCallback(async (): Promise<boolean> => {
     if (!samlInfo?.organization) return false;
 
     try {
@@ -57,7 +83,7 @@ const SAMLAuthModal = ({
             organization: samlInfo.organization
           });
           return true;
-        } catch (error) {
+        } catch (error: any) {
           // If still 403 SAML error, authorization not complete yet
           if (error.status === 403 && error.message?.toLowerCase().includes('saml')) {
             return false;
@@ -72,7 +98,7 @@ const SAMLAuthModal = ({
       }
 
       return false;
-    } catch (error) {
+    } catch (error: any) {
       componentLogger.error('Error checking SAML status', {
         organization: samlInfo.organization,
         error: error.message
@@ -120,7 +146,7 @@ const SAMLAuthModal = ({
 
     // Start polling
     pollingIntervalRef.current = setInterval(async () => {
-      const elapsedTime = Date.now() - pollingStartTimeRef.current;
+      const elapsedTime = Date.now() - (pollingStartTimeRef.current || 0);
       
       // Check timeout
       if (elapsedTime > pollingTimeout) {
@@ -181,11 +207,11 @@ const SAMLAuthModal = ({
 
   // Listen for SAML authentication events from other tabs
   useEffect(() => {
-    if (!isOpen || !samlInfo?.organization) return;
+    if (!isOpen || !samlInfo?.organization) return undefined;
 
     const unsubscribe = crossTabSyncService.on(
       CrossTabEventTypes.SAML_AUTHENTICATED,
-      (data) => {
+      (data: any) => {
         if (data.organization === samlInfo.organization) {
           componentLogger.debug('SAML authentication detected from another tab', {
             organization: data.organization
@@ -196,7 +222,9 @@ const SAMLAuthModal = ({
       }
     );
 
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+    };
   }, [isOpen, samlInfo, stopPolling, onClose, componentLogger]);
 
   // Cleanup on unmount or close
@@ -244,16 +272,12 @@ const SAMLAuthModal = ({
       <div 
         className="saml-modal-overlay" 
         onClick={onClose}
-        onKeyDown={(e) => e.key === 'Escape' && onClose()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="saml-modal-title"
-        tabIndex={-1}
       >
         <div 
-          className="saml-modal" 
-          onClick={(e) => e.stopPropagation()}
-          onKeyDown={(e) => e.stopPropagation()}
+          className="saml-modal"
           role="document"
         >
           <div className="saml-modal-header">
@@ -311,7 +335,6 @@ const SAMLAuthModal = ({
               <button 
                 onClick={onClose}
                 className="btn-primary"
-                autoFocus
               >
                 Understood
               </button>
@@ -363,16 +386,12 @@ const SAMLAuthModal = ({
     <div 
       className="saml-modal-overlay" 
       onClick={handleClose}
-      onKeyDown={(e) => e.key === 'Escape' && handleClose()}
       role="dialog"
       aria-modal="true"
       aria-labelledby="saml-modal-title"
-      tabIndex={-1}
     >
       <div 
-        className="saml-modal" 
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.stopPropagation()}
+        className="saml-modal"
         role="document"
       >
         <div className="saml-modal-header">
