@@ -245,7 +245,6 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({ className = '' }) =
                 value={searchTerm}
                 onChange={handleSearchChange}
                 className="language-search"
-                autoFocus={false}
               />
             </div>
             

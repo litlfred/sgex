@@ -30,21 +30,19 @@ const PagesManager = () => {
         return;
       }
 
-      // Try to restore authentication from stored token
-      const token = sessionStorage.getItem('github_token') || localStorage.getItem('github_token');
-      if (token) {
-        console.log('Restoring GitHub authentication from stored token');
-        const success = githubService.authenticate(token);
-        if (success) {
-          console.log('GitHub authentication restored successfully');
-        } else {
-          console.warn('Failed to restore GitHub authentication');
-          // Clean up invalid tokens
-          sessionStorage.removeItem('github_token');
-          localStorage.removeItem('github_token');
-        }
+      // Try to restore authentication from secure token storage
+      console.log('[PagesManager] Attempting to restore GitHub authentication from secure token storage');
+      const success = await githubService.initializeFromStoredToken();
+      
+      console.log('[PagesManager] Authentication initialization result:', {
+        success,
+        isAuthenticatedAfter: githubService.isAuth()
+      });
+      
+      if (success) {
+        console.log('[PagesManager] GitHub authentication restored successfully from secure token storage');
       } else {
-        console.warn('No stored GitHub token found');
+        console.warn('[PagesManager] No valid stored GitHub token found');
       }
 
       setInitializingAuth(false);

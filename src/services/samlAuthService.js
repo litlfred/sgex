@@ -4,9 +4,12 @@
  * Centralized service for handling GitHub SAML SSO authorization requests.
  * Prevents console spam by tracking SAML errors and providing a single
  * modal interface for users to authorize their Personal Access Tokens.
+ * 
+ * Supports cross-tab synchronization for SAML authentication state.
  */
 
 import logger from '../utils/logger';
+import crossTabSyncService, { CrossTabEventTypes } from './crossTabSyncService';
 
 class SAMLAuthService {
   constructor() {
@@ -15,6 +18,34 @@ class SAMLAuthService {
     this.modalCallback = null;
     this.recentSAMLErrors = new Map(); // Track recent errors to prevent spam
     this.errorCooldownMs = 60000; // 1 minute cooldown per org
+    
+    // Set up cross-tab synchronization
+    this.setupCrossTabSync();
+  }
+
+  /**
+   * Set up cross-tab synchronization for SAML authentication
+   */
+  setupCrossTabSync() {
+    if (!crossTabSyncService.isAvailable()) {
+      this.logger.warn('Cross-tab sync not available - SAML state will not sync across tabs');
+      return;
+    }
+
+    // Listen for SAML authentication events from other tabs
+    crossTabSyncService.on(CrossTabEventTypes.SAML_AUTHENTICATED, (data) => {
+      this.logger.debug('SAML authentication event received from another tab', { 
+        organization: data.organization 
+      });
+      
+      // Clear cooldown for this organization since auth was successful
+      if (data.organization) {
+        this.clearCooldown(data.organization);
+        this.resolvePendingRequest(data.organization, data.repository);
+      }
+    });
+
+    this.logger.debug('Cross-tab sync configured for SAML authentication');
   }
 
   /**
@@ -140,6 +171,26 @@ class SAMLAuthService {
   clearCooldown(organization) {
     this.recentSAMLErrors.delete(organization);
     this.logger.debug('SAML error cooldown cleared', { organization });
+  }
+
+  /**
+   * Mark SAML authorization as successful and broadcast to other tabs
+   * @param {string} organization - Organization name
+   * @param {string} repo - Repository name (optional)
+   */
+  markSAMLAuthorized(organization, repo = null) {
+    this.clearCooldown(organization);
+    this.resolvePendingRequest(organization, repo);
+    
+    // Broadcast SAML authentication event to other tabs
+    if (crossTabSyncService.isAvailable()) {
+      crossTabSyncService.broadcast(CrossTabEventTypes.SAML_AUTHENTICATED, {
+        organization: organization,
+        repository: repo,
+        timestamp: Date.now()
+      });
+      this.logger.debug('SAML authentication broadcasted to other tabs', { organization });
+    }
   }
 
   /**

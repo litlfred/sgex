@@ -166,13 +166,14 @@ pages:
     );
 
     // Wait for pages to load and find edit button
-    await waitFor(async () => {
-      const editButton = await screen.findByText('✏️ Edit');
-      expect(editButton).toBeInTheDocument();
-      
-      // Click edit button to open modal
-      fireEvent.click(editButton);
+    const editButton = await waitFor(async () => {
+      const button = await screen.findByText('✏️ Edit');
+      expect(button).toBeInTheDocument();
+      return button;
     });
+
+    // Click edit button to open modal
+    fireEvent.click(editButton);
 
     // Verify PageEditModal is displayed
     await waitFor(() => {

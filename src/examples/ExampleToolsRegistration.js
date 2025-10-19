@@ -19,21 +19,20 @@ export { ValueSetEditor, RepositoryStatsDashboard };
 
 // Example of how to add these to your App.js routing:
 /*
-
 import { ValueSetEditor, RepositoryStatsDashboard } from './examples/ExampleToolsRegistration';
 
-// In your App.js Routes:
-<Routes>
-  {/* Existing routes... */}
-  
-  {/* Example tools using the framework */}
-  <Route path="/value-set-editor/:user/:repo/:branch/:asset" element={<ValueSetEditor />} />
-  <Route path="/repository-stats/:user/:repo" element={<RepositoryStatsDashboard />} />
-  <Route path="/repository-stats/:user/:repo/:branch" element={<RepositoryStatsDashboard />} />
-  
-  {/* Other routes... */}
-</Routes>
+In your App.js Routes:
 
+  <Routes>
+    ... Existing routes ...
+    
+    Example tools using the framework:
+    <Route path="/value-set-editor/:user/:repo/:branch/:asset" element={<ValueSetEditor />} />
+    <Route path="/repository-stats/:user/:repo" element={<RepositoryStatsDashboard />} />
+    <Route path="/repository-stats/:user/:repo/:branch" element={<RepositoryStatsDashboard />} />
+    
+    ... Other routes ...
+  </Routes>
 */
 
 // You can also get tools programmatically:

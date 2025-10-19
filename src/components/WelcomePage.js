@@ -35,17 +35,22 @@ const WelcomePage = () => {
 
   // Initial authentication check - runs once on mount
   useEffect(() => {
-    const initializeAuth = () => {
-      // Check if user is already authenticated from previous session
-      const token = sessionStorage.getItem('github_token') || localStorage.getItem('github_token');
-      if (token) {
-        const success = githubService.authenticate(token);
-        if (success) {
-          setIsAuthenticated(true);
-        } else {
-          sessionStorage.removeItem('github_token');
-          localStorage.removeItem('github_token');
-        }
+    const initializeAuth = async () => {
+      console.log('[WelcomePage] Attempting to initialize authentication from stored token');
+      
+      // Try to restore authentication from secure token storage
+      const success = await githubService.initializeFromStoredToken();
+      
+      console.log('[WelcomePage] Authentication initialization result:', {
+        success,
+        isAuthenticatedAfter: githubService.isAuthenticated
+      });
+      
+      if (success) {
+        setIsAuthenticated(true);
+        console.log('[WelcomePage] Authentication restored successfully');
+      } else {
+        console.log('[WelcomePage] No valid stored token found or authentication failed');
       }
     };
 
