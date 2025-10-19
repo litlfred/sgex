@@ -6,16 +6,79 @@
  */
 
 import { useState, useEffect } from 'react';
-import { useRoutingContext, getRoutingContext } from '../services/routingContextService';
+import { getRoutingContext, RoutingContext } from '../services/routingContextService';
 import useDAKUrlParams from './useDAKUrlParams';
+
+/**
+ * URL context hook return type
+ */
+interface URLContextReturn {
+  urlContext: Partial<RoutingContext>;
+  isReady: boolean;
+  getUser: () => string | undefined;
+  getRepo: () => string | undefined;
+  getBranch: () => string | undefined;
+  getAsset: () => string | undefined;
+  getComponent: () => string | undefined;
+  getDeploymentBranch: () => string | undefined;
+  hasContext: () => boolean;
+  clearContext: () => void;
+}
+
+/**
+ * Router parameters interface
+ */
+interface RouterParams {
+  user?: string;
+  repo?: string;
+  branch?: string;
+  '*'?: string;
+  [key: string]: string | undefined;
+}
+
+/**
+ * Route context return type
+ */
+interface RouteContextReturn {
+  user?: string;
+  repo?: string;
+  branch?: string;
+  asset?: string;
+  component?: string;
+  deploymentBranch?: string;
+  isReady: boolean;
+  hasContext: boolean;
+  source: {
+    fromRouter: boolean;
+    fromURL: boolean;
+  };
+}
+
+/**
+ * DAK context options
+ */
+interface DAKContextOptions {
+  fetchData?: boolean;
+  includeAuthentication?: boolean;
+  includeValidation?: boolean;
+}
 
 /**
  * Hook to access URL context extracted from direct URL entry
  * This supplements React Router params with context from 404.html routing
+ * 
+ * @returns URL context with helper methods
+ * 
+ * @example
+ * const { urlContext, isReady, getUser, getRepo } = useURLContext();
+ * if (isReady) {
+ *   console.log('User:', getUser());
+ *   console.log('Repo:', getRepo());
+ * }
  */
-export const useURLContext = () => {
-  const [urlContext, setUrlContext] = useState({});
-  const [isReady, setIsReady] = useState(false);
+export const useURLContext = (): URLContextReturn => {
+  const [urlContext, setUrlContext] = useState<Partial<RoutingContext>>({});
+  const [isReady, setIsReady] = useState<boolean>(false);
 
   useEffect(() => {
     // Get context from the new routing context service
@@ -24,7 +87,7 @@ export const useURLContext = () => {
     setIsReady(true);
 
     // Listen for context changes (e.g., navigation)
-    const handleStorageChange = (e) => {
+    const handleStorageChange = (e: StorageEvent): void => {
       if (e.key && e.key.startsWith('sgex_')) {
         const updatedContext = getRoutingContext();
         setUrlContext(updatedContext);
@@ -69,8 +132,17 @@ export const useURLContext = () => {
 /**
  * Hook for components that need routing context but might not have React Router params
  * Combines React Router params with URL context as fallback
+ * 
+ * @param routerParams - Router parameters from useParams()
+ * @returns Merged route context
+ * 
+ * @example
+ * const { user, repo, branch, isReady, hasContext } = useRouteContext(useParams());
+ * if (hasContext) {
+ *   console.log(`DAK: ${user}/${repo}/${branch}`);
+ * }
  */
-export const useRouteContext = (routerParams = {}) => {
+export const useRouteContext = (routerParams: RouterParams = {}): RouteContextReturn => {
   const { urlContext, isReady } = useURLContext();
   
   // Merge router params with URL context, preferring router params
@@ -97,8 +169,20 @@ export const useRouteContext = (routerParams = {}) => {
 /**
  * Hook specifically for DAK components that need user/repo context
  * Enhanced version that can optionally fetch GitHub data when needed
+ * 
+ * @param routerParams - Router parameters from useParams()
+ * @param options - Configuration options
+ * @returns DAK context with optional GitHub data
+ * 
+ * @example
+ * // Basic usage without data fetching
+ * const { user, repo, isValidDAK } = useDAKContext(useParams());
+ * 
+ * @example
+ * // With GitHub data fetching
+ * const { profile, repository, loading } = useDAKContext(useParams(), { fetchData: true });
  */
-export const useDAKContext = (routerParams = {}, options = {}) => {
+export const useDAKContext = (routerParams: RouterParams = {}, options: DAKContextOptions = {}): any => {
   const routeContext = useRouteContext(routerParams);
   const { 
     fetchData = false, 
@@ -118,7 +202,7 @@ export const useDAKContext = (routerParams = {}, options = {}) => {
     };
   }
 
-  const missingParams = [];
+  const missingParams: string[] = [];
   if (!routeContext.user) missingParams.push('user');
   if (!routeContext.repo) missingParams.push('repo');
 
@@ -161,16 +245,31 @@ export const useDAKContext = (routerParams = {}, options = {}) => {
 /**
  * Simplified hook for DAK components that only need parameter validation
  * Use this instead of useDAKUrlParams when you don't need GitHub data fetching
+ * 
+ * @param routerParams - Router parameters from useParams()
+ * @returns DAK context without GitHub data
+ * 
+ * @example
+ * const { user, repo, branch, isValidDAK } = useDAKParams(useParams());
  */
-export const useDAKParams = (routerParams = {}) => {
+export const useDAKParams = (routerParams: RouterParams = {}): any => {
   return useDAKContext(routerParams, { fetchData: false });
 };
 
 /**
  * Enhanced hook for DAK components that need full GitHub integration
  * Use this as a direct replacement for useDAKUrlParams
+ * 
+ * @param routerParams - Router parameters from useParams()
+ * @returns DAK context with GitHub data
+ * 
+ * @example
+ * const { profile, repository, loading, error } = useDAKData(useParams());
+ * if (!loading && profile) {
+ *   console.log('Profile:', profile.login);
+ * }
  */
-export const useDAKData = (routerParams = {}) => {
+export const useDAKData = (routerParams: RouterParams = {}): any => {
   return useDAKContext(routerParams, { 
     fetchData: true, 
     includeAuthentication: true, 
