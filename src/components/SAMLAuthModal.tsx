@@ -3,12 +3,40 @@ import logger from '../utils/logger';
 import './SAMLAuthModal.css';
 
 /**
+ * SAML authorization information
+ */
+interface SAMLInfo {
+  organization: string;
+  repository?: string;
+  authorizationUrl: string;
+}
+
+/**
+ * Props for SAMLAuthModal component
+ */
+interface SAMLAuthModalProps {
+  /** Whether the modal is open */
+  isOpen: boolean;
+  /** Callback when modal is closed */
+  onClose: () => void;
+  /** SAML authorization information */
+  samlInfo: SAMLInfo | null;
+}
+
+/**
  * SAMLAuthModal Component
  * 
  * Modal dialog that guides users through GitHub SAML SSO authorization process.
  * Displayed when a Personal Access Token needs SAML SSO authorization for an organization.
+ * 
+ * @example
+ * <SAMLAuthModal 
+ *   isOpen={isOpen}
+ *   onClose={handleClose}
+ *   samlInfo={{ organization: 'WHO', authorizationUrl: 'https://...' }}
+ * />
  */
-const SAMLAuthModal = ({ isOpen, onClose, samlInfo }) => {
+const SAMLAuthModal: React.FC<SAMLAuthModalProps> = ({ isOpen, onClose, samlInfo }) => {
   const componentLogger = logger.getLogger('SAMLAuthModal');
 
   useEffect(() => {
@@ -31,7 +59,7 @@ const SAMLAuthModal = ({ isOpen, onClose, samlInfo }) => {
 
   const { organization, repository, authorizationUrl } = samlInfo;
 
-  const handleAuthorize = () => {
+  const handleAuthorize = (): void => {
     componentLogger.userAction('Authorize SAML clicked', { 
       organization,
       authorizationUrl 
@@ -47,7 +75,7 @@ const SAMLAuthModal = ({ isOpen, onClose, samlInfo }) => {
     });
   };
 
-  const handleClose = () => {
+  const handleClose = (): void => {
     componentLogger.userAction('SAML modal closed', { organization });
     onClose();
   };
@@ -136,3 +164,4 @@ const SAMLAuthModal = ({ isOpen, onClose, samlInfo }) => {
 };
 
 export default SAMLAuthModal;
+export type { SAMLInfo, SAMLAuthModalProps };

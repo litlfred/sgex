@@ -1,27 +1,80 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams, NavigateFunction, Location } from 'react-router-dom';
 import githubService from '../services/githubService';
 import repositoryCacheService from '../services/repositoryCacheService';
 import samlAuthService from '../services/samlAuthService';
-import SAMLAuthModal from './SAMLAuthModal';
+import SAMLAuthModal, { SAMLInfo } from './SAMLAuthModal';
 import { PageLayout } from './framework';
 
-const RepositorySelection = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { user } = useParams();
-  const [repositories, setRepositories] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [samlModalOpen, setSamlModalOpen] = useState(false);
-  const [samlModalInfo, setSamlModalInfo] = useState(null);
+/**
+ * GitHub user/org profile
+ */
+interface GitHubProfile {
+  login: string;
+  name?: string;
+  avatar_url?: string;
+  type: string;
+  isDemo?: boolean;
+  [key: string]: any;
+}
+
+/**
+ * Repository owner information
+ */
+interface RepoOwner {
+  login: string;
+  [key: string]: any;
+}
+
+/**
+ * GitHub repository structure
+ */
+interface GitHubRepository {
+  id: number;
+  name: string;
+  description?: string;
+  private: boolean;
+  language?: string;
+  topics?: string[];
+  stargazers_count?: number;
+  forks_count?: number;
+  updated_at: string;
+  owner: RepoOwner;
+  [key: string]: any;
+}
+
+/**
+ * Location state structure
+ */
+interface LocationState {
+  profile?: GitHubProfile;
+  warningMessage?: string;
+}
+
+/**
+ * Repository selection page component
+ * 
+ * Allows users to browse and select DAK repositories from a user or organization.
+ * 
+ * @example
+ * <RepositorySelection />
+ */
+const RepositorySelection: React.FC = () => {
+  const location: Location = useLocation();
+  const navigate: NavigateFunction = useNavigate();
+  const { user } = useParams<{ user: string }>();
+  const [repositories, setRepositories] = useState<GitHubRepository[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [samlModalOpen, setSamlModalOpen] = useState<boolean>(false);
+  const [samlModalInfo, setSamlModalInfo] = useState<SAMLInfo | null>(null);
   
   // Get profile from location state or fetch from GitHub using user param
-  const [profile, setProfile] = useState(location.state?.profile);
+  const [profile, setProfile] = useState<GitHubProfile | undefined>((location.state as LocationState)?.profile);
 
   // Fetch profile if we have user param but no profile in state
   useEffect(() => {
-    const fetchProfile = async () => {
+    const fetchProfile = async (): Promise<void> => {
       if (user && !profile) {
         try {
           if (githubService.isAuth()) {
@@ -49,7 +102,7 @@ const RepositorySelection = () => {
     };
     
     // Register SAML modal callback
-    samlAuthService.registerModalCallback((samlInfo) => {
+    samlAuthService.registerModalCallback((samlInfo: SAMLInfo) => {
       setSamlModalInfo(samlInfo);
       setSamlModalOpen(true);
     });
@@ -57,7 +110,9 @@ const RepositorySelection = () => {
     fetchProfile();
   }, [user, profile, navigate]);
 
-  const fetchRepositories = useCallback(async (forceRefresh = false) => {
+  const fetchRepositories = useCallback(async (forceRefresh: boolean = false): Promise<void> => {
+    if (!profile) return;
+    
     setLoading(true);
     setError(null);
     
@@ -66,7 +121,7 @@ const RepositorySelection = () => {
       
       // First, check cache unless we're forcing a refresh
       if (!forceRefresh) {
-        let cachedRepos = null;
+        let cachedRepos: { repositories: GitHubRepository[] } | null = null;
         try {
           cachedRepos = repositoryCacheService.getCachedRepositories(profile.login, profileType);
         } catch (cacheError) {
@@ -115,7 +170,7 @@ const RepositorySelection = () => {
     }
   }, [profile, user, navigate, fetchRepositories]);
 
-  const handleRepositorySelect = (repo) => {
+  const handleRepositorySelect = (repo: GitHubRepository): void => {
     navigate(`/dashboard/${repo.owner.login}/${repo.name}`, { 
       state: { 
         profile, 
@@ -124,7 +179,7 @@ const RepositorySelection = () => {
     });
   };
 
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -229,3 +284,4 @@ const RepositorySelection = () => {
 };
 
 export default RepositorySelection;
+export type { GitHubProfile, GitHubRepository };

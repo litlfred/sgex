@@ -1,20 +1,93 @@
 import React, { useState, useEffect, useRef } from 'react';
 import githubService from '../services/githubService';
 
-const CommitsSlider = ({ repository, selectedBranch }) => {
-  const [commits, setCommits] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [hasMore, setHasMore] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
-  const sliderRef = useRef(null);
+/**
+ * GitHub commit author/committer info
+ */
+interface GitHubUser {
+  login?: string;
+  avatar_url?: string;
+}
+
+/**
+ * Commit author/committer details
+ */
+interface CommitAuthor {
+  name: string;
+  email: string;
+  date: string;
+}
+
+/**
+ * Commit details
+ */
+interface CommitDetails {
+  author: CommitAuthor;
+  committer: CommitAuthor;
+  message: string;
+}
+
+/**
+ * GitHub commit object
+ */
+interface GitHubCommit {
+  sha: string;
+  commit: CommitDetails;
+  author?: GitHubUser | null;
+  committer?: GitHubUser | null;
+  html_url: string;
+}
+
+/**
+ * Repository owner info
+ */
+interface RepositoryOwner {
+  login: string;
+}
+
+/**
+ * Repository structure
+ */
+interface Repository {
+  name: string;
+  full_name: string;
+  owner?: RepositoryOwner;
+  default_branch?: string;
+}
+
+/**
+ * Props for CommitsSlider component
+ */
+interface CommitsSliderProps {
+  /** Repository object */
+  repository: Repository;
+  /** Selected branch name */
+  selectedBranch?: string;
+}
+
+/**
+ * Horizontal slider component displaying commits with pagination
+ * 
+ * @example
+ * <CommitsSlider 
+ *   repository={repoData} 
+ *   selectedBranch="main" 
+ * />
+ */
+const CommitsSlider: React.FC<CommitsSliderProps> = ({ repository, selectedBranch }) => {
+  const [commits, setCommits] = useState<GitHubCommit[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState<boolean>(true);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const sliderRef = useRef<HTMLDivElement>(null);
 
   const owner = repository.owner?.login || repository.full_name.split('/')[0];
   const repoName = repository.name;
   const branch = selectedBranch || repository.default_branch || 'main';
 
   // Load commits
-  const loadCommits = async (page = 1, append = false) => {
+  const loadCommits = async (page: number = 1, append: boolean = false): Promise<void> => {
     if (loading) return;
 
     setLoading(true);
@@ -53,30 +126,30 @@ const CommitsSlider = ({ repository, selectedBranch }) => {
   }, [repository, selectedBranch]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Load more commits
-  const loadMoreCommits = () => {
+  const loadMoreCommits = (): void => {
     if (hasMore && !loading) {
       loadCommits(currentPage + 1, true);
     }
   };
 
   // Scroll handlers
-  const scrollLeft = () => {
+  const scrollLeft = (): void => {
     if (sliderRef.current) {
       sliderRef.current.scrollBy({ left: -300, behavior: 'smooth' });
     }
   };
 
-  const scrollRight = () => {
+  const scrollRight = (): void => {
     if (sliderRef.current) {
       sliderRef.current.scrollBy({ left: 300, behavior: 'smooth' });
     }
   };
 
   // Format commit date
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
     const now = new Date();
-    const diffTime = Math.abs(now - date);
+    const diffTime = Math.abs(now.getTime() - date.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
     if (diffDays === 1) {
@@ -89,7 +162,7 @@ const CommitsSlider = ({ repository, selectedBranch }) => {
   };
 
   // Truncate commit message
-  const truncateMessage = (message, maxLength = 60) => {
+  const truncateMessage = (message: string, maxLength: number = 60): string => {
     if (message.length <= maxLength) return message;
     return message.substring(0, maxLength) + '...';
   };
@@ -125,7 +198,7 @@ const CommitsSlider = ({ repository, selectedBranch }) => {
       </div>
 
       <div className="commits-slider" ref={sliderRef}>
-        {commits.map((commit, index) => (
+        {commits.map((commit) => (
           <div key={commit.sha} className="commit-card">
             <div className="commit-header">
               <img 
@@ -197,3 +270,4 @@ const CommitsSlider = ({ repository, selectedBranch }) => {
 };
 
 export default CommitsSlider;
+export type { Repository, GitHubCommit, CommitsSliderProps };

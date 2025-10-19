@@ -7,20 +7,80 @@
 import React, { useState } from 'react';
 import { createAssetEditor } from '../framework';
 
+/**
+ * Tool definition structure
+ */
+interface ToolDefinition {
+  id: string;
+  name: string;
+  [key: string]: any;
+}
+
+/**
+ * Page parameters
+ */
+interface PageParams {
+  [key: string]: any;
+}
+
+/**
+ * Asset structure
+ */
+interface Asset {
+  path: string;
+  content?: string;
+  [key: string]: any;
+}
+
+/**
+ * Tool state structure
+ */
+interface ToolState {
+  content?: string;
+  assets: Asset[];
+  [key: string]: any;
+}
+
+/**
+ * Save result
+ */
+interface SaveResult {
+  result: 'success' | 'error';
+  [key: string]: any;
+}
+
+/**
+ * Editor component props
+ */
+interface ValueSetEditorComponentProps {
+  toolDefinition: ToolDefinition;
+  pageParams: PageParams;
+  toolState: ToolState;
+  onAssetSave: (content: string, target: string) => Promise<SaveResult>;
+  onGitHubSave: (content: string, commitMessage: string) => Promise<SaveResult>;
+}
+
+/**
+ * Context for editor hooks
+ */
+interface EditorContext {
+  [key: string]: any;
+}
+
 // The actual editor component
-const ValueSetEditorComponent = ({ 
+const ValueSetEditorComponent: React.FC<ValueSetEditorComponentProps> = ({ 
   toolDefinition, 
   pageParams, 
   toolState,
   onAssetSave,
   onGitHubSave 
 }) => {
-  const [content, setContent] = useState(toolState.content || '');
-  const [hasChanges, setHasChanges] = useState(false);
-  const [parseError, setParseError] = useState(null);
+  const [content, setContent] = useState<string>(toolState.content || '');
+  const [hasChanges, setHasChanges] = useState<boolean>(false);
+  const [parseError, setParseError] = useState<string | null>(null);
 
   // Handle content changes
-  const handleContentChange = (newContent) => {
+  const handleContentChange = (newContent: string): void => {
     setContent(newContent);
     setHasChanges(newContent !== toolState.assets[0]?.content);
     
@@ -29,12 +89,12 @@ const ValueSetEditorComponent = ({
       JSON.parse(newContent);
       setParseError(null);
     } catch (error) {
-      setParseError(error.message);
+      setParseError((error as Error).message);
     }
   };
 
   // Handle local save
-  const handleSaveLocal = async () => {
+  const handleSaveLocal = async (): Promise<void> => {
     try {
       const result = await onAssetSave(content, 'local');
       if (result.result === 'success') {
@@ -46,7 +106,7 @@ const ValueSetEditorComponent = ({
   };
 
   // Handle GitHub save
-  const handleSaveGitHub = async () => {
+  const handleSaveGitHub = async (): Promise<void> => {
     const commitMessage = prompt('Enter commit message:');
     if (commitMessage) {
       try {
@@ -79,14 +139,14 @@ const ValueSetEditorComponent = ({
       <div className="editor-toolbar">
         <button 
           onClick={handleSaveLocal}
-          disabled={!hasChanges || parseError}
+          disabled={!hasChanges || !!parseError}
           className="save-local-btn"
         >
           Save Locally
         </button>
         <button 
           onClick={handleSaveGitHub}
-          disabled={!hasChanges || parseError}
+          disabled={!hasChanges || !!parseError}
           className="save-github-btn"
         >
           Save to GitHub
@@ -216,11 +276,11 @@ const ValueSetEditor = createAssetEditor({
   category: 'terminology',
   
   // Hooks
-  onInit: async (context) => {
+  onInit: async (context: EditorContext): Promise<void> => {
     console.log('Value Set Editor initialized', context);
   },
   
-  onAssetSave: async (context) => {
+  onAssetSave: async (context: EditorContext): Promise<void> => {
     console.log('Asset saved', context);
     
     // You could add additional logic here, like:
@@ -229,9 +289,10 @@ const ValueSetEditor = createAssetEditor({
     // - Notifying other services
   },
   
-  onError: (error, context) => {
+  onError: (error: Error, context: EditorContext): void => {
     console.error('Value Set Editor error:', error, context);
   }
 });
 
 export default ValueSetEditor;
+export type { ToolDefinition, PageParams, ToolState, Asset, SaveResult, ValueSetEditorComponentProps };
