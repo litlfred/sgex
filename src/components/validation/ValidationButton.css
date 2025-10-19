@@ -1,0 +1,143 @@
+/**
+ * ValidationButton Styles
+ * 
+ * Button-style indicators following GitHub Pages deployment workflow styling.
+ * Colors: RED (error), YELLOW (warning), GREEN (success), BLUE (info)
+ */
+
+.validation-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  background-color: #fff;
+  color: #333;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.validation-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.validation-button:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.validation-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.validation-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 120, 212, 0.3);
+}
+
+/* Status indicators - Button style colors */
+
+.validation-button--error {
+  border-color: #d32f2f;
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.validation-button--error:hover:not(:disabled) {
+  background-color: #ffcdd2;
+  border-color: #c62828;
+}
+
+.validation-button--warning {
+  border-color: #f57c00;
+  background-color: #fff3e0;
+  color: #e65100;
+}
+
+.validation-button--warning:hover:not(:disabled) {
+  background-color: #ffe0b2;
+  border-color: #e65100;
+}
+
+.validation-button--success {
+  border-color: #388e3c;
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.validation-button--success:hover:not(:disabled) {
+  background-color: #c8e6c9;
+  border-color: #2e7d32;
+}
+
+.validation-button--info {
+  border-color: #0277bd;
+  background-color: #e1f5fe;
+  color: #01579b;
+}
+
+.validation-button--info:hover:not(:disabled) {
+  background-color: #b3e5fc;
+  border-color: #01579b;
+}
+
+/* Indicator styles */
+
+.validation-button__indicator {
+  font-weight: bold;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+}
+
+/* Spinner animation */
+
+.validation-button__spinner {
+  display: inline-block;
+  animation: validation-button-spin 1s linear infinite;
+  font-size: 16px;
+}
+
+@keyframes validation-button-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Dark mode support (prepared for future) */
+
+@media (prefers-color-scheme: dark) {
+  .validation-button {
+    background-color: #2d2d2d;
+    color: #e0e0e0;
+    border-color: #555;
+  }
+
+  .validation-button--error {
+    background-color: #3a1f1f;
+    border-color: #d32f2f;
+  }
+
+  .validation-button--warning {
+    background-color: #3a2a1f;
+    border-color: #f57c00;
+  }
+
+  .validation-button--success {
+    background-color: #1f3a20;
+    border-color: #388e3c;
+  }
+
+  .validation-button--info {
+    background-color: #1f2a3a;
+    border-color: #0277bd;
+  }
+}
