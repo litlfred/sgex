@@ -2,17 +2,33 @@ import React, { useState } from 'react';
 import HelpModal from './HelpModal';
 import useThemeImage from '../hooks/useThemeImage';
 
-const HelpButton = ({ helpTopic, contextData = {} }) => {
-  const [showHelp, setShowHelp] = useState(false);
+/**
+ * Props for HelpButton component
+ */
+interface HelpButtonProps {
+  /** Topic identifier for help content */
+  helpTopic?: string;
+  /** Additional context data to pass to help modal */
+  contextData?: Record<string, any>;
+}
+
+/**
+ * Help button that displays SGEX mascot and opens help modal
+ * 
+ * @example
+ * <HelpButton helpTopic="dak-editor" contextData={{ componentType: 'bpmn' }} />
+ */
+const HelpButton: React.FC<HelpButtonProps> = ({ helpTopic, contextData = {} }) => {
+  const [showHelp, setShowHelp] = useState<boolean>(false);
 
   // Theme-aware mascot image
   const mascotImage = useThemeImage('sgex-mascot.png');
 
-  const handleHelpClick = () => {
+  const handleHelpClick = (): void => {
     setShowHelp(true);
   };
 
-  const handleCloseHelp = () => {
+  const handleCloseHelp = (): void => {
     setShowHelp(false);
   };
 

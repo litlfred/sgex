@@ -5,8 +5,11 @@ import { PageLayout } from './framework';
 /**
  * Component that redirects users from /dashboard to /dak-action
  * since dashboard requires user and repository parameters
+ * 
+ * @example
+ * <Route path="/dashboard" element={<DashboardRedirect />} />
  */
-const DashboardRedirect = () => {
+const DashboardRedirect: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
