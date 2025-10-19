@@ -1,4 +1,4 @@
-import React, { useState, Suspense, lazy } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import stagingGroundService from '../services/stagingGroundService';
 
 // Lazy load MDEditor to improve initial page responsiveness
@@ -7,6 +7,17 @@ const MDEditor = lazy(() => import('@uiw/react-md-editor'));
 const PageEditModal = ({ page, onClose, onSave }) => {
   const [content, setContent] = useState(page?.content ? atob(page.content.content) : '');
   const [isSaving, setIsSaving] = useState(false);
+
+  // Handle Escape key
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape' && !isSaving) {
+        onClose();
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [onClose, isSaving]);
 
   if (!page) return null;
 
@@ -49,8 +60,17 @@ const PageEditModal = ({ page, onClose, onSave }) => {
   };
 
   return (
-    <div className="page-edit-modal-overlay" onClick={handleOverlayClick}>
-      <div className="page-edit-modal">
+    <div 
+      className="page-edit-modal-overlay" 
+      onClick={(e) => e.target === e.currentTarget && handleOverlayClick(e)}
+      role="presentation"
+    >
+      <div 
+        className="page-edit-modal"
+        role="dialog"
+        aria-modal="true"
+        tabIndex={-1}
+      >
         <div className="page-edit-modal-header">
           <h2>Edit {page.title}</h2>
           <div className="header-actions">

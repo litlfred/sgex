@@ -203,6 +203,15 @@
   border-bottom: 1px solid var(--who-border-color);
   cursor: pointer;
   transition: background-color 0.2s;
+  background: none;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  width: 100%;
+  text-align: left;
+  font-size: inherit;
+  font-family: inherit;
+  color: inherit;
 }
 
 .file-item:hover {

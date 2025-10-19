@@ -49,6 +49,20 @@ const DecisionSupportLogicViewContent = () => {
   const [enhancedFullwidth, setEnhancedFullwidth] = useState(false);
   const [autoHide, setAutoHide] = useState(false);
 
+  // Handle Escape key for dialogs
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        if (selectedDialog) setSelectedDialog(null);
+        if (cqlModal) setCqlModal(null);
+      }
+    };
+    if (selectedDialog || cqlModal) {
+      document.addEventListener('keydown', handleEscape);
+      return () => document.removeEventListener('keydown', handleEscape);
+    }
+  }, [selectedDialog, cqlModal]);
+
   // Extract profile, repository, branch for use in effects
   const { profile, repository, branch: selectedBranch } = pageParams;
 
@@ -761,8 +775,21 @@ define "Contraindication Present":
 
       {/* Source Dialog */}
       {selectedDialog && (
-        <div className="dialog-overlay" onClick={() => setSelectedDialog(null)}>
-          <div className="dialog-content" onClick={(e) => e.stopPropagation()}>
+        <div 
+          className="dialog-overlay" 
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setSelectedDialog(null);
+            }
+          }}
+          role="presentation"
+        >
+          <div 
+            className="dialog-content" 
+            role="dialog"
+            aria-modal="true"
+            tabIndex={-1}
+          >
             <div className="dialog-header">
               <h3>{selectedDialog.title}</h3>
               <button 
@@ -816,8 +843,21 @@ define "Contraindication Present":
 
       {/* CQL Modal */}
       {cqlModal && (
-        <div className="dialog-overlay" onClick={() => setCqlModal(null)}>
-          <div className="dialog-content cql-modal" onClick={(e) => e.stopPropagation()}>
+        <div 
+          className="dialog-overlay" 
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setCqlModal(null);
+            }
+          }}
+          role="presentation"
+        >
+          <div 
+            className="dialog-content cql-modal" 
+            role="dialog"
+            aria-modal="true"
+            tabIndex={-1}
+          >
             <div className="dialog-header">
               <div className="cql-modal-title">
                 <h3>📜 CQL Code</h3>

@@ -60,8 +60,17 @@ const CommitDiffModal = ({ isOpen, onClose, owner, repo, commitSha, commitMessag
   if (!isOpen) return null;
 
   return (
-    <div className="commit-diff-modal-overlay" onClick={onClose}>
-      <div className="commit-diff-modal" onClick={e => e.stopPropagation()}>
+    <div 
+      className="commit-diff-modal-overlay" 
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+      role="presentation"
+    >
+      <div 
+        className="commit-diff-modal"
+        role="dialog"
+        aria-modal="true"
+        tabIndex={-1}
+      >
         <div className="commit-diff-header">
           <h3>📋 Commit Changes</h3>
           <button className="close-button" onClick={onClose}>✕</button>

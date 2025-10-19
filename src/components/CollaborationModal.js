@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import useThemeImage from '../hooks/useThemeImage';
 import { ALT_TEXT_KEYS, getAltText } from '../utils/imageAltTextHelper';
@@ -6,6 +6,17 @@ import { ALT_TEXT_KEYS, getAltText } from '../utils/imageAltTextHelper';
 const CollaborationModal = ({ onClose }) => {
   const { t } = useTranslation();
   const [currentSlide, setCurrentSlide] = useState(0);
+
+  // Handle Escape key
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [onClose]);
 
   // Theme-aware collaboration image
   const collaborationImage = useThemeImage('collaboration.png');
@@ -139,8 +150,17 @@ const CollaborationModal = ({ onClose }) => {
   };
 
   return (
-    <div className="collaboration-modal-overlay" onClick={handleOverlayClick}>
-      <div className="collaboration-modal">
+    <div 
+      className="collaboration-modal-overlay" 
+      onClick={(e) => e.target === e.currentTarget && handleOverlayClick(e)}
+      role="presentation"
+    >
+      <div 
+        className="collaboration-modal"
+        role="dialog"
+        aria-modal="true"
+        tabIndex={-1}
+      >
         <div className="modal-header">
           <h2>{slides[currentSlide].title}</h2>
           <button className="close-button" onClick={onClose}>

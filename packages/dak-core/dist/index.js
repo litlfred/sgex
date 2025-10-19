@@ -13,6 +13,8 @@
  * - Asset management
  * - Shared FSH parsing and generation utilities
  * - Base component classes for all DAK types
+ * - DAK Component Objects for managing component instances
+ * - Source resolution for canonical, URL, and inline sources
  * - No web or MCP service dependencies
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -30,7 +32,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DAKAssetType = exports.DAKComponentType = exports.decisionTableCore = exports.DecisionTableCore = exports.questionnaireDefinitionCore = exports.QuestionnaireDefinitionCore = exports.actorDefinitionCore = exports.ActorDefinitionCore = exports.DAKValidationService = exports.dakService = exports.DAKService = void 0;
+exports.DAKAssetType = exports.DAKComponentType = exports.StagingGroundIntegrationService = exports.DAKFactory = exports.DAKObject = exports.SourceResolutionService = exports.decisionTableCore = exports.DecisionTableCore = exports.questionnaireDefinitionCore = exports.QuestionnaireDefinitionCore = exports.actorDefinitionCore = exports.ActorDefinitionCore = exports.DAKValidationService = exports.dakService = exports.DAKService = void 0;
 // Core types
 __exportStar(require("./types"), exports);
 // Core services
@@ -48,6 +50,17 @@ Object.defineProperty(exports, "questionnaireDefinitionCore", { enumerable: true
 var decision_table_1 = require("./decision-table");
 Object.defineProperty(exports, "DecisionTableCore", { enumerable: true, get: function () { return decision_table_1.DecisionTableCore; } });
 Object.defineProperty(exports, "decisionTableCore", { enumerable: true, get: function () { return decision_table_1.decisionTableCore; } });
+// New: Source resolution and Component Objects
+var sourceResolution_1 = require("./sourceResolution");
+Object.defineProperty(exports, "SourceResolutionService", { enumerable: true, get: function () { return sourceResolution_1.SourceResolutionService; } });
+__exportStar(require("./dakComponentObject"), exports);
+__exportStar(require("./components"), exports);
+var dakObject_1 = require("./dakObject");
+Object.defineProperty(exports, "DAKObject", { enumerable: true, get: function () { return dakObject_1.DAKObject; } });
+var dakFactory_1 = require("./dakFactory");
+Object.defineProperty(exports, "DAKFactory", { enumerable: true, get: function () { return dakFactory_1.DAKFactory; } });
+var stagingGroundIntegration_1 = require("./stagingGroundIntegration");
+Object.defineProperty(exports, "StagingGroundIntegrationService", { enumerable: true, get: function () { return stagingGroundIntegration_1.StagingGroundIntegrationService; } });
 // Base component classes and utilities
 __exportStar(require("./base-component"), exports);
 __exportStar(require("./fsh-utils"), exports);

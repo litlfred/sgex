@@ -19,7 +19,7 @@ export type ReportHandler = (metric: Metric) => void;
  * Report web vitals metrics to a provided callback
  * Dynamically imports web-vitals library to track Core Web Vitals:
  * - CLS (Cumulative Layout Shift)
- * - FID (First Input Delay)
+ * - INP (Interaction to Next Paint) - replaces FID in web-vitals v3+
  * - FCP (First Contentful Paint)
  * - LCP (Largest Contentful Paint)
  * - TTFB (Time to First Byte)
@@ -35,12 +35,12 @@ export type ReportHandler = (metric: Metric) => void;
  */
 const reportWebVitals = (onPerfEntry?: ReportHandler): void => {
   if (onPerfEntry && onPerfEntry instanceof Function) {
-    import('web-vitals').then(({ getCLS, getFID, getFCP, getLCP, getTTFB }) => {
-      getCLS(onPerfEntry);
-      getFID(onPerfEntry);
-      getFCP(onPerfEntry);
-      getLCP(onPerfEntry);
-      getTTFB(onPerfEntry);
+    import('web-vitals').then(({ onCLS, onINP, onFCP, onLCP, onTTFB }) => {
+      onCLS(onPerfEntry);
+      onINP(onPerfEntry);
+      onFCP(onPerfEntry);
+      onLCP(onPerfEntry);
+      onTTFB(onPerfEntry);
     });
   }
 };

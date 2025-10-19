@@ -3,6 +3,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import githubService from '../services/githubService';
 import repositoryCacheService from '../services/repositoryCacheService';
+import samlAuthService from '../services/samlAuthService';
+import SAMLAuthModal from './SAMLAuthModal';
 import { PageLayout } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
 
@@ -15,6 +17,8 @@ const SelectProfilePage = () => {
   const [error, setError] = useState(null);
   const [dakCounts, setDakCounts] = useState({});
   const [warningMessage, setWarningMessage] = useState(null);
+  const [samlModalOpen, setSamlModalOpen] = useState(false);
+  const [samlModalInfo, setSamlModalInfo] = useState(null);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -162,6 +166,14 @@ const SelectProfilePage = () => {
     initializeAuth();
   }, []);
 
+  // Register SAML modal callback on mount
+  useEffect(() => {
+    samlAuthService.registerModalCallback((samlInfo) => {
+      setSamlModalInfo(samlInfo);
+      setSamlModalOpen(true);
+    });
+  }, []);
+
   // Handle warning message from navigation state
   useEffect(() => {
     if (location.state?.warningMessage) {
@@ -294,6 +306,16 @@ const SelectProfilePage = () => {
         )}
         </div>
       )}
+      
+      {/* SAML Authorization Modal */}
+      <SAMLAuthModal
+        isOpen={samlModalOpen}
+        onClose={() => {
+          setSamlModalOpen(false);
+          setSamlModalInfo(null);
+        }}
+        samlInfo={samlModalInfo}
+      />
     </PageLayout>
   );
 };

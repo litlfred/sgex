@@ -135,6 +135,7 @@ const PageLayoutInner: React.FC<PageLayoutInnerProps> = ({
         {showMascot && (
           <ContextualHelpMascot 
             pageId={`${pageName}-loading`}
+            helpContent={[]}
             position="bottom-right"
           />
         )}
@@ -167,6 +168,7 @@ const PageLayoutInner: React.FC<PageLayoutInnerProps> = ({
         {showMascot && (
           <ContextualHelpMascot 
             pageId={pageName}
+            helpContent={[]}
             position="bottom-right"
             contextData={{}}
           />

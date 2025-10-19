@@ -102,30 +102,6 @@ const DAKActionSelectionContent = () => {
                   <p>{action.description}</p>
                 </div>
               </div>
-
-              <div className="action-workflow">
-                {action.id === 'edit' && (
-                  <div className="workflow-steps">
-                    <span className="step">1. Select DAK</span>
-                    <span className="step">2. Edit Components</span>
-                  </div>
-                )}
-                {action.id === 'fork' && (
-                  <div className="workflow-steps">
-                    <span className="step">1. Select Source DAK</span>
-                    <span className="step">2. Select Destination</span>
-                    <span className="step">3. Edit Components</span>
-                  </div>
-                )}
-                {action.id === 'create' && (
-                  <div className="workflow-steps">
-                    <span className="step">1. Select Template</span>
-                    <span className="step">2. Select Destination</span>
-                    <span className="step">3. Configure DAK</span>
-                    <span className="step">4. Edit Components</span>
-                  </div>
-                )}
-              </div>
             </div>
           ))}
         </div>

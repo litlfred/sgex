@@ -34,79 +34,202 @@ export interface DAKMetadata {
   publisher: DAKPublisher;
 }
 
-// 9 DAK Components
+// ============================================================================
+// DAK Component Source Types
+// Based on WHO SMART Guidelines updated logical model
+// https://github.com/WorldHealthOrganization/smart-base/blob/main/input/fsh/models/DAK.fsh
+// ============================================================================
+
+/**
+ * Base source type for DAK component sources
+ * Supports canonical URI, URL (absolute/relative), or inline instance data
+ * Based on WHO SMART Guidelines DAKComponentSources.fsh
+ */
+export interface DAKComponentSource<T> {
+  /** Canonical URI pointing to the component definition */
+  canonical?: string;
+  
+  /** URL to retrieve component definition from input/ or external source */
+  url?: string;
+  
+  /** Inline instance data */
+  instance?: T;
+  
+  /** Metadata about the source (SGEX-specific, not in FHIR LM) */
+  metadata?: {
+    /** When this source was added */
+    addedAt?: string;
+    /** Who/what added this source */
+    addedBy?: string;
+    /** Last validation timestamp */
+    lastValidated?: string;
+    /** Source type for tracking */
+    sourceType?: 'canonical' | 'url-absolute' | 'url-relative' | 'inline';
+  };
+}
+
+/**
+ * Source resolution result
+ */
+export interface ResolvedSource<T> {
+  /** The resolved data */
+  data: T;
+  /** The source that was used */
+  source: DAKComponentSource<T>;
+  /** How the data was resolved */
+  resolutionMethod: 'canonical' | 'url-absolute' | 'url-relative' | 'inline' | 'cache';
+  /** When resolved */
+  resolvedAt: Date;
+}
+
+/**
+ * Source validation result
+ */
+export interface SourceValidationResult {
+  isValid: boolean;
+  sourceType: 'canonical' | 'url-absolute' | 'url-relative' | 'inline';
+  errors: string[];
+  warnings: string[];
+}
+
+/**
+ * Save options for component instances
+ */
+export interface SaveOptions {
+  /** Path for file-based saves (relative to input/) */
+  path?: string;
+  
+  /** Whether to save as inline data in dak.json */
+  inline?: boolean;
+  
+  /** Commit message for staging ground */
+  message?: string;
+  
+  /** Update existing source or create new */
+  updateExisting?: boolean;
+}
+
+// ============================================================================
+// 9 DAK Components - Data Interfaces
+// ============================================================================
+
 export interface HealthInterventions {
+  /** Unique identifier */
+  id?: string;
   /** Overview of the health interventions and WHO, regional or national recommendations */
   interventions: any[];
 }
 
 export interface GenericPersona {
+  /** Unique identifier */
+  id?: string;
   /** Depiction of the human and system actors */
   personas: any[];
 }
 
 export interface UserScenario {
+  /** Unique identifier */
+  id?: string;
   /** Narratives that describe how the different personas may interact */
   scenarios: any[];
 }
 
 export interface BusinessProcessWorkflow {
+  /** Unique identifier */
+  id?: string;
   /** Business processes and workflows for achieving health programme objectives */
   processes: any[];
 }
 
+/**
+ * Core Data Element
+ * A core data element can be one of: ValueSet, CodeSystem, ConceptMap, or Logical Model
+ * Based on WHO SMART Guidelines CoreDataElement.fsh
+ */
 export interface CoreDataElement {
-  /** Data elements required throughout the different points of a workflow */
-  elements: any[];
+  /** Identifier for the core data element */
+  id?: string;
+  
+  /** Type of core data element */
+  type: 'valueset' | 'codesystem' | 'conceptmap' | 'logicalmodel';
+  
+  /** Canonical URI/IRI pointing to the definition */
+  canonical: string;
+  
+  /** Description - either Markdown content or URI to a Markdown file */
+  description?: string | { uri: string };
 }
 
 export interface DecisionSupportLogic {
+  /** Unique identifier */
+  id?: string;
   /** Decision-support logic and algorithms to support appropriate service delivery */
   logic: any[];
 }
 
 export interface ProgramIndicator {
+  /** Unique identifier */
+  id?: string;
   /** Core set of indicators for decision-making, performance metrics and reporting */
   indicators: any[];
 }
 
 export interface Requirements {
+  /** Unique identifier */
+  id?: string;
   /** High-level list of core functions and capabilities that the system must have */
   requirements: any[];
 }
 
 export interface TestScenario {
+  /** Unique identifier */
+  id?: string;
   /** Set of test scenarios to validate an implementation of the DAK */
   scenarios: any[];
 }
 
+// ============================================================================
+// Specific Source Types for Each of the 9 DAK Components
+// ============================================================================
+
+export type HealthInterventionsSource = DAKComponentSource<HealthInterventions>;
+export type GenericPersonaSource = DAKComponentSource<GenericPersona>;
+export type UserScenarioSource = DAKComponentSource<UserScenario>;
+export type BusinessProcessWorkflowSource = DAKComponentSource<BusinessProcessWorkflow>;
+export type CoreDataElementSource = DAKComponentSource<CoreDataElement>;
+export type DecisionSupportLogicSource = DAKComponentSource<DecisionSupportLogic>;
+export type ProgramIndicatorSource = DAKComponentSource<ProgramIndicator>;
+export type RequirementsSource = DAKComponentSource<Requirements>;
+export type TestScenarioSource = DAKComponentSource<TestScenario>;
+
 /**
  * Complete Digital Adaptation Kit (DAK) representation
  * Logical Model for representing a complete DAK with metadata and all 9 DAK components
+ * Updated to use Source types per WHO SMART Guidelines logical model
  */
 export interface DAK extends DAKMetadata {
   /** Resource type identifier for DAK logical model */
   resourceType: 'DAK';
   
-  // 9 DAK Components (all optional, cardinality 0..*)
+  // 9 DAK Components (all optional, cardinality 0..*) - now using Source types
   /** Health Interventions and Recommendations */
-  healthInterventions?: HealthInterventions[];
+  healthInterventions?: HealthInterventionsSource[];
   /** Generic Personas */
-  personas?: GenericPersona[];
+  personas?: GenericPersonaSource[];
   /** User Scenarios */
-  userScenarios?: UserScenario[];
+  userScenarios?: UserScenarioSource[];
   /** Generic Business Processes and Workflows */
-  businessProcesses?: BusinessProcessWorkflow[];
+  businessProcesses?: BusinessProcessWorkflowSource[];
   /** Core Data Elements */
-  dataElements?: CoreDataElement[];
+  dataElements?: CoreDataElementSource[];
   /** Decision-Support Logic */
-  decisionLogic?: DecisionSupportLogic[];
+  decisionLogic?: DecisionSupportLogicSource[];
   /** Program Indicators */
-  indicators?: ProgramIndicator[];
+  indicators?: ProgramIndicatorSource[];
   /** Functional and Non-Functional Requirements */
-  requirements?: Requirements[];
+  requirements?: RequirementsSource[];
   /** Test Scenarios */
-  testScenarios?: TestScenario[];
+  testScenarios?: TestScenarioSource[];
 }
 
 /**

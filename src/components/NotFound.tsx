@@ -62,7 +62,7 @@ const NotFound: React.FC = () => {
       showHeader={true}
       showMascot={true}
       showBreadcrumbs={false}
-      customBreadcrumbs={null}
+      customBreadcrumbs={undefined}
     >
       <div className="not-found-page">
         <h1>Page Not Found</h1>

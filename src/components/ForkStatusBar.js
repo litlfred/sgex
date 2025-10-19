@@ -154,7 +154,12 @@ const ForkStatusBar = ({ profile, repository, selectedBranch }) => {
 
   return (
     <div className={`fork-status-bar ${isExpanded ? 'expanded' : 'collapsed'}`}>
-      <div className="fork-status-header" onClick={toggleExpansion}>
+      <button 
+        className="fork-status-header" 
+        onClick={toggleExpansion}
+        type="button"
+        aria-expanded={isExpanded}
+      >
         <div className="fork-badge">
           <span className="fork-icon">🍴</span>
           <span className="fork-count">{forks.length}</span>
@@ -169,6 +174,15 @@ const ForkStatusBar = ({ profile, repository, selectedBranch }) => {
                   e.stopPropagation();
                   handleParentClick(e);
                 }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleParentClick(e);
+                  }
+                }}
+                role="button"
+                tabIndex={0}
               >
                 {parentRepository.owner.login}/{parentRepository.name}
               </span>
@@ -182,19 +196,20 @@ const ForkStatusBar = ({ profile, repository, selectedBranch }) => {
             </>
           )}
         </span>
-        <button className="fork-toggle-btn" aria-label={isExpanded ? 'Collapse' : 'Expand'}>
+        <span className="fork-toggle-btn" aria-label={isExpanded ? 'Collapse' : 'Expand'}>
           <span className={`toggle-icon ${isExpanded ? 'expanded' : ''}`}>▼</span>
-        </button>
-      </div>
+        </span>
+      </button>
       
       {isExpanded && (
         <div className="fork-list">
           {parentRepository && (
             <div className="parent-section">
               <h4 className="section-title">Parent Repository</h4>
-              <div 
+              <button 
                 className="fork-item parent-item"
                 onClick={(event) => handleParentClick(event)}
+                type="button"
               >
                 <div className="fork-avatar">
                   <img 
@@ -226,7 +241,7 @@ const ForkStatusBar = ({ profile, repository, selectedBranch }) => {
                 <div className="fork-actions">
                   <span className="fork-link-hint">Click to view DAK →</span>
                 </div>
-              </div>
+              </button>
             </div>
           )}
           
@@ -241,10 +256,11 @@ const ForkStatusBar = ({ profile, repository, selectedBranch }) => {
               {parentRepository && <h4 className="section-title">Forks ({forks.length})</h4>}
               <div className="fork-items">
                 {forks.map((fork) => (
-                  <div 
+                  <button 
                     key={fork.id} 
                     className="fork-item"
                     onClick={(event) => handleForkClick(event, fork)}
+                    type="button"
                   >
                     <div className="fork-avatar">
                       <img 
@@ -275,7 +291,7 @@ const ForkStatusBar = ({ profile, repository, selectedBranch }) => {
                     <div className="fork-actions">
                       <span className="fork-link-hint">Click to view DAK →</span>
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
             </div>
