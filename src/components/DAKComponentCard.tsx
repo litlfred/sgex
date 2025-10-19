@@ -4,31 +4,67 @@ import useThemeImage from '../hooks/useThemeImage';
 import { getAltText, ALT_TEXT_KEYS } from '../utils/imageAltTextHelper';
 import './DAKComponentCard.css';
 
-const DAKComponentCard = ({ component, onClick, className = '' }) => {
+/**
+ * DAK Component information
+ */
+interface DAKComponent {
+  name: string;
+  description: string;
+  type: string;
+  color: string;
+  icon: string;
+  cardImage: string;
+  fileTypes: string[];
+  count: number;
+}
+
+/**
+ * Props for DAKComponentCard component
+ */
+interface DAKComponentCardProps {
+  /** Component information to display */
+  component: DAKComponent;
+  /** Click handler for card interaction */
+  onClick?: (event: React.MouseEvent | React.KeyboardEvent, component: DAKComponent) => void;
+  /** Additional CSS class names */
+  className?: string;
+}
+
+/**
+ * Card component for displaying DAK component information
+ * 
+ * @example
+ * <DAKComponentCard 
+ *   component={componentData} 
+ *   onClick={handleClick}
+ *   className="highlighted"
+ * />
+ */
+const DAKComponentCard: React.FC<DAKComponentCardProps> = ({ component, onClick, className = '' }) => {
   const { t } = useTranslation();
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [imageError, setImageError] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState<boolean>(false);
+  const [imageError, setImageError] = useState<boolean>(false);
   
   // Get theme-aware image path
   const cardImagePath = useThemeImage(component.cardImage);
 
-  const handleImageLoad = () => {
+  const handleImageLoad = (): void => {
     setImageLoaded(true);
     setImageError(false);
   };
 
-  const handleImageError = () => {
+  const handleImageError = (): void => {
     setImageError(true);
     setImageLoaded(false);
   };
 
-  const handleClick = (event) => {
+  const handleClick = (event: React.MouseEvent | React.KeyboardEvent): void => {
     if (onClick) {
       onClick(event, component);
     }
   };
 
-  const handleKeyDown = (event) => {
+  const handleKeyDown = (event: React.KeyboardEvent): void => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
       handleClick(event);
@@ -40,7 +76,7 @@ const DAKComponentCard = ({ component, onClick, className = '' }) => {
       className={`component-card ${component.type.toLowerCase()} ${imageLoaded ? 'image-loaded' : ''} ${className}`}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
-      style={{ '--component-color': component.color }}
+      style={{ '--component-color': component.color } as React.CSSProperties}
       tabIndex={0}
       role="button"
       aria-label={`${component.name} - ${component.description}`}
@@ -90,3 +126,4 @@ const DAKComponentCard = ({ component, onClick, className = '' }) => {
 };
 
 export default DAKComponentCard;
+export type { DAKComponent, DAKComponentCardProps };

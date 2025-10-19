@@ -1,5 +1,5 @@
 import React from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, NavigateFunction } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { PageLayout, usePageParams } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
@@ -7,7 +7,29 @@ import useThemeImage from '../hooks/useThemeImage';
 import { ALT_TEXT_KEYS, getAltText } from '../utils/imageAltTextHelper';
 import './DAKActionSelection.css';
 
-const DAKActionSelection = () => {
+/**
+ * GitHub profile information
+ */
+interface GitHubProfile {
+  login: string;
+  [key: string]: any;
+}
+
+/**
+ * DAK action information
+ */
+interface DAKAction {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  color: string;
+}
+
+/**
+ * DAK Action Selection page wrapper component
+ */
+const DAKActionSelection: React.FC = () => {
   return (
     <PageLayout pageName="dak-action-selection">
       <DAKActionSelectionContent />
@@ -15,10 +37,13 @@ const DAKActionSelection = () => {
   );
 };
 
-const DAKActionSelectionContent = () => {
+/**
+ * Content component for DAK action selection
+ */
+const DAKActionSelectionContent: React.FC = () => {
   const { t } = useTranslation();
   const location = useLocation();
-  const navigate = useNavigate();
+  const navigate: NavigateFunction = useNavigate();
   const { profile } = usePageParams();
   
   // Theme-aware action images
@@ -27,12 +52,12 @@ const DAKActionSelectionContent = () => {
   const createImage = useThemeImage('create.png');
   
   // Use profile from framework (PageProvider) or location state
-  const effectiveProfile = profile || location.state?.profile;
+  const effectiveProfile: GitHubProfile | undefined = profile || location.state?.profile;
 
   // Note: Profile validation is handled by PageLayout framework
   // When accessing directly via URL, the framework will load the profile based on URL params
 
-  const dakActions = [
+  const dakActions: DAKAction[] = [
     {
       id: 'edit',
       title: 'Edit Existing DAK',
@@ -56,7 +81,9 @@ const DAKActionSelectionContent = () => {
     }
   ];
 
-  const handleActionSelect = (event, actionId) => {
+  const handleActionSelect = (event: React.MouseEvent, actionId: string): void => {
+    if (!effectiveProfile) return;
+    
     // Navigate directly to the DAK selection with the chosen action and user parameter
     const navigationState = { 
       profile: effectiveProfile, 
@@ -88,7 +115,7 @@ const DAKActionSelectionContent = () => {
               key={action.id}
               className={`action-card-container`}
               onClick={(event) => handleActionSelect(event, action.id)}
-              style={{ '--action-color': action.color }}
+              style={{ '--action-color': action.color } as React.CSSProperties}
             >
               <div className="action-card-main">
                 <div className="action-card">
@@ -111,3 +138,4 @@ const DAKActionSelectionContent = () => {
 };
 
 export default DAKActionSelection;
+export type { GitHubProfile, DAKAction };

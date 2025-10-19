@@ -1,7 +1,16 @@
 import React from 'react';
 import ContextualHelpMascot from './ContextualHelpMascot';
 
-const PATSetupInstructions = () => {
+/**
+ * Component displaying instructions for creating GitHub Personal Access Tokens
+ * 
+ * Provides step-by-step guidance for creating both fine-grained and classic PATs,
+ * including required permissions and security best practices.
+ * 
+ * @example
+ * <PATSetupInstructions />
+ */
+const PATSetupInstructions: React.FC = () => {
   return (
     <div className="pat-setup-instructions">
       <div className="setup-content">

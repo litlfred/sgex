@@ -1,9 +1,42 @@
 import React, { useEffect } from 'react';
 
-const PageViewModal = ({ page, onClose }) => {
+/**
+ * Page content structure from GitHub API
+ */
+interface PageContent {
+  content: string;
+}
+
+/**
+ * Page data structure
+ */
+interface Page {
+  title: string;
+  filename: string;
+  path: string;
+  content?: PageContent;
+}
+
+/**
+ * Props for PageViewModal component
+ */
+interface PageViewModalProps {
+  /** Page data to display */
+  page: Page | null;
+  /** Callback when modal is closed */
+  onClose: () => void;
+}
+
+/**
+ * Modal component for viewing page content with markdown rendering
+ * 
+ * @example
+ * <PageViewModal page={pageData} onClose={handleClose} />
+ */
+const PageViewModal: React.FC<PageViewModalProps> = ({ page, onClose }) => {
   // Handle Escape key
   useEffect(() => {
-    const handleEscape = (e) => {
+    const handleEscape = (e: KeyboardEvent): void => {
       if (e.key === 'Escape') {
         onClose();
       }
@@ -14,7 +47,7 @@ const PageViewModal = ({ page, onClose }) => {
 
   if (!page) return null;
 
-  const handleOverlayClick = (e) => {
+  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>): void => {
     if (e.target === e.currentTarget) {
       onClose();
     }
@@ -24,7 +57,7 @@ const PageViewModal = ({ page, onClose }) => {
   const markdownContent = page.content ? atob(page.content.content) : '';
 
   // Simple markdown to HTML conversion for basic formatting
-  const formatMarkdown = (markdown) => {
+  const formatMarkdown = (markdown: string): string => {
     return markdown
       .replace(/^# (.*$)/gim, '<h1>$1</h1>')
       .replace(/^## (.*$)/gim, '<h2>$1</h2>')
@@ -71,20 +104,22 @@ const PageViewModal = ({ page, onClose }) => {
               <button className="tab-btn active">Rendered</button>
               <button className="tab-btn" onClick={() => {
                 // Toggle between rendered and raw view
-                const rendered = document.querySelector('.rendered-content');
-                const raw = document.querySelector('.raw-content');
+                const rendered = document.querySelector('.rendered-content') as HTMLElement;
+                const raw = document.querySelector('.raw-content') as HTMLElement;
                 const tabs = document.querySelectorAll('.tab-btn');
                 
-                if (rendered.style.display === 'none') {
-                  rendered.style.display = 'block';
-                  raw.style.display = 'none';
-                  tabs[0].classList.add('active');
-                  tabs[1].classList.remove('active');
-                } else {
-                  rendered.style.display = 'none';
-                  raw.style.display = 'block';
-                  tabs[0].classList.remove('active');
-                  tabs[1].classList.add('active');
+                if (rendered && raw && tabs.length >= 2) {
+                  if (rendered.style.display === 'none') {
+                    rendered.style.display = 'block';
+                    raw.style.display = 'none';
+                    tabs[0].classList.add('active');
+                    tabs[1].classList.remove('active');
+                  } else {
+                    rendered.style.display = 'none';
+                    raw.style.display = 'block';
+                    tabs[0].classList.remove('active');
+                    tabs[1].classList.add('active');
+                  }
                 }
               }}>Raw Markdown</button>
             </div>
@@ -104,3 +139,4 @@ const PageViewModal = ({ page, onClose }) => {
 };
 
 export default PageViewModal;
+export type { Page, PageContent, PageViewModalProps };
