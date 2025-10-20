@@ -1,10 +1,45 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import githubService from '../services/githubService';
 
-const CommitDiffModal = ({ isOpen, onClose, owner, repo, commitSha, commitMessage }) => {
-  const [commitData, setCommitData] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+interface CommitFile {
+  filename: string;
+  status: string;
+  additions: number;
+  deletions: number;
+  previous_filename?: string;
+}
+
+interface CommitData {
+  sha: string;
+  html_url: string;
+  commit: {
+    message: string;
+    author: {
+      name: string;
+      email: string;
+      date: string;
+    };
+  };
+  files?: CommitFile[];
+  stats?: {
+    additions: number;
+    deletions: number;
+  };
+}
+
+interface CommitDiffModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  owner: string;
+  repo: string;
+  commitSha: string;
+  commitMessage?: string;
+}
+
+const CommitDiffModal: React.FC<CommitDiffModalProps> = ({ isOpen, onClose, owner, repo, commitSha, commitMessage }) => {
+  const [commitData, setCommitData] = useState<CommitData | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
   const loadCommitData = useCallback(async () => {
     setLoading(true);
@@ -27,7 +62,7 @@ const CommitDiffModal = ({ isOpen, onClose, owner, repo, commitSha, commitMessag
     }
   }, [isOpen, commitSha, loadCommitData]);
 
-  const getFileChangeIcon = (status) => {
+  const getFileChangeIcon = (status: string): string => {
     switch (status) {
       case 'added':
         return '✅';
@@ -42,7 +77,7 @@ const CommitDiffModal = ({ isOpen, onClose, owner, repo, commitSha, commitMessag
     }
   };
 
-  const getFileChangeClass = (status) => {
+  const getFileChangeClass = (status: string): string => {
     switch (status) {
       case 'added':
         return 'file-added';

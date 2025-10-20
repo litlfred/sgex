@@ -10,22 +10,22 @@ import { handleNavigationClick } from '../utils/navigationUtils';
 import useThemeImage from '../hooks/useThemeImage';
 import { ALT_TEXT_KEYS, getAltText } from '../utils/imageAltTextHelper';
 
-const WelcomePage = () => {
+const WelcomePage: React.FC = () => {
   const { t } = useTranslation();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [showCollaborationModal, setShowCollaborationModal] = useState(false);
-  const [showPATHelp, setShowPATHelp] = useState(false);
-  const [warningMessage, setWarningMessage] = useState(null);
-  const [tokenName, setTokenName] = useState('');
-  const [patToken, setPatToken] = useState('');
-  const [patError, setPATError] = useState('');
-  const [patLoading, setPATLoading] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [showCollaborationModal, setShowCollaborationModal] = useState<boolean>(false);
+  const [showPATHelp, setShowPATHelp] = useState<boolean>(false);
+  const [warningMessage, setWarningMessage] = useState<string | null>(null);
+  const [tokenName, setTokenName] = useState<string>('');
+  const [patToken, setPatToken] = useState<string>('');
+  const [patError, setPATError] = useState<string>('');
+  const [patLoading, setPATLoading] = useState<boolean>(false);
 
   const navigate = useNavigate();
   const location = useLocation();
   
   // Ref to focus on PAT token input
-  const patTokenInputRef = useRef(null);
+  const patTokenInputRef = useRef<HTMLInputElement>(null);
 
   // Theme-aware image paths
   const mascotImage = useThemeImage('sgex-mascot.png');
@@ -110,7 +110,7 @@ const WelcomePage = () => {
     };
   }, [isAuthenticated]);
 
-  const handleAuthSuccess = (token, octokitInstance, username) => {
+  const handleAuthSuccess = (token: string, octokitInstance: any, username?: string) => {
     // Store token in session storage for this session
     sessionStorage.setItem('github_token', token);
     
@@ -125,7 +125,7 @@ const WelcomePage = () => {
     setIsAuthenticated(true);
   };
 
-  const handleAuthoringClick = (event) => {
+  const handleAuthoringClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     handleNavigationClick(event, '/select_profile', navigate);
   };
 
@@ -143,7 +143,7 @@ const WelcomePage = () => {
     setShowCollaborationModal(false);
   };
 
-  const handlePATSubmit = async (e) => {
+  const handlePATSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     if (!patToken.trim()) {
@@ -179,12 +179,12 @@ const WelcomePage = () => {
     }
   };
 
-  const handleTokenNameChange = (e) => {
+  const handleTokenNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setTokenName(e.target.value);
     if (patError) setPATError(''); // Clear error when user starts typing
   };
 
-  const handlePATTokenChange = (e) => {
+  const handlePATTokenChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPatToken(e.target.value);
     if (patError) setPATError(''); // Clear error when user starts typing
   };
