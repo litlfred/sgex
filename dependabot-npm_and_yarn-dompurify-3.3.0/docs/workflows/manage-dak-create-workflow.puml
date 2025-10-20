@@ -1,0 +1,67 @@
+@startuml Create New DAK Workflow Sequence
+!theme plain
+title Create New DAK Workflow - Sequence Diagram
+
+actor "[[../requirements.md#req-actor-001 DAK Author]]" as Author
+participant "[[../requirements.md#req-actor-002 SGeX Workbench]]" as SGeX  
+participant "[[../requirements.md#req-actor-003 GitHub]]" as GitHub
+participant "[[../requirements.md#req-actor-004 OCL]]" as OCL
+participant "[[../requirements.md#req-actor-005 PCMT]]" as PCMT
+
+Author -> SGeX: Choose "Create New DAK" action
+
+== Template Selection ==
+Author -> SGeX: Navigate to template selection
+note right of SGeX: Fixed template list from\nconfiguration file
+SGeX -> Author: Present WHO template SMART Guidelines\n(smart-ig-empty template)
+Author -> SGeX: Confirm template selection
+
+== Destination Organization Selection ==  
+Author -> SGeX: Navigate to destination organization selection
+SGeX -> GitHub: Query user organizations
+GitHub -> SGeX: Return user organizations
+SGeX -> Author: Present organization selection interface
+
+Author -> SGeX: Select destination organization
+
+== DAK Configuration ==
+Author -> SGeX: Navigate to DAK configuration
+SGeX -> Author: Present DAK configuration form\n(name, title, description, id)
+Author -> SGeX: Submit configuration parameters
+
+== Repository Creation ==
+SGeX -> GitHub: Create repository from WHO template\n(WorldHealthOrganization/smart-ig-empty)
+GitHub -> SGeX: Confirm repository creation
+SGeX -> GitHub: Update sushi-config.yaml with parameters
+GitHub -> SGeX: Confirm configuration update
+SGeX -> Author: Navigate to Edit DAK Component
+
+== Edit DAK Component Phase ==
+Author -> SGeX: Access DAK Component Editor
+SGeX -> Author: Present component editing interface
+
+loop Component Editing Session
+    Author -> SGeX: Edit component content
+    
+    alt Terminology Data Needed
+        SGeX -> OCL: Request terminology data
+        OCL -> SGeX: Provide terminology definitions/mappings
+        SGeX -> Author: Present terminology options
+    end
+    
+    alt Product Data Needed  
+        SGeX -> PCMT: Request product master data
+        PCMT -> SGeX: Provide product catalog information
+        SGeX -> Author: Present product data options
+    end
+    
+    Author -> SGeX: Save component changes
+    SGeX -> GitHub: Commit changes to repository
+    GitHub -> SGeX: Confirm commit
+    SGeX -> Author: Confirm save successful
+end
+
+Author -> SGeX: Complete DAK management
+SGeX -> Author: Return to DAK dashboard
+
+@enduml
