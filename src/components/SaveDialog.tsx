@@ -3,7 +3,56 @@ import githubService from '../services/githubService';
 import dakComplianceService from '../services/dakComplianceService';
 import stagingGroundService from '../services/stagingGroundService';
 
-const SaveDialog = ({ 
+interface StagingFile {
+  path: string;
+  content: string;
+}
+
+interface StagingGround {
+  files: StagingFile[];
+  message?: string;
+}
+
+interface ValidationResult {
+  level: 'error' | 'warning' | 'info';
+  message: string;
+  suggestion?: string;
+}
+
+interface Validation {
+  files: {
+    [filePath: string]: ValidationResult[];
+  };
+}
+
+interface Repository {
+  name: string;
+  full_name: string;
+  owner?: {
+    login: string;
+  };
+  isDemo?: boolean;
+  default_branch?: string;
+}
+
+interface SaveResult {
+  sha: string;
+  message: string;
+  url: string;
+}
+
+interface SaveDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  stagingGround: StagingGround | null;
+  validation: Validation | null;
+  repository: Repository;
+  selectedBranch: string;
+  hasWriteAccess: boolean;
+  onSaveSuccess: (result: SaveResult) => void;
+}
+
+const SaveDialog: React.FC<SaveDialogProps> = ({ 
   isOpen, 
   onClose, 
   stagingGround, 
@@ -13,11 +62,11 @@ const SaveDialog = ({
   hasWriteAccess,
   onSaveSuccess 
 }) => {
-  const [commitMessage, setCommitMessage] = useState('');
-  const [overrideValidation, setOverrideValidation] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState(null);
-  const [showValidationDetails, setShowValidationDetails] = useState(false);
+  const [commitMessage, setCommitMessage] = useState<string>('');
+  const [overrideValidation, setOverrideValidation] = useState<boolean>(false);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [showValidationDetails, setShowValidationDetails] = useState<boolean>(false);
 
   // Reset state when dialog opens
   useEffect(() => {
@@ -92,7 +141,7 @@ const SaveDialog = ({
     }
   };
 
-  const getErrorMessage = (error) => {
+  const getErrorMessage = (error: any): string => {
     if (error.status === 409) {
       return 'Conflict detected. The branch has been updated since you started. Please refresh and try again.';
     } else if (error.status === 403) {
@@ -106,7 +155,7 @@ const SaveDialog = ({
     }
   };
 
-  const formatValidationIcon = (level) => {
+  const formatValidationIcon = (level: string): string => {
     switch (level) {
       case 'error': return '🔴';
       case 'warning': return '🟡';
@@ -116,7 +165,7 @@ const SaveDialog = ({
   };
 
   // Handle removing individual file
-  const handleRemoveFile = (filePath) => {
+  const handleRemoveFile = (filePath: string): void => {
     if (window.confirm(`Are you sure you want to remove "${filePath}" from staging? This cannot be undone.`)) {
       stagingGroundService.removeFile(filePath);
     }

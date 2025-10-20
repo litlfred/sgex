@@ -1,14 +1,39 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import tutorialService from '../services/tutorialService';
 import EnhancedTutorialModal from './EnhancedTutorialModal';
 import './TutorialManager.css';
 
+interface Tutorial {
+  id: string;
+  title: string;
+  description?: string;
+  pages?: string[];
+  category?: string;
+  badge?: string;
+  [key: string]: any;
+}
+
+interface TutorialManagerProps {
+  pageId: string;
+  children: ReactNode | ((props: TutorialProps) => ReactNode);
+  contextData?: Record<string, any>;
+  tutorials?: Tutorial[];
+  autoRegisterTutorials?: boolean;
+}
+
+interface TutorialProps {
+  availableTutorials: Tutorial[];
+  launchTutorial: (tutorialId: string) => void;
+  tutorialService: typeof tutorialService;
+  pageId: string;
+}
+
 /**
  * TutorialManager - Higher-order component that provides tutorial management capabilities
  * to any page component. It handles tutorial registration, menu integration, and modal display.
  */
-const TutorialManager = ({ 
+const TutorialManager: React.FC<TutorialManagerProps> = ({ 
   pageId, 
   children, 
   contextData = {},
@@ -16,9 +41,9 @@ const TutorialManager = ({
   autoRegisterTutorials = true 
 }) => {
   const { t } = useTranslation();
-  const [showTutorial, setShowTutorial] = useState(false);
-  const [currentTutorialId, setCurrentTutorialId] = useState(null);
-  const [availableTutorials, setAvailableTutorials] = useState([]);
+  const [showTutorial, setShowTutorial] = useState<boolean>(false);
+  const [currentTutorialId, setCurrentTutorialId] = useState<string | null>(null);
+  const [availableTutorials, setAvailableTutorials] = useState<Tutorial[]>([]);
 
   // Register page-specific tutorials
   useEffect(() => {
@@ -42,17 +67,17 @@ const TutorialManager = ({
     updateAvailableTutorials();
   }, [pageId, tutorials, autoRegisterTutorials, contextData]);
 
-  const updateAvailableTutorials = () => {
+  const updateAvailableTutorials = (): void => {
     const pageTutorials = tutorialService.getTutorialsForPage(pageId, contextData);
     setAvailableTutorials(pageTutorials);
   };
 
-  const launchTutorial = (tutorialId) => {
+  const launchTutorial = (tutorialId: string): void => {
     setCurrentTutorialId(tutorialId);
     setShowTutorial(true);
   };
 
-  const closeTutorial = () => {
+  const closeTutorial = (): void => {
     setShowTutorial(false);
     setCurrentTutorialId(null);
   };
@@ -82,10 +107,18 @@ const TutorialManager = ({
   );
 };
 
+interface TutorialLauncherProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  tutorialId: string;
+  children?: ReactNode;
+  className?: string;
+  contextData?: Record<string, any>;
+  onLaunch?: (tutorialId: string) => void;
+}
+
 /**
  * TutorialLauncher - Component for launching specific tutorials
  */
-export const TutorialLauncher = ({ 
+export const TutorialLauncher: React.FC<TutorialLauncherProps> = ({ 
   tutorialId, 
   children, 
   className = 'tutorial-launcher',
@@ -93,9 +126,9 @@ export const TutorialLauncher = ({
   onLaunch,
   ...props 
 }) => {
-  const [showTutorial, setShowTutorial] = useState(false);
+  const [showTutorial, setShowTutorial] = useState<boolean>(false);
 
-  const handleClick = () => {
+  const handleClick = (): void => {
     if (onLaunch) {
       onLaunch(tutorialId);
     } else {
@@ -103,7 +136,7 @@ export const TutorialLauncher = ({
     }
   };
 
-  const closeTutorial = () => {
+  const closeTutorial = (): void => {
     setShowTutorial(false);
   };
 
@@ -128,10 +161,18 @@ export const TutorialLauncher = ({
   );
 };
 
+interface TutorialMenuProps {
+  pageId: string;
+  contextData?: Record<string, any>;
+  onTutorialSelect?: (tutorialId: string) => void;
+  className?: string;
+  showCategories?: boolean;
+}
+
 /**
  * TutorialMenu - Component for displaying available tutorials in a menu
  */
-export const TutorialMenu = ({ 
+export const TutorialMenu: React.FC<TutorialMenuProps> = ({ 
   pageId, 
   contextData = {}, 
   onTutorialSelect,
@@ -139,8 +180,8 @@ export const TutorialMenu = ({
   showCategories = false 
 }) => {
   const { t } = useTranslation();
-  const [tutorials, setTutorials] = useState([]);
-  const [categories, setCategories] = useState({});
+  const [tutorials, setTutorials] = useState<Tutorial[]>([]);
+  const [categories, setCategories] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const pageTutorials = tutorialService.getTutorialsForPage(pageId, contextData);
@@ -151,7 +192,7 @@ export const TutorialMenu = ({
     }
   }, [pageId, contextData, showCategories]);
 
-  const handleTutorialClick = (tutorialId) => {
+  const handleTutorialClick = (tutorialId: string): void => {
     if (onTutorialSelect) {
       onTutorialSelect(tutorialId);
     }
@@ -161,8 +202,8 @@ export const TutorialMenu = ({
     return null;
   }
 
-  const renderTutorialsByCategory = () => {
-    const categorizedTutorials = {};
+  const renderTutorialsByCategory = (): JSX.Element[] => {
+    const categorizedTutorials: Record<string, Tutorial[]> = {};
     
     tutorials.forEach(tutorial => {
       const category = tutorial.category || 'uncategorized';
@@ -201,7 +242,7 @@ export const TutorialMenu = ({
     ));
   };
 
-  const renderTutorialsList = () => {
+  const renderTutorialsList = (): JSX.Element[] => {
     return tutorials.map(tutorial => (
       <button
         key={tutorial.id}
@@ -229,24 +270,31 @@ export const TutorialMenu = ({
   );
 };
 
+interface UseTutorialsReturn {
+  tutorials: Tutorial[];
+  launchTutorial: (tutorialId: string) => Tutorial | null;
+  registerTutorial: (tutorialId: string, tutorialDefinition: Tutorial) => boolean;
+  tutorialService: typeof tutorialService;
+}
+
 /**
  * Hook for accessing tutorial functionality in functional components
  */
-export const useTutorials = (pageId, contextData = {}) => {
-  const [tutorials, setTutorials] = useState([]);
+export const useTutorials = (pageId: string, contextData: Record<string, any> = {}): UseTutorialsReturn => {
+  const [tutorials, setTutorials] = useState<Tutorial[]>([]);
 
   useEffect(() => {
     const pageTutorials = tutorialService.getTutorialsForPage(pageId, contextData);
     setTutorials(pageTutorials);
   }, [pageId, contextData]);
 
-  const launchTutorial = (tutorialId) => {
+  const launchTutorial = (tutorialId: string): Tutorial | null => {
     // For hooks, we'll need to use a global modal manager or portal
     // For now, return the tutorial for the component to handle
     return tutorialService.getTutorial(tutorialId);
   };
 
-  const registerTutorial = (tutorialId, tutorialDefinition) => {
+  const registerTutorial = (tutorialId: string, tutorialDefinition: Tutorial): boolean => {
     try {
       tutorialService.registerTutorial(tutorialId, {
         ...tutorialDefinition,

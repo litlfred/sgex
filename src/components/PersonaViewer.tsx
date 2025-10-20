@@ -3,7 +3,23 @@ import githubService from '../services/githubService';
 import { PageLayout, usePage } from './framework';
 import './PersonaViewer.css';
 
-const PersonaViewer = () => {
+interface ActorSource {
+  type: 'fsh' | 'json';
+  path: string;
+  lineNumber?: number;
+  resourceType?: string;
+  fullPath?: string;
+}
+
+interface Actor {
+  id: string;
+  name: string;
+  description: string;
+  type: string;
+  source: ActorSource;
+}
+
+const PersonaViewer: React.FC = () => {
   return (
     <PageLayout pageName="persona-viewer">
       <PersonaViewerContent />
@@ -11,14 +27,14 @@ const PersonaViewer = () => {
   );
 };
 
-const PersonaViewerContent = () => {
+const PersonaViewerContent: React.FC = () => {
   const pageContext = usePage();
   
   // All hooks must be called before any early returns
-  const [actors, setActors] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [scanStatus, setScanStatus] = useState('');
+  const [actors, setActors] = useState<Actor[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [scanStatus, setScanStatus] = useState<string>('');
   
   // Get data from page framework (with null-safe access)
   const profile = pageContext?.profile;
@@ -29,11 +45,11 @@ const PersonaViewerContent = () => {
   const selectedBranch = branch || repository?.default_branch || 'main';
 
   // Helper function to parse FSH file content for actor definitions
-  const parseFshFileForActors = useCallback((filePath, content) => {
-    const actors = [];
+  const parseFshFileForActors = useCallback((filePath: string, content: string): Actor[] => {
+    const actors: Actor[] = [];
     const lines = content.split('\n');
     
-    let currentActor = null;
+    let currentActor: Actor | null = null;
     let inActorDefinition = false;
     
     for (let i = 0; i < lines.length; i++) {
@@ -112,14 +128,14 @@ const PersonaViewerContent = () => {
   }, []);
 
   // Helper function to parse JSON file content for actor definitions
-  const parseJsonFileForActors = useCallback((filePath, content) => {
-    const actors = [];
+  const parseJsonFileForActors = useCallback((filePath: string, content: string): Actor[] => {
+    const actors: Actor[] = [];
     
     try {
       const jsonData = JSON.parse(content);
       
       // Function to recursively search for actor-like objects
-      const searchForActors = (obj, path = '') => {
+      const searchForActors = (obj: any, path: string = ''): void => {
         if (typeof obj !== 'object' || obj === null) return;
         
         if (Array.isArray(obj)) {
@@ -250,7 +266,7 @@ const PersonaViewerContent = () => {
   }, [user, repo, selectedBranch, scanForActors]);
 
   // Helper function to generate source file link
-  const getSourceFileLink = useCallback((actor) => {
+  const getSourceFileLink = useCallback((actor: Actor): string => {
     if (!user || !repo || !actor.source) return '#';
     
     const baseUrl = `https://github.com/${user}/${repo}/blob/${selectedBranch}/${actor.source.path}`;

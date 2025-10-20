@@ -9,15 +9,68 @@ import { createDashboard } from '../framework';
 import dataAccessLayer from '../../services/dataAccessLayer';
 import userAccessService from '../../services/userAccessService';
 
+interface Repository {
+  name: string;
+  full_name: string;
+  owner?: {
+    login: string;
+  };
+}
+
+interface PageParams {
+  repository: Repository | null;
+  branch: string;
+}
+
+interface ToolDefinition {
+  id: string;
+  name: string;
+  title: string;
+  description: string;
+}
+
+interface ToolState {
+  [key: string]: any;
+}
+
+interface DashboardProps {
+  toolDefinition: ToolDefinition;
+  pageParams: PageParams;
+  toolState: ToolState;
+}
+
+interface RecentChange {
+  file: string;
+  type: 'modified' | 'added' | 'deleted';
+  date: string;
+}
+
+interface Stats {
+  totalAssets: number;
+  valuesSets: number;
+  actors: number;
+  businessProcesses: number;
+  lastModified: string;
+  contributors: string[];
+  branches: string[];
+  recentChanges: RecentChange[];
+}
+
+interface UserInfo {
+  type: string;
+  user: any;
+  access: any;
+}
+
 // The dashboard component
-const RepositoryStatsDashboard = ({ 
+const RepositoryStatsDashboard: React.FC<DashboardProps> = ({ 
   toolDefinition, 
   pageParams, 
   toolState 
 }) => {
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [userInfo, setUserInfo] = useState(null);
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
 
   useEffect(() => {
     loadStatistics();
