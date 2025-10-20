@@ -373,6 +373,36 @@ class GitHubService {
   }
 
   /**
+   * Get commits for a repository
+   * 
+   * @param owner - Repository owner
+   * @param repo - Repository name
+   * @param options - Commit list options (sha, per_page, page)
+   * @returns Promise<any[]> Array of commits
+   * 
+   * @example
+   * const commits = await githubService.getCommits('who', 'anc-dak', { sha: 'main', per_page: 10, page: 1 });
+   */
+  async getCommits(
+    owner: string,
+    repo: string,
+    options: { sha?: string; per_page?: number; page?: number } = {}
+  ): Promise<any[]> {
+    try {
+      const octokit = this.isAuthenticated && this.octokit ? this.octokit : await this.createOctokitInstance();
+      const { data } = await octokit.rest.repos.listCommits({
+        owner,
+        repo,
+        ...options
+      });
+      return data;
+    } catch (error) {
+      this.logger.error('Failed to get commits', { owner, repo, options, error });
+      throw error;
+    }
+  }
+
+  /**
    * Get directory contents from a GitHub repository
    * 
    * @param owner - Repository owner
