@@ -73,7 +73,7 @@ const BranchSelector: React.FC<BranchSelectorProps> = ({
       }
 
       // Try to restore authentication from stored token
-      const success = githubService.initializeFromStoredToken();
+      const success = await githubService.initializeFromStoredToken();
       if (success) {
         console.log('BranchSelector: GitHub authentication restored successfully');
       } else {
