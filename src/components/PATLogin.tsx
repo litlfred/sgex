@@ -1,13 +1,31 @@
 import React, { useState } from "react";
 import { useTranslation } from 'react-i18next';
 import logger from "../utils/logger";
+import { Octokit } from '@octokit/rest';
 
-const PATLogin = ({ onAuthSuccess }) => {
+/**
+ * Props for the PATLogin component
+ */
+interface PATLoginProps {
+  /** Callback function called when authentication succeeds */
+  onAuthSuccess: (token: string, octokit: Octokit) => void;
+}
+
+/**
+ * PATLogin - Personal Access Token login component
+ * 
+ * Allows users to authenticate with GitHub using a Personal Access Token (PAT).
+ * Validates the token by making a test API call to GitHub.
+ * 
+ * @param props - Component props
+ * @returns React component
+ */
+const PATLogin: React.FC<PATLoginProps> = ({ onAuthSuccess }) => {
   const { t } = useTranslation();
-  const [token, setToken] = useState("");
-  const [tokenName, setTokenName] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [token, setToken] = useState<string>("");
+  const [tokenName, setTokenName] = useState<string>("");
+  const [error, setError] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
   const componentLogger = logger.getLogger('PATLogin');
 
   React.useEffect(() => {
@@ -15,7 +33,7 @@ const PATLogin = ({ onAuthSuccess }) => {
     return () => componentLogger.componentUnmount();
   }, [componentLogger, onAuthSuccess]);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     componentLogger.userAction('PAT login attempt', { tokenProvided: !!token.trim() });
     
@@ -33,7 +51,6 @@ const PATLogin = ({ onAuthSuccess }) => {
     
     try {
       // Test the token by creating an Octokit instance and making a test request
-      const { Octokit } = await import('@octokit/rest');
       const octokit = new Octokit({ auth: token.trim() });
       componentLogger.debug('Octokit instance created for PAT validation');
       
@@ -50,7 +67,7 @@ const PATLogin = ({ onAuthSuccess }) => {
       
       // Call success callback with token and octokit instance
       onAuthSuccess(token.trim(), octokit);
-    } catch (err) {
+    } catch (err: any) {
       const duration = Date.now() - startTime;
       componentLogger.apiError('GET', '/user', err);
       componentLogger.auth('PAT authentication failed', { 
@@ -72,12 +89,12 @@ const PATLogin = ({ onAuthSuccess }) => {
     }
   };
 
-  const handleTokenChange = (e) => {
+  const handleTokenChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     setToken(e.target.value);
     if (error) setError(""); // Clear error when user starts typing
   };
 
-  const handleTokenNameChange = (e) => {
+  const handleTokenNameChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     setTokenName(e.target.value);
     if (error) setError(""); // Clear error when user starts typing
   };

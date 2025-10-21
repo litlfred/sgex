@@ -2,8 +2,8 @@
 
 ## Current Status
 
-**Phase 8 Progress**: 30/199 files (15.1%)
-**Overall Progress**: 64/233 files (27%)
+**Phase 8 Progress**: 33/199 files (16.6%)
+**Overall Progress**: 67/233 files (29%)
 
 ## Categories
 
@@ -14,12 +14,17 @@
 | Hooks | 3 | 2 | 1 | 67% |
 | Utils Tests | 4 | 4 | 0 | 100% ✅ |
 | Framework | 7 | 3 | 4 | 43% |
-| Components | 70 | 18 | 52 | 26% |
+| Components | 70 | 21 | 49 | 30% |
 | DAK Modules | 14 | 0 | 14 | 0% |
 | Test Files | 93 | 0 | 93 | 0% |
 | Root Files | 6 | 0 | 6 | 0% |
 
 ## Recent Batches
+
+### Batch 6 - Branch Management Components (3 files)
+- ✅ PATLogin.tsx (141 lines) - Personal Access Token login
+- ✅ BranchDeploymentSelector.tsx (203 lines) - Branch deployment selection
+- ✅ BranchSelector.tsx (247 lines) - Branch selector with creation
 
 ### Batch 5 - Medium UI Components (3 files)
 - ✅ CommitDiffModal.tsx (179 lines) - Commit diff display modal
@@ -40,7 +45,7 @@
 
 ## Next Steps
 
-1. Continue with remaining components (52 JS files in src/components/)
+1. Continue with remaining components (49 JS files in src/components/)
 2. Complete framework components (4 remaining)
 3. Migrate DAK modules (14 files)
 4. Migrate test files (93 files)

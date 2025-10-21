@@ -1,24 +1,71 @@
 import React, { useState, useEffect } from 'react';
 import githubService from '../services/githubService';
 
-const BranchSelector = ({ 
+/**
+ * Repository interface
+ */
+interface Repository {
+  name: string;
+  full_name: string;
+  default_branch: string;
+  owner?: {
+    login: string;
+  };
+}
+
+/**
+ * Branch interface
+ */
+interface Branch {
+  name: string;
+  commit?: {
+    sha: string;
+    url: string;
+  };
+  protected?: boolean;
+}
+
+/**
+ * Props for BranchSelector component
+ */
+interface BranchSelectorProps {
+  /** Repository to select branches from */
+  repository: Repository;
+  /** Currently selected branch name */
+  selectedBranch?: string;
+  /** Callback when branch selection changes */
+  onBranchChange?: (branchName: string) => void;
+  /** Optional CSS class name */
+  className?: string;
+}
+
+/**
+ * BranchSelector - Component for selecting and creating branches in a repository
+ * 
+ * Displays a dropdown of available branches and provides functionality to create new branches.
+ * Automatically fetches branches from the repository and handles authentication.
+ * 
+ * @param props - Component props
+ * @returns React component
+ */
+const BranchSelector: React.FC<BranchSelectorProps> = ({ 
   repository, 
   selectedBranch, 
   onBranchChange, 
   className = '' 
 }) => {
-  const [branches, setBranches] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [newBranchName, setNewBranchName] = useState('');
-  const [creating, setCreating] = useState(false);
-  const [createError, setCreateError] = useState(null);
-  const [initializingAuth, setInitializingAuth] = useState(true);
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState<boolean>(false);
+  const [newBranchName, setNewBranchName] = useState<string>('');
+  const [creating, setCreating] = useState<boolean>(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [initializingAuth, setInitializingAuth] = useState<boolean>(true);
 
   // Initialize authentication if needed
   useEffect(() => {
-    const initializeAuthentication = async () => {
+    const initializeAuthentication = async (): Promise<void> => {
       // Check if GitHub service is already authenticated
       if (githubService.isAuth()) {
         setInitializingAuth(false);
@@ -40,7 +87,7 @@ const BranchSelector = ({
   }, []);
 
   useEffect(() => {
-    const fetchBranches = async () => {
+    const fetchBranches = async (): Promise<void> => {
       if (!repository) return;
 
       // Wait for authentication to be initialized
@@ -88,13 +135,13 @@ const BranchSelector = ({
     }
   }, [repository, selectedBranch, onBranchChange, initializingAuth]);
 
-  const handleBranchSelect = (branchName) => {
+  const handleBranchSelect = (branchName: string): void => {
     if (onBranchChange) {
       onBranchChange(branchName);
     }
   };
 
-  const handleCreateBranch = async () => {
+  const handleCreateBranch = async (): Promise<void> => {
     if (!newBranchName.trim()) {
       setCreateError('Branch name is required');
       return;

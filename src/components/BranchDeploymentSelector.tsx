@@ -3,10 +3,41 @@ import { PageLayout } from './framework';
 import useThemeImage from '../hooks/useThemeImage';
 import BranchListingPage from './BranchListingPage';
 
-const BranchDeploymentSelector = ({ mode = 'deployment-selector' }) => {
-  const [deployments, setDeployments] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+/**
+ * Deployment information interface
+ */
+interface Deployment {
+  id: string;
+  name: string;
+  branch: string;
+  url: string;
+  description: string;
+  status: 'active' | 'inactive';
+  lastUpdated: string;
+  type: 'main' | 'feature';
+}
+
+/**
+ * Props for BranchDeploymentSelector component
+ */
+interface BranchDeploymentSelectorProps {
+  /** Mode of operation - either deployment selector or full branch listing */
+  mode?: 'deployment-selector' | 'branch-listing';
+}
+
+/**
+ * BranchDeploymentSelector - Component for selecting between different branch deployments
+ * 
+ * Displays available deployments (main and feature branches) and allows users to navigate between them.
+ * Can also show a full branch listing page.
+ * 
+ * @param props - Component props
+ * @returns React component
+ */
+const BranchDeploymentSelector: React.FC<BranchDeploymentSelectorProps> = ({ mode = 'deployment-selector' }) => {
+  const [deployments, setDeployments] = useState<Deployment[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Theme-aware image paths
   const mascotImage = useThemeImage('sgex-mascot.png');
@@ -15,13 +46,13 @@ const BranchDeploymentSelector = ({ mode = 'deployment-selector' }) => {
     // Only fetch deployments if we're in deployment selector mode
     if (mode !== 'deployment-selector') return;
     
-    const fetchDeployments = async () => {
+    const fetchDeployments = async (): Promise<void> => {
       try {
         setLoading(true);
         
         // For now, we'll use a mock list of deployments
         // In the future, this could be fetched from GitHub Pages API or a deployment manifest
-        const mockDeployments = [
+        const mockDeployments: Deployment[] = [
           {
             id: 'main',
             name: 'Main Application',
@@ -66,15 +97,15 @@ const BranchDeploymentSelector = ({ mode = 'deployment-selector' }) => {
     fetchDeployments();
   }, [mode]);
 
-  const handleDeploymentSelect = (deployment) => {
+  const handleDeploymentSelect = (deployment: Deployment): void => {
     // Navigate to the deployment URL
     window.location.href = deployment.url;
   };
 
-  const formatLastUpdated = (dateString) => {
+  const formatLastUpdated = (dateString: string): string => {
     const date = new Date(dateString);
     const now = new Date();
-    const diffInHours = Math.floor((now - date) / (1000 * 60 * 60));
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
     
     if (diffInHours < 1) {
       return 'Updated less than an hour ago';
