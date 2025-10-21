@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { DAKValidationReport } from '@/services/validation/types';
+import { DAKValidationReport } from '../../services/validation/types';
 import './ValidationSummary.css';
 
 export interface ValidationSummaryProps {

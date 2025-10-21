@@ -50,15 +50,6 @@ module.exports = {
     configure: (webpackConfig) => {
       const webpack = require('webpack');
       
-      // Configure path aliases to match tsconfig.json
-      Object.assign(webpackConfig.resolve.alias, {
-        '@': path.resolve(__dirname, 'src'),
-        '@/components': path.resolve(__dirname, 'src/components'),
-        '@/services': path.resolve(__dirname, 'src/services'),
-        '@/utils': path.resolve(__dirname, 'src/utils'),
-        '@/types': path.resolve(__dirname, 'src/types'),
-      });
-      
       // Disable ESLint plugin in production builds to avoid treating warnings as errors
       // This allows the TypeScript migration to proceed while accessibility issues are addressed separately
       if (process.env.NODE_ENV === 'production') {

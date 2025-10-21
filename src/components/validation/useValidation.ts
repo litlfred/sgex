@@ -8,8 +8,8 @@ import {
   DAKValidationReport, 
   FileValidationResult,
   ComponentValidationOptions 
-} from '@/services/validation/types';
-import { dakArtifactValidationService } from '@/services/validation';
+} from '../../services/validation/types';
+import { dakArtifactValidationService } from '../../services/validation';
 
 /**
  * Hook options for validation
