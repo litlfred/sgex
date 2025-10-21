@@ -138,25 +138,25 @@ export const ValidationReport: React.FC<ValidationReportProps> = ({
           <div className="validation-summary-stat">
             <span className="validation-stat-label">Errors</span>
             <span className="validation-stat-value validation-stat-error">
-              {report.summary.errorCount}
+              {report.summary.totalErrors}
             </span>
           </div>
           <div className="validation-summary-stat">
             <span className="validation-stat-label">Warnings</span>
             <span className="validation-stat-value validation-stat-warning">
-              {report.summary.warningCount}
+              {report.summary.totalWarnings}
             </span>
           </div>
           <div className="validation-summary-stat">
             <span className="validation-stat-label">Info</span>
             <span className="validation-stat-value validation-stat-info">
-              {report.summary.infoCount}
+              {report.summary.totalInfo}
             </span>
           </div>
           <div className="validation-summary-stat">
             <span className="validation-stat-label">Files</span>
             <span className="validation-stat-value">
-              {report.summary.filesValidated}
+              {report.summary.totalFiles}
             </span>
           </div>
         </div>

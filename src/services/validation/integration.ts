@@ -8,7 +8,7 @@
  */
 
 import type { DAKArtifactValidationService } from './DAKArtifactValidationService';
-import type { DAKValidationReport, ComponentValidationOptions } from './types';
+import type { DAKValidationReport, ComponentValidationOptions, FileValidationResult } from './types';
 
 /**
  * Integration result
@@ -50,7 +50,7 @@ export function integrateWithGitHub(
         branch: string,
         component: string,
         options?: ComponentValidationOptions
-      ): Promise<DAKValidationReport> {
+      ): Promise<FileValidationResult[]> {
         return await validationService.validateComponent(owner, repo, branch, component, options);
       };
     }
@@ -120,14 +120,33 @@ export function integrateWithStagingGround(
           metadata: file.metadata
         }));
         
+        // Create a minimal validation report for the override
+        const minimalReport: DAKValidationReport = {
+          repository: {
+            owner: '',
+            repo: '',
+            branch: ''
+          },
+          timestamp: new Date(),
+          summary: {
+            totalFiles: files.length,
+            validFiles: 0,
+            filesWithErrors: files.length,
+            filesWithWarnings: 0,
+            totalErrors: 1,
+            totalWarnings: 0,
+            totalInfo: 0
+          },
+          fileResults: [],
+          canSave: false
+        };
+        
         const result = await validationService.saveWithOverride({
           files,
           explanation,
           commitMessage,
-          author: {
-            name: 'DAK Author',
-            email: 'author@example.com'
-          }
+          user: 'DAK Author <author@example.com>',
+          validationReport: minimalReport
         });
         
         return result;
@@ -176,13 +195,13 @@ export function integrateWithDAKCompliance(
         component?: string
       ): Promise<{
         oldFramework: any;
-        newFramework: DAKValidationReport;
+        newFramework: FileValidationResult;
       }> {
         // Run old framework validation
         const oldResult = await complianceService.validateFile(filePath, content);
         
         // Run new framework validation
-        const newResult = await validationService.validateFile(filePath, content, fileType, component);
+        const newResult = await validationService.validateFile(filePath, content, fileType, component || 'unknown');
         
         return {
           oldFramework: oldResult,
@@ -241,7 +260,15 @@ export async function validateStagedFiles(
   // without requiring service integration
   const { dakArtifactValidationService } = await import('./index');
   
-  return await dakArtifactValidationService.validateStagingGround(files);
+  // Map files to include required fileType and component fields
+  const mappedFiles = files.map(file => ({
+    path: file.path,
+    content: file.content,
+    fileType: file.path.split('.').pop() || 'unknown',
+    component: file.metadata?.component || 'unknown'
+  }));
+  
+  return await dakArtifactValidationService.validateStagingGround(mappedFiles);
 }
 
 /**

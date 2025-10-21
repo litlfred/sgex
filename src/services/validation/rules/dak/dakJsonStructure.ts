@@ -47,7 +47,8 @@ export const dakJsonStructureRule: ValidationRule = {
     level: 'error',
     component: 'dak-config',
     title: 'DAK JSON Structure Valid',
-    description: 'dak.json SHALL conform to the WHO SMART Base DAK schema with required canonical, url, and component source properties'
+    description: 'dak.json SHALL conform to the WHO SMART Base DAK schema with required canonical, url, and component source properties',
+    fileTypes: ['json']
   },
   
   /**
