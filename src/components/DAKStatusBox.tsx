@@ -3,9 +3,36 @@ import githubService from '../services/githubService';
 import CommitsSlider from './CommitsSlider';
 import GitHubActionsIntegration from './GitHubActionsIntegration';
 
-const DAKStatusBox = ({ repository, selectedBranch, hasWriteAccess, profile }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [repositoryStats, setRepositoryStats] = useState({
+interface Repository {
+  owner?: { login: string };
+  full_name: string;
+  name: string;
+  default_branch?: string;
+}
+
+interface Profile {
+  login: string;
+  [key: string]: any;
+}
+
+interface DAKStatusBoxProps {
+  repository: Repository;
+  selectedBranch?: string;
+  hasWriteAccess?: boolean;
+  profile?: Profile;
+}
+
+interface RepositoryStats {
+  recentCommits: any[];
+  openPullRequestsCount: number;
+  openIssuesCount: number;
+  statsLoading: boolean;
+  statsError: string | null;
+}
+
+const DAKStatusBox: React.FC<DAKStatusBoxProps> = ({ repository, selectedBranch, hasWriteAccess, profile }) => {
+  const [isExpanded, setIsExpanded] = useState<boolean>(false);
+  const [repositoryStats, setRepositoryStats] = useState<RepositoryStats>({
     recentCommits: [],
     openPullRequestsCount: 0,
     openIssuesCount: 0,

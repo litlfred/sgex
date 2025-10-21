@@ -3,7 +3,11 @@ import { useTranslation } from 'react-i18next';
 import useThemeImage from '../hooks/useThemeImage';
 import { ALT_TEXT_KEYS, getAltText } from '../utils/imageAltTextHelper';
 
-const CollaborationModal = ({ onClose }) => {
+interface CollaborationModalProps {
+  onClose: () => void;
+}
+
+const CollaborationModal: React.FC<CollaborationModalProps> = ({ onClose }) => {
   const { t } = useTranslation();
   const [currentSlide, setCurrentSlide] = useState(0);
 

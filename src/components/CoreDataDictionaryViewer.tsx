@@ -30,14 +30,14 @@ const CoreDataDictionaryViewerContent = () => {
   const user = profile?.login;
   const repo = repository?.name;
   
-  const [dataElements, setDataElements] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [selectedElement, setSelectedElement] = useState(null);
-  const [showModal, setShowModal] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [hasPublishedDak, setHasPublishedDak] = useState(false);
-  const [checkingPublishedDak, setCheckingPublishedDak] = useState(false);
+  const [dataElements, setDataElements] = useState<any[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedElement, setSelectedElement] = useState<any | null>(null);
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [hasPublishedDak, setHasPublishedDak] = useState<boolean>(false);
+  const [checkingPublishedDak, setCheckingPublishedDak] = useState<boolean>(false);
 
   // Handle Escape key for modal
   useEffect(() => {
