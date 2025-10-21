@@ -411,6 +411,37 @@ class GitHubService {
   }
 
   /**
+   * Get branches from a GitHub repository
+   * 
+   * @param owner - Repository owner
+   * @param repo - Repository name
+   * @param options - Optional parameters for pagination
+   * @returns Promise<any[]> Array of branch data
+   * 
+   * @example
+   * const branches = await githubService.getBranches('who', 'anc-dak', { per_page: 30, page: 1 });
+   */
+  async getBranches(
+    owner: string,
+    repo: string,
+    options: { per_page?: number; page?: number } = {}
+  ): Promise<any[]> {
+    try {
+      const octokit = this.isAuthenticated && this.octokit ? this.octokit : await this.createOctokitInstance();
+      const { data } = await octokit.rest.repos.listBranches({
+        owner,
+        repo,
+        per_page: options.per_page || 100,
+        page: options.page || 1
+      });
+      return data;
+    } catch (error) {
+      this.logger.error('Failed to get branches', { owner, repo, options, error });
+      throw error;
+    }
+  }
+
+  /**
    * Get directory contents from a GitHub repository
    * 
    * @param owner - Repository owner
