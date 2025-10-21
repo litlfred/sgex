@@ -53,7 +53,7 @@ export function useValidation(options: UseValidationOptions = {}): UseValidation
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   
-  const debounceTimer = useRef<NodeJS.Timeout>();
+  const debounceTimer = useRef<NodeJS.Timeout | undefined>(undefined);
   
   const validate = useCallback(async () => {
     if (!owner || !repo) {
@@ -144,7 +144,7 @@ export function useFileValidation(): UseFileValidationReturn {
         filePath,
         content,
         fileType,
-        component
+        component || 'unknown'
       );
       setResult(fileResult);
     } catch (err) {
@@ -195,7 +195,7 @@ export function useRepositoryValidation(
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   
-  const debounceTimer = useRef<NodeJS.Timeout>();
+  const debounceTimer = useRef<NodeJS.Timeout | undefined>(undefined);
   
   const validate = useCallback(async (
     owner: string,
@@ -250,8 +250,8 @@ export function useRepositoryValidation(
  * Hook for component-specific validation
  */
 export interface UseComponentValidationReturn {
-  /** Current validation report */
-  report: DAKValidationReport | null;
+  /** Current validation results */
+  report: FileValidationResult[] | null;
   /** Loading state */
   loading: boolean;
   /** Error state */
@@ -268,7 +268,7 @@ export interface UseComponentValidationReturn {
 }
 
 export function useComponentValidation(): UseComponentValidationReturn {
-  const [report, setReport] = useState<DAKValidationReport | null>(null);
+  const [report, setReport] = useState<FileValidationResult[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   
