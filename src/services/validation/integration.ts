@@ -114,42 +114,82 @@ export function integrateWithStagingGround(
         commitMessage: string
       ): Promise<any> {
         const stagingGround = stagingService.getStagingGround();
-        const files = stagingGround.files.map((file: any) => ({
+        
+        // Get current user from userAccessService
+        const userAccessServiceModule = await import('../userAccessService');
+        const userAccessService = userAccessServiceModule.default;
+        const currentUser = userAccessService.getCurrentUser();
+        if (!currentUser) {
+          throw new Error('User must be authenticated to save with override');
+        }
+        
+        // Get repository context from staging ground
+        const repository = stagingGround.repository;
+        const branch = stagingGround.branch;
+        
+        if (!repository || !branch) {
+          throw new Error('Repository and branch context required for save with override');
+        }
+        
+        // Parse repository string (format: "owner/repo")
+        const [owner, repo] = repository.split('/');
+        if (!owner || !repo) {
+          throw new Error('Invalid repository format. Expected "owner/repo"');
+        }
+        
+        // Prepare files for validation
+        const validationFiles = stagingGround.files.map((file: any) => ({
           path: file.path,
           content: file.content,
-          metadata: file.metadata
+          fileType: file.path.split('.').pop() || 'unknown',
+          component: file.metadata?.component || 'unknown'
         }));
         
-        // Create a minimal validation report for the override
-        const minimalReport: DAKValidationReport = {
-          repository: {
-            owner: '',
-            repo: '',
-            branch: ''
-          },
-          timestamp: new Date(),
-          summary: {
-            totalFiles: files.length,
-            validFiles: 0,
-            filesWithErrors: files.length,
-            filesWithWarnings: 0,
-            totalErrors: 1,
-            totalWarnings: 0,
-            totalInfo: 0
-          },
-          fileResults: [],
-          canSave: false
-        };
+        // Run validation on staged files to get actual validation report
+        const validationReport = await validationService.validateStagingGround(validationFiles);
         
-        const result = await validationService.saveWithOverride({
-          files,
-          explanation,
+        // Prepare files for save request
+        const filesToSave = stagingGround.files.map((file: any) => ({
+          path: file.path,
+          content: file.content
+        }));
+        
+        // Format user identity
+        const userIdentity = currentUser.email 
+          ? `${currentUser.name || currentUser.login} <${currentUser.email}>`
+          : `${currentUser.name || currentUser.login}`;
+        
+        // Format commit message with override information
+        const enhancedCommitMessage = [
           commitMessage,
-          user: 'DAK Author <author@example.com>',
-          validationReport: minimalReport
+          '',
+          'VALIDATION OVERRIDE',
+          `By: ${userIdentity}`,
+          `Reason: ${explanation}`,
+          `Errors overridden: ${validationReport.summary.totalErrors}`,
+          `Date: ${new Date().toISOString()}`
+        ].join('\n');
+        
+        // Validate and record the override
+        const overrideApproved = await validationService.saveWithOverride({
+          files: filesToSave,
+          explanation,
+          commitMessage: enhancedCommitMessage,
+          user: userIdentity,
+          validationReport
         });
         
-        return result;
+        if (!overrideApproved) {
+          throw new Error('Override validation failed');
+        }
+        
+        // Now proceed with actual save using staging ground service's normal save method
+        // The staging ground service should handle the actual GitHub commit
+        return { 
+          success: true, 
+          overrideApproved: true,
+          message: 'Override approved - proceed with save using staging ground service'
+        };
       };
     }
     
