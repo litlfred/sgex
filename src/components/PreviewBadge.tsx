@@ -11,42 +11,78 @@ import './PreviewBadge.css';
 // Lazy load MDEditor to improve initial page responsiveness
 const MDEditor = lazy(() => import('@uiw/react-md-editor'));
 
+interface BranchInfo {
+  branch: string;
+  repo: string;
+  owner: string;
+}
+
+interface PRInfo {
+  number: number;
+  title: string;
+  body: string;
+  state: string;
+  draft: boolean;
+  html_url: string;
+  user: {
+    login: string;
+    avatar_url: string;
+  };
+  head: {
+    ref: string;
+  };
+  base: {
+    ref: string;
+  };
+}
+
+interface Comment {
+  id: number;
+  body: string;
+  user: {
+    login: string;
+    avatar_url: string;
+  };
+  created_at: string;
+  updated_at: string;
+}
+
 /**
  * PreviewBadge component that displays when the app is deployed from a non-main branch
  * Shows branch name and links to the associated PR
  * Can expand to show detailed PR information, comments, and add new comments
  */
-const PreviewBadge = () => {
-  const [branchInfo, setBranchInfo] = useState(null);
-  const [prInfo, setPrInfo] = useState([]); // Changed to array to support multiple PRs
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [isSticky, setIsSticky] = useState(false);
-  const [comments, setComments] = useState([]);
-  const [commentsLoading, setCommentsLoading] = useState(false);
-  const [newComment, setNewComment] = useState('');
-  const [submittingComment, setSubmittingComment] = useState(false);
-  const [commentSubmissionStatus, setCommentSubmissionStatus] = useState(null); // 'submitting', 'success', 'error'
-  const [expandedComments, setExpandedComments] = useState(new Set());
-  const [expandedDescription, setExpandedDescription] = useState(false);
-  const [showMarkdownEditor, setShowMarkdownEditor] = useState(false);
-  const [workflowStatus, setWorkflowStatus] = useState(null);
-  const [workflowLoading, setWorkflowLoading] = useState(false);
+const PreviewBadge: React.FC = () => {
+  const [branchInfo, setBranchInfo] = useState<BranchInfo | null>(null);
+  const [prInfo, setPrInfo] = useState<PRInfo[]>([]); // Changed to array to support multiple PRs
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isExpanded, setIsExpanded] = useState<boolean>(false);
+  const [isSticky, setIsSticky] = useState<boolean>(false);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [commentsLoading, setCommentsLoading] = useState<boolean>(false);
+  const [newComment, setNewComment] = useState<string>('');
+  const [submittingComment, setSubmittingComment] = useState<boolean>(false);
+  const [commentSubmissionStatus, setCommentSubmissionStatus] = useState<'submitting' | 'success' | 'error' | null>(null);
+  const [expandedComments, setExpandedComments] = useState<Set<number>>(new Set());
+  const [expandedDescription, setExpandedDescription] = useState<boolean>(false);
+  const [showMarkdownEditor, setShowMarkdownEditor] = useState<boolean>(false);
+  const [workflowStatus, setWorkflowStatus] = useState<any>(null);
+  const [workflowLoading, setWorkflowLoading] = useState<boolean>(false);
   // Always use WorkflowDashboard - removed simple view toggle
-  const [showWorkflowView, setShowWorkflowView] = useState(false); // Default to discussion view
-  const [newlyAddedCommentId, setNewlyAddedCommentId] = useState(null);
-  const [copilotSessionInfo, setCopilotSessionInfo] = useState(null);
-  const [showCopilotSession, setShowCopilotSession] = useState(false);
-  const [isWatchingSession, setIsWatchingSession] = useState(false);
-  const [watchSessionInterval, setWatchSessionInterval] = useState(null);
-  const [isRefreshingSession, setIsRefreshingSession] = useState(false);
-  const [lastSessionCheck, setLastSessionCheck] = useState(null);
-  const [sessionRefreshCount, setSessionRefreshCount] = useState(0);
-  const [isRefreshingComments, setIsRefreshingComments] = useState(false);
-  const [ReactMarkdown, setReactMarkdown] = useState(null);
-  const [DOMPurify, setDOMPurify] = useState(null);
-  const [rehypeRaw, setRehypeRaw] = useState(null);
+  const [showWorkflowView, setShowWorkflowView] = useState<boolean>(false); // Default to discussion view
+  const [newlyAddedCommentId, setNewlyAddedCommentId] = useState<number | null>(null);
+  const [copilotSessionInfo, setCopilotSessionInfo] = useState<any>(null);
+  const [showCopilotSession, setShowCopilotSession] = useState<boolean>(false);
+  const [isWatchingSession, setIsWatchingSession] = useState<boolean>(false);
+  const [watchSessionInterval, setWatchSessionInterval] = useState<NodeJS.Timeout | null>(null);
+  const [isRefreshingSession, setIsRefreshingSession] = useState<boolean>(false);
+  const [lastSessionCheck, setLastSessionCheck] = useState<Date | null>(null);
+  const [sessionRefreshCount, setSessionRefreshCount] = useState<number>(0);
+  const [isRefreshingComments, setIsRefreshingComments] = useState<boolean>(false);
+  const [ReactMarkdown, setReactMarkdown] = useState<any>(null);
+  const [DOMPurify, setDOMPurify] = useState<any>(null);
+  const [rehypeRaw, setRehypeRaw] = useState<any>(null);
 
   // Lazy load markdown and sanitization components
   useEffect(() => {
@@ -67,17 +103,17 @@ const PreviewBadge = () => {
 
     loadMarkdownComponents();
   }, []);
-  const [canComment, setCanComment] = useState(true);
-  const [canTriggerWorkflows, setCanTriggerWorkflows] = useState(false);
-  const [canApproveWorkflows, setCanApproveWorkflows] = useState(false);
-  const [canMergePR, setCanMergePR] = useState(false);
-  const [canManagePR, setCanManagePR] = useState(false); // For draft/ready status changes
-  const [isMergingPR, setIsMergingPR] = useState(false);
-  const [canReviewPR, setCanReviewPR] = useState(false);
-  const [isApprovingPR, setIsApprovingPR] = useState(false);
-  const [isRequestingChanges, setIsRequestingChanges] = useState(false);
-  const [isMarkingReadyForReview, setIsMarkingReadyForReview] = useState(false);
-  const [approvalStatus, setApprovalStatus] = useState(null); // 'success', 'error'
+  const [canComment, setCanComment] = useState<boolean>(true);
+  const [canTriggerWorkflows, setCanTriggerWorkflows] = useState<boolean>(false);
+  const [canApproveWorkflows, setCanApproveWorkflows] = useState<boolean>(false);
+  const [canMergePR, setCanMergePR] = useState<boolean>(false);
+  const [canManagePR, setCanManagePR] = useState<boolean>(false); // For draft/ready status changes
+  const [isMergingPR, setIsMergingPR] = useState<boolean>(false);
+  const [canReviewPR, setCanReviewPR] = useState<boolean>(false);
+  const [isApprovingPR, setIsApprovingPR] = useState<boolean>(false);
+  const [isRequestingChanges, setIsRequestingChanges] = useState<boolean>(false);
+  const [isMarkingReadyForReview, setIsMarkingReadyForReview] = useState<boolean>(false);
+  const [approvalStatus, setApprovalStatus] = useState<'success' | 'error' | null>(null); // 'success', 'error'
   const [approvalMessage, setApprovalMessage] = useState('');
   const [commentsPage, setCommentsPage] = useState(1);
   const [allComments, setAllComments] = useState([]);

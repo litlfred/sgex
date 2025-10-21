@@ -1,11 +1,17 @@
 import React, { useState } from 'react';
 import logger from '../utils/logger';
 
-const LoginModal = ({ isOpen, onClose, onAuthSuccess }) => {
-  const [username, setUsername] = useState('');
-  const [token, setToken] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+interface LoginModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onAuthSuccess: (token: string, username: string) => void;
+}
+
+const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onAuthSuccess }) => {
+  const [username, setUsername] = useState<string>('');
+  const [token, setToken] = useState<string>('');
+  const [error, setError] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
   const componentLogger = logger.getLogger('LoginModal');
 
   React.useEffect(() => {
@@ -16,7 +22,7 @@ const LoginModal = ({ isOpen, onClose, onAuthSuccess }) => {
     return () => componentLogger.componentUnmount();
   }, [componentLogger, isOpen, onAuthSuccess]);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     componentLogger.userAction('PAT login attempt', { 
       usernameProvided: !!username.trim(),
@@ -77,17 +83,17 @@ const LoginModal = ({ isOpen, onClose, onAuthSuccess }) => {
     }
   };
 
-  const handleTokenChange = (e) => {
+  const handleTokenChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setToken(e.target.value);
     if (error) setError(''); // Clear error when user starts typing
   };
 
-  const handleUsernameChange = (e) => {
+  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUsername(e.target.value);
     if (error) setError(''); // Clear error when user starts typing
   };
 
-  const handleOverlayClick = (e) => {
+  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) {
       onClose();
     }

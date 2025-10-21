@@ -4,24 +4,48 @@ import githubService from '../services/githubService';
 import ScreenshotEditor from './ScreenshotEditor';
 import repositoryConfig from '../config/repositoryConfig';
 
-const BugReportForm = ({ onClose, contextData = {} }) => {
-  const [templates, setTemplates] = useState([]);
-  const [selectedTemplate, setSelectedTemplate] = useState(null);
-  const [formData, setFormData] = useState({});
-  const [includeConsole, setIncludeConsole] = useState(false);
-  const [includeScreenshot, setIncludeScreenshot] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-  const [error, setError] = useState(null);
-  const [submitResult, setSubmitResult] = useState(null);
-  const [consoleCapture, setConsoleCapture] = useState(null);
-  const [screenshotBlob, setScreenshotBlob] = useState(null);
-  const [screenshotPreview, setScreenshotPreview] = useState(null);
-  const [takingScreenshot, setTakingScreenshot] = useState(false);
-  const [showContextPreview, setShowContextPreview] = useState(false);
-  const [showScreenshotEditor, setShowScreenshotEditor] = useState(false);
-  const [originalScreenshotBlob, setOriginalScreenshotBlob] = useState(null);
+interface BugReportFormProps {
+  onClose: () => void;
+  contextData?: Record<string, any>;
+}
+
+interface TemplateType {
+  name: string;
+  type: string;
+  fields: FieldDefinition[];
+}
+
+interface FieldDefinition {
+  name: string;
+  label: string;
+  type: string;
+  required?: boolean;
+  placeholder?: string;
+  options?: string[];
+}
+
+interface FormDataType {
+  [key: string]: any;
+}
+
+const BugReportForm: React.FC<BugReportFormProps> = ({ onClose, contextData = {} }) => {
+  const [templates, setTemplates] = useState<TemplateType[]>([]);
+  const [selectedTemplate, setSelectedTemplate] = useState<TemplateType | null>(null);
+  const [formData, setFormData] = useState<FormDataType>({});
+  const [includeConsole, setIncludeConsole] = useState<boolean>(false);
+  const [includeScreenshot, setIncludeScreenshot] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [submitting, setSubmitting] = useState<boolean>(false);
+  const [submitted, setSubmitted] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [submitResult, setSubmitResult] = useState<any>(null);
+  const [consoleCapture, setConsoleCapture] = useState<any>(null);
+  const [screenshotBlob, setScreenshotBlob] = useState<Blob | null>(null);
+  const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
+  const [takingScreenshot, setTakingScreenshot] = useState<boolean>(false);
+  const [showContextPreview, setShowContextPreview] = useState<boolean>(false);
+  const [showScreenshotEditor, setShowScreenshotEditor] = useState<boolean>(false);
+  const [originalScreenshotBlob, setOriginalScreenshotBlob] = useState<Blob | null>(null);
 
   // Load templates on mount
   useEffect(() => {
