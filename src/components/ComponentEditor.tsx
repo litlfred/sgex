@@ -5,7 +5,35 @@ import ContextualHelpMascot from './ContextualHelpMascot';
 import WHODigitalLibrary from './WHODigitalLibrary';
 import useThemeImage from '../hooks/useThemeImage';
 
-const ComponentEditor = () => {
+interface Profile {
+  login: string;
+  name?: string;
+  avatar_url?: string;
+  type?: string;
+}
+
+interface Repository {
+  name: string;
+  description?: string;
+}
+
+interface Component {
+  id: string;
+  name: string;
+  color?: string;
+  icon?: string;
+  fileTypes?: string[];
+  type?: string;
+  description?: string;
+}
+
+interface LocationState {
+  profile?: Profile;
+  repository?: Repository;
+  component?: Component;
+}
+
+const ComponentEditor: React.FC = () => {
   const location = useLocation();
   
   const isHealthInterventions = location.pathname.includes('/health-interventions/');
@@ -21,27 +49,27 @@ const ComponentEditor = () => {
   );
 };
 
-const HealthInterventionsEditor = () => {
+const HealthInterventionsEditor: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { params } = usePageParams();
-  const [selectedReferences, setSelectedReferences] = useState([]);
+  const [selectedReferences, setSelectedReferences] = useState<any[]>([]);
   
   // Theme-aware mascot image for fallback avatar
   const mascotImage = useThemeImage('sgex-mascot.png');
   
   // Get data from URL params or location state
-  const { profile, repository } = location.state || {};
+  const { profile, repository } = (location.state as LocationState) || {};
   const user = params?.user;
   const repo = params?.repo;
   
-  const currentComponent = { id: 'health-interventions', name: 'Health Interventions' };
+  const currentComponent: Component = { id: 'health-interventions', name: 'Health Interventions' };
 
-  const handleReferencesChange = useCallback((references) => {
+  const handleReferencesChange = useCallback((references: any[]) => {
     setSelectedReferences(references);
   }, []);
 
-  const handleHomeNavigation = () => {
+  const handleHomeNavigation = (): void => {
     navigate('/');
   };
 
@@ -76,8 +104,8 @@ const HealthInterventionsEditor = () => {
       <ContextualHelpMascot 
         pageId="health-interventions-editor"
         contextData={{ 
-          profile: profile || { login: user }, 
-          repository: repository || { name: repo }, 
+          profile: profile || { login: user || 'unknown' }, 
+          repository: repository || { name: repo || 'unknown' }, 
           component: currentComponent,
           selectedReferencesCount: selectedReferences.length 
         }}
@@ -86,16 +114,16 @@ const HealthInterventionsEditor = () => {
   );
 };
 
-const ComponentEditorContent = () => {
+const ComponentEditorContent: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { params } = usePageParams();
-  const [selectedReferences, setSelectedReferences] = useState([]);
+  const [selectedReferences, setSelectedReferences] = useState<any[]>([]);
   
   // Theme-aware mascot image for fallback avatar
   const mascotImage = useThemeImage('sgex-mascot.png');
   
-  const { profile, repository, component } = location.state || {};
+  const { profile, repository, component } = (location.state as LocationState) || {};
 
   // Determine component from route or state
   let currentComponent = component;
@@ -107,11 +135,11 @@ const ComponentEditorContent = () => {
     currentComponent = { id: params.componentId, name: params.componentId };
   }
 
-  const handleReferencesChange = useCallback((references) => {
+  const handleReferencesChange = useCallback((references: any[]) => {
     setSelectedReferences(references);
   }, []);
 
-  const handleHomeNavigation = () => {
+  const handleHomeNavigation = (): void => {
     navigate('/');
   };
 
@@ -120,8 +148,8 @@ const ComponentEditorContent = () => {
     if (currentComponent?.id === 'health-interventions') {
       // Allow access to health-interventions editor without full context
       // Use placeholder data for now
-      const placeholderProfile = { login: 'demo-user', avatar_url: mascotImage, name: 'Demo User' };
-      const placeholderRepo = { name: 'demo-repository' };
+      const placeholderProfile: Profile = { login: 'demo-user', avatar_url: mascotImage, name: 'Demo User' };
+      const placeholderRepo: Repository = { name: 'demo-repository' };
       
       return (
         <div className="component-editor">

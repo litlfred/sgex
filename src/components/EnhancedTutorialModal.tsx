@@ -5,20 +5,57 @@ import useThemeImage from '../hooks/useThemeImage';
 import { ALT_TEXT_KEYS, getAltText } from '../utils/imageAltTextHelper';
 import './EnhancedTutorialModal.css';
 
-const EnhancedTutorialModal = ({ tutorialId, onClose, contextData = {} }) => {
+interface TutorialBranch {
+  choice: string;
+  label: string;
+  description?: string;
+  nextStep?: number;
+}
+
+interface TutorialStep {
+  title: string;
+  content: string;
+  branches?: TutorialBranch[];
+}
+
+interface Tutorial {
+  id: string;
+  title: string;
+  description?: string;
+  badge?: string;
+  steps: TutorialStep[];
+}
+
+interface TutorialStepResult {
+  isComplete: boolean;
+  stepIndex?: number;
+  context?: Record<string, any>;
+}
+
+interface EnhancedTutorialModalProps {
+  tutorialId: string;
+  onClose: () => void;
+  contextData?: Record<string, any>;
+}
+
+const EnhancedTutorialModal: React.FC<EnhancedTutorialModalProps> = ({ 
+  tutorialId, 
+  onClose, 
+  contextData = {} 
+}) => {
   const { t } = useTranslation();
-  const [tutorial, setTutorial] = useState(null);
-  const [currentStepIndex, setCurrentStepIndex] = useState(0);
-  const [tutorialState, setTutorialState] = useState({});
-  const [isLoading, setIsLoading] = useState(true);
-  const [showChoices, setShowChoices] = useState(false);
+  const [tutorial, setTutorial] = useState<Tutorial | null>(null);
+  const [currentStepIndex, setCurrentStepIndex] = useState<number>(0);
+  const [tutorialState, setTutorialState] = useState<Record<string, any>>({});
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [showChoices, setShowChoices] = useState<boolean>(false);
 
   // Theme-aware mascot image
   const mascotImage = useThemeImage('sgex-mascot.png');
 
   // Handle Escape key
   useEffect(() => {
-    const handleEscape = (e) => {
+    const handleEscape = (e: KeyboardEvent): void => {
       if (e.key === 'Escape') {
         onClose();
       }
@@ -55,19 +92,19 @@ const EnhancedTutorialModal = ({ tutorialId, onClose, contextData = {} }) => {
     }
   }, [tutorial, tutorialId, currentStepIndex, tutorialState, contextData]);
 
-  const handleOverlayClick = (e) => {
+  const handleOverlayClick = (e: React.MouseEvent): void => {
     if (e.target === e.currentTarget) {
       onClose();
     }
   };
 
-  const handleStepNavigation = (direction, userChoice = null) => {
+  const handleStepNavigation = (direction: 'next' | 'previous' | number, userChoice: string | null = null): void => {
     if (!tutorial) return;
 
     let nextIndex = currentStepIndex;
     
     if (direction === 'next') {
-      const stepResult = tutorialService.processStep(tutorial, currentStepIndex, userChoice, tutorialState);
+      const stepResult: TutorialStepResult = tutorialService.processStep(tutorial, currentStepIndex, userChoice, tutorialState);
       
       if (stepResult.isComplete) {
         // Tutorial complete
@@ -95,11 +132,11 @@ const EnhancedTutorialModal = ({ tutorialId, onClose, contextData = {} }) => {
     setShowChoices(false);
   };
 
-  const handleUserChoice = (choice) => {
+  const handleUserChoice = (choice: string): void => {
     handleStepNavigation('next', choice);
   };
 
-  const renderCurrentStep = () => {
+  const renderCurrentStep = (): React.ReactNode => {
     if (!tutorial || !tutorial.steps || currentStepIndex >= tutorial.steps.length) {
       return null;
     }
@@ -130,7 +167,7 @@ const EnhancedTutorialModal = ({ tutorialId, onClose, contextData = {} }) => {
           {hasBranches && (
             <div className="tutorial-choices">
               <div className="choices-container">
-                {currentStep.branches.map((branch, index) => (
+                {currentStep.branches!.map((branch, index) => (
                   <button
                     key={index}
                     className="choice-btn"

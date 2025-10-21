@@ -3,17 +3,48 @@ import { useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
 import { handleNavigationClick } from '../utils/navigationUtils';
 
-const ForkStatusBar = ({ profile, repository, selectedBranch }) => {
+interface Repository {
+  id: number;
+  name: string;
+  full_name: string;
+  description?: string;
+  owner: {
+    login: string;
+    avatar_url: string;
+    type: string;
+  };
+  fork: boolean;
+  parent?: Repository;
+  default_branch: string;
+  stargazers_count: number;
+  open_issues_count: number;
+  updated_at: string;
+}
+
+interface Profile {
+  login: string;
+  name: string;
+  avatar_url: string;
+  type: string;
+}
+
+interface ForkStatusBarProps {
+  profile: Profile;
+  repository: Repository;
+  selectedBranch: string;
+}
+
+const ForkStatusBar: React.FC<ForkStatusBarProps> = ({ profile, repository, selectedBranch }) => {
   const navigate = useNavigate();
   
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [forks, setForks] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [parentRepository, setParentRepository] = useState(null);
+  const [isExpanded, setIsExpanded] = useState<boolean>(false);
+  const [forks, setForks] = useState<Repository[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [parentRepository, setParentRepository] = useState<Repository | null>(null);
 
   // Get session storage key for this repository
-  const getStorageKey = React.useCallback(() => {
+  const getStorageKey = React.useCallback((): string | null => {
     if (!repository) return null;
     return `sgex_fork_status_${repository.full_name}`;
   }, [repository]);
@@ -30,7 +61,7 @@ const ForkStatusBar = ({ profile, repository, selectedBranch }) => {
   }, [getStorageKey]);
 
   // Save expansion state to session storage
-  const toggleExpansion = () => {
+  const toggleExpansion = (): void => {
     const newState = !isExpanded;
     setIsExpanded(newState);
     
@@ -42,7 +73,7 @@ const ForkStatusBar = ({ profile, repository, selectedBranch }) => {
 
   // Fetch forks and parent repository info when component mounts
   useEffect(() => {
-    const fetchRepositoryInfo = async () => {
+    const fetchRepositoryInfo = async (): Promise<void> => {
       if (!repository) return;
       
       setLoading(true);
@@ -69,7 +100,7 @@ const ForkStatusBar = ({ profile, repository, selectedBranch }) => {
         // Fetch forks for the current repository being viewed
         const forks = await githubService.getRepositoryForks(repository.owner.login, repository.name);
         setForks(forks);
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching repository information:', err);
         setError(err.message);
       } finally {
@@ -81,7 +112,7 @@ const ForkStatusBar = ({ profile, repository, selectedBranch }) => {
   }, [repository]);
 
   // Generate DAK dashboard URL for a fork
-  const getForkDashboardUrl = (fork) => {
+  const getForkDashboardUrl = (fork: Repository): string => {
     const owner = fork.owner.login;
     const repoName = fork.name;
     const branch = fork.default_branch || 'main';
@@ -89,7 +120,7 @@ const ForkStatusBar = ({ profile, repository, selectedBranch }) => {
   };
 
   // Handle parent repository navigation
-  const handleParentClick = (event) => {
+  const handleParentClick = (event: React.MouseEvent): void => {
     if (!parentRepository) return;
     
     const dashboardUrl = getForkDashboardUrl(parentRepository);
@@ -108,7 +139,7 @@ const ForkStatusBar = ({ profile, repository, selectedBranch }) => {
   };
 
   // Handle fork navigation
-  const handleForkClick = (event, fork) => {
+  const handleForkClick = (event: React.MouseEvent, fork: Repository): void => {
     const dashboardUrl = getForkDashboardUrl(fork);
     const navigationState = {
       profile: {
