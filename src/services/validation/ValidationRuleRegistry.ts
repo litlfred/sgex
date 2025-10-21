@@ -280,9 +280,9 @@ export class ValidationRuleRegistry {
       info: 0
     };
 
-    for (const rule of this.rules.values()) {
+    Array.from(this.rules.values()).forEach(rule => {
       rulesByLevel[rule.metadata.level]++;
-    }
+    });
 
     return {
       totalRules: this.rules.size,

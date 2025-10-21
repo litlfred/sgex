@@ -50,7 +50,8 @@ export const decisionIdAndLabelRule: ValidationRule = {
     level: 'error',
     component: 'decision-logic',
     title: 'DMN Decision ID and Label Required',
-    description: 'All dmn:decision elements SHALL have both @id and @label attributes as required by DMN 1.3 specification'
+    description: 'All dmn:decision elements SHALL have both @id and @label attributes as required by DMN 1.3 specification',
+    fileTypes: ['dmn', 'xml']
   },
   
   /**
@@ -96,7 +97,7 @@ export const decisionIdAndLabelRule: ValidationRule = {
             seenViolations.add(violationKey);
             
             const xpath = context.getXPath(decision);
-            const line = decision.lineNumber || 0;
+            const line = 0;
             
             violations.push({
               ruleCode: 'DMN-DECISION-ID-LABEL-001',
@@ -122,7 +123,7 @@ export const decisionIdAndLabelRule: ValidationRule = {
             seenViolations.add(violationKey);
             
             const xpath = context.getXPath(decision);
-            const line = decision.lineNumber || 0;
+            const line = 0;
             
             violations.push({
               ruleCode: 'DMN-DECISION-ID-LABEL-001',

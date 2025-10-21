@@ -20,6 +20,7 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
+    "downlevelIteration": true,
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
