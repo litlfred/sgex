@@ -161,6 +161,14 @@ class GitHubService {
   }
 
   /**
+   * Check if the service is currently authenticated
+   * @returns {boolean} True if authenticated, false otherwise
+   */
+  isAuth(): boolean {
+    return this.isAuthenticated;
+  }
+
+  /**
    * Get current authentication state
    */
   getAuthenticationState(): AuthenticationState {
