@@ -582,6 +582,213 @@ npm test -- --coverage     # Generate coverage report
 
 **Remember**: These files control the entire deployment and routing infrastructure. Unauthorized changes can break the production application for all users.
 
+## 🔧 GitHub Actions Workflow Best Practices
+
+### Security and Maintainability Guidelines
+
+**IMPORTANT**: To mitigate workflow injection vulnerabilities and improve maintainability, follow these practices when working with GitHub Actions workflows:
+
+### ✅ Use Python Scripts for Business Logic
+
+**YOU MUST**:
+- Extract all business logic from workflow YAML files into Python scripts in the `scripts/` directory
+- Keep workflow files minimal - they should only orchestrate, not implement
+- Avoid inline bash scripts, heredocs, or JavaScript code in workflows
+- Use Python scripts with clear command-line arguments for all complex operations
+
+**Example - GOOD**:
+```yaml
+- name: Analyze build
+  run: python3 scripts/analyze-build-output.py --output artifacts/
+```
+
+**Example - BAD**:
+```yaml
+- name: Analyze build
+  run: |
+    cat > analyze.js << 'EOF'
+    const fs = require('fs');
+    // 50+ lines of inline JavaScript...
+    EOF
+    node analyze.js
+```
+
+### 🛡️ Workflow Injection Prevention
+
+**Security Risks**:
+- Inline bash/JavaScript in workflows is vulnerable to injection attacks
+- Variables from GitHub context (`${{ github.event... }}`) can contain untrusted user input
+- Complex bash scripts in workflows are hard to sanitize and validate
+
+**Mitigation Strategy**:
+1. **Move logic to Python scripts**: Python scripts can properly sanitize inputs
+2. **Pass data as arguments**: Use command-line arguments instead of environment variables when possible
+3. **Validate in Python**: Let Python scripts validate and sanitize all inputs
+4. **Minimal workflow logic**: Workflows should only call scripts, not contain logic
+
+**Example - Secure Pattern**:
+```yaml
+# Workflow (minimal, secure)
+- name: Generate report
+  run: |
+    python3 scripts/generate-report.py \
+      --user "${{ github.actor }}" \
+      --branch "${{ github.ref_name }}" \
+      --commit "${{ github.sha }}"
+```
+
+```python
+# scripts/generate-report.py (validates inputs)
+import argparse
+import re
+
+def validate_branch_name(branch):
+    """Validate branch name to prevent injection."""
+    if not re.match(r'^[a-zA-Z0-9._/-]+$', branch):
+        raise ValueError(f"Invalid branch name: {branch}")
+    return branch
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--branch', required=True, type=validate_branch_name)
+# ... rest of script
+```
+
+### 📋 Workflow Refactoring Checklist
+
+When creating or modifying workflows:
+
+- [ ] Extract any bash scripts longer than 3 lines into Python scripts
+- [ ] Move all JavaScript code to Python scripts
+- [ ] Remove heredocs (`cat > file << 'EOF'`) - use Python instead
+- [ ] Pass GitHub context variables as script arguments, not environment variables
+- [ ] Validate all user-controllable inputs in Python scripts
+- [ ] Keep workflow steps simple: setup, run script, upload artifacts
+- [ ] Add proper error handling in Python scripts
+- [ ] Make scripts executable with proper shebang (`#!/usr/bin/env python3`)
+- [ ] Follow existing script patterns in `scripts/` directory
+
+### 🎯 Python Script Guidelines
+
+**Location**: All workflow-related scripts go in `scripts/` directory
+
+**Naming Convention**:
+- Use descriptive names: `generate-build-stats.py`, `analyze-coverage.py`
+- Use hyphens for word separation (not underscores)
+- Use `.py` extension
+
+**Script Structure**:
+```python
+#!/usr/bin/env python3
+"""
+Brief description of what the script does.
+
+This script is called by GitHub Actions workflow to...
+"""
+
+import sys
+import argparse
+from pathlib import Path
+
+def main():
+    """Main entry point."""
+    parser = argparse.ArgumentParser(description='...')
+    parser.add_argument('--arg', required=True, help='...')
+    args = parser.parse_args()
+    
+    # Validate inputs
+    # Perform operations
+    # Generate outputs
+    
+    return 0  # Success
+
+if __name__ == '__main__':
+    sys.exit(main())
+```
+
+**Error Handling**:
+- Return non-zero exit codes on failure
+- Print clear error messages to stderr
+- Validate all inputs before processing
+- Handle file I/O errors gracefully
+
+### 📦 Example: Refactoring a Workflow
+
+**Before (inline script - not secure)**:
+```yaml
+- name: Process data
+  run: |
+    user="${{ github.actor }}"
+    echo "Processing for $user"
+    cat > process.sh << 'EOF'
+    #!/bin/bash
+    # Complex bash logic here
+    EOF
+    bash process.sh
+```
+
+**After (Python script - secure)**:
+```yaml
+- name: Process data
+  run: python3 scripts/process-workflow-data.py --user "${{ github.actor }}"
+```
+
+```python
+# scripts/process-workflow-data.py
+#!/usr/bin/env python3
+"""Process workflow data with proper input validation."""
+import sys
+import argparse
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--user', required=True)
+    args = parser.parse_args()
+    
+    # Validate user input
+    if not args.user.isalnum() and args.user not in ['-', '_']:
+        print(f"Error: Invalid user: {args.user}", file=sys.stderr)
+        return 1
+    
+    # Safe processing logic here
+    print(f"Processing for {args.user}")
+    return 0
+
+if __name__ == '__main__':
+    sys.exit(main())
+```
+
+### 🔍 Existing Examples
+
+Reference these workflows and scripts as examples:
+- **Workflow**: `.github/workflows/build-analysis.yml` - Shows minimal workflow with Python script calls
+- **Scripts**:
+  - `scripts/analyze-build-output.py` - Build analysis
+  - `scripts/generate-build-metadata.py` - Metadata generation
+  - `scripts/manage-pr-comment.py` - PR comment management
+  - `scripts/manage-compliance-comment.py` - Compliance reporting
+
+### 🚫 What NOT to Do
+
+**Avoid These Patterns**:
+1. ❌ Long inline bash scripts in workflow YAML
+2. ❌ Inline JavaScript/Node.js code in workflows
+3. ❌ Heredocs for creating script files in workflows
+4. ❌ Complex string interpolation with GitHub context variables
+5. ❌ Direct use of user-controllable inputs without validation
+6. ❌ Mixing logic and orchestration in workflow files
+
+### ✅ Required Changes to Existing Workflows
+
+When you encounter workflows with inline scripts:
+1. Create Python scripts in `scripts/` directory
+2. Extract the business logic to Python
+3. Update workflow to call Python scripts
+4. Add input validation in Python
+5. Test thoroughly
+6. Document in commit message
+
+**Note**: For deployment workflows (`branch-deployment.yml`, `landing-page-deployment.yml`), you need **explicit consent** from @litlfred before making changes.
+
 ## Troubleshooting Common Issues
 
 ### Authentication Issues
