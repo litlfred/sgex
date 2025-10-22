@@ -121,10 +121,18 @@ export const ValidationReport: React.FC<ValidationReportProps> = ({
   }, { errorCount: 0, warningCount: 0, infoCount: 0 });
 
   return (
-    <div className="validation-report-overlay" onClick={onClose}>
-      <div className="validation-report-modal" onClick={(e) => e.stopPropagation()}>
+    <div 
+      className="validation-report-overlay" 
+      role="presentation"
+    >
+      <div 
+        className="validation-report-modal" 
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="validation-report-title"
+      >
         <div className="validation-report-header">
-          <h2>Validation Report</h2>
+          <h2 id="validation-report-title">Validation Report</h2>
           <button
             className="validation-report-close"
             onClick={onClose}
@@ -213,6 +221,15 @@ export const ValidationReport: React.FC<ValidationReportProps> = ({
                 <div
                   className="validation-file-header"
                   onClick={() => toggleFile(filePath)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      toggleFile(filePath);
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  aria-expanded={expandedFiles.has(filePath)}
                 >
                   <span className="validation-file-toggle">
                     {expandedFiles.has(filePath) ? '▼' : '▶'}
