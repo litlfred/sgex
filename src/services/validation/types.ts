@@ -213,6 +213,21 @@ export interface ValidationContext {
   /** Get JSON parser */
   getJSONParser: () => any;
   
+  /** Parse XML content */
+  parseXML: (content: string) => Document;
+  
+  /** Parse JSON content */
+  parseJSON: <T = any>(content: string) => T;
+  
+  /** Parse YAML content */
+  parseYAML: <T = any>(content: string) => T;
+  
+  /** Check if content is well-formed XML */
+  isWellFormedXML: (content: string) => boolean;
+  
+  /** Check if content is valid JSON */
+  isValidJSON: (content: string) => boolean;
+  
   /** Get file content from repository/staging */
   getFileContent: (filePath: string) => Promise<string>;
   
@@ -222,8 +237,17 @@ export interface ValidationContext {
   /** Get line number from offset */
   getLineNumber: (content: string, offset: number) => number;
   
+  /** Get column number from offset */
+  getColumnNumber: (content: string, offset: number) => number;
+  
   /** Generate XPath expression */
   getXPath: (element: any) => string;
+  
+  /** Get repository context */
+  getRepositoryContext: () => { owner: string; repo: string; branch: string } | undefined;
+  
+  /** Set repository context */
+  setRepositoryContext: (context: { owner: string; repo: string; branch: string }) => void;
 }
 
 /**

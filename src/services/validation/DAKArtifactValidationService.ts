@@ -320,16 +320,47 @@ export class DAKArtifactValidationService {
       throw new Error('Override explanation must be at least 10 characters');
     }
 
-    // TODO: Integrate with stagingGroundService to save files
-    // with override metadata in commit message
+    // Validate that files have validation errors to override
+    if (request.validationReport.summary.totalErrors === 0) {
+      throw new Error('No validation errors to override. Use normal save instead.');
+    }
 
-    // Log override for audit trail
-    console.log('Validation override:', {
+    // Create override metadata record
+    const overrideRecord = {
+      timestamp: new Date().toISOString(),
       user: request.user,
       explanation: request.explanation,
-      fileCount: request.files.length,
-      errorCount: request.validationReport.summary.totalErrors
-    });
+      commitMessage: request.commitMessage,
+      validationErrors: request.validationReport.summary.totalErrors,
+      validationWarnings: request.validationReport.summary.totalWarnings,
+      filesAffected: request.files.length,
+      fileList: request.files.map(f => f.path),
+      violationSummary: request.validationReport.fileResults.map(fr => ({
+        path: fr.filePath,
+        errorCount: fr.violations.filter(v => v.level === 'error').length,
+        warningCount: fr.violations.filter(v => v.level === 'warning').length
+      }))
+    };
+
+    // Log override for audit trail (in production, this should go to a proper audit log)
+    console.log('Validation override authorized:', overrideRecord);
+
+    // Store override metadata in localStorage for audit purposes
+    try {
+      const overrideHistory = JSON.parse(localStorage.getItem('sgex_validation_overrides') || '[]');
+      overrideHistory.push(overrideRecord);
+      // Keep only last 100 overrides
+      if (overrideHistory.length > 100) {
+        overrideHistory.shift();
+      }
+      localStorage.setItem('sgex_validation_overrides', JSON.stringify(overrideHistory));
+    } catch (error) {
+      console.warn('Failed to store override in audit log:', error);
+    }
+
+    // Note: The actual file saving should be handled by the calling code (e.g., stagingGroundService)
+    // after this method returns true. This method only validates and records the override decision.
+    // The commit message should include the override explanation from the request.
 
     return true;
   }

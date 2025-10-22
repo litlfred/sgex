@@ -91,7 +91,7 @@ export const ValidationReport: React.FC<ValidationReportProps> = ({
   }
 
   // Filter violations
-  const filteredResults = Object.entries(report.files).reduce((acc, [filePath, result]) => {
+  const filteredResults = report.fileResults.reduce((acc, result) => {
     const filteredViolations = result.violations.filter(v => {
       const levelMatch = filterLevel === 'all' || v.level === filterLevel;
       const componentMatch = filterComponent === 'all' || result.component === filterComponent;
@@ -99,7 +99,7 @@ export const ValidationReport: React.FC<ValidationReportProps> = ({
     });
 
     if (filteredViolations.length > 0) {
-      acc[filePath] = { ...result, violations: filteredViolations };
+      acc[result.filePath] = { ...result, violations: filteredViolations };
     }
 
     return acc;
@@ -107,7 +107,7 @@ export const ValidationReport: React.FC<ValidationReportProps> = ({
 
   // Get unique components
   const components = Array.from(new Set(
-    Object.values(report.files).map(r => r.component).filter(Boolean)
+    report.fileResults.map(r => r.component).filter(Boolean)
   ));
 
   // Calculate filtered summary
@@ -138,25 +138,25 @@ export const ValidationReport: React.FC<ValidationReportProps> = ({
           <div className="validation-summary-stat">
             <span className="validation-stat-label">Errors</span>
             <span className="validation-stat-value validation-stat-error">
-              {report.summary.errorCount}
+              {report.summary.totalErrors}
             </span>
           </div>
           <div className="validation-summary-stat">
             <span className="validation-stat-label">Warnings</span>
             <span className="validation-stat-value validation-stat-warning">
-              {report.summary.warningCount}
+              {report.summary.totalWarnings}
             </span>
           </div>
           <div className="validation-summary-stat">
             <span className="validation-stat-label">Info</span>
             <span className="validation-stat-value validation-stat-info">
-              {report.summary.infoCount}
+              {report.summary.totalInfo}
             </span>
           </div>
           <div className="validation-summary-stat">
             <span className="validation-stat-label">Files</span>
             <span className="validation-stat-value">
-              {report.summary.filesValidated}
+              {report.summary.totalFiles}
             </span>
           </div>
         </div>

@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { DAKValidationReport } from '@/services/validation/types';
+import { DAKValidationReport } from '../../services/validation/types';
 import './ValidationSummary.css';
 
 export interface ValidationSummaryProps {
@@ -32,12 +32,12 @@ export const ValidationSummary: React.FC<ValidationSummaryProps> = ({
   }
 
   const { summary } = report;
-  const { errorCount = 0, warningCount = 0, infoCount = 0 } = summary;
+  const { totalErrors = 0, totalWarnings = 0, totalInfo = 0 } = summary;
 
   // Determine overall status
   const getStatus = (): 'error' | 'warning' | 'success' => {
-    if (errorCount > 0) return 'error';
-    if (warningCount > 0) return 'warning';
+    if (totalErrors > 0) return 'error';
+    if (totalWarnings > 0) return 'warning';
     return 'success';
   };
 
@@ -78,24 +78,24 @@ export const ValidationSummary: React.FC<ValidationSummaryProps> = ({
       </div>
 
       <div className="validation-summary__counts">
-        {errorCount > 0 && (
+        {totalErrors > 0 && (
           <span className="validation-summary__badge validation-summary__badge--error">
             <span className="validation-summary__badge-label">Errors:</span>
-            <span className="validation-summary__badge-count">{errorCount}</span>
+            <span className="validation-summary__badge-count">{totalErrors}</span>
           </span>
         )}
         
-        {warningCount > 0 && (
+        {totalWarnings > 0 && (
           <span className="validation-summary__badge validation-summary__badge--warning">
             <span className="validation-summary__badge-label">Warnings:</span>
-            <span className="validation-summary__badge-count">{warningCount}</span>
+            <span className="validation-summary__badge-count">{totalWarnings}</span>
           </span>
         )}
         
-        {infoCount > 0 && (
+        {totalInfo > 0 && (
           <span className="validation-summary__badge validation-summary__badge--info">
             <span className="validation-summary__badge-label">Info:</span>
-            <span className="validation-summary__badge-count">{infoCount}</span>
+            <span className="validation-summary__badge-count">{totalInfo}</span>
           </span>
         )}
       </div>

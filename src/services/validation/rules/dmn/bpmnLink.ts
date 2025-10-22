@@ -47,7 +47,8 @@ export const dmnBpmnLinkRule: ValidationRule = {
     level: 'warning',
     component: 'decision-logic',
     title: 'DMN Decision Linked to BPMN',
-    description: 'DMN decision @id SHOULD be associated with a bpmn:businessRuleTask with the same id in at least one BPMN diagram'
+    description: 'DMN decision @id SHOULD be associated with a bpmn:businessRuleTask with the same id in at least one BPMN diagram',
+    fileTypes: ['dmn', 'xml']
   },
   
   /**
@@ -84,7 +85,7 @@ export const dmnBpmnLinkRule: ValidationRule = {
           
           if (id) {
             const xpath = context.getXPath(decision);
-            const line = decision.lineNumber || 0;
+            const line = 0;
             
             violations.push({
               ruleCode: 'DMN-BPMN-LINK-001',
@@ -140,7 +141,7 @@ export const dmnBpmnLinkRule: ValidationRule = {
         // If no match found, add warning
         if (!foundMatch) {
           const xpath = context.getXPath(decision);
-          const line = decision.lineNumber || 0;
+          const line = 0;
           
           violations.push({
             ruleCode: 'DMN-BPMN-LINK-001',

@@ -490,6 +490,14 @@ class GitHubService {
   }
 
   /**
+   * Check if service is authenticated (method version for backward compatibility)
+   * @returns true if authenticated, false otherwise
+   */
+  isAuth(): boolean {
+    return this.isAuthenticated;
+  }
+
+  /**
    * Get token type
    */
   get getTokenType(): 'classic' | 'fine-grained' | 'oauth' | null {

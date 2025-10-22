@@ -44,7 +44,8 @@ export const smartBaseDependencyRule: ValidationRule = {
     level: 'error',
     component: 'dak-config',
     title: 'SMART Base Dependency Required',
-    description: 'A DAK Implementation Guide SHALL have smart.who.int.base as a dependency in sushi-config.yaml'
+    description: 'A DAK Implementation Guide SHALL have smart.who.int.base as a dependency in sushi-config.yaml',
+    fileTypes: ['yaml', 'yml']
   },
   
   /**

@@ -20,13 +20,20 @@ export const PAGE_TYPES = {
  */
 const PageContext = createContext(null);
 
+// Track if we've already logged the PageContext error to avoid spam
+let hasLoggedPageContextError = false;
+
 /**
  * Hook to use page context
  */
 export const usePage = () => {
   const context = useContext(PageContext);
   if (!context) {
-    console.error('usePage: PageContext is null - component not wrapped in PageProvider');
+    // Only log the error once to avoid console spam
+    if (!hasLoggedPageContextError) {
+      console.error('usePage: PageContext is null - component not wrapped in PageProvider');
+      hasLoggedPageContextError = true;
+    }
     // Return a default context instead of throwing to make ErrorHandler more resilient
     return {
       pageName: 'unknown',

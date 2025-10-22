@@ -45,7 +45,8 @@ export const fshSyntaxRule: ValidationRule = {
     level: 'error',
     component: 'fhir-profiles',
     title: 'FHIR FSH Syntax Valid',
-    description: 'FHIR Shorthand (FSH) files SHALL have valid syntax that can be processed by the SUSHI compiler'
+    description: 'FHIR Shorthand (FSH) files SHALL have valid syntax that can be processed by the SUSHI compiler',
+    fileTypes: ['fsh']
   },
   
   /**

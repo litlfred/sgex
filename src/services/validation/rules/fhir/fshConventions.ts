@@ -49,7 +49,8 @@ export const fshConventionsRule: ValidationRule = {
     level: 'warning',
     component: 'fhir-profiles',
     title: 'FHIR FSH Naming Conventions',
-    description: 'FHIR Shorthand (FSH) files SHOULD follow WHO naming conventions with PascalCase for profiles, extensions, and value sets'
+    description: 'FHIR Shorthand (FSH) files SHOULD follow WHO naming conventions with PascalCase for profiles, extensions, and value sets',
+    fileTypes: ['fsh']
   },
   
   /**

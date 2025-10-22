@@ -209,12 +209,24 @@ function generateDAKRoutes(routeName: string, dakComponent: DAKComponentConfig):
 /**
  * Generate routes for a standard component
  */
-function generateStandardRoutes(componentName: string, componentConfig: StandardComponentConfig): React.JSX.Element[] {
+function generateStandardRoutes(componentName: string, componentConfig: any): React.JSX.Element[] {
   // Use componentName (the key) as the component to load, unless component is explicitly specified
   const actualComponentName = componentConfig.component || componentName;
   const Component = createLazyComponent(actualComponentName);
+  
+  // Check if the config has a routes array (new format)
+  if (componentConfig.routes && Array.isArray(componentConfig.routes)) {
+    return componentConfig.routes.map((routeConfig: any, index: number) => (
+      <Route 
+        key={`${componentName}-${index}`} 
+        path={routeConfig.path} 
+        element={<Component />} 
+      />
+    ));
+  }
+  
+  // Fallback to old format using path property
   const path = componentConfig.path || `/${componentName}`;
-
   return [
     <Route key={componentName} path={path} element={<Component />} />
   ];
