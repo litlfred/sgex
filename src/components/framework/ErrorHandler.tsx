@@ -53,8 +53,9 @@ export interface ErrorHandlerProps {
  * />
  */
 const ErrorHandler: React.FC<ErrorHandlerProps> = ({ error, onRetry }) => {
+  // Safely get page context - may not be available if error occurred during PageProvider initialization
   const pageContext = usePage();
-  const pageName = pageContext.pageName;
+  const pageName = pageContext?.pageName || 'unknown';
   const [bugReportSent, setBugReportSent] = useState(false);
 
   // Theme-aware mascot image
