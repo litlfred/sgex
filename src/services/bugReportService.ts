@@ -324,6 +324,73 @@ class BugReportService {
     
     return `- Browser: ${userAgent}\n- Platform: ${platform}\n- URL: ${window.location.href}`;
   }
+
+  /**
+   * Capture console output for debugging
+   * @returns Object with stop method to stop capturing and get captured logs
+   */
+  captureConsoleOutput(): { stop: () => void; getLogs: () => string[] } {
+    const logs: string[] = [];
+    const originalConsole = {
+      log: console.log,
+      warn: console.warn,
+      error: console.error,
+      info: console.info
+    };
+
+    // Override console methods to capture output
+    console.log = (...args: any[]) => {
+      logs.push(`[LOG] ${args.map(a => String(a)).join(' ')}`);
+      originalConsole.log(...args);
+    };
+
+    console.warn = (...args: any[]) => {
+      logs.push(`[WARN] ${args.map(a => String(a)).join(' ')}`);
+      originalConsole.warn(...args);
+    };
+
+    console.error = (...args: any[]) => {
+      logs.push(`[ERROR] ${args.map(a => String(a)).join(' ')}`);
+      originalConsole.error(...args);
+    };
+
+    console.info = (...args: any[]) => {
+      logs.push(`[INFO] ${args.map(a => String(a)).join(' ')}`);
+      originalConsole.info(...args);
+    };
+
+    return {
+      stop: () => {
+        // Restore original console methods
+        console.log = originalConsole.log;
+        console.warn = originalConsole.warn;
+        console.error = originalConsole.error;
+        console.info = originalConsole.info;
+      },
+      getLogs: () => logs
+    };
+  }
+
+  /**
+   * Get issue templates
+   * @param owner - Repository owner (optional, uses config default)
+   * @param repo - Repository name (optional, uses config default)
+   * @returns Promise resolving to array of issue templates
+   */
+  async getTemplates(owner?: string, repo?: string): Promise<IssueTemplate[]> {
+    const repoOwner = owner || repositoryConfig.getOwner();
+    const repoName = repo || repositoryConfig.getName();
+    const cacheKey = `${repoOwner}/${repoName}`;
+
+    // Check cache first (cache valid for 5 minutes)
+    const cached = this.templateCache.get(cacheKey);
+    if (cached && Date.now() - cached.fetchedAt < 5 * 60 * 1000) {
+      return cached.templates;
+    }
+
+    // Fetch fresh templates
+    return await this.fetchIssueTemplates(repoOwner, repoName);
+  }
 }
 
 // Export singleton instance

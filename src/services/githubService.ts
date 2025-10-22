@@ -161,6 +161,14 @@ class GitHubService {
   }
 
   /**
+   * Check if the service is currently authenticated
+   * @returns {boolean} True if authenticated, false otherwise
+   */
+  isAuth(): boolean {
+    return this.isAuthenticated;
+  }
+
+  /**
    * Get current authentication state
    */
   getAuthenticationState(): AuthenticationState {
@@ -369,6 +377,113 @@ class GitHubService {
     } catch (error) {
       this.logger.debug('Failed to check write access', { owner, repo, error });
       return false;
+    }
+  }
+
+  /**
+   * Get commits for a repository
+   * 
+   * @param owner - Repository owner
+   * @param repo - Repository name
+   * @param options - Commit list options (sha, per_page, page)
+   * @returns Promise<any[]> Array of commits
+   * 
+   * @example
+   * const commits = await githubService.getCommits('who', 'anc-dak', { sha: 'main', per_page: 10, page: 1 });
+   */
+  async getCommits(
+    owner: string,
+    repo: string,
+    options: { sha?: string; per_page?: number; page?: number } = {}
+  ): Promise<any[]> {
+    try {
+      const octokit = this.isAuthenticated && this.octokit ? this.octokit : await this.createOctokitInstance();
+      const { data } = await octokit.rest.repos.listCommits({
+        owner,
+        repo,
+        ...options
+      });
+      return data;
+    } catch (error) {
+      this.logger.error('Failed to get commits', { owner, repo, options, error });
+      throw error;
+    }
+  }
+
+  /**
+   * Get branches from a GitHub repository
+   * 
+   * @param owner - Repository owner
+   * @param repo - Repository name
+   * @param options - Optional parameters for pagination
+   * @returns Promise<any[]> Array of branch data
+   * 
+   * @example
+   * const branches = await githubService.getBranches('who', 'anc-dak', { per_page: 30, page: 1 });
+   */
+  async getBranches(
+    owner: string,
+    repo: string,
+    options: { per_page?: number; page?: number } = {}
+  ): Promise<any[]> {
+    try {
+      const octokit = this.isAuthenticated && this.octokit ? this.octokit : await this.createOctokitInstance();
+      const { data } = await octokit.rest.repos.listBranches({
+        owner,
+        repo,
+        per_page: options.per_page || 100,
+        page: options.page || 1
+      });
+      return data;
+    } catch (error) {
+      this.logger.error('Failed to get branches', { owner, repo, options, error });
+      throw error;
+    }
+  }
+
+  /**
+   * Create a new branch in a GitHub repository
+   * 
+   * @param owner - Repository owner
+   * @param repo - Repository name
+   * @param branchName - Name for the new branch
+   * @param sourceBranch - Source branch to create from (defaults to 'main')
+   * @returns Promise<any> Created branch reference
+   * 
+   * @example
+   * const branch = await githubService.createBranch('who', 'anc-dak', 'feature-branch', 'main');
+   */
+  async createBranch(
+    owner: string,
+    repo: string,
+    branchName: string,
+    sourceBranch: string = 'main'
+  ): Promise<any> {
+    try {
+      const octokit = this.isAuthenticated && this.octokit ? this.octokit : await this.createOctokitInstance();
+      
+      // Get the SHA of the source branch
+      const { data: refData } = await octokit.rest.git.getRef({
+        owner,
+        repo,
+        ref: `heads/${sourceBranch}`
+      });
+      
+      const sha = refData.object.sha;
+      
+      // Create the new branch
+      const { data } = await octokit.rest.git.createRef({
+        owner,
+        repo,
+        ref: `refs/heads/${branchName}`,
+        sha
+      });
+      
+      this.logger.info('Branch created successfully', { owner, repo, branchName, sourceBranch });
+      return data;
+    } catch (error) {
+      this.logger.error('Failed to create branch', { owner, repo, branchName, sourceBranch, error });
+      throw error;
     }
   }
 

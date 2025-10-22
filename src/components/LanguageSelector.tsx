@@ -1,6 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { Language, LanguageSelectorProps } from '../types/core';
+
+interface Language {
+  code: string;
+  name: string;
+  flag: string;
+  englishName?: string;
+}
 
 // Default UN languages
 const UN_LANGUAGES: Language[] = [
@@ -13,7 +19,7 @@ const UN_LANGUAGES: Language[] = [
 ];
 
 // Comprehensive ISO 639-1 language list with native names and English names for searchability
-const ADDITIONAL_LANGUAGES: Language[] = [
+const ADDITIONAL_LANGUAGES: (Language & { englishName: string })[] = [
   // European languages
   { code: 'de', name: 'Deutsch', englishName: 'German', flag: '🇩🇪' },
   { code: 'it', name: 'Italiano', englishName: 'Italian', flag: '🇮🇹' },
@@ -27,7 +33,7 @@ const ADDITIONAL_LANGUAGES: Language[] = [
   { code: 'cs', name: 'Čeština', englishName: 'Czech', flag: '🇨🇿' },
   { code: 'sk', name: 'Slovenčina', englishName: 'Slovak', flag: '🇸🇰' },
   { code: 'hu', name: 'Magyar', englishName: 'Hungarian', flag: '🇭🇺' },
-  { code: 'ro', name: 'Română', englishName: 'Romanian', flag: '🇷🇴' },
+  { code: 'ro', name: 'Română', englishName: 'Romanian', flag: '🇷��' },
   { code: 'bg', name: 'Български', englishName: 'Bulgarian', flag: '🇧🇬' },
   { code: 'hr', name: 'Hrvatski', englishName: 'Croatian', flag: '🇭🇷' },
   { code: 'el', name: 'Ελληνικά', englishName: 'Greek', flag: '🇬🇷' },
@@ -97,7 +103,7 @@ const ADDITIONAL_LANGUAGES: Language[] = [
   { code: 'xh', name: 'isiXhosa', englishName: 'Xhosa', flag: '🇿🇦' },
   { code: 'st', name: 'Sesotho', englishName: 'Sotho', flag: '🇱🇸' },
   { code: 'tn', name: 'Setswana', englishName: 'Tswana', flag: '🇧🇼' },
-  { code: 'ss', name: 'SiSwati', englishName: 'Swati', flag: '🇸🇿' },
+  { code: 'ss', name: 'SiSwati', englishName: 'Swati', flag: '🇸��' },
   { code: 've', name: 'Tshivenḓa', englishName: 'Venda', flag: '🇿🇦' },
   { code: 'ts', name: 'Xitsonga', englishName: 'Tsonga', flag: '🇿🇦' },
   { code: 'sn', name: 'ChiShona', englishName: 'Shona', flag: '🇿🇼' },
@@ -131,6 +137,10 @@ const ADDITIONAL_LANGUAGES: Language[] = [
   { code: 'sa', name: 'संस्कृतम्', englishName: 'Sanskrit', flag: '🇮🇳' }
 ];
 
+interface LanguageSelectorProps {
+  className?: string;
+}
+
 const LanguageSelector: React.FC<LanguageSelectorProps> = ({ className = '' }) => {
   const { i18n, t } = useTranslation();
   const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -144,7 +154,7 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({ className = '' }) =
   // Get available languages (UN languages + any additional selected languages)
   const availableLanguages = useMemo(() => {
     // Start with all UN languages
-    const languages = [...UN_LANGUAGES];
+    const languages: Language[] = [...UN_LANGUAGES];
     
     // Add any additional languages that have been selected
     selectedLanguages.forEach(langCode => {
@@ -177,7 +187,7 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({ className = '' }) =
     return ADDITIONAL_LANGUAGES.filter(lang => 
       !selectedLanguages.includes(lang.code) &&
       (lang.name.toLowerCase().includes(searchLower) || 
-       (lang.englishName && lang.englishName.toLowerCase().includes(searchLower)) ||
+       lang.englishName.toLowerCase().includes(searchLower) ||
        lang.code.toLowerCase().includes(searchLower))
     ).slice(0, 10); // Limit to 10 results
   }, [searchTerm, selectedLanguages]);
@@ -245,6 +255,7 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({ className = '' }) =
                 value={searchTerm}
                 onChange={handleSearchChange}
                 className="language-search"
+                autoFocus={false}
               />
             </div>
             
