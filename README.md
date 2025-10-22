@@ -129,6 +129,34 @@ npm run verify-404    # Verify existing build
 
 For detailed implementation information, see [docs/404-implementation.md](docs/404-implementation.md).
 
+## Build Analysis and Troubleshooting
+
+SGEX Workbench includes a comprehensive build analysis workflow that generates detailed logs and statistics for troubleshooting and optimization:
+
+### Accessing Build Logs and Stats
+
+Build artifacts from workflow runs can be accessed via GitHub Actions:
+
+1. Navigate to the [Actions tab](https://github.com/litlfred/sgex/actions)
+2. Select the workflow run (e.g., "Build Analysis and Logging" or deployment runs)
+3. Scroll to the **Artifacts** section at the bottom of the page
+4. Download the artifact (e.g., `build-logs-and-stats-2024-01-15_10-30-00_UTC`)
+5. Extract the ZIP file to access logs and statistics
+
+### Available Artifacts
+
+- **build.log** - Complete build output with warnings and errors
+- **npm-install.log** - Dependency installation log with verbose output
+- **build-analysis.json** - Detailed file-by-file size breakdown
+- **webpack-stats.json** - Webpack bundle statistics for analysis tools
+- **build-analysis.txt** - Human-readable summary of largest files
+
+### Artifact Retention
+
+Build artifacts are retained for **90 days** and can be downloaded at any time during this period for troubleshooting and analysis.
+
+For detailed information about build analysis, troubleshooting, and optimization, see [docs/BUILD_ANALYSIS.md](docs/BUILD_ANALYSIS.md).
+
 ## MCP Services
 
 SGEX Workbench includes Model Context Protocol (MCP) services that provide structured API access to DAK information:

@@ -9,8 +9,18 @@ name: Build Analysis and Logging
 # - Build artifacts archived for later download
 # - Analysis of largest modules and bundles
 # 
+# How to Use:
+# 1. Go to Actions tab > Build Analysis and Logging > Run workflow
+# 2. Select branch and options, then click "Run workflow"
+# 3. Wait for workflow to complete
+# 4. Scroll to bottom of run page and download artifacts from "Artifacts" section
+# 5. Extract ZIP file to access logs and statistics
+# 
 # Artifacts are retained for 90 days (configurable) and can be accessed
 # from the Actions tab > specific workflow run > Artifacts section.
+# 
+# Documentation: docs/BUILD_ANALYSIS.md
+# Quick Guide: docs/DOWNLOADING_BUILD_ARTIFACTS.md
 
 on:
   # Manual trigger for on-demand build analysis
