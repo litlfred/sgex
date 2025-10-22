@@ -442,6 +442,52 @@ class GitHubService {
   }
 
   /**
+   * Create a new branch in a GitHub repository
+   * 
+   * @param owner - Repository owner
+   * @param repo - Repository name
+   * @param branchName - Name for the new branch
+   * @param sourceBranch - Source branch to create from (defaults to 'main')
+   * @returns Promise<any> Created branch reference
+   * 
+   * @example
+   * const branch = await githubService.createBranch('who', 'anc-dak', 'feature-branch', 'main');
+   */
+  async createBranch(
+    owner: string,
+    repo: string,
+    branchName: string,
+    sourceBranch: string = 'main'
+  ): Promise<any> {
+    try {
+      const octokit = this.isAuthenticated && this.octokit ? this.octokit : await this.createOctokitInstance();
+      
+      // Get the SHA of the source branch
+      const { data: refData } = await octokit.rest.git.getRef({
+        owner,
+        repo,
+        ref: `heads/${sourceBranch}`
+      });
+      
+      const sha = refData.object.sha;
+      
+      // Create the new branch
+      const { data } = await octokit.rest.git.createRef({
+        owner,
+        repo,
+        ref: `refs/heads/${branchName}`,
+        sha
+      });
+      
+      this.logger.info('Branch created successfully', { owner, repo, branchName, sourceBranch });
+      return data;
+    } catch (error) {
+      this.logger.error('Failed to create branch', { owner, repo, branchName, sourceBranch, error });
+      throw error;
+    }
+  }
+
+  /**
    * Get directory contents from a GitHub repository
    * 
    * @param owner - Repository owner
