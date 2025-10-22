@@ -6,6 +6,11 @@
  * @module validation
  */
 
+import { ValidationRuleRegistry } from './ValidationRuleRegistry';
+import { validationContext } from './ValidationContext';
+import { createDAKArtifactValidationService } from './DAKArtifactValidationService';
+import { registerAllRules } from './rules';
+
 // Export types
 export * from './types';
 
@@ -23,12 +28,6 @@ export * from './rules';
 
 // Export integration functions
 export * from './integration';
-
-// Create and export default validation service instance
-import { ValidationRuleRegistry } from './ValidationRuleRegistry';
-import { validationContext } from './ValidationContext';
-import { createDAKArtifactValidationService } from './DAKArtifactValidationService';
-import { registerAllRules } from './rules';
 
 // Create singleton registry
 export const validationRegistry = new ValidationRuleRegistry({

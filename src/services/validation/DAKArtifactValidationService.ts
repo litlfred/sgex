@@ -11,7 +11,6 @@
  */
 
 import {
-  ValidationRule,
   FileValidationResult,
   DAKValidationReport,
   ValidationViolation,
