@@ -28,6 +28,7 @@ export * from './integration';
 import { ValidationRuleRegistry } from './ValidationRuleRegistry';
 import { validationContext } from './ValidationContext';
 import { createDAKArtifactValidationService } from './DAKArtifactValidationService';
+import { registerAllRules } from './rules';
 
 // Create singleton registry
 export const validationRegistry = new ValidationRuleRegistry({
@@ -35,6 +36,9 @@ export const validationRegistry = new ValidationRuleRegistry({
   maxCacheSize: 1000,
   throwOnDuplicate: false
 });
+
+// Register all validation rules
+registerAllRules(validationRegistry);
 
 // Create singleton validation service
 export const dakArtifactValidationService = createDAKArtifactValidationService(
