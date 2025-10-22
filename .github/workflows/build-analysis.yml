@@ -27,10 +27,10 @@ on:
   workflow_dispatch:
     inputs:
       branch:
-        description: 'Branch to analyze (defaults to main)'
+        description: 'Branch to analyze (leave empty to use current branch)'
         required: false
         type: string
-        default: 'main'
+        default: ''
       generate_sourcemaps:
         description: 'Generate source maps for detailed debugging'
         required: false
@@ -44,7 +44,7 @@ on:
         description: 'Branch to analyze'
         required: false
         type: string
-        default: 'main'
+        default: ''
       generate_sourcemaps:
         description: 'Generate source maps for detailed debugging'
         required: false
@@ -73,7 +73,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
         with:
-          ref: ${{ inputs.branch || 'main' }}
+          ref: ${{ inputs.branch || github.ref }}
           fetch-depth: 0
 
       - name: Setup Node.js
@@ -144,7 +144,7 @@ jobs:
         if: always()
         run: |
           python3 scripts/generate-build-readme.py \
-            --branch "${{ inputs.branch || 'main' }}" \
+            --branch "${{ inputs.branch || github.ref_name }}" \
             --commit "${{ github.sha }}" \
             --workflow-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
       
@@ -154,7 +154,7 @@ jobs:
           python3 scripts/generate-build-metadata.py \
             --workflow-run-id "${{ github.run_id }}" \
             --workflow-run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
-            --branch "${{ inputs.branch || 'main' }}" \
+            --branch "${{ inputs.branch || github.ref_name }}" \
             --commit-sha "${{ github.sha }}" \
             --commit-url "${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}" \
             --build-timestamp "${{ steps.configure_build.outputs.build_timestamp }}" \
@@ -179,7 +179,7 @@ jobs:
         run: |
           echo "## 📊 Build Analysis Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Branch:** \`${{ inputs.branch || 'main' }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** \`${{ inputs.branch || github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Build Timestamp:** ${{ steps.configure_build.outputs.build_timestamp }}" >> $GITHUB_STEP_SUMMARY
           echo "**Source Maps:** ${{ inputs.generate_sourcemaps || false }}" >> $GITHUB_STEP_SUMMARY
