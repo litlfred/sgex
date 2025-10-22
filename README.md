@@ -101,6 +101,13 @@ The SGEX Workbench is a browser-based, static web application for collaborative 
    ```
    This ensures the 404.html file is properly configured for GitHub Pages SPA routing.
 
+5. **Analyze build with detailed stats** (optional)
+   ```bash
+   # Via GitHub Actions workflow
+   # Go to Actions > Build Analysis and Logging > Run workflow
+   ```
+   See [docs/BUILD_ANALYSIS.md](docs/BUILD_ANALYSIS.md) for detailed build analysis and troubleshooting.
+
 ## GitHub Pages Deployment
 
 SGEX Workbench includes a comprehensive 404.html file that enables proper Single Page Application (SPA) routing on GitHub Pages. The 404.html file:

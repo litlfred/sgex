@@ -1,0 +1,435 @@
+name: Build Analysis and Logging
+
+# This workflow provides enhanced build logging and artifact collection
+# for troubleshooting and analysis of production builds.
+# 
+# Features:
+# - Detailed webpack build stats with file-level information
+# - Verbose build logging with debug output
+# - Build artifacts archived for later download
+# - Analysis of largest modules and bundles
+# 
+# Artifacts are retained for 90 days (configurable) and can be accessed
+# from the Actions tab > specific workflow run > Artifacts section.
+
+on:
+  # Manual trigger for on-demand build analysis
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to analyze (defaults to main)'
+        required: false
+        type: string
+        default: 'main'
+      generate_sourcemaps:
+        description: 'Generate source maps for detailed debugging'
+        required: false
+        type: boolean
+        default: false
+  
+  # Workflow call - allows other workflows to trigger build analysis
+  workflow_call:
+    inputs:
+      branch:
+        description: 'Branch to analyze'
+        required: false
+        type: string
+        default: 'main'
+      generate_sourcemaps:
+        description: 'Generate source maps for detailed debugging'
+        required: false
+        type: boolean
+        default: false
+  
+  # Optionally trigger on pushes to main for continuous monitoring
+  # push:
+  #   branches: [ main ]
+  #   paths:
+  #     - 'src/**'
+  #     - 'public/**'
+  #     - 'package.json'
+  #     - 'package-lock.json'
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  build-with-stats:
+    name: Build with Detailed Stats and Logs
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.branch || 'main' }}
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Create artifacts directory
+        run: |
+          mkdir -p artifacts
+          echo "📦 Creating artifacts directory for build logs and stats"
+      
+      - name: Install dependencies with verbose logging
+        run: |
+          echo "📥 Installing dependencies with verbose output..."
+          npm ci --legacy-peer-deps --verbose 2>&1 | tee artifacts/npm-install.log
+          echo "✅ Dependencies installed"
+      
+      - name: Configure build for detailed stats
+        id: configure_build
+        run: |
+          echo "⚙️ Configuring build for detailed statistics..."
+          
+          # Set environment variables for verbose output
+          echo "VERBOSE=true" >> $GITHUB_ENV
+          
+          # Configure source map generation based on input
+          if [[ "${{ inputs.generate_sourcemaps }}" == "true" ]]; then
+            echo "GENERATE_SOURCEMAP=true" >> $GITHUB_ENV
+            echo "📊 Source maps will be generated for detailed debugging"
+          else
+            echo "GENERATE_SOURCEMAP=false" >> $GITHUB_ENV
+            echo "ℹ️ Source maps disabled to reduce build size"
+          fi
+          
+          # Set other build environment variables
+          echo "CI=false" >> $GITHUB_ENV
+          echo "ESLINT_NO_DEV_ERRORS=true" >> $GITHUB_ENV
+          echo "PUBLIC_URL=/sgex/" >> $GITHUB_ENV
+          
+          echo "build_timestamp=$(date -u '+%Y-%m-%d_%H-%M-%S_UTC')" >> $GITHUB_OUTPUT
+          echo "✅ Build configuration complete"
+      
+      - name: Build with webpack stats
+        id: build
+        run: |
+          echo "🔨 Building application with detailed webpack statistics..."
+          echo "Build started at: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          
+          # Run the build with detailed output
+          npm run build -- --stats 2>&1 | tee artifacts/build.log
+          
+          echo "Build completed at: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          echo "✅ Build completed successfully"
+        continue-on-error: false
+      
+      - name: Generate webpack bundle stats JSON
+        if: success()
+        run: |
+          echo "📊 Generating webpack bundle statistics JSON..."
+          
+          # Create a custom webpack stats script
+          cat > generate-stats.js << 'EOF'
+          const { execSync } = require('child_process');
+          const fs = require('fs');
+          const path = require('path');
+          
+          try {
+            // Run webpack build with JSON stats output
+            console.log('Generating webpack stats...');
+            const statsJson = execSync(
+              'npx craco build --stats-json',
+              { 
+                encoding: 'utf-8',
+                env: {
+                  ...process.env,
+                  CI: 'false',
+                  ESLINT_NO_DEV_ERRORS: 'true',
+                  GENERATE_SOURCEMAP: 'false',
+                  PUBLIC_URL: '/sgex/'
+                }
+              }
+            );
+            
+            console.log('✅ Webpack stats generated successfully');
+            
+            // Find the stats.json file in the build directory
+            const buildDir = path.join(__dirname, 'build');
+            if (fs.existsSync(path.join(buildDir, 'stats.json'))) {
+              // Move stats.json to artifacts
+              fs.copyFileSync(
+                path.join(buildDir, 'stats.json'),
+                path.join(__dirname, 'artifacts', 'webpack-stats.json')
+              );
+              console.log('📦 Stats file saved to artifacts/webpack-stats.json');
+            } else {
+              console.log('⚠️ stats.json not found in build directory');
+            }
+          } catch (error) {
+            console.error('Error generating stats:', error.message);
+            process.exit(1);
+          }
+          EOF
+          
+          node generate-stats.js || echo "⚠️ Failed to generate stats JSON (non-fatal)"
+        continue-on-error: true
+      
+      - name: Analyze build output and largest modules
+        if: success()
+        run: |
+          echo "📈 Analyzing build output..."
+          
+          cat > analyze-build.js << 'EOF'
+          const fs = require('fs');
+          const path = require('path');
+          
+          function formatBytes(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+          }
+          
+          function analyzeDirectory(dir) {
+            const files = [];
+            
+            function walkDir(currentPath) {
+              const items = fs.readdirSync(currentPath);
+              
+              for (const item of items) {
+                const fullPath = path.join(currentPath, item);
+                const stats = fs.statSync(fullPath);
+                
+                if (stats.isDirectory()) {
+                  walkDir(fullPath);
+                } else {
+                  const relativePath = path.relative(dir, fullPath);
+                  files.push({
+                    path: relativePath,
+                    size: stats.size,
+                    extension: path.extname(fullPath)
+                  });
+                }
+              }
+            }
+            
+            walkDir(dir);
+            return files;
+          }
+          
+          try {
+            const buildDir = path.join(__dirname, 'build');
+            
+            if (!fs.existsSync(buildDir)) {
+              console.error('Build directory not found!');
+              process.exit(1);
+            }
+            
+            console.log('=== Build Analysis Report ===\n');
+            
+            // Analyze all files
+            const files = analyzeDirectory(buildDir);
+            
+            // Calculate totals by type
+            const byType = {};
+            let totalSize = 0;
+            
+            files.forEach(file => {
+              totalSize += file.size;
+              const ext = file.extension || 'no-extension';
+              if (!byType[ext]) {
+                byType[ext] = { count: 0, size: 0 };
+              }
+              byType[ext].count++;
+              byType[ext].size += file.size;
+            });
+            
+            console.log('📊 Build Size Summary:');
+            console.log(`Total Files: ${files.length}`);
+            console.log(`Total Size: ${formatBytes(totalSize)}\n`);
+            
+            console.log('📂 Size by File Type:');
+            Object.entries(byType)
+              .sort((a, b) => b[1].size - a[1].size)
+              .forEach(([ext, stats]) => {
+                const percentage = ((stats.size / totalSize) * 100).toFixed(1);
+                console.log(`  ${ext.padEnd(15)} ${formatBytes(stats.size).padEnd(12)} (${percentage}%) - ${stats.count} files`);
+              });
+            
+            console.log('\n🔍 Top 20 Largest Files:');
+            files
+              .sort((a, b) => b.size - a.size)
+              .slice(0, 20)
+              .forEach((file, index) => {
+                const percentage = ((file.size / totalSize) * 100).toFixed(1);
+                console.log(`  ${(index + 1).toString().padStart(2)}. ${formatBytes(file.size).padEnd(12)} (${percentage.padStart(5)}%) - ${file.path}`);
+              });
+            
+            // Save detailed analysis to JSON
+            const analysis = {
+              timestamp: new Date().toISOString(),
+              totalFiles: files.length,
+              totalSize: totalSize,
+              totalSizeFormatted: formatBytes(totalSize),
+              byType: Object.entries(byType).map(([ext, stats]) => ({
+                extension: ext,
+                count: stats.count,
+                size: stats.size,
+                sizeFormatted: formatBytes(stats.size),
+                percentage: ((stats.size / totalSize) * 100).toFixed(1)
+              })).sort((a, b) => b.size - a.size),
+              largestFiles: files
+                .sort((a, b) => b.size - a.size)
+                .slice(0, 50)
+                .map(file => ({
+                  path: file.path,
+                  size: file.size,
+                  sizeFormatted: formatBytes(file.size),
+                  percentage: ((file.size / totalSize) * 100).toFixed(1)
+                }))
+            };
+            
+            fs.writeFileSync(
+              path.join(__dirname, 'artifacts', 'build-analysis.json'),
+              JSON.stringify(analysis, null, 2)
+            );
+            
+            console.log('\n✅ Detailed analysis saved to artifacts/build-analysis.json');
+            
+          } catch (error) {
+            console.error('Error analyzing build:', error);
+            process.exit(1);
+          }
+          EOF
+          
+          node analyze-build.js | tee artifacts/build-analysis.txt
+      
+      - name: Generate build summary
+        if: always()
+        run: |
+          echo "📝 Generating build summary..."
+          
+          cat > artifacts/README.md << 'EOF'
+          # Build Analysis Artifacts
+          
+          This directory contains detailed build logs and statistics from the SGEX Workbench production build.
+          
+          ## Files in this Archive
+          
+          ### Logs
+          - **npm-install.log** - Complete npm dependency installation log with verbose output
+          - **build.log** - Full webpack build log including all warnings and errors
+          - **build-analysis.txt** - Human-readable analysis of build output with size breakdowns
+          
+          ### Statistics
+          - **webpack-stats.json** - Complete webpack bundle statistics in JSON format (if generated)
+          - **build-analysis.json** - Detailed build size analysis with file-by-file breakdown
+          
+          ## How to Use These Artifacts
+          
+          ### Viewing Build Logs
+          Simply open the `.log` or `.txt` files in any text editor to review the build output.
+          
+          ### Analyzing Bundle Size
+          1. Open `build-analysis.json` to see detailed file-by-file breakdown
+          2. Review `build-analysis.txt` for a quick summary of largest files
+          3. Use `webpack-stats.json` with tools like:
+             - [webpack-bundle-analyzer](https://www.npmjs.com/package/webpack-bundle-analyzer)
+             - [webpack-visualizer](https://chrisbateman.github.io/webpack-visualizer/)
+             - [source-map-explorer](https://www.npmjs.com/package/source-map-explorer)
+          
+          ### Finding Build Issues
+          1. Search `build.log` for "ERROR" or "WARNING" to find issues
+          2. Check `npm-install.log` if build failures occur during dependency installation
+          3. Review bundle sizes in `build-analysis.json` to identify optimization opportunities
+          
+          ## Accessing These Artifacts from GitHub
+          
+          1. Navigate to the GitHub Actions tab
+          2. Click on the specific workflow run
+          3. Scroll down to the "Artifacts" section
+          4. Download the "build-logs-and-stats" artifact
+          5. Extract the ZIP file to access all logs and statistics
+          
+          ## Retention Policy
+          
+          Build artifacts are retained for **90 days** by default (configurable in workflow settings).
+          After this period, artifacts are automatically deleted by GitHub.
+          
+          ---
+          
+          Generated: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+          Branch: ${{ inputs.branch || 'main' }}
+          Commit: ${{ github.sha }}
+          Workflow Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          EOF
+          
+          echo "✅ Build summary generated"
+      
+      - name: Save build metadata
+        if: always()
+        run: |
+          cat > artifacts/build-metadata.json << EOF
+          {
+            "workflow_run_id": "${{ github.run_id }}",
+            "workflow_run_url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+            "branch": "${{ inputs.branch || 'main' }}",
+            "commit_sha": "${{ github.sha }}",
+            "commit_url": "${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}",
+            "build_timestamp": "${{ steps.configure_build.outputs.build_timestamp }}",
+            "generate_sourcemaps": ${{ inputs.generate_sourcemaps || false }},
+            "node_version": "20",
+            "runner_os": "${{ runner.os }}",
+            "triggered_by": "${{ github.actor }}",
+            "event_name": "${{ github.event_name }}"
+          }
+          EOF
+          
+          echo "✅ Build metadata saved"
+      
+      - name: Upload build logs and stats
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs-and-stats-${{ steps.configure_build.outputs.build_timestamp }}
+          path: artifacts/
+          retention-days: 90
+          compression-level: 6
+          if-no-files-found: warn
+      
+      - name: Create workflow summary
+        if: always()
+        run: |
+          echo "## 📊 Build Analysis Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** \`${{ inputs.branch || 'main' }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Build Timestamp:** ${{ steps.configure_build.outputs.build_timestamp }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Source Maps:** ${{ inputs.generate_sourcemaps || false }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -f artifacts/build-analysis.txt ]; then
+            echo "### 📈 Build Size Analysis" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            head -30 artifacts/build-analysis.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 Download Artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Build logs and statistics have been uploaded as workflow artifacts." >> $GITHUB_STEP_SUMMARY
+          echo "To access them:" >> $GITHUB_STEP_SUMMARY
+          echo "1. Go to the [Artifacts section](#artifacts) of this workflow run" >> $GITHUB_STEP_SUMMARY
+          echo "2. Download the \`build-logs-and-stats-${{ steps.configure_build.outputs.build_timestamp }}\` artifact" >> $GITHUB_STEP_SUMMARY
+          echo "3. Extract the ZIP file to view all logs and statistics" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Retention:** Artifacts are retained for 90 days" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "### ✅ Build Status: SUCCESS" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### ❌ Build Status: FAILED" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Check the build logs artifact for detailed error information." >> $GITHUB_STEP_SUMMARY
+          fi
