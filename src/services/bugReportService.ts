@@ -370,6 +370,27 @@ class BugReportService {
       getLogs: () => logs
     };
   }
+
+  /**
+   * Get issue templates
+   * @param owner - Repository owner (optional, uses config default)
+   * @param repo - Repository name (optional, uses config default)
+   * @returns Promise resolving to array of issue templates
+   */
+  async getTemplates(owner?: string, repo?: string): Promise<IssueTemplate[]> {
+    const repoOwner = owner || repositoryConfig.getOwner();
+    const repoName = repo || repositoryConfig.getName();
+    const cacheKey = `${repoOwner}/${repoName}`;
+
+    // Check cache first (cache valid for 5 minutes)
+    const cached = this.templateCache.get(cacheKey);
+    if (cached && Date.now() - cached.fetchedAt < 5 * 60 * 1000) {
+      return cached.templates;
+    }
+
+    // Fetch fresh templates
+    return await this.fetchIssueTemplates(repoOwner, repoName);
+  }
 }
 
 // Export singleton instance
