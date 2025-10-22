@@ -226,21 +226,56 @@ export class DAKArtifactValidationService {
     // Set repository context
     this.context.setRepositoryContext({ owner, repo, branch });
 
-    // TODO: Integrate with githubService to list all files
-    // For now, return empty report as placeholder
-    const fileResults: FileValidationResult[] = [];
+    try {
+      // Get all files from repository using githubService
+      const files = await this.context.getRepositoryFiles(owner, repo, branch);
+      
+      // Filter files based on component if specified
+      const filesToValidate = options?.component
+        ? files.filter(file => this.isComponentFile(file.path, options.component))
+        : files;
 
-    // Calculate summary
-    const summary = this.calculateSummary(fileResults);
+      // Validate all files
+      const fileResults = await this.validateFiles(
+        filesToValidate.map(file => ({
+          path: file.path,
+          content: file.content,
+          fileType: this.getFileType(file.path),
+          component: this.getComponentFromPath(file.path)
+        }))
+      );
 
-    return {
-      repository: { owner, repo, branch },
-      timestamp: new Date(),
-      summary,
-      fileResults,
-      canSave: summary.filesWithErrors === 0,
-      duration: Date.now() - startTime
-    };
+      // Calculate summary
+      const summary = this.calculateSummary(fileResults);
+
+      return {
+        repository: { owner, repo, branch },
+        timestamp: new Date(),
+        summary,
+        fileResults,
+        canSave: summary.filesWithErrors === 0,
+        duration: Date.now() - startTime
+      };
+    } catch (error) {
+      // If repository access fails, return report with error
+      console.error('Repository validation failed:', error);
+      return {
+        repository: { owner, repo, branch },
+        timestamp: new Date(),
+        summary: {
+          totalFiles: 0,
+          validFiles: 0,
+          filesWithErrors: 0,
+          filesWithWarnings: 0,
+          totalErrors: 0,
+          totalWarnings: 0,
+          totalInfo: 0
+        },
+        fileResults: [],
+        canSave: false,
+        duration: Date.now() - startTime
+      };
+    }
   }
 
   /**
@@ -263,12 +298,28 @@ export class DAKArtifactValidationService {
     // Set repository context
     this.context.setRepositoryContext({ owner, repo, branch });
 
-    // Get rules for this component
-    const componentRules = this.registry.getRulesByComponent(component);
+    try {
+      // Get all files from repository
+      const files = await this.context.getRepositoryFiles(owner, repo, branch);
+      
+      // Filter to only component files
+      const componentFiles = files.filter(file => this.isComponentFile(file.path, component));
 
-    // TODO: Integrate with githubService to list component files
-    // For now, return empty array as placeholder
-    return [];
+      // Validate component files
+      const fileResults = await this.validateFiles(
+        componentFiles.map(file => ({
+          path: file.path,
+          content: file.content,
+          fileType: this.getFileType(file.path),
+          component: component
+        }))
+      );
+
+      return fileResults;
+    } catch (error) {
+      console.error('Component validation failed:', error);
+      return [];
+    }
   }
 
   /**
@@ -373,6 +424,68 @@ export class DAKArtifactValidationService {
    */
   canSave(report: DAKValidationReport): boolean {
     return report.canSave;
+  }
+
+  /**
+   * Get file type from file path
+   * 
+   * @param filePath - File path
+   * @returns File type/extension
+   */
+  private getFileType(filePath: string): string {
+    const extension = filePath.split('.').pop()?.toLowerCase();
+    return extension || 'unknown';
+  }
+
+  /**
+   * Get DAK component from file path
+   * 
+   * @param filePath - File path
+   * @returns DAK component type
+   */
+  private getComponentFromPath(filePath: string): string {
+    const path = filePath.toLowerCase();
+    
+    // Map directory patterns to DAK components
+    if (path.includes('/bpmn/') || path.endsWith('.bpmn')) {
+      return 'business-processes';
+    } else if (path.includes('/dmn/') || path.endsWith('.dmn')) {
+      return 'decision-logic';
+    } else if (path.includes('/fsh/') || path.endsWith('.fsh')) {
+      return 'fhir-profiles';
+    } else if (path.includes('/questionnaires/') || path.includes('/forms/')) {
+      return 'data-entry-forms';
+    } else if (path.includes('/valuesets/') || path.includes('/codesystems/')) {
+      return 'terminology';
+    } else if (path.includes('sushi-config.yaml') || path.includes('dak.json')) {
+      return 'dak-config';
+    }
+    
+    return 'unknown';
+  }
+
+  /**
+   * Check if file belongs to specified component
+   * 
+   * @param filePath - File path
+   * @param component - DAK component type
+   * @returns true if file belongs to component
+   */
+  private isComponentFile(filePath: string, component: string): boolean {
+    const fileComponent = this.getComponentFromPath(filePath);
+    
+    // Map component names to patterns
+    const componentMap: Record<string, string[]> = {
+      'business-processes': ['business-processes'],
+      'decision-logic': ['decision-logic'],
+      'fhir-profiles': ['fhir-profiles'],
+      'dak-config': ['dak-config'],
+      'data-entry-forms': ['data-entry-forms'],
+      'terminology': ['terminology']
+    };
+    
+    const validComponents = componentMap[component] || [component];
+    return validComponents.includes(fileComponent);
   }
 
   /**
