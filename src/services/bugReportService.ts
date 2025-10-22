@@ -324,6 +324,52 @@ class BugReportService {
     
     return `- Browser: ${userAgent}\n- Platform: ${platform}\n- URL: ${window.location.href}`;
   }
+
+  /**
+   * Capture console output for debugging
+   * @returns Object with stop method to stop capturing and get captured logs
+   */
+  captureConsoleOutput(): { stop: () => void; getLogs: () => string[] } {
+    const logs: string[] = [];
+    const originalConsole = {
+      log: console.log,
+      warn: console.warn,
+      error: console.error,
+      info: console.info
+    };
+
+    // Override console methods to capture output
+    console.log = (...args: any[]) => {
+      logs.push(`[LOG] ${args.map(a => String(a)).join(' ')}`);
+      originalConsole.log(...args);
+    };
+
+    console.warn = (...args: any[]) => {
+      logs.push(`[WARN] ${args.map(a => String(a)).join(' ')}`);
+      originalConsole.warn(...args);
+    };
+
+    console.error = (...args: any[]) => {
+      logs.push(`[ERROR] ${args.map(a => String(a)).join(' ')}`);
+      originalConsole.error(...args);
+    };
+
+    console.info = (...args: any[]) => {
+      logs.push(`[INFO] ${args.map(a => String(a)).join(' ')}`);
+      originalConsole.info(...args);
+    };
+
+    return {
+      stop: () => {
+        // Restore original console methods
+        console.log = originalConsole.log;
+        console.warn = originalConsole.warn;
+        console.error = originalConsole.error;
+        console.info = originalConsole.info;
+      },
+      getLogs: () => logs
+    };
+  }
 }
 
 // Export singleton instance
