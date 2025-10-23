@@ -5,9 +5,9 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { createDashboard } from '../framework';
-import dataAccessLayer from '../../services/dataAccessLayer';
-import userAccessService from '../../services/userAccessService';
+import { createDashboard } from './framework/ToolDefinition';
+import dataAccessLayer from '../services/dataAccessLayer';
+import userAccessService from '../services/userAccessService';
 
 interface Repository {
   name: string;

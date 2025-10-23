@@ -2,6 +2,8 @@
  * Utility functions for handling navigation with command-click support
  */
 
+import React from 'react';
+
 /**
  * React Router location object type
  */
@@ -17,7 +19,7 @@ export interface Location {
  * @param event - The click event
  * @returns True if should open in new tab (Ctrl/Cmd+click)
  */
-export const shouldOpenInNewTab = (event: MouseEvent): boolean => {
+export const shouldOpenInNewTab = (event: React.MouseEvent | MouseEvent): boolean => {
   return !!(event?.ctrlKey || event?.metaKey); // Ctrl on Windows/Linux, Cmd on Mac
 };
 
@@ -94,7 +96,7 @@ export type NavigateFunction = (to: string, options?: { state?: any }) => void;
  * @param state - Optional state to pass with navigation
  */
 export const handleNavigationClick = (
-  event: MouseEvent, 
+  event: React.MouseEvent | MouseEvent, 
   path: string, 
   navigate: NavigateFunction, 
   state: any = null

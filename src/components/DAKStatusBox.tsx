@@ -202,9 +202,8 @@ const DAKStatusBox: React.FC<DAKStatusBoxProps> = ({ repository, selectedBranch,
               <div className="status-section">
                 <h4>🔄 Recent Commits</h4>
                 <CommitsSlider 
-                  commits={repositoryStats.recentCommits}
                   repository={repository}
-                  branch={branch}
+                  selectedBranch={branch}
                 />
               </div>
 

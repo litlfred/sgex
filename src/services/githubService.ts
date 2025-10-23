@@ -359,6 +359,59 @@ class GitHubService {
   }
 
   /**
+   * Get repository statistics including recent commits, PRs, and issues
+   * @param owner - Repository owner
+   * @param repo - Repository name
+   * @param branch - Branch name (optional)
+   * @returns Promise resolving to repository statistics
+   */
+  async getRepositoryStats(owner: string, repo: string, branch?: string): Promise<{
+    recentCommits: any[];
+    openPullRequestsCount: number;
+    openIssuesCount: number;
+  }> {
+    try {
+      const octokit = this.isAuthenticated && this.octokit ? this.octokit : await this.createOctokitInstance();
+      
+      // Get recent commits
+      const commitsOptions: any = {
+        owner,
+        repo,
+        per_page: 5
+      };
+      if (branch) {
+        commitsOptions.sha = branch;
+      }
+      const { data: recentCommits } = await octokit.rest.repos.listCommits(commitsOptions);
+
+      // Get open PRs count
+      const { data: pullRequests } = await octokit.rest.pulls.list({
+        owner,
+        repo,
+        state: 'open',
+        per_page: 1
+      });
+
+      // Get open issues count
+      const { data: issues } = await octokit.rest.issues.listForRepo({
+        owner,
+        repo,
+        state: 'open',
+        per_page: 1
+      });
+
+      return {
+        recentCommits,
+        openPullRequestsCount: pullRequests.length,
+        openIssuesCount: issues.length
+      };
+    } catch (error) {
+      this.logger.error('Failed to get repository stats', { owner, repo, branch, error });
+      throw error;
+    }
+  }
+
+  /**
    * Check if user has write access to repository
    */
   async hasRepositoryWriteAccess(owner: string, repo: string): Promise<boolean> {
