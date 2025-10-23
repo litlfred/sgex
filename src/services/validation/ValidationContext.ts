@@ -292,56 +292,6 @@ export class ValidationContext implements IValidationContext {
   getRepositoryContext(): { owner: string; repo: string; branch: string } | undefined {
     return this.repositoryContext;
   }
-
-  /**
-   * Get all files from repository recursively
-   * 
-   * @param owner - Repository owner
-   * @param repo - Repository name
-   * @param branch - Branch name
-   * @param path - Starting path (defaults to root)
-   * @returns Array of file objects with path and content
-   */
-  async getRepositoryFiles(
-    owner: string,
-    repo: string,
-    branch: string,
-    path: string = ''
-  ): Promise<Array<{ path: string; content: string; }>> {
-    const files: Array<{ path: string; content: string; }> = [];
-    
-    // Lazy load githubService to avoid initialization order issues
-    // This prevents the validation module from affecting githubService exports
-    const githubServiceModule = await import('../githubService');
-    const githubService = githubServiceModule.default;
-    
-    try {
-      const contents = await githubService.getDirectoryContents(owner, repo, path, branch);
-      
-      for (const item of contents) {
-        if (item.type === 'file') {
-          // Get file content
-          try {
-            const content = await githubService.getFileContent(owner, repo, item.path, branch);
-            files.push({
-              path: item.path,
-              content: typeof content === 'string' ? content : JSON.stringify(content)
-            });
-          } catch (error) {
-            console.warn(`Failed to fetch file ${item.path}:`, error);
-          }
-        } else if (item.type === 'dir') {
-          // Recursively fetch directory contents
-          const subFiles = await this.getRepositoryFiles(owner, repo, branch, item.path);
-          files.push(...subFiles);
-        }
-      }
-    } catch (error) {
-      console.error(`Failed to fetch repository contents at ${path}:`, error);
-    }
-    
-    return files;
-  }
 }
 
 // Export singleton instance
