@@ -1,0 +1,11 @@
+{
+  "artifact_urls": {
+    "build-logs": "https://github.com/litlfred/sgex/actions/runs/18755199725/artifacts/4354332720",
+    "webpack-stats": "https://github.com/litlfred/sgex/actions/runs/18755199725/artifacts/4354332793",
+    "bundle-report": "https://github.com/litlfred/sgex/actions/runs/18755199725/artifacts/4354332873",
+    "build-step-log": "https://github.com/litlfred/sgex/actions/runs/18755199725/artifacts/4354332992",
+    "bundle-analysis-step-log": "https://github.com/litlfred/sgex/actions/runs/18755199725/artifacts/4354333096"
+  },
+  "found_count": 5,
+  "requested_count": 6
+}
