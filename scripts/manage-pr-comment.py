@@ -374,13 +374,13 @@ class PRCommentManager:
         analysis_step_url = data.get('analysis_step_url', '')
         
         # Build artifacts tracking section (shown in all stages)
-        # Use workflow artifacts anchor (#artifacts) when artifacts are available
-        event_log_link = f"{workflow_url}#artifacts" if event_artifact_url else f"{workflow_url}#artifacts"
-        build_logs_link = f"{workflow_url}#artifacts" if build_logs_url else "build-logs"
-        webpack_stats_link = f"{workflow_url}#artifacts" if webpack_stats_url else "webpack-stats"
-        bundle_report_link = f"{workflow_url}#artifacts" if bundle_report_url else "bundle-report"
-        build_step_link_url = f"{workflow_url}#artifacts" if build_step_url else "build-step-log"
-        analysis_step_link_url = f"{workflow_url}#artifacts" if analysis_step_url else "bundle-analysis-step-log"
+        # Use actual artifact URLs (with artifact IDs) when available
+        event_log_link = event_artifact_url if event_artifact_url else f"{workflow_url}#artifacts"
+        build_logs_link = build_logs_url if build_logs_url else "build-logs"
+        webpack_stats_link = webpack_stats_url if webpack_stats_url else "webpack-stats"
+        bundle_report_link = bundle_report_url if bundle_report_url else "bundle-report"
+        build_step_link_url = build_step_url if build_step_url else "build-step-log"
+        analysis_step_link_url = analysis_step_url if analysis_step_url else "bundle-analysis-step-log"
         
         # Determine if artifacts are available (have URLs) or pending
         event_status = "🟢 **Available**" if event_artifact_url else "🟢 **Available**"  # Always available early
@@ -457,12 +457,12 @@ class PRCommentManager:
 
 | Artifact | Status | Description | Type |
 |----------|--------|-------------|------|
-| [workflow-event-log]({workflow_url}#artifacts) | 🟢 **Available** | GitHub event metadata with links | .log |
-| [build-logs]({workflow_url}#artifacts) | 🟣 **Available** | Complete timestamped build output | .txt |
-| [webpack-stats]({workflow_url}#artifacts) | 🟢 **Available** | Webpack compilation statistics | .json |
-| [bundle-report]({workflow_url}#artifacts) | 🟢 **Available** | Bundle size analysis | .txt |
-| [build-step-log]({workflow_url}#artifacts) | 🟢 **Available** | Build step console output | .log |
-| [bundle-analysis-step-log]({workflow_url}#artifacts) | 🟢 **Available** | Bundle analysis console output | .log |
+| [workflow-event-log]({event_log_link}) | {event_status} | GitHub event metadata with links | .log |
+| [build-logs]({build_logs_link}) | {build_logs_status} | Complete timestamped build output | .txt |
+| [webpack-stats]({webpack_stats_link}) | {webpack_stats_status} | Webpack compilation statistics | .json |
+| [bundle-report]({bundle_report_link}) | {bundle_report_status} | Bundle size analysis | .txt |
+| [build-step-log]({build_step_link_url}) | {build_step_status} | Build step console output | .log |
+| [bundle-analysis-step-log]({analysis_step_link_url}) | {analysis_step_status} | Bundle analysis console output | .log |
 
 **🟢 All artifacts now available!** Click artifact names above or visit [workflow artifacts section]({workflow_url}#artifacts).
 """
@@ -570,12 +570,12 @@ class PRCommentManager:
 
 | Artifact | Status | Description | Type |
 |----------|--------|-------------|------|
-| [workflow-event-log]({workflow_url}#artifacts) | 🟢 **Available** | GitHub event metadata with links | .log |
-| [build-logs]({workflow_url}#artifacts) | 🟣 **Available** | Complete timestamped build output | .txt |
-| [webpack-stats]({workflow_url}#artifacts) | 🟢 **Available** | Webpack compilation statistics | .json |
-| [bundle-report]({workflow_url}#artifacts) | 🟢 **Available** | Bundle size analysis and recommendations | .txt |
-| [build-step-log]({workflow_url}#artifacts) | 🟢 **Available** | Build step console output | .log |
-| [bundle-analysis-step-log]({workflow_url}#artifacts) | 🟢 **Available** | Bundle analysis console output | .log |
+| [workflow-event-log]({event_log_link}) | {event_status} | GitHub event metadata with links | .log |
+| [build-logs]({build_logs_link}) | {build_logs_status} | Complete timestamped build output | .txt |
+| [webpack-stats]({webpack_stats_link}) | {webpack_stats_status} | Webpack compilation statistics | .json |
+| [bundle-report]({bundle_report_link}) | {bundle_report_status} | Bundle size analysis and recommendations | .txt |
+| [build-step-log]({build_step_link_url}) | {build_step_status} | Build step console output | .log |
+| [bundle-analysis-step-log]({analysis_step_link_url}) | {analysis_step_status} | Bundle analysis console output | .log |
 
 **🟢 All artifacts available!** Click artifact names above or visit [workflow artifacts section]({workflow_url}#artifacts).
 
