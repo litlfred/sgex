@@ -244,12 +244,18 @@ npm run build:check
 **Documentation:**
 - [Bundle Analysis Guide](docs/bundle-analysis-guide.md) - How to use the analyzer
 - [Bundle Analysis Report](BUNDLE_ANALYSIS_REPORT.md) - Current findings and recommendations
+- [FHIR Resource Loader](docs/fhir-resource-loader.md) - Dynamic FHIR resource loading service
 
 **Key Findings:**
 - Main bundle: 532 KB (exceeds 300 KB limit by 231 KB)
 - Largest chunk: 5.64 MB (exceeds 1 MB limit by 4.64 MB)
 - Second largest: 1.38 MB (exceeds 1 MB limit by 385 KB)
 - Optimization potential: 33% reduction in main bundle, 65% in largest chunks
+
+**Optimizations Implemented:**
+- ✅ Bundle analyzer for identifying large dependencies
+- ✅ Bundle size checker for enforcing budgets
+- ✅ FHIR Resource Loader for dynamic resource loading (~3 MB reduction potential)
 
 The bundle analyzer helps identify:
 - Large dependencies that can be lazy-loaded

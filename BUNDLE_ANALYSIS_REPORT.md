@@ -148,12 +148,33 @@ const PageEditModal = React.lazy(() => import('./PageEditModal'));
 **Expected Impact**: Reduce main bundle by ~2-3 MB
 
 #### 2. Externalize FHIR Data Files
-Move static FHIR JSON files to:
-- External CDN
-- On-demand API endpoints  
-- IndexedDB with lazy loading
+**STATUS: ✅ IMPLEMENTED**
 
-**Expected Impact**: Reduce bundle by ~3 MB
+A FHIR Resource Loader Service has been implemented to dynamically load FHIR resources from external sources:
+- Load on-demand from canonical URLs (published or CI builds)
+- Automatic fallback: published URL → CI build URL
+- In-memory caching to avoid redundant requests
+- Supports any FHIR IG, not just DAKs
+- Configurable timeout and caching behavior
+
+**Implementation**: `src/services/fhirResourceLoaderService.ts`
+**Documentation**: `docs/fhir-resource-loader.md`
+
+**Usage Example**:
+```typescript
+import { loadFHIRResource } from './services/fhirResourceLoaderService';
+
+const valueSet = await loadFHIRResource(
+  'http://hl7.org/fhir/ValueSet/administrative-gender'
+);
+```
+
+**Next Steps**:
+- Integrate into components that use FHIR resources
+- Replace static FHIR imports with dynamic loading
+- Add preloading for commonly used resources
+
+**Expected Impact**: Reduce bundle by ~3 MB once fully integrated
 
 #### 3. Replace Lodash with Targeted Imports
 ```javascript
