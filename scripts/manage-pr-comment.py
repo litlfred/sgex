@@ -365,19 +365,43 @@ class PRCommentManager:
 **Workflow Step:** {step_link}
 """
         
+        # Get artifact URLs if provided
+        event_artifact_url = data.get('event_artifact_url', '')
+        build_logs_url = data.get('build_logs_url', '')
+        webpack_stats_url = data.get('webpack_stats_url', '')
+        bundle_report_url = data.get('bundle_report_url', '')
+        build_step_url = data.get('build_step_url', '')
+        analysis_step_url = data.get('analysis_step_url', '')
+        
         # Build artifacts tracking section (shown in all stages)
+        # Use actual artifact URLs if available, otherwise fall back to workflow URL
+        event_log_link = event_artifact_url if event_artifact_url else f"{workflow_url}#artifacts"
+        build_logs_link = build_logs_url if build_logs_url else "build-logs"
+        webpack_stats_link = webpack_stats_url if webpack_stats_url else "webpack-stats"
+        bundle_report_link = bundle_report_url if bundle_report_url else "bundle-report"
+        build_step_link_url = build_step_url if build_step_url else "build-step-log"
+        analysis_step_link_url = analysis_step_url if analysis_step_url else "bundle-analysis-step-log"
+        
+        # Determine if artifacts are available (have URLs) or pending
+        event_status = "✅ **Available**" if event_artifact_url else "✅ **Available**"  # Always available early
+        build_logs_status = "✅ **Available**" if build_logs_url else "⏳ Pending"
+        webpack_stats_status = "✅ **Available**" if webpack_stats_url else "⏳ Pending"
+        bundle_report_status = "✅ **Available**" if bundle_report_url else "⏳ Pending"
+        build_step_status = "✅ **Available**" if build_step_url else "⏳ Pending"
+        analysis_step_status = "✅ **Available**" if analysis_step_url else "⏳ Pending"
+        
         artifacts_section = f"""
 
 <h3>📦 Build Artifacts Status</h3>
 
 | Artifact | Status | Description | Type |
 |----------|--------|-------------|------|
-| [workflow-event-log]({workflow_url}#artifacts) | ✅ **Available** | GitHub event metadata with links | .log |
-| build-logs | ⏳ Pending | Complete timestamped build output | .txt |
-| webpack-stats | ⏳ Pending | Webpack compilation statistics | .json |
-| bundle-report | ⏳ Pending | Bundle size analysis | .txt |
-| build-step-log | ⏳ Pending | Build step console output | .log |
-| bundle-analysis-step-log | ⏳ Pending | Bundle analysis console output | .log |
+| [workflow-event-log]({event_log_link}) | {event_status} | GitHub event metadata with links | .log |
+| {"[build-logs](" + build_logs_link + ")" if build_logs_url else "build-logs"} | {build_logs_status} | Complete timestamped build output | .txt |
+| {"[webpack-stats](" + webpack_stats_link + ")" if webpack_stats_url else "webpack-stats"} | {webpack_stats_status} | Webpack compilation statistics | .json |
+| {"[bundle-report](" + bundle_report_link + ")" if bundle_report_url else "bundle-report"} | {bundle_report_status} | Bundle size analysis | .txt |
+| {"[build-step-log](" + build_step_link_url + ")" if build_step_url else "build-step-log"} | {build_step_status} | Build step console output | .log |
+| {"[bundle-analysis-step-log](" + analysis_step_link_url + ")" if analysis_step_url else "bundle-analysis-step-log"} | {analysis_step_status} | Bundle analysis console output | .log |
 
 **Note**: workflow-event-log is available immediately. Other artifacts will be uploaded as steps complete.
 """
