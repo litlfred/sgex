@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/sgex/copilot-fix-validation-service-visibility/static/css/main.fd933b0c.css",
-    "main.js": "/sgex/copilot-fix-validation-service-visibility/static/js/main.b071277c.js",
+    "main.js": "/sgex/copilot-fix-validation-service-visibility/static/js/main.c6021289.js",
     "static/js/228.49c741fa.chunk.js": "/sgex/copilot-fix-validation-service-visibility/static/js/228.49c741fa.chunk.js",
     "static/css/8700.247e7b29.chunk.css": "/sgex/copilot-fix-validation-service-visibility/static/css/8700.247e7b29.chunk.css",
     "static/js/8700.7b0fe685.chunk.js": "/sgex/copilot-fix-validation-service-visibility/static/js/8700.7b0fe685.chunk.js",
@@ -56,11 +56,12 @@
     "static/js/950.f967aa69.chunk.js": "/sgex/copilot-fix-validation-service-visibility/static/js/950.f967aa69.chunk.js",
     "static/css/2728.dc3a5859.chunk.css": "/sgex/copilot-fix-validation-service-visibility/static/css/2728.dc3a5859.chunk.css",
     "static/js/2728.8e2a90ca.chunk.js": "/sgex/copilot-fix-validation-service-visibility/static/js/2728.8e2a90ca.chunk.js",
-    "static/js/7298.6b5cf247.chunk.js": "/sgex/copilot-fix-validation-service-visibility/static/js/7298.6b5cf247.chunk.js",
+    "static/js/8601.ff0f1d14.chunk.js": "/sgex/copilot-fix-validation-service-visibility/static/js/8601.ff0f1d14.chunk.js",
     "static/js/399.4a6b5f72.chunk.js": "/sgex/copilot-fix-validation-service-visibility/static/js/399.4a6b5f72.chunk.js",
     "static/js/3714.cf96e8cb.chunk.js": "/sgex/copilot-fix-validation-service-visibility/static/js/3714.cf96e8cb.chunk.js",
     "static/js/7076.f6118f3e.chunk.js": "/sgex/copilot-fix-validation-service-visibility/static/js/7076.f6118f3e.chunk.js",
     "static/js/5619.626b0f55.chunk.js": "/sgex/copilot-fix-validation-service-visibility/static/js/5619.626b0f55.chunk.js",
+    "static/js/7298.6b5cf247.chunk.js": "/sgex/copilot-fix-validation-service-visibility/static/js/7298.6b5cf247.chunk.js",
     "static/js/5508.665ca8b9.chunk.js": "/sgex/copilot-fix-validation-service-visibility/static/js/5508.665ca8b9.chunk.js",
     "static/js/9082.6525a9d2.chunk.js": "/sgex/copilot-fix-validation-service-visibility/static/js/9082.6525a9d2.chunk.js",
     "static/js/3738.cd910bef.chunk.js": "/sgex/copilot-fix-validation-service-visibility/static/js/3738.cd910bef.chunk.js",
@@ -70,13 +71,13 @@
     "static/js/2873.df562286.chunk.js": "/sgex/copilot-fix-validation-service-visibility/static/js/2873.df562286.chunk.js",
     "static/js/5787.a0c1bae4.chunk.js": "/sgex/copilot-fix-validation-service-visibility/static/js/5787.a0c1bae4.chunk.js",
     "static/js/2675.7b1b9f37.chunk.js": "/sgex/copilot-fix-validation-service-visibility/static/js/2675.7b1b9f37.chunk.js",
-    "static/js/1934.2e85b514.chunk.js": "/sgex/copilot-fix-validation-service-visibility/static/js/1934.2e85b514.chunk.js",
+    "static/js/1934.6a394ecc.chunk.js": "/sgex/copilot-fix-validation-service-visibility/static/js/1934.6a394ecc.chunk.js",
     "static/media/antlr4.web.cjs": "/sgex/copilot-fix-validation-service-visibility/static/media/antlr4.web.2a08cb2996bccdc22d76.cjs",
     "static/media/axios.cjs": "/sgex/copilot-fix-validation-service-visibility/static/media/axios.aa20eea88359390f2fbc.cjs",
     "index.html": "/sgex/copilot-fix-validation-service-visibility/index.html"
   },
   "entrypoints": [
     "static/css/main.fd933b0c.css",
-    "static/js/main.b071277c.js"
+    "static/js/main.c6021289.js"
   ]
 }
