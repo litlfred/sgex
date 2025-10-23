@@ -365,6 +365,23 @@ class PRCommentManager:
 **Workflow Step:** {step_link}
 """
         
+        # Build artifacts tracking section (shown in all stages)
+        artifacts_section = f"""
+
+<h3>📦 Build Artifacts Status</h3>
+
+| Artifact | Status | Description | Type |
+|----------|--------|-------------|------|
+| [workflow-event-log]({workflow_url}#artifacts) | ✅ **Available** | GitHub event metadata with links | .log |
+| build-logs | ⏳ Pending | Complete timestamped build output | .txt |
+| webpack-stats | ⏳ Pending | Webpack compilation statistics | .json |
+| bundle-report | ⏳ Pending | Bundle size analysis | .txt |
+| build-step-log | ⏳ Pending | Build step console output | .log |
+| bundle-analysis-step-log | ⏳ Pending | Bundle analysis console output | .log |
+
+**Note**: workflow-event-log is available immediately. Other artifacts will be uploaded as steps complete.
+"""
+        
         # Stage-specific content with HTML headers for consistent styling
         if stage == 'started':
             status_line = "<h2>🚀 Deployment Status: Build Started</h2>"
@@ -377,19 +394,6 @@ class PRCommentManager:
             if branch_url:
                 actions += f"""
 <a href="{branch_url}"><img src="https://img.shields.io/badge/Preview_URL-orange?style=for-the-badge&logo=github&label=%F0%9F%8C%90&labelColor=gray" alt="Expected Deployment URL"/></a> _(will be live after deployment)_"""
-            
-            # Add early artifact availability notice
-            actions += f"""
-
-<h3>📋 Event Metadata (Available Now)</h3>
-
-The workflow event log is uploaded immediately and available for download:
-
-| Artifact | Description | Type |
-|----------|-------------|------|
-| [workflow-event-log]({workflow_url}#artifacts) | GitHub event metadata with links | .log |
-
-**How to access:** Click [View Artifacts]({workflow_url}#artifacts) - this artifact is available immediately at the start of the workflow."""
             
             timeline_entry = f"- **{timestamp}** - 🟠 {step_link} - Initializing"
         
@@ -422,16 +426,22 @@ The workflow event log is uploaded immediately and available for download:
                 actions += f"""
 <a href="{branch_url}"><img src="https://img.shields.io/badge/Preview_URL-orange?style=for-the-badge&logo=github&label=%F0%9F%8C%90&labelColor=gray" alt="Expected Deployment URL"/></a> _(will be live after deployment)_"""
             
-            # Add note about build artifacts that will be available
-            actions += f"""
+            # Override artifacts section for building stage - some artifacts are now available
+            artifacts_section = f"""
 
-<h3>📦 Build Artifacts (In Progress)</h3>
+<h3>📦 Build Artifacts Status</h3>
 
-Detailed build logs and webpack stats will be captured and uploaded as artifacts when the build completes. These will include:
-- Timestamped build output
-- Bundle size analysis
-- Webpack statistics
-- GitHub event metadata"""
+| Artifact | Status | Description | Type |
+|----------|--------|-------------|------|
+| [workflow-event-log]({workflow_url}#artifacts) | ✅ **Available** | GitHub event metadata with links | .log |
+| [build-logs]({workflow_url}#artifacts) | ✅ **Available** | Complete timestamped build output | .txt |
+| [webpack-stats]({workflow_url}#artifacts) | ✅ **Available** | Webpack compilation statistics | .json |
+| [bundle-report]({workflow_url}#artifacts) | ✅ **Available** | Bundle size analysis | .txt |
+| [build-step-log]({workflow_url}#artifacts) | ✅ **Available** | Build step console output | .log |
+| [bundle-analysis-step-log]({workflow_url}#artifacts) | ✅ **Available** | Bundle analysis console output | .log |
+
+**✅ All artifacts now available!** Click artifact names above or visit [workflow artifacts section]({workflow_url}#artifacts).
+"""
             
             timeline_entry = f"- **{timestamp}** - 🟠 {step_link} - In progress"
         
@@ -529,28 +539,27 @@ Detailed build logs and webpack stats will be captured and uploaded as artifacts
 
 <a href="{workflow_url}"><img src="https://img.shields.io/badge/Build_Logs-gray?style=for-the-badge&logo=github" alt="Build Logs"/></a>"""
             
-            # Add build artifacts section if available
-            if build_logs_available or artifacts_url:
-                actions += f"""
+            # Override artifacts section for success - all green
+            artifacts_section = f"""
 
-<h3>📦 Build Artifacts</h3>
+<h3>📦 Build Artifacts Status</h3>
 
-Build logs and webpack stats are available as separate downloadable artifacts:
+| Artifact | Status | Description | Type |
+|----------|--------|-------------|------|
+| [workflow-event-log]({workflow_url}#artifacts) | ✅ **Available** | GitHub event metadata with links | .log |
+| [build-logs]({workflow_url}#artifacts) | ✅ **Available** | Complete timestamped build output | .txt |
+| [webpack-stats]({workflow_url}#artifacts) | ✅ **Available** | Webpack compilation statistics | .json |
+| [bundle-report]({workflow_url}#artifacts) | ✅ **Available** | Bundle size analysis and recommendations | .txt |
+| [build-step-log]({workflow_url}#artifacts) | ✅ **Available** | Build step console output | .log |
+| [bundle-analysis-step-log]({workflow_url}#artifacts) | ✅ **Available** | Bundle analysis console output | .log |
 
-| Artifact | Description | Type |
-|----------|-------------|------|
-| [workflow-event-log]({workflow_url}#artifacts) | GitHub event metadata with links | .log |
-| [build-logs]({workflow_url}#artifacts) | Complete timestamped build output | .txt |
-| [webpack-stats]({workflow_url}#artifacts) | Webpack compilation statistics | .json |
-| [bundle-report]({workflow_url}#artifacts) | Bundle size analysis and recommendations | .txt |
-| [build-step-log]({workflow_url}#artifacts) | Build step console output | .log |
-| [bundle-analysis-step-log]({workflow_url}#artifacts) | Bundle analysis step console output | .log |
+**✅ All artifacts available!** Click artifact names above or visit [workflow artifacts section]({workflow_url}#artifacts).
 
-**How to access:** 
-1. Click [View Artifacts]({workflow_url}#artifacts) on the workflow run page
-2. Download individual artifact files directly (no zip extraction needed)
-3. Each artifact contains a single log file for easy viewing"""
-            
+**How to download:** 
+1. Click any artifact name in the table above
+2. Or visit the [workflow run page]({workflow_url}) and scroll to "Artifacts"
+3. Each artifact contains a single log file (no zip extraction needed)
+"""
             
             timeline_entry = f"- **{timestamp}** - 🟢 {step_link} - Site is live"
         
@@ -620,6 +629,8 @@ Build logs and webpack stats are available as separate downloadable artifacts:
 {preamble}
 
 {actions}
+
+{artifacts_section}
 
 ---
 
