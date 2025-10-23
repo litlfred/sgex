@@ -1,0 +1,31 @@
+<svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+  <!-- Cat paw (dark mode - lighter colors) -->
+  <g fill="#D4A574" stroke="#B8926A" stroke-width="0.5">
+    <!-- Main paw pad -->
+    <ellipse cx="10" cy="14" rx="4" ry="2.5" />
+    
+    <!-- Toe pads -->
+    <circle cx="7" cy="10" r="1.5" />
+    <circle cx="10" cy="9" r="1.5" />
+    <circle cx="13" cy="10" r="1.5" />
+  </g>
+  
+  <!-- Information symbol -->
+  <g fill="#6BB6FF" stroke="#4A90E2" stroke-width="0.5">
+    <!-- Circle background -->
+    <circle cx="10" cy="4.5" r="2.8" fill="#2A2A2A" stroke="#6BB6FF" stroke-width="0.6" />
+    
+    <!-- "i" dot -->
+    <circle cx="10" cy="3.2" r="0.5" fill="#6BB6FF" />
+    
+    <!-- "i" stem -->
+    <rect x="9.6" y="4.2" width="0.8" height="2.2" fill="#6BB6FF" rx="0.2" />
+  </g>
+  
+  <!-- Sparkle effects -->
+  <g fill="#6BB6FF" opacity="0.6">
+    <circle cx="6" cy="2" r="0.3" />
+    <circle cx="14" cy="2" r="0.3" />
+    <circle cx="15.5" cy="5" r="0.3" />
+  </g>
+</svg>
