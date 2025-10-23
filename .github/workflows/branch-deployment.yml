@@ -87,6 +87,43 @@ jobs:
           ref: ${{ github.event.inputs.branch || github.head_ref || github.ref }}
           fetch-depth: 0
 
+      - name: Log workflow event metadata
+        id: log_event
+        continue-on-error: true
+        run: |
+          echo "📋 Logging GitHub Actions event metadata..."
+          echo "=================================================="
+          echo "Event: ${{ github.event_name }}"
+          echo "Actor: ${{ github.actor }}"
+          echo "SHA: ${{ github.sha }}"
+          echo "Ref: ${{ github.ref }}"
+          echo "Ref Name: ${{ github.ref_name }}"
+          echo "Repository: ${{ github.repository }}"
+          echo "Run ID: ${{ github.run_id }}"
+          echo "Run Number: ${{ github.run_number }}"
+          echo "Run Attempt: ${{ github.run_attempt }}"
+          echo "Workflow: ${{ github.workflow }}"
+          echo "=================================================="
+          
+          # Create artifacts directory
+          mkdir -p artifacts
+          
+          # Log complete event payload and GitHub context
+          python3 scripts/log_workflow_event.py \
+            --event-name "${{ github.event_name }}" \
+            --event-json '${{ toJSON(github.event) }}' \
+            --github-json '${{ toJSON(github) }}' \
+            --output-file "artifacts/workflow-event.log"
+          
+          echo "✅ Event metadata logged to artifacts/workflow-event.log"
+          echo ""
+          echo "🔗 GitHub Links:"
+          echo "   Commit: https://github.com/${{ github.repository }}/commit/${{ github.sha }}"
+          if [[ "${{ github.ref_name }}" != "" && "${{ github.ref_name }}" != "refs/pull/"* ]]; then
+            echo "   Branch: https://github.com/${{ github.repository }}/tree/${{ github.ref_name }}"
+          fi
+          echo "   Workflow Run: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
       - name: Find associated PR
         id: find_pr
         uses: actions/github-script@v8
@@ -235,21 +272,135 @@ jobs:
             --stage "building" \
             --data "{\"commit_sha\":\"${{ github.sha }}\",\"branch_name\":\"${{ steps.branch_info.outputs.branch_name }}\",\"commit_url\":\"https://github.com/${{ github.repository }}/commit/${{ github.sha }}\",\"workflow_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\",\"branch_url\":\"$branch_url\"}"
 
-      - name: Build branch-specific React app
+      - name: Build branch-specific React app with enhanced logging
+        id: build_app
         continue-on-error: false
         run: |
-          echo "Building with PUBLIC_URL: ${{ steps.public_url.outputs.public_url }}"
-          echo "Building with REACT_APP_GITHUB_REF_NAME: ${{ steps.branch_info.outputs.branch_name }}"
+          echo "🔧 Starting enhanced build with comprehensive logging..."
+          echo "📍 PUBLIC_URL: ${{ steps.public_url.outputs.public_url }}"
+          echo "🌿 Branch: ${{ steps.branch_info.outputs.branch_name }}"
+          echo ""
           
-          # Build the React app
-          npm run build
+          # Create artifacts directory if not exists
+          mkdir -p artifacts
+          
+          # Use Python script for secure build execution with comprehensive logging
+          python3 scripts/build_with_logging.py \
+            --public-url "${{ steps.public_url.outputs.public_url }}" \
+            --branch-name "${{ steps.branch_info.outputs.branch_name }}" \
+            --artifacts-dir "artifacts" 2>&1 | tee -a artifacts/build-step.log
+          
+          build_exit_code=${PIPESTATUS[0]}
+          
+          if [ $build_exit_code -ne 0 ]; then
+            echo "❌ Build failed with exit code: $build_exit_code"
+            exit $build_exit_code
+          fi
+          
+          echo "✅ Build completed successfully"
         env:
           CI: false
           ESLINT_NO_DEV_ERRORS: true
           GENERATE_SOURCEMAP: false
-          PUBLIC_URL: ${{ steps.public_url.outputs.public_url }}
-          GITHUB_REF_NAME: ${{ steps.branch_info.outputs.branch_name }}
-          REACT_APP_GITHUB_REF_NAME: ${{ steps.branch_info.outputs.branch_name }}
+
+      - name: Analyze build artifacts and generate bundle report
+        id: analyze_bundle
+        if: always()
+        continue-on-error: true
+        run: |
+          echo "📊 Analyzing webpack bundle..."
+          
+          # Generate bundle analysis report
+          python3 scripts/analyze_webpack_stats.py \
+            --build-dir "build" \
+            --output-file "artifacts/bundle-report.txt" 2>&1 | tee -a artifacts/bundle-analysis-step.log
+          
+          # Display summary
+          if [ -f "artifacts/bundle-report.txt" ]; then
+            echo "✅ Bundle analysis complete"
+            echo ""
+            echo "=== Bundle Summary (First 30 lines) ==="
+            head -30 artifacts/bundle-report.txt
+            echo ""
+            echo "📦 Full report available in workflow artifacts"
+          else
+            echo "⚠️  Bundle analysis report not generated"
+          fi
+
+      - name: Display build artifacts summary
+        if: always()
+        run: |
+          echo ""
+          echo "=============================================================================="
+          echo "📊 Build Artifacts Summary"
+          echo "=============================================================================="
+          echo ""
+          
+          if [ -f "artifacts/workflow-event.log" ]; then
+            event_lines=$(wc -l < artifacts/workflow-event.log)
+            event_size=$(du -h artifacts/workflow-event.log | cut -f1)
+            echo "📋 Workflow Event Log: $event_lines lines, $event_size"
+          else
+            echo "⚠️  Workflow event log not found"
+          fi
+          
+          if [ -f "artifacts/build-logs.txt" ]; then
+            log_lines=$(wc -l < artifacts/build-logs.txt)
+            log_size=$(du -h artifacts/build-logs.txt | cut -f1)
+            echo "📝 Build Log: $log_lines lines, $log_size"
+          else
+            echo "⚠️  Build log not found"
+          fi
+          
+          if [ -f "artifacts/webpack-stats.json" ]; then
+            stats_size=$(du -h artifacts/webpack-stats.json | cut -f1)
+            echo "📊 Webpack Stats: $stats_size"
+          else
+            echo "⚠️  Webpack stats not found"
+          fi
+          
+          if [ -f "artifacts/bundle-report.txt" ]; then
+            report_lines=$(wc -l < artifacts/bundle-report.txt)
+            report_size=$(du -h artifacts/bundle-report.txt | cut -f1)
+            echo "📦 Bundle Report: $report_lines lines, $report_size"
+            echo ""
+            echo "Top 5 Largest Files:"
+            grep -A 5 "Largest Files" artifacts/bundle-report.txt | tail -5 || echo "  (Not available)"
+          else
+            echo "⚠️  Bundle report not found"
+          fi
+          
+          if [ -f "artifacts/build-step.log" ]; then
+            build_step_size=$(du -h artifacts/build-step.log | cut -f1)
+            echo "🔧 Build Step Log: $build_step_size"
+          fi
+          
+          if [ -f "artifacts/bundle-analysis-step.log" ]; then
+            analysis_step_size=$(du -h artifacts/bundle-analysis-step.log | cut -f1)
+            echo "📊 Analysis Step Log: $analysis_step_size"
+          fi
+          
+          echo ""
+          echo "=============================================================================="
+          echo "🔗 Download artifacts from the Actions run page"
+          echo "   Artifacts section → build-logs-${{ github.run_id }}-${{ github.run_attempt }}"
+          echo "=============================================================================="
+          echo ""
+
+      - name: Upload build logs and stats as artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            artifacts/workflow-event.log
+            artifacts/build-logs.txt
+            artifacts/webpack-stats.json
+            artifacts/bundle-report.txt
+            artifacts/build-step.log
+            artifacts/bundle-analysis-step.log
+          retention-days: 90
+          if-no-files-found: warn
 
       - name: Validate branch directory safety
         id: validate_branch
@@ -788,7 +939,7 @@ jobs:
             --workflow-name "Deploy Feature Branch" \
             --event-name "${{ github.event_name }}" \
             --stage "success" \
-            --data "{\"commit_sha\":\"${{ github.sha }}\",\"branch_name\":\"${{ steps.branch_info.outputs.branch_name }}\",\"commit_url\":\"https://github.com/${{ github.repository }}/commit/${{ github.sha }}\",\"workflow_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\",\"branch_url\":\"$branch_url\"}"
+            --data "{\"commit_sha\":\"${{ github.sha }}\",\"branch_name\":\"${{ steps.branch_info.outputs.branch_name }}\",\"commit_url\":\"https://github.com/${{ github.repository }}/commit/${{ github.sha }}\",\"workflow_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\",\"branch_url\":\"$branch_url\",\"build_logs_available\":true,\"artifacts_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifacts\"}"
 
       - name: Comment on associated PR (Failure)
         if: always() && failure() && steps.find_pr.outputs.result != ''

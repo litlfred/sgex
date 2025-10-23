@@ -408,6 +408,17 @@ class PRCommentManager:
                 actions += f"""
 <a href="{branch_url}"><img src="https://img.shields.io/badge/Preview_URL-orange?style=for-the-badge&logo=github&label=%F0%9F%8C%90&labelColor=gray" alt="Expected Deployment URL"/></a> _(will be live after deployment)_"""
             
+            # Add note about build artifacts that will be available
+            actions += f"""
+
+<h3>📦 Build Artifacts (In Progress)</h3>
+
+Detailed build logs and webpack stats will be captured and uploaded as artifacts when the build completes. These will include:
+- Timestamped build output
+- Bundle size analysis
+- Webpack statistics
+- GitHub event metadata"""
+            
             timeline_entry = f"- **{timestamp}** - 🟠 {step_link} - In progress"
         
         elif stage == 'deploying':
@@ -491,6 +502,11 @@ class PRCommentManager:
             status_icon = "🟢"
             status_text = "Live and accessible"
             next_step = "**Status:** Deployment complete - site is ready for testing"
+            
+            # Extract build artifacts information if provided
+            artifacts_url = data.get('artifacts_url', '')
+            build_logs_available = data.get('build_logs_available', False)
+            
             actions = f"""<h3>🌐 Preview URLs</h3>
 
 <a href="{branch_url}"><img src="https://img.shields.io/badge/Open_Branch_Preview-brightgreen?style=for-the-badge&logo=github&label=%F0%9F%8C%90&labelColor=gray" alt="Open Branch Preview"/></a>
@@ -498,6 +514,23 @@ class PRCommentManager:
 <h3>🔗 Quick Actions</h3>
 
 <a href="{workflow_url}"><img src="https://img.shields.io/badge/Build_Logs-gray?style=for-the-badge&logo=github" alt="Build Logs"/></a>"""
+            
+            # Add build artifacts section if available
+            if build_logs_available or artifacts_url:
+                actions += f"""
+
+<h3>📦 Build Artifacts</h3>
+
+Build logs and webpack stats are available for download:
+- **build-logs.txt** - Complete timestamped build output
+- **webpack-stats.json** - Webpack compilation statistics
+- **bundle-report.txt** - Bundle size analysis and recommendations
+- **workflow-event.log** - Complete GitHub event metadata
+
+<a href="{workflow_url}#artifacts"><img src="https://img.shields.io/badge/Download_Artifacts-blue?style=for-the-badge&logo=download&label=📦&labelColor=gray" alt="Download Artifacts"/></a>
+
+**How to access:** Scroll to the "Artifacts" section at the bottom of the [workflow run page]({workflow_url}) and download `build-logs-{action_id_display}`."""
+            
             timeline_entry = f"- **{timestamp}** - 🟢 {step_link} - Site is live"
         
         elif stage == 'failure':
