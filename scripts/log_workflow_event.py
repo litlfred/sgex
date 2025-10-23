@@ -258,14 +258,16 @@ Examples:
 
     parser.add_argument(
         '--event-json',
-        required=True,
-        help='GitHub event payload as JSON string (use toJSON(github.event))'
+        required=False,
+        default=None,
+        help='GitHub event payload as JSON string (use toJSON(github.event)) or set GITHUB_EVENT_JSON env var'
     )
 
     parser.add_argument(
         '--github-json',
-        required=True,
-        help='GitHub context as JSON string (use toJSON(github))'
+        required=False,
+        default=None,
+        help='GitHub context as JSON string (use toJSON(github)) or set GITHUB_CONTEXT_JSON env var'
     )
 
     parser.add_argument(
@@ -282,16 +284,66 @@ def main():
     args = parse_arguments()
 
     try:
-        # Parse JSON arguments
-        event = json.loads(args.event_json)
-        github = json.loads(args.github_json)
-    except json.JSONDecodeError as e:
-        print(f"❌ Error parsing JSON: {e}", file=sys.stderr)
-        sys.exit(1)
+        # Parse JSON arguments - try from args first, then environment variables
+        event_json_str = args.event_json or os.environ.get('GITHUB_EVENT_JSON', '{}')
+        github_json_str = args.github_json or os.environ.get('GITHUB_CONTEXT_JSON', '{}')
+        
+        try:
+            event = json.loads(event_json_str)
+        except json.JSONDecodeError as e:
+            print(f"⚠️  Warning: Could not parse event JSON ({e}), using empty dict", file=sys.stderr)
+            event = {}
+        
+        try:
+            github = json.loads(github_json_str)
+        except json.JSONDecodeError as e:
+            print(f"⚠️  Warning: Could not parse github context JSON ({e}), using fallback", file=sys.stderr)
+            # Use environment variables as fallback
+            github = {
+                'event_name': os.environ.get('GITHUB_EVENT_NAME', args.event_name),
+                'actor': os.environ.get('GITHUB_ACTOR', 'unknown'),
+                'sha': os.environ.get('GITHUB_SHA', 'unknown'),
+                'ref': os.environ.get('GITHUB_REF', 'unknown'),
+                'ref_name': os.environ.get('GITHUB_REF_NAME', 'unknown'),
+                'repository': os.environ.get('GITHUB_REPOSITORY', 'unknown'),
+                'run_id': os.environ.get('GITHUB_RUN_ID', 'unknown'),
+                'run_number': os.environ.get('GITHUB_RUN_NUMBER', 'unknown'),
+                'run_attempt': os.environ.get('GITHUB_RUN_ATTEMPT', '1'),
+                'workflow': os.environ.get('GITHUB_WORKFLOW', 'unknown')
+            }
+    except Exception as e:
+        print(f"❌ Error processing arguments: {e}", file=sys.stderr)
+        # Create minimal output file to avoid workflow failure
+        if args.output_file:
+            args.output_file.parent.mkdir(parents=True, exist_ok=True)
+            with open(args.output_file, 'w', encoding='utf-8') as f:
+                f.write(f"Error logging event: {e}\n")
+                f.write(f"Event: {args.event_name}\n")
+                f.write(f"Timestamp: {datetime.now(timezone.utc).isoformat()}\n")
+            print(f"⚠️  Minimal log file created at: {args.output_file}")
+        sys.exit(0)  # Don't fail the workflow
 
     # Create logger and log event
     logger = WorkflowEventLogger(output_file=args.output_file)
-    log_text = logger.log_event(args.event_name, event, github)
+    try:
+        log_text = logger.log_event(args.event_name, event, github)
+    except Exception as e:
+        print(f"⚠️  Error logging event details: {e}", file=sys.stderr)
+        # Create minimal output
+        if args.output_file:
+            args.output_file.parent.mkdir(parents=True, exist_ok=True)
+            with open(args.output_file, 'w', encoding='utf-8') as f:
+                f.write(f"Workflow Event Log (Fallback Mode)\n")
+                f.write(f"=" * 80 + "\n")
+                f.write(f"Event: {args.event_name}\n")
+                f.write(f"Actor: {github.get('actor', 'unknown')}\n")
+                f.write(f"SHA: {github.get('sha', 'unknown')}\n")
+                f.write(f"Ref: {github.get('ref', 'unknown')}\n")
+                f.write(f"Run ID: {github.get('run_id', 'unknown')}\n")
+                f.write(f"Timestamp: {datetime.now(timezone.utc).isoformat()}\n")
+                f.write(f"\nError: {e}\n")
+            print(f"⚠️  Fallback log file created at: {args.output_file}")
+        sys.exit(0)  # Don't fail the workflow
 
     # Print summary to console
     print("\n📋 Workflow Event Summary")
