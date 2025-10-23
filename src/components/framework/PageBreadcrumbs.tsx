@@ -40,6 +40,7 @@ interface PageBreadcrumbsProps {
  * />
  */
 const PageBreadcrumbs: React.FC<PageBreadcrumbsProps> = ({ customBreadcrumbs }) => {
+  const pageContext = usePage() as any;
   const { 
     type, 
     pageName, 
@@ -47,7 +48,12 @@ const PageBreadcrumbs: React.FC<PageBreadcrumbsProps> = ({ customBreadcrumbs }) 
     repository, 
     branch,
     navigate 
-  } = usePage();
+  } = pageContext;
+
+  // Type-safe navigate function wrapper
+  const navigateToPath = (path: string) => {
+    (navigate as (path: string) => void)(path);
+  };
 
   // If custom breadcrumbs are provided, use them
   if (customBreadcrumbs && customBreadcrumbs.length > 0) {
@@ -60,7 +66,7 @@ const PageBreadcrumbs: React.FC<PageBreadcrumbsProps> = ({ customBreadcrumbs }) 
                 <>
                   <button 
                     className="breadcrumb-link" 
-                    onClick={() => crumb.onClick ? crumb.onClick() : navigate(crumb.path || '/')}
+                    onClick={() => crumb.onClick ? crumb.onClick() : navigateToPath(crumb.path || '/')}
                     aria-label={`Navigate to ${crumb.label}`}
                   >
                     {crumb.label}
@@ -86,7 +92,7 @@ const PageBreadcrumbs: React.FC<PageBreadcrumbsProps> = ({ customBreadcrumbs }) 
   breadcrumbs.push({
     label: 'Select Profile',
     path: '/',
-    onClick: () => navigate('/')
+    onClick: () => navigateToPath('/')
   });
 
   // Add user context for user/DAK/asset pages
@@ -94,7 +100,7 @@ const PageBreadcrumbs: React.FC<PageBreadcrumbsProps> = ({ customBreadcrumbs }) 
     breadcrumbs.push({
       label: 'Select Repository',
       path: `/dak-selection/${profile.login}`,
-      onClick: () => navigate(`/dak-selection/${profile.login}`)
+      onClick: () => navigateToPath(`/dak-selection/${profile.login}`)
     });
   }
 
@@ -106,7 +112,7 @@ const PageBreadcrumbs: React.FC<PageBreadcrumbsProps> = ({ customBreadcrumbs }) 
       breadcrumbs.push({
         label: 'DAK Components',
         path: `/dashboard/${ownerLogin}/${repository.name}${branchPath}`,
-        onClick: () => navigate(`/dashboard/${ownerLogin}/${repository.name}${branchPath}`)
+        onClick: () => navigateToPath(`/dashboard/${ownerLogin}/${repository.name}${branchPath}`)
       });
     }
   }
@@ -158,7 +164,7 @@ const PageBreadcrumbs: React.FC<PageBreadcrumbsProps> = ({ customBreadcrumbs }) 
               <>
                 <button 
                   className="breadcrumb-link" 
-                  onClick={() => crumb.onClick ? crumb.onClick() : navigate(crumb.path || '/')}
+                  onClick={() => crumb.onClick ? crumb.onClick() : navigateToPath(crumb.path || '/')}
                   aria-label={`Navigate to ${crumb.label}`}
                 >
                   {crumb.label}
