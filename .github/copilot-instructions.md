@@ -65,6 +65,133 @@ If you find yourself writing code that:
 
 ---
 
+## 🚀 CRITICAL: LAZY LOADING POLICY 🚀
+
+**MANDATORY FOR ALL COPILOT AGENTS**: Lazy loading is the **HIGHLY PREFERRED** method for loading libraries, services, components, and modules in SGeX Workbench. This is critical for performance, user experience, and preventing module initialization order issues.
+
+### Why Lazy Loading is Critical
+
+1. **Performance**: Reduces initial bundle size and improves time-to-interactive
+2. **User Experience**: Faster page loads, especially on slow connections
+3. **Module Initialization**: Prevents circular dependencies and initialization order issues
+4. **Bandwidth**: Minimizes data transfer for features users may not use
+5. **Scalability**: Allows the application to grow without impacting initial load time
+
+### Lazy Loading Requirements
+
+**YOU MUST** use lazy loading for:
+- ✅ **React Components**: Use `React.lazy()` for all route-level and feature components
+- ✅ **Services**: Use dynamic `import()` for heavy services or those with complex dependency chains
+- ✅ **Libraries**: Defer loading of large libraries (BPMN.js, DMN.js, etc.) until needed
+- ✅ **Validation Rules**: Register validation rules on-demand, not at module initialization
+- ✅ **Heavy Dependencies**: Load XML/JSON parsers, formatters, etc. only when used
+
+**YOU MUST NOT**:
+- ❌ Import services at module top-level if they trigger complex initialization chains
+- ❌ Load large libraries eagerly when they're only used in specific features
+- ❌ Initialize singletons at module load time if they have dependencies
+- ❌ Import heavy components without React.lazy() or Suspense
+
+### Lazy Loading Patterns
+
+#### 1. React Components (Preferred)
+```javascript
+// ✅ CORRECT - Lazy load with React.lazy()
+const ValidationReport = React.lazy(() => import('./validation/ValidationReport'));
+const BPMNEditor = React.lazy(() => import('./BPMNEditor'));
+
+// Use with Suspense
+<Suspense fallback={<div>Loading...</div>}>
+  <ValidationReport />
+</Suspense>
+
+// ❌ WRONG - Eager import
+import { ValidationReport } from './validation/ValidationReport';
+```
+
+#### 2. Services and Libraries (Preferred)
+```javascript
+// ✅ CORRECT - Dynamic import with memoization
+let servicePromise = null;
+async function getValidationService() {
+  if (!servicePromise) {
+    servicePromise = import('../../services/validation').then(module => module.validationService);
+  }
+  return servicePromise;
+}
+
+// Use in functions/hooks
+const service = await getValidationService();
+
+// ❌ WRONG - Top-level import
+import { validationService } from '../../services/validation';
+```
+
+#### 3. Heavy Libraries (Preferred)
+```javascript
+// ✅ CORRECT - Load BPMN.js only when needed
+async function loadBPMNModeler() {
+  const BpmnJS = await import('bpmn-js/lib/Modeler');
+  return new BpmnJS.default({ container: '#canvas' });
+}
+
+// ❌ WRONG - Load at module init
+import BpmnModeler from 'bpmn-js/lib/Modeler';
+```
+
+#### 4. Validation Rules (Preferred)
+```javascript
+// ✅ CORRECT - Register rules on first validation
+let rulesRegistered = false;
+export async function ensureRulesRegistered() {
+  if (rulesRegistered) return;
+  const { registerAllRules } = await import('./rules');
+  registerAllRules(registry);
+  rulesRegistered = true;
+}
+
+// ❌ WRONG - Register at module init
+import { registerAllRules } from './rules';
+registerAllRules(registry); // Runs immediately
+```
+
+### Exception Cases
+
+Lazy loading may be skipped ONLY when:
+1. **Critical path**: Component is needed for initial render (e.g., App.js, Router)
+2. **Tiny modules**: Module is < 1KB and has no dependencies
+3. **Already bundled**: Module is guaranteed to be in the same webpack chunk
+4. **Explicit approval**: Code owner/maintainer explicitly approves eager loading
+
+**Document exceptions** with clear comments explaining why lazy loading is skipped.
+
+### Testing Lazy Loading
+
+When implementing lazy loading:
+1. **Build and inspect**: Check webpack bundle analysis for separate chunks
+2. **Network tab**: Verify chunks load on-demand in browser DevTools
+3. **Performance**: Measure time-to-interactive before and after
+4. **Error handling**: Ensure proper error boundaries for lazy-loaded components
+
+### Common Pitfalls to Avoid
+
+1. **Circular dependencies**: Lazy loading often reveals circular deps - fix the architecture
+2. **Forgotten Suspense**: React.lazy() requires Suspense wrapper
+3. **Promise caching**: Cache dynamic import promises to avoid loading twice
+4. **Module initialization side effects**: Services with side effects at module level will still run - refactor to lazy init
+
+### Code Review Checklist
+
+Before submitting code, verify:
+- [ ] All route-level components use React.lazy()
+- [ ] Heavy services use dynamic import with memoization
+- [ ] No services imported at top-level if they have complex initialization
+- [ ] Suspense boundaries in place for lazy components
+- [ ] Build output shows separate chunks for lazy-loaded modules
+- [ ] No module initialization order issues in console
+
+---
+
 Following these guidelines will help us code together better:
 * If a branch is mentioned in a request, issue or bug report, then please update the context to refer to the branch mentioned. If no branch is mentioned, then assume it is main.
 * If there is no issue mentioned in a prompt or already in context, then propose to create an issue with an appropriate summary and title.   
