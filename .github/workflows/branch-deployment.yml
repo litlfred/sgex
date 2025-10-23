@@ -124,6 +124,15 @@ jobs:
           fi
           echo "   Workflow Run: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
+      - name: Upload workflow event log (early upload)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: workflow-event-log
+          path: artifacts/workflow-event.log
+          retention-days: 90
+          if-no-files-found: warn
+
       - name: Find associated PR
         id: find_pr
         uses: actions/github-script@v8
@@ -384,7 +393,7 @@ jobs:
           echo "=============================================================================="
           echo "🔗 Download artifacts from the Actions run page"
           echo "   Each log file is available as a separate artifact:"
-          echo "   - workflow-event-log"
+          echo "   - workflow-event-log (uploaded early, available immediately)"
           echo "   - build-logs"
           echo "   - webpack-stats"
           echo "   - bundle-report"
@@ -392,15 +401,6 @@ jobs:
           echo "   - bundle-analysis-step-log"
           echo "=============================================================================="
           echo ""
-
-      - name: Upload workflow event log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: workflow-event-log
-          path: artifacts/workflow-event.log
-          retention-days: 90
-          if-no-files-found: warn
 
       - name: Upload build logs
         if: always()

@@ -377,6 +377,20 @@ class PRCommentManager:
             if branch_url:
                 actions += f"""
 <a href="{branch_url}"><img src="https://img.shields.io/badge/Preview_URL-orange?style=for-the-badge&logo=github&label=%F0%9F%8C%90&labelColor=gray" alt="Expected Deployment URL"/></a> _(will be live after deployment)_"""
+            
+            # Add early artifact availability notice
+            actions += f"""
+
+<h3>📋 Event Metadata (Available Now)</h3>
+
+The workflow event log is uploaded immediately and available for download:
+
+| Artifact | Description | Type |
+|----------|-------------|------|
+| [workflow-event-log]({workflow_url}#artifacts) | GitHub event metadata with links | .log |
+
+**How to access:** Click [View Artifacts]({workflow_url}#artifacts) - this artifact is available immediately at the start of the workflow."""
+            
             timeline_entry = f"- **{timestamp}** - 🟠 {step_link} - Initializing"
         
         elif stage == 'setup':
