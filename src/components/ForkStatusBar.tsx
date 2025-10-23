@@ -120,7 +120,7 @@ const ForkStatusBar: React.FC<ForkStatusBarProps> = ({ profile, repository, sele
   };
 
   // Handle parent repository navigation
-  const handleParentClick = (event: React.MouseEvent): void => {
+  const handleParentClick = (event: React.MouseEvent | React.KeyboardEvent): void => {
     if (!parentRepository) return;
     
     const dashboardUrl = getForkDashboardUrl(parentRepository);

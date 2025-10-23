@@ -434,6 +434,27 @@ class GitHubService {
   }
 
   /**
+   * Get repository forks
+   * @param owner - Repository owner
+   * @param repo - Repository name
+   * @returns Promise resolving to array of fork repositories
+   */
+  async getRepositoryForks(owner: string, repo: string): Promise<any[]> {
+    try {
+      const octokit = this.isAuthenticated && this.octokit ? this.octokit : await this.createOctokitInstance();
+      const { data } = await octokit.rest.repos.listForks({
+        owner,
+        repo,
+        per_page: 100
+      });
+      return data;
+    } catch (error) {
+      this.logger.error('Failed to get repository forks', { owner, repo, error });
+      throw error;
+    }
+  }
+
+  /**
    * Get commits for a repository
    * 
    * @param owner - Repository owner

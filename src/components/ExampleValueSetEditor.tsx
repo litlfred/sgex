@@ -5,7 +5,7 @@
  */
 
 import React, { useState } from 'react';
-import { createAssetEditor } from '../framework';
+import { createAssetEditor } from './framework/ToolDefinition';
 
 /**
  * Tool definition structure
@@ -179,7 +179,7 @@ const ValueSetEditorComponent: React.FC<ValueSetEditorComponentProps> = ({
         </ul>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .value-set-editor {
           padding: 1rem;
           max-width: 1200px;
