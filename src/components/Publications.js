@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import githubService from '../services/githubService';
 import StagingGround from './StagingGround';
 import DAKPublicationGenerator from './DAKPublicationGenerator';
 import { useValidation } from './validation/useValidation';
-import { ValidationButton } from './validation/ValidationButton';
-import { ValidationReport } from './validation/ValidationReport';
-import { ValidationSummary } from './validation/ValidationSummary';
+
+// Lazy load validation components for better performance
+const ValidationButton = React.lazy(() => import('./validation/ValidationButton'));
+const ValidationReport = React.lazy(() => import('./validation/ValidationReport'));
+const ValidationSummary = React.lazy(() => import('./validation/ValidationSummary'));
 
 const Publications = ({ profile, repository, selectedBranch, hasWriteAccess }) => {
   const [branches, setBranches] = useState([]);
@@ -254,45 +256,47 @@ const Publications = ({ profile, repository, selectedBranch, hasWriteAccess }) =
           </p>
         </div>
 
-        <div className="validation-controls">
-          <div className="component-filter">
-            <label htmlFor="validation-component-filter">Validate Component:</label>
-            <select
-              id="validation-component-filter"
-              value={validationComponent}
-              onChange={(e) => setValidationComponent(e.target.value)}
-              className="component-select"
-            >
-              <option value="all">All Components</option>
-              <option value="business-processes">Business Processes (BPMN)</option>
-              <option value="decision-logic">Decision Logic (DMN)</option>
-              <option value="fhir-profiles">FHIR Profiles (FSH)</option>
-              <option value="dak-config">DAK Configuration</option>
-            </select>
-          </div>
+        <Suspense fallback={<div style={{ padding: '10px' }}>Loading validation...</div>}>
+          <div className="validation-controls">
+            <div className="component-filter">
+              <label htmlFor="validation-component-filter">Validate Component:</label>
+              <select
+                id="validation-component-filter"
+                value={validationComponent}
+                onChange={(e) => setValidationComponent(e.target.value)}
+                className="component-select"
+              >
+                <option value="all">All Components</option>
+                <option value="business-processes">Business Processes (BPMN)</option>
+                <option value="decision-logic">Decision Logic (DMN)</option>
+                <option value="fhir-profiles">FHIR Profiles (FSH)</option>
+                <option value="dak-config">DAK Configuration</option>
+              </select>
+            </div>
 
-          <ValidationButton
-            onClick={() => validate({ component: validationComponent === 'all' ? undefined : validationComponent })}
-            loading={validating}
-            status={report ? (report.isValid ? 'success' : (report.summary.errorCount > 0 ? 'error' : 'warning')) : undefined}
-            label={validating ? 'Validating...' : 'Run Validation'}
-          />
-        </div>
-
-        {report && (
-          <div className="validation-results">
-            <ValidationSummary
-              report={report}
-              onClick={() => setShowValidationModal(true)}
+            <ValidationButton
+              onClick={() => validate({ component: validationComponent === 'all' ? undefined : validationComponent })}
+              loading={validating}
+              status={report ? (report.isValid ? 'success' : (report.summary.errorCount > 0 ? 'error' : 'warning')) : undefined}
+              label={validating ? 'Validating...' : 'Run Validation'}
             />
           </div>
-        )}
 
-        <ValidationReport
-          report={report}
-          isOpen={showValidationModal}
-          onClose={() => setShowValidationModal(false)}
-        />
+          {report && (
+            <div className="validation-results">
+              <ValidationSummary
+                report={report}
+                onClick={() => setShowValidationModal(true)}
+              />
+            </div>
+          )}
+
+          <ValidationReport
+            report={report}
+            isOpen={showValidationModal}
+            onClose={() => setShowValidationModal(false)}
+          />
+        </Suspense>
       </div>
       
       <div className="section-header">

@@ -9,7 +9,6 @@
 import { ValidationRuleRegistry } from './ValidationRuleRegistry';
 import { validationContext } from './ValidationContext';
 import { createDAKArtifactValidationService } from './DAKArtifactValidationService';
-import { registerAllRules } from './rules';
 
 // Export types
 export * from './types';
@@ -36,11 +35,19 @@ export const validationRegistry = new ValidationRuleRegistry({
   throwOnDuplicate: false
 });
 
-// Register all validation rules
-registerAllRules(validationRegistry);
-
 // Create singleton validation service
 export const dakArtifactValidationService = createDAKArtifactValidationService(
   validationRegistry,
   validationContext
 );
+
+// Lazy load validation rules - only register when first validation is triggered
+let rulesRegistered = false;
+export async function ensureRulesRegistered(): Promise<void> {
+  if (rulesRegistered) return;
+  
+  // Dynamic import to defer loading of all validation rules
+  const { registerAllRules } = await import('./rules');
+  registerAllRules(validationRegistry);
+  rulesRegistered = true;
+}

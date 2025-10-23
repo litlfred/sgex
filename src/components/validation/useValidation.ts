@@ -9,7 +9,7 @@ import {
   FileValidationResult,
   ComponentValidationOptions 
 } from '../../services/validation/types';
-import { dakArtifactValidationService } from '../../services/validation';
+import { dakArtifactValidationService, ensureRulesRegistered } from '../../services/validation';
 
 /**
  * Hook options for validation
@@ -66,6 +66,9 @@ export function useValidation(options: UseValidationOptions = {}): UseValidation
     setLoading(true);
     
     try {
+      // Ensure validation rules are registered before validation (lazy loading)
+      await ensureRulesRegistered();
+      
       const validationReport = await dakArtifactValidationService.validateRepository(
         owner,
         repo,
@@ -140,6 +143,9 @@ export function useFileValidation(): UseFileValidationReturn {
     setLoading(true);
     
     try {
+      // Ensure validation rules are registered before validation (lazy loading)
+      await ensureRulesRegistered();
+      
       const fileResult = await dakArtifactValidationService.validateFile(
         filePath,
         content,
@@ -213,6 +219,9 @@ export function useRepositoryValidation(
       setLoading(true);
       
       try {
+        // Ensure validation rules are registered before validation (lazy loading)
+        await ensureRulesRegistered();
+        
         const validationReport = await dakArtifactValidationService.validateRepository(
           owner,
           repo,
@@ -282,6 +291,9 @@ export function useComponentValidation(): UseComponentValidationReturn {
     setLoading(true);
     
     try {
+      // Ensure validation rules are registered before validation (lazy loading)
+      await ensureRulesRegistered();
+      
       const validationReport = await dakArtifactValidationService.validateComponent(
         owner,
         repo,
