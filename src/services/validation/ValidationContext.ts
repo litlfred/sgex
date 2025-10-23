@@ -8,6 +8,7 @@
  */
 
 import { ValidationContext as IValidationContext } from './types';
+import githubService from '../githubService';
 
 /**
  * Validation Context Implementation
@@ -309,9 +310,6 @@ export class ValidationContext implements IValidationContext {
     path: string = ''
   ): Promise<Array<{ path: string; content: string; }>> {
     const files: Array<{ path: string; content: string; }> = [];
-    
-    // Dynamic import of githubService to avoid circular dependencies
-    const { default: githubService } = await import('../githubService');
     
     try {
       const contents = await githubService.getDirectoryContents(owner, repo, path, branch);
