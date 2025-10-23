@@ -206,6 +206,7 @@ sgex/
 - `npm start` - Runs the app in development mode
 - `npm test` - Launches the test runner in interactive watch mode
 - `npm run build` - Builds the app for production (includes TypeScript type checking and schema generation)
+- `npm run analyze` - Generates bundle analysis report for optimization (see [Bundle Analysis](#bundle-analysis))
 - `npm run type-check` - Runs TypeScript type checking without compilation
 - `npm run type-check:watch` - Runs TypeScript type checking in watch mode
 - `npm run generate-schemas` - Generates JSON schemas from TypeScript types
@@ -213,6 +214,34 @@ sgex/
 - `npm run lint:a11y` - Shows only accessibility (jsx-a11y) warnings
 - `npm run lint:fix` - Automatically fixes linting issues where possible
 - `npm run eject` - **Note: This is a one-way operation. Don't do this unless you're sure!**
+
+### Bundle Analysis
+
+SGEX Workbench includes webpack-bundle-analyzer for monitoring and optimizing bundle size. This helps maintain fast load times as required by REQ-PERF-001.
+
+**Quick Start:**
+```bash
+npm run analyze
+```
+
+This generates:
+- `bundle-report.html` - Interactive treemap visualization
+- `bundle-stats.json` - Detailed statistics for programmatic analysis
+
+**Documentation:**
+- [Bundle Analysis Guide](docs/bundle-analysis-guide.md) - How to use the analyzer
+- [Bundle Analysis Report](BUNDLE_ANALYSIS_REPORT.md) - Current findings and recommendations
+
+**Key Findings:**
+- Main bundle: 532 KB
+- Largest contributors: React Markdown Editor (2.4 MB), FHIR profiles (3 MB)
+- Optimization potential: 33% reduction in main bundle, 65% in largest chunks
+
+The bundle analyzer helps identify:
+- Large dependencies that can be lazy-loaded
+- Duplicate code across chunks
+- Opportunities for code splitting
+- Unused exports and dead code
 
 ### TypeScript Migration
 
