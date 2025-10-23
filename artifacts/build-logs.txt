@@ -1,0 +1,137 @@
+================================================================================
+Build Log - 2025-10-23T15:37:30.072462+00:00
+================================================================================
+
+Branch: copilot/enhance-production-build-logs-again
+Public URL: /sgex/copilot-enhance-production-build-logs-again/
+Command: npm run build
+
+Environment Variables:
+  CI=false
+  ESLINT_NO_DEV_ERRORS=true
+  GENERATE_SOURCEMAP=false
+  GITHUB_REF_NAME=copilot/enhance-production-build-logs-again
+  NODE_ENV=production
+  PUBLIC_URL=/sgex/copilot-enhance-production-build-logs-again/
+  REACT_APP_GITHUB_REF_NAME=copilot/enhance-production-build-logs-again
+
+================================================================================
+Build Output:
+================================================================================
+
+[15:37:30.352] 
+[15:37:30.352] > sgex-workbench@1.0.0 prebuild
+[15:37:30.352] > echo 'Skipping prebuild due to TypeScript errors'
+[15:37:30.352] 
+[15:37:30.356] Skipping prebuild due to TypeScript errors
+[15:37:30.358] 
+[15:37:30.358] > sgex-workbench@1.0.0 build
+[15:37:30.358] > npm run configure:repo && craco build
+[15:37:30.358] 
+[15:37:30.475] 
+[15:37:30.475] > sgex-workbench@1.0.0 configure:repo
+[15:37:30.475] > node scripts/configure-repository.js
+[15:37:30.475] 
+[15:37:30.502] 🔧 Configuring repository settings for build...
+[15:37:30.507] ✅ Repository consistency verified: litlfred/sgex
+[15:37:30.508] ✅ Repository configuration set from package.json:
+[15:37:30.508]    Owner: litlfred
+[15:37:30.508]    Name: sgex
+[15:37:30.508]    Full: litlfred/sgex
+[15:37:30.508]    Env file: .env
+[15:37:30.509] ✅ Updated 404.html with repository: litlfred/sgex
+[15:37:30.509] ✨ Repository configuration complete!
+[15:37:31.685] Creating an optimized production build...
+[15:38:36.081] Compiled successfully.
+[15:38:36.081] 
+[15:38:36.081] File sizes after gzip:
+[15:38:36.081] 
+[15:38:36.532]   1.18 MB    build/static/js/5508.647b89a2.chunk.js
+[15:38:36.532]   501.67 kB  build/static/js/5743.3204317f.chunk.js
+[15:38:36.532]   226.2 kB   build/static/js/2698.33473f22.chunk.js
+[15:38:36.532]   162.37 kB  build/static/js/main.5669391f.js
+[15:38:36.532]   97.57 kB   build/static/js/5426.94844b07.chunk.js
+[15:38:36.532]   71.71 kB   build/static/css/main.b24bd6b3.css
+[15:38:36.532]   61.8 kB    build/static/js/9225.68db32a9.chunk.js
+[15:38:36.533]   59.17 kB   build/static/js/2383.e1325433.chunk.js
+[15:38:36.533]   58.92 kB   build/static/js/3882.607df9f4.chunk.js
+[15:38:36.533]   46.31 kB   build/static/js/1052.e97023af.chunk.js
+[15:38:36.533]   36.96 kB   build/static/js/8900.0cb7ec61.chunk.js
+[15:38:36.533]   35.55 kB   build/static/js/9082.6525a9d2.chunk.js
+[15:38:36.533]   35.08 kB   build/static/js/7845.8a795cc9.chunk.js
+[15:38:36.533]   18.72 kB   build/static/js/112.b763af0b.chunk.js
+[15:38:36.533]   14.62 kB   build/static/js/5586.ef4217a7.chunk.js
+[15:38:36.533]   13.04 kB   build/static/js/6558.b384bcda.chunk.js
+[15:38:36.533]   12.96 kB   build/static/js/4601.cd610d40.chunk.js
+[15:38:36.533]   11.06 kB   build/static/js/5787.a0c1bae4.chunk.js
+[15:38:36.533]   8.66 kB    build/static/js/7082.a20b0ed0.chunk.js
+[15:38:36.533]   8.41 kB    build/static/js/3738.cd910bef.chunk.js
+[15:38:36.534]   7.74 kB    build/static/js/5453.5c5f68ce.chunk.js
+[15:38:36.534]   6.97 kB    build/static/js/9414.15f5f948.chunk.js
+[15:38:36.534]   6.28 kB    build/static/js/2873.df562286.chunk.js
+[15:38:36.534]   5.9 kB     build/static/js/7009.b9064467.chunk.js
+[15:38:36.534]   5.88 kB    build/static/css/5743.abcb72f4.chunk.css
+[15:38:36.534]   5.86 kB    build/static/js/328.748426a7.chunk.js
+[15:38:36.534]   5.74 kB    build/static/js/7458.ac7bfb8b.chunk.js
+[15:38:36.534]   5.57 kB    build/static/js/2057.f354e73c.chunk.js
+[15:38:36.534]   5.35 kB    build/static/js/2101.6b786f56.chunk.js
+[15:38:36.534]   5.18 kB    build/static/js/2255.9013a1c8.chunk.js
+[15:38:36.534]   4.99 kB    build/static/js/2675.d6c3afa3.chunk.js
+[15:38:36.534]   4.76 kB    build/static/js/115.d1a523b5.chunk.js
+[15:38:36.534]   4.63 kB    build/static/js/8700.a0dbf3dd.chunk.js
+[15:38:36.534]   4.44 kB    build/static/js/3442.872dd55c.chunk.js
+[15:38:36.534]   4.36 kB    build/static/js/1008.1b5d9d87.chunk.js
+[15:38:36.534]   3.74 kB    build/static/js/228.988b99cc.chunk.js
+[15:38:36.534]   3.63 kB    build/static/js/4420.5c0723e2.chunk.js
+[15:38:36.534]   3.44 kB    build/static/css/5586.8cf0e385.chunk.css
+[15:38:36.534]   3.39 kB    build/static/js/988.67b8f9b3.chunk.js
+[15:38:36.534]   3.04 kB    build/static/js/5922.5c038216.chunk.js
+[15:38:36.534]   3.01 kB    build/static/js/5012.fc02e7a1.chunk.js
+[15:38:36.534]   2.95 kB    build/static/js/5619.626b0f55.chunk.js
+[15:38:36.534]   2.94 kB    build/static/js/6970.9a451703.chunk.js
+[15:38:36.534]   2.83 kB    build/static/js/7076.f6118f3e.chunk.js
+[15:38:36.534]   2.62 kB    build/static/js/1685.cee8e250.chunk.js
+[15:38:36.534]   2.51 kB    build/static/js/1989.068691f5.chunk.js
+[15:38:36.534]   2.48 kB    build/static/js/5409.cfcd6dd8.chunk.js
+[15:38:36.534]   2.15 kB    build/static/js/9147.4f17fddd.chunk.js
+[15:38:36.534]   2.1 kB     build/static/js/5432.cafe60bc.chunk.js
+[15:38:36.534]   2.06 kB    build/static/js/8754.95b6827f.chunk.js
+[15:38:36.534]   2.06 kB    build/static/js/3714.cf96e8cb.chunk.js
+[15:38:36.534]   1.85 kB    build/static/js/4885.9e019195.chunk.js
+[15:38:36.534]   1.68 kB    build/static/js/399.4a6b5f72.chunk.js
+[15:38:36.534]   1.58 kB    build/static/js/4044.41273295.chunk.js
+[15:38:36.534]   1.37 kB    build/static/css/1989.781e6114.chunk.css
+[15:38:36.534]   1.24 kB    build/static/css/1008.247e7b29.chunk.css
+[15:38:36.534]   1.24 kB    build/static/css/2101.247e7b29.chunk.css
+[15:38:36.534]   1.24 kB    build/static/css/7458.247e7b29.chunk.css
+[15:38:36.534]   1.24 kB    build/static/css/8700.247e7b29.chunk.css
+[15:38:36.534]   1.19 kB    build/static/css/5409.fb4c1a1f.chunk.css
+[15:38:36.534]   1.11 kB    build/static/js/984.2658d46e.chunk.js
+[15:38:36.534]   754 B      build/static/js/727.5169a101.chunk.js
+[15:38:36.534]   332 B      build/static/js/9906.38ad9db1.chunk.js
+[15:38:36.534]   147 B      build/static/js/5906.981b126a.chunk.js
+[15:38:36.534] 
+[15:38:36.534] The bundle size is significantly larger than recommended.
+[15:38:36.534] Consider reducing it with code splitting: https://goo.gl/9VhYWB
+[15:38:36.534] You can also analyze the project dependencies: https://goo.gl/LeUzfb
+[15:38:36.534] 
+[15:38:36.534] The project was built assuming it is hosted at /sgex/copilot-enhance-production-build-logs-again/.
+[15:38:36.534] You can control this with the homepage field in your package.json.
+[15:38:36.534] 
+[15:38:36.534] The build folder is ready to be deployed.
+[15:38:36.534] 
+[15:38:36.535] Find out more about deployment here:
+[15:38:36.535] 
+[15:38:36.535]   https://cra.link/deployment
+[15:38:36.535] 
+[15:38:36.658] npm notice
+[15:38:36.658] npm notice New major version of npm available! 10.8.2 -> 11.6.2
+[15:38:36.658] npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.6.2
+[15:38:36.658] npm notice To update run: npm install -g npm@11.6.2
+[15:38:36.658] npm notice
+
+================================================================================
+Build completed at 2025-10-23T15:38:36.663387+00:00
+Exit code: 0
+Total lines logged: 110
+================================================================================

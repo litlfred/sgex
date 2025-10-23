@@ -1,0 +1,105 @@
+================================================================================
+Webpack Bundle Analysis Report
+Generated: 2025-10-23T15:38:36.714611+00:00
+================================================================================
+
+=== Build Directory Summary ===
+Total Size: 69.39 MB
+File Count: 198
+
+=== File Types ===
+  .png                  43 files    57.37 MB
+  .js                   57 files    10.44 MB
+  .md                   38 files    565.6 KB
+  .css                   9 files    524.3 KB
+  .cjs                   2 files    154.0 KB
+  .html                  8 files    136.3 KB
+  .json                  7 files    123.5 KB
+  .svg                  18 files     29.5 KB
+  .bpmn                  1 files     28.3 KB
+  .yaml                  1 files     25.4 KB
+  .backup                1 files     10.9 KB
+  .puml                  4 files      9.7 KB
+  .txt                   8 files      4.3 KB
+  .ico                   1 files      1.1 KB
+
+=== Largest Files (Top 15) ===
+   1.    5.64 MB  static/js/5508.647b89a2.chunk.js
+      ⚠️  Large file (>200.0 KB)
+   2.    3.68 MB  sgex-mascot.png
+      ⚠️  Large file (>200.0 KB)
+   3.    3.68 MB  pronunciation-guide.png
+      ⚠️  Large file (>200.0 KB)
+   4.    2.32 MB  pronunciation-guide_grey_tabby.png
+      ⚠️  Large file (>200.0 KB)
+   5.    2.32 MB  sgex-mascot_grey_tabby.png
+      ⚠️  Large file (>200.0 KB)
+   6.    2.10 MB  authoring_grey_tabby.png
+      ⚠️  Large file (>200.0 KB)
+   7.    2.00 MB  authoring.png
+      ⚠️  Large file (>200.0 KB)
+   8.    1.96 MB  collaboration.png
+      ⚠️  Large file (>200.0 KB)
+   9.    1.80 MB  dashboard/dak_interventions_grey_tabby.png
+      ⚠️  Large file (>200.0 KB)
+  10.    1.80 MB  dashboard/dak_interventions.png
+      ⚠️  Large file (>200.0 KB)
+  11.    1.74 MB  expirement.png
+      ⚠️  Large file (>200.0 KB)
+  12.    1.73 MB  collaboration_grey_tabby.png
+      ⚠️  Large file (>200.0 KB)
+  13.    1.72 MB  expirement_grey_tabby.png
+      ⚠️  Large file (>200.0 KB)
+  14.    1.39 MB  pat-login_grey_tabby.png
+      ⚠️  Large file (>200.0 KB)
+  15.    1.38 MB  static/js/5743.3204317f.chunk.js
+      ⚠️  Large file (>200.0 KB)
+
+=== JavaScript Bundles ===
+Total JS Size: 10.44 MB
+JS File Count: 57
+
+Top 10 JavaScript Files:
+   1.    5.64 MB  static/js/5508.647b89a2.chunk.js
+   2.    1.38 MB  static/js/5743.3204317f.chunk.js
+   3.   620.5 KB  static/js/2698.33473f22.chunk.js
+   4.   531.2 KB  static/js/main.5669391f.js
+   5.   351.1 KB  static/js/5426.94844b07.chunk.js
+   6.   228.4 KB  static/js/3882.607df9f4.chunk.js
+   7.   211.0 KB  static/js/9225.68db32a9.chunk.js
+   8.   206.2 KB  static/js/2383.e1325433.chunk.js
+   9.   198.1 KB  static/js/1052.e97023af.chunk.js
+  10.   132.5 KB  static/js/7845.8a795cc9.chunk.js
+
+=== CSS Files ===
+Total CSS Size: 524.3 KB
+CSS File Count: 9
+
+   1.   451.5 KB  static/css/main.b24bd6b3.css
+   2.    32.9 KB  static/css/5743.abcb72f4.chunk.css
+   3.    15.5 KB  static/css/5586.8cf0e385.chunk.css
+   4.     5.1 KB  static/css/1989.781e6114.chunk.css
+   5.     3.9 KB  static/css/2101.247e7b29.chunk.css
+
+=== Recommendations ===
+⚠️  Found 8 large JavaScript files (>200.0 KB)
+   Consider:
+   - Code splitting for large modules
+   - Lazy loading for non-critical components
+   - Tree shaking to remove unused code
+
+🔴 Found 40 very large files (>500.0 KB)
+   Priority actions:
+   - Review dependencies for these files
+   - Consider splitting into smaller chunks
+   - Enable compression (gzip/brotli)
+
+💡 General Optimization Tips:
+   - Enable source map generation only for debugging
+   - Use production builds for deployment
+   - Consider using dynamic imports for routes
+   - Review and optimize third-party dependencies
+
+================================================================================
+End of Report
+================================================================================
