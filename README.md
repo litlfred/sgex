@@ -221,20 +221,34 @@ SGEX Workbench includes webpack-bundle-analyzer for monitoring and optimizing bu
 
 **Quick Start:**
 ```bash
+# Check if bundles exceed size limits
+npm run check-bundle-size
+
+# Analyze bundle composition
 npm run analyze
+
+# Build and check in one command
+npm run build:check
 ```
 
-This generates:
-- `bundle-report.html` - Interactive treemap visualization
-- `bundle-stats.json` - Detailed statistics for programmatic analysis
+**Tools:**
+- `npm run check-bundle-size` - Enforce bundle size budgets and catch regressions
+- `npm run analyze` - Generate interactive treemap visualization and detailed statistics
+- `npm run build:check` - Build and verify bundle sizes in one command
+
+**Size Budgets:**
+- Main bundle: 300 KB maximum (currently 532 KB ❌)
+- Individual chunks: 1 MB maximum (2 chunks exceed ❌)
+- Total JS: 10 MB maximum (currently 10.43 MB ❌)
 
 **Documentation:**
 - [Bundle Analysis Guide](docs/bundle-analysis-guide.md) - How to use the analyzer
 - [Bundle Analysis Report](BUNDLE_ANALYSIS_REPORT.md) - Current findings and recommendations
 
 **Key Findings:**
-- Main bundle: 532 KB
-- Largest contributors: React Markdown Editor (2.4 MB), FHIR profiles (3 MB)
+- Main bundle: 532 KB (exceeds 300 KB limit by 231 KB)
+- Largest chunk: 5.64 MB (exceeds 1 MB limit by 4.64 MB)
+- Second largest: 1.38 MB (exceeds 1 MB limit by 385 KB)
 - Optimization potential: 33% reduction in main bundle, 65% in largest chunks
 
 The bundle analyzer helps identify:

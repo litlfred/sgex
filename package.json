@@ -40,6 +40,8 @@
     "build": "npm run configure:repo && craco build",
     "build:analyze": "ANALYZE=true npm run build",
     "analyze": "npm run build:analyze && echo '\n✅ Bundle analysis complete! Open bundle-report.html to view the interactive report.'",
+    "check-bundle-size": "node scripts/check-bundle-size.js",
+    "build:check": "npm run build && npm run check-bundle-size",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "serve": "npm run build && cd build && python3 -m http.server 3000",

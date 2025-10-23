@@ -229,30 +229,61 @@ Already in craco.config.js, but consider:
 
 ## Monitoring and Ongoing Maintenance
 
+### Bundle Size Checker
+
+A bundle size checker script has been implemented to enforce size budgets:
+
+```bash
+# Check bundle sizes against limits
+npm run check-bundle-size
+
+# Build and check in one command
+npm run build:check
+```
+
+**Size Budgets Enforced:**
+- Main bundle: 300 KB maximum
+- Individual chunks: 1 MB maximum
+- Total JavaScript: 10 MB maximum (warning at 8 MB)
+
+The checker provides:
+- ✅ Clear pass/fail status for each bundle
+- 📊 Detailed size information and violations
+- 💡 Actionable recommendations when limits exceeded
+- 🎯 Exit code 1 on failure (suitable for CI/CD)
+
 ### Integration into CI/CD
 
 Add to GitHub Actions workflow:
 ```yaml
-- name: Bundle Analysis
-  run: npm run analyze
+- name: Build Project
+  run: npm run build
   
 - name: Check Bundle Size
-  run: |
-    # Fail if main bundle > 300 KB
-    # Fail if any chunk > 1 MB
+  run: npm run check-bundle-size
+  # This will fail the build if bundles exceed limits
+```
+
+Or use the combined command:
+```yaml
+- name: Build and Check Bundle Size
+  run: npm run build:check
 ```
 
 ### Regular Reviews
 - Monthly bundle analysis review
 - Track bundle size trends
 - Update optimization strategies
+- Adjust size budgets as needed
 
 ### npm Scripts Added
 
 ```json
 {
   "build:analyze": "ANALYZE=true npm run build",
-  "analyze": "npm run build:analyze && echo 'Bundle analysis complete!'"
+  "analyze": "npm run build:analyze && echo 'Bundle analysis complete!'",
+  "check-bundle-size": "node scripts/check-bundle-size.js",
+  "build:check": "npm run build && npm run check-bundle-size"
 }
 ```
 

@@ -2,9 +2,35 @@
 
 ## Overview
 
-SGEX Workbench includes webpack-bundle-analyzer integration for ongoing bundle size monitoring and optimization. This guide explains how to generate and interpret bundle analysis reports.
+SGEX Workbench includes two tools for bundle size monitoring and optimization:
+1. **Bundle Size Checker** - Enforces size budgets and catches regressions
+2. **Bundle Analyzer** - Provides detailed visualization and analysis
+
+This guide explains how to use both tools effectively.
 
 ## Quick Start
+
+### Check Bundle Sizes
+
+```bash
+# Check if current build exceeds size limits
+npm run check-bundle-size
+
+# Build and check in one command
+npm run build:check
+```
+
+**Size Budgets:**
+- Main bundle: 300 KB maximum
+- Individual chunks: 1 MB maximum
+- Total JavaScript: 10 MB maximum
+
+The checker will:
+- ✅ Show which bundles are within limits
+- ❌ Identify bundles that exceed limits
+- 📊 Display size violations with details
+- 💡 Provide recommendations for fixes
+- Exit with code 1 if any limits exceeded (for CI/CD)
 
 ### Generate Bundle Report
 
@@ -22,9 +48,62 @@ This will:
 
 Open `bundle-report.html` in your browser to see an interactive treemap visualization of your bundle composition.
 
-## Understanding the Report
+## Bundle Size Checker
 
-### Interactive Treemap
+### Usage
+
+The bundle size checker enforces size budgets and helps catch regressions early.
+
+```bash
+# Run after building
+npm run build
+npm run check-bundle-size
+
+# Or combine both steps
+npm run build:check
+```
+
+### Understanding the Output
+
+**Example output:**
+```
+Bundle Size Check
+================================================================================
+
+Main Bundle:
+  main.e5b31441.js
+  Size: 531.14 KB / 300.00 KB ❌ EXCEEDS LIMIT
+  Exceeds limit by 231.14 KB
+
+Chunks:
+  ❌ 2 chunk(s) exceed size limit:
+     3415.d913d5d4.chunk.js: 5.64 MB (exceeds by 4.64 MB)
+     2998.253ba146.chunk.js: 1.38 MB (exceeds by 385.70 KB)
+  ✅ 52 chunk(s) within size limit
+
+Total JavaScript:
+  Size: 10.43 MB
+  ❌ CRITICAL: Total size exceeds 10.00 MB
+```
+
+### Customizing Size Budgets
+
+Edit `scripts/check-bundle-size.js` to adjust size limits:
+
+```javascript
+const SIZE_LIMITS = {
+  main: 300 * 1024,        // Main bundle limit
+  chunk: 1 * 1024 * 1024,  // Individual chunk limit
+  totalWarning: 8 * 1024 * 1024,  // Warning threshold
+  totalError: 10 * 1024 * 1024,   // Error threshold
+};
+```
+
+## Bundle Analyzer
+
+### Understanding the Report
+
+#### Interactive Treemap
 
 The bundle report shows a treemap where:
 - **Box size** = module size
@@ -32,7 +111,7 @@ The bundle report shows a treemap where:
 - **Hover** = see detailed size information
 - **Click** = drill down into module contents
 
-### Size Metrics
+#### Size Metrics
 
 Three size metrics are shown:
 - **Stat**: Original uncompressed size
@@ -42,6 +121,18 @@ Three size metrics are shown:
 Focus on **Parsed** size for optimization targets.
 
 ## npm Scripts
+
+### check-bundle-size
+```bash
+npm run check-bundle-size
+```
+Checks if bundles exceed defined size limits. Exits with code 1 if any violations found.
+
+### build:check
+```bash
+npm run build:check
+```
+Builds the project and checks bundle sizes. Convenient for CI/CD and pre-commit checks.
 
 ### analyze
 ```bash
