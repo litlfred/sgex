@@ -521,15 +521,22 @@ Detailed build logs and webpack stats will be captured and uploaded as artifacts
 
 <h3>📦 Build Artifacts</h3>
 
-Build logs and webpack stats are available for download:
-- **build-logs.txt** - Complete timestamped build output
-- **webpack-stats.json** - Webpack compilation statistics
-- **bundle-report.txt** - Bundle size analysis and recommendations
-- **workflow-event.log** - Complete GitHub event metadata
+Build logs and webpack stats are available as separate downloadable artifacts:
 
-<a href="{workflow_url}#artifacts"><img src="https://img.shields.io/badge/Download_Artifacts-blue?style=for-the-badge&logo=download&label=📦&labelColor=gray" alt="Download Artifacts"/></a>
+| Artifact | Description | Type |
+|----------|-------------|------|
+| [workflow-event-log]({workflow_url}#artifacts) | GitHub event metadata with links | .log |
+| [build-logs]({workflow_url}#artifacts) | Complete timestamped build output | .txt |
+| [webpack-stats]({workflow_url}#artifacts) | Webpack compilation statistics | .json |
+| [bundle-report]({workflow_url}#artifacts) | Bundle size analysis and recommendations | .txt |
+| [build-step-log]({workflow_url}#artifacts) | Build step console output | .log |
+| [bundle-analysis-step-log]({workflow_url}#artifacts) | Bundle analysis step console output | .log |
 
-**How to access:** Scroll to the "Artifacts" section at the bottom of the [workflow run page]({workflow_url}) and download `build-logs-{action_id_display}`."""
+**How to access:** 
+1. Click [View Artifacts]({workflow_url}#artifacts) on the workflow run page
+2. Download individual artifact files directly (no zip extraction needed)
+3. Each artifact contains a single log file for easy viewing"""
+            
             
             timeline_entry = f"- **{timestamp}** - 🟢 {step_link} - Site is live"
         

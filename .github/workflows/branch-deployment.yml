@@ -383,22 +383,67 @@ jobs:
           echo ""
           echo "=============================================================================="
           echo "🔗 Download artifacts from the Actions run page"
-          echo "   Artifacts section → build-logs-${{ github.run_id }}-${{ github.run_attempt }}"
+          echo "   Each log file is available as a separate artifact:"
+          echo "   - workflow-event-log"
+          echo "   - build-logs"
+          echo "   - webpack-stats"
+          echo "   - bundle-report"
+          echo "   - build-step-log"
+          echo "   - bundle-analysis-step-log"
           echo "=============================================================================="
           echo ""
 
-      - name: Upload build logs and stats as artifacts
+      - name: Upload workflow event log
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: build-logs-${{ github.run_id }}-${{ github.run_attempt }}
-          path: |
-            artifacts/workflow-event.log
-            artifacts/build-logs.txt
-            artifacts/webpack-stats.json
-            artifacts/bundle-report.txt
-            artifacts/build-step.log
-            artifacts/bundle-analysis-step.log
+          name: workflow-event-log
+          path: artifacts/workflow-event.log
+          retention-days: 90
+          if-no-files-found: warn
+
+      - name: Upload build logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: artifacts/build-logs.txt
+          retention-days: 90
+          if-no-files-found: warn
+
+      - name: Upload webpack stats
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: webpack-stats
+          path: artifacts/webpack-stats.json
+          retention-days: 90
+          if-no-files-found: warn
+
+      - name: Upload bundle report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle-report
+          path: artifacts/bundle-report.txt
+          retention-days: 90
+          if-no-files-found: warn
+
+      - name: Upload build step log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-step-log
+          path: artifacts/build-step.log
+          retention-days: 90
+          if-no-files-found: warn
+
+      - name: Upload bundle analysis step log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle-analysis-step-log
+          path: artifacts/bundle-analysis-step.log
           retention-days: 90
           if-no-files-found: warn
 
