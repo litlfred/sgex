@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageLayout, usePage } from './framework';
-import { useDakComponent } from '../services/ComponentObjectProvider.tsx';
+import { useDakComponent } from '../services/ComponentObjectProvider';
 import './CoreDataDictionaryViewer.css';
 
 /**
@@ -22,7 +22,8 @@ const CoreDataDictionaryViewer = () => {
 
 const CoreDataDictionaryViewerContent = () => {
   const navigate = useNavigate();
-  const { profile, repository, branch } = usePage();
+  const pageContext = usePage() as any;
+  const { profile, repository, branch } = pageContext;
   
   // Component Object for core data elements
   const dataElementsComponent = useDakComponent('dataElements');
@@ -41,7 +42,7 @@ const CoreDataDictionaryViewerContent = () => {
 
   // Handle Escape key for modal
   useEffect(() => {
-    const handleEscape = (e) => {
+    const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && showModal) {
         closeModal();
       }
@@ -53,7 +54,7 @@ const CoreDataDictionaryViewerContent = () => {
   }, [showModal]);
 
   // Generate base URL for IG Publisher artifacts
-  const getBaseUrl = useCallback((branchName) => {
+  const getBaseUrl = useCallback((branchName: string) => {
     const owner = user || repository?.owner?.login || repository?.full_name?.split('/')[0];
     const repoName = repo || repository?.name;
     
@@ -99,7 +100,7 @@ const CoreDataDictionaryViewerContent = () => {
       setDataElements(elements || []);
     } catch (err) {
       console.error('Error loading data elements:', err);
-      setError(err.message || 'Failed to load core data elements');
+      setError(err instanceof Error ? err.message : 'Failed to load core data elements');
     } finally {
       setLoading(false);
     }
@@ -136,7 +137,7 @@ const CoreDataDictionaryViewerContent = () => {
   };
 
   // Modal handlers
-  const openModal = (element) => {
+  const openModal = (element: any) => {
     setSelectedElement(element);
     setShowModal(true);
   };

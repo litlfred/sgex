@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import bugReportService from '../services/bugReportService';
+import bugReportService, { IssueTemplate, TemplateField } from '../services/bugReportService';
 import githubService from '../services/githubService';
 import ScreenshotEditor from './ScreenshotEditor';
 import repositoryConfig from '../config/repositoryConfig';
@@ -7,12 +7,6 @@ import repositoryConfig from '../config/repositoryConfig';
 interface BugReportFormProps {
   onClose: () => void;
   contextData?: Record<string, any>;
-}
-
-interface TemplateType {
-  name: string;
-  type: string;
-  fields: FieldDefinition[];
 }
 
 interface FieldDefinition {
@@ -29,8 +23,8 @@ interface FormDataType {
 }
 
 const BugReportForm: React.FC<BugReportFormProps> = ({ onClose, contextData = {} }) => {
-  const [templates, setTemplates] = useState<TemplateType[]>([]);
-  const [selectedTemplate, setSelectedTemplate] = useState<TemplateType | null>(null);
+  const [templates, setTemplates] = useState<IssueTemplate[]>([]);
+  const [selectedTemplate, setSelectedTemplate] = useState<IssueTemplate | null>(null);
   const [formData, setFormData] = useState<FormDataType>({});
   const [includeConsole, setIncludeConsole] = useState<boolean>(false);
   const [includeScreenshot, setIncludeScreenshot] = useState<boolean>(false);
@@ -86,14 +80,14 @@ const BugReportForm: React.FC<BugReportFormProps> = ({ onClose, contextData = {}
     }
   };
 
-  const handleTemplateChange = (template) => {
-    setSelectedTemplate(template);
+  const handleTemplateChange = (template: IssueTemplate | undefined) => {
+    setSelectedTemplate(template || null);
     setFormData({}); // Reset form data when template changes
-    setIncludeConsole(template.type === 'bug'); // Auto-enable console for bug reports
-    setIncludeScreenshot(template.type === 'bug'); // Auto-enable screenshot for bug reports
+    setIncludeConsole(template?.type === 'bug'); // Auto-enable console for bug reports
+    setIncludeScreenshot(template?.type === 'bug'); // Auto-enable screenshot for bug reports
   };
 
-  const handleFormChange = (fieldId, value) => {
+  const handleFormChange = (fieldId: string, value: any) => {
     setFormData(prev => ({
       ...prev,
       [fieldId]: value
@@ -118,7 +112,7 @@ const BugReportForm: React.FC<BugReportFormProps> = ({ onClose, contextData = {}
       }
     } catch (err) {
       console.error('Failed to take screenshot:', err);
-      setError('Failed to capture screenshot: ' + err.message);
+      setError('Failed to capture screenshot: ' + (err instanceof Error ? err.message : String(err)));
     } finally {
       setTakingScreenshot(false);
     }
@@ -128,7 +122,7 @@ const BugReportForm: React.FC<BugReportFormProps> = ({ onClose, contextData = {}
     setShowScreenshotEditor(true);
   };
 
-  const handleScreenshotEditorSave = (editedBlob) => {
+  const handleScreenshotEditorSave = (editedBlob: Blob) => {
     // Update the screenshot with the edited version
     setScreenshotBlob(editedBlob);
     
@@ -165,7 +159,7 @@ const BugReportForm: React.FC<BugReportFormProps> = ({ onClose, contextData = {}
     };
   }, [screenshotPreview]);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     if (!selectedTemplate) {
@@ -184,7 +178,7 @@ const BugReportForm: React.FC<BugReportFormProps> = ({ onClose, contextData = {}
       const currentScreenshot = includeScreenshot ? screenshotBlob : null;
       
       // Check if user is authenticated and can submit via API
-      if (githubService.isAuthenticated) {
+      if (githubService.isAuth()) {
         const result = await bugReportService.submitIssue(
           repositoryConfig.getOwner(),
           repositoryConfig.getName(),
@@ -243,7 +237,7 @@ const BugReportForm: React.FC<BugReportFormProps> = ({ onClose, contextData = {}
       }
     } catch (err) {
       console.error('Failed to submit bug report:', err);
-      setError(err.message);
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setSubmitting(false);
     }
@@ -266,7 +260,7 @@ const BugReportForm: React.FC<BugReportFormProps> = ({ onClose, contextData = {}
     );
   };
 
-  const renderFormField = (field) => {
+  const renderFormField = (field: TemplateField) => {
     const { id, type, attributes = {}, validations = {} } = field;
     const { label, description, placeholder, options } = attributes;
     const { required } = validations;
@@ -276,7 +270,7 @@ const BugReportForm: React.FC<BugReportFormProps> = ({ onClose, contextData = {}
         <div key={id || Math.random()} className="form-field markdown-field">
           <div 
             className="markdown-content"
-            dangerouslySetInnerHTML={{ __html: attributes.value }}
+            dangerouslySetInnerHTML={{ __html: attributes.value || '' }}
           />
         </div>
       );
@@ -342,8 +336,8 @@ const BugReportForm: React.FC<BugReportFormProps> = ({ onClose, contextData = {}
             >
               <option value="">Select an option...</option>
               {options?.map((option, index) => (
-                <option key={index} value={option.value || option}>
-                  {option.label || option}
+                <option key={index} value={typeof option === 'string' ? option : option.value}>
+                  {typeof option === 'string' ? option : option.label}
                 </option>
               ))}
             </select>
@@ -359,24 +353,27 @@ const BugReportForm: React.FC<BugReportFormProps> = ({ onClose, contextData = {}
                 {required && <span className="required">*</span>}
               </legend>
               {description && <p className="field-description">{description}</p>}
-              {options?.map((option, index) => (
-                <label key={index} className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    className="checkbox-input"
-                    checked={formData[fieldId]?.includes(option.value || option) || false}
-                    onChange={(e) => {
-                      const value = option.value || option;
-                      const currentValues = formData[fieldId] || [];
-                      const newValues = e.target.checked
-                        ? [...currentValues, value]
-                        : currentValues.filter(v => v !== value);
-                      handleFormChange(fieldId, newValues);
-                    }}
-                  />
-                  {option.label || option}
-                </label>
-              ))}
+              {options?.map((option, index) => {
+                const optionValue = typeof option === 'string' ? option : option.value;
+                const optionLabel = typeof option === 'string' ? option : option.label;
+                return (
+                  <label key={index} className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      className="checkbox-input"
+                      checked={formData[fieldId]?.includes(optionValue) || false}
+                      onChange={(e) => {
+                        const currentValues = formData[fieldId] || [];
+                        const newValues = e.target.checked
+                          ? [...currentValues, optionValue]
+                          : currentValues.filter((v: any) => v !== optionValue);
+                        handleFormChange(fieldId, newValues);
+                      }}
+                    />
+                    {optionLabel}
+                  </label>
+                );
+              })}
             </fieldset>
           </div>
         );
@@ -592,7 +589,7 @@ const BugReportForm: React.FC<BugReportFormProps> = ({ onClose, contextData = {}
               ) : (
                 <div className="screenshot-preview">
                   <img 
-                    src={screenshotPreview} 
+                    src={screenshotPreview || undefined} 
                     alt="Screenshot preview" 
                     className="screenshot-image"
                   />
@@ -649,7 +646,7 @@ const BugReportForm: React.FC<BugReportFormProps> = ({ onClose, contextData = {}
                 <ul>
                   <li><strong>Current Page:</strong> {contextData.pageId || 'Unknown'}</li>
                   <li><strong>URL:</strong> {window.location.href}</li>
-                  <li><strong>Authentication:</strong> {githubService.isAuthenticated ? 'Authenticated' : 'Demo Mode'}</li>
+                  <li><strong>Authentication:</strong> {githubService.isAuth() ? 'Authenticated' : 'Demo Mode'}</li>
                 </ul>
               </div>
               
@@ -691,7 +688,7 @@ const BugReportForm: React.FC<BugReportFormProps> = ({ onClose, contextData = {}
         </div>
 
         {/* Template Fields */}
-        {selectedTemplate && (
+        {selectedTemplate && Array.isArray(selectedTemplate.body) && (
           <div className="template-fields">
             {selectedTemplate.body.map(field => renderFormField(field))}
           </div>
@@ -705,7 +702,7 @@ const BugReportForm: React.FC<BugReportFormProps> = ({ onClose, contextData = {}
             disabled={submitting || !selectedTemplate}
           >
             {submitting ? 'Opening...' : 
-             githubService.isAuthenticated ? 'Submit Issue' : 'Open in GitHub'}
+             githubService.isAuth() ? 'Submit Issue' : 'Open in GitHub'}
           </button>
           
           <button
@@ -730,7 +727,7 @@ const BugReportForm: React.FC<BugReportFormProps> = ({ onClose, contextData = {}
 
         {/* Authentication Status */}
         <div className="auth-status">
-          {githubService.isAuthenticated ? (
+          {githubService.isAuth() ? (
             <p className="auth-info authenticated">
               ✅ Authenticated - Issues will be submitted directly to GitHub
             </p>

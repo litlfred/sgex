@@ -97,12 +97,12 @@ const HealthInterventionsEditor: React.FC = () => {
       <div className="editor-content">
         <WHODigitalLibrary 
           onReferencesChange={handleReferencesChange}
-          selectedReferences={selectedReferences}
         />
       </div>
       
       <ContextualHelpMascot 
         pageId="health-interventions-editor"
+        helpContent={null}
         contextData={{ 
           profile: profile || { login: user || 'unknown' }, 
           repository: repository || { name: repo || 'unknown' }, 
@@ -174,12 +174,12 @@ const ComponentEditorContent: React.FC = () => {
           <div className="editor-content">
             <WHODigitalLibrary 
               onReferencesChange={handleReferencesChange}
-              selectedReferences={selectedReferences}
             />
           </div>
           
           <ContextualHelpMascot 
             pageId="component-editor"
+            helpContent={null}
             contextData={{ component: currentComponent }}
           />
         </div>
@@ -188,6 +188,12 @@ const ComponentEditorContent: React.FC = () => {
       navigate('/');
       return <div>Redirecting...</div>;
     }
+  }
+
+  // Safety check for currentComponent
+  if (!currentComponent) {
+    navigate('/');
+    return <div>Redirecting...</div>;
   }
 
   return (

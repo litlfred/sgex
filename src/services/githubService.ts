@@ -411,6 +411,28 @@ class GitHubService {
   }
 
   /**
+   * Get a single commit with its details
+   * @param owner - Repository owner
+   * @param repo - Repository name
+   * @param ref - Commit SHA or ref
+   * @returns Promise resolving to commit data
+   */
+  async getCommit(owner: string, repo: string, ref: string): Promise<any> {
+    try {
+      const octokit = this.isAuthenticated && this.octokit ? this.octokit : await this.createOctokitInstance();
+      const { data } = await octokit.rest.repos.getCommit({
+        owner,
+        repo,
+        ref
+      });
+      return data;
+    } catch (error) {
+      this.logger.error('Failed to get commit', { owner, repo, ref, error });
+      throw error;
+    }
+  }
+
+  /**
    * Get branches from a GitHub repository
    * 
    * @param owner - Repository owner
