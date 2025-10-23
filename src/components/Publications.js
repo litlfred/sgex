@@ -2,12 +2,9 @@ import React, { useState, useEffect, Suspense } from 'react';
 import githubService from '../services/githubService';
 import StagingGround from './StagingGround';
 import DAKPublicationGenerator from './DAKPublicationGenerator';
-import { useValidation } from './validation/useValidation';
 
-// Lazy load validation components for better performance
-const ValidationButton = React.lazy(() => import('./validation/ValidationButton'));
-const ValidationReport = React.lazy(() => import('./validation/ValidationReport'));
-const ValidationSummary = React.lazy(() => import('./validation/ValidationSummary'));
+// Lazy load entire validation section to prevent module initialization issues
+const DAKValidationSection = React.lazy(() => import('./DAKValidationSection'));
 
 const Publications = ({ profile, repository, selectedBranch, hasWriteAccess }) => {
   const [branches, setBranches] = useState([]);
@@ -15,18 +12,9 @@ const Publications = ({ profile, repository, selectedBranch, hasWriteAccess }) =
   const [workflowRuns, setWorkflowRuns] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showValidationModal, setShowValidationModal] = useState(false);
-  const [validationComponent, setValidationComponent] = useState('all');
 
   const owner = repository.owner?.login || repository.full_name.split('/')[0];
   const repoName = repository.name;
-
-  // Validation hook
-  const { report, loading: validating, validate } = useValidation({
-    owner,
-    repo: repoName,
-    branch: selectedBranch || repository.default_branch
-  });
 
   useEffect(() => {
     const fetchPublicationData = async () => {
@@ -246,58 +234,14 @@ const Publications = ({ profile, repository, selectedBranch, hasWriteAccess }) =
         profile={profile}
       />
       
-      {/* DAK Validation Section */}
-      <div className="dak-validation-section">
-        <div className="section-header">
-          <h3 className="section-title">DAK Validation</h3>
-          <p className="section-description">
-            Validate DAK artifacts against WHO SMART Guidelines standards. Check BPMN processes, 
-            DMN decision tables, FSH profiles, and DAK-level compliance.
-          </p>
-        </div>
-
-        <Suspense fallback={<div style={{ padding: '10px' }}>Loading validation...</div>}>
-          <div className="validation-controls">
-            <div className="component-filter">
-              <label htmlFor="validation-component-filter">Validate Component:</label>
-              <select
-                id="validation-component-filter"
-                value={validationComponent}
-                onChange={(e) => setValidationComponent(e.target.value)}
-                className="component-select"
-              >
-                <option value="all">All Components</option>
-                <option value="business-processes">Business Processes (BPMN)</option>
-                <option value="decision-logic">Decision Logic (DMN)</option>
-                <option value="fhir-profiles">FHIR Profiles (FSH)</option>
-                <option value="dak-config">DAK Configuration</option>
-              </select>
-            </div>
-
-            <ValidationButton
-              onClick={() => validate({ component: validationComponent === 'all' ? undefined : validationComponent })}
-              loading={validating}
-              status={report ? (report.isValid ? 'success' : (report.summary.errorCount > 0 ? 'error' : 'warning')) : undefined}
-              label={validating ? 'Validating...' : 'Run Validation'}
-            />
-          </div>
-
-          {report && (
-            <div className="validation-results">
-              <ValidationSummary
-                report={report}
-                onClick={() => setShowValidationModal(true)}
-              />
-            </div>
-          )}
-
-          <ValidationReport
-            report={report}
-            isOpen={showValidationModal}
-            onClose={() => setShowValidationModal(false)}
-          />
-        </Suspense>
-      </div>
+      {/* DAK Validation Section - Lazy loaded to prevent module initialization issues */}
+      <Suspense fallback={<div style={{ padding: '20px' }}>Loading validation...</div>}>
+        <DAKValidationSection
+          owner={owner}
+          repo={repoName}
+          branch={selectedBranch || repository.default_branch}
+        />
+      </Suspense>
       
       <div className="section-header">
         <h3 className="section-title">Published DAK Content</h3>
