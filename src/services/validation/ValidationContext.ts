@@ -8,7 +8,6 @@
  */
 
 import { ValidationContext as IValidationContext } from './types';
-import githubService from '../githubService';
 
 /**
  * Validation Context Implementation
@@ -310,6 +309,11 @@ export class ValidationContext implements IValidationContext {
     path: string = ''
   ): Promise<Array<{ path: string; content: string; }>> {
     const files: Array<{ path: string; content: string; }> = [];
+    
+    // Lazy load githubService to avoid initialization order issues
+    // This prevents the validation module from affecting githubService exports
+    const githubServiceModule = await import('../githubService');
+    const githubService = githubServiceModule.default;
     
     try {
       const contents = await githubService.getDirectoryContents(owner, repo, path, branch);
