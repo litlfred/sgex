@@ -9,7 +9,18 @@ import {
   FileValidationResult,
   ComponentValidationOptions 
 } from '../../services/validation/types';
-import { dakArtifactValidationService, ensureRulesRegistered } from '../../services/validation';
+
+// Lazy load validation service to prevent module initialization issues
+let validationServicePromise: Promise<any> | null = null;
+async function getValidationService() {
+  if (!validationServicePromise) {
+    validationServicePromise = import('../../services/validation').then(module => ({
+      service: module.dakArtifactValidationService,
+      ensureRulesRegistered: module.ensureRulesRegistered
+    }));
+  }
+  return validationServicePromise;
+}
 
 /**
  * Hook options for validation
@@ -66,10 +77,11 @@ export function useValidation(options: UseValidationOptions = {}): UseValidation
     setLoading(true);
     
     try {
-      // Ensure validation rules are registered before validation (lazy loading)
+      // Lazy load validation service and ensure rules are registered
+      const { service, ensureRulesRegistered } = await getValidationService();
       await ensureRulesRegistered();
       
-      const validationReport = await dakArtifactValidationService.validateRepository(
+      const validationReport = await service.validateRepository(
         owner,
         repo,
         branch
@@ -143,10 +155,11 @@ export function useFileValidation(): UseFileValidationReturn {
     setLoading(true);
     
     try {
-      // Ensure validation rules are registered before validation (lazy loading)
+      // Lazy load validation service and ensure rules are registered
+      const { service, ensureRulesRegistered } = await getValidationService();
       await ensureRulesRegistered();
       
-      const fileResult = await dakArtifactValidationService.validateFile(
+      const fileResult = await service.validateFile(
         filePath,
         content,
         fileType,
@@ -219,10 +232,11 @@ export function useRepositoryValidation(
       setLoading(true);
       
       try {
-        // Ensure validation rules are registered before validation (lazy loading)
+        // Lazy load validation service and ensure rules are registered
+        const { service, ensureRulesRegistered } = await getValidationService();
         await ensureRulesRegistered();
         
-        const validationReport = await dakArtifactValidationService.validateRepository(
+        const validationReport = await service.validateRepository(
           owner,
           repo,
           branch,
@@ -291,10 +305,11 @@ export function useComponentValidation(): UseComponentValidationReturn {
     setLoading(true);
     
     try {
-      // Ensure validation rules are registered before validation (lazy loading)
+      // Lazy load validation service and ensure rules are registered
+      const { service, ensureRulesRegistered } = await getValidationService();
       await ensureRulesRegistered();
       
-      const validationReport = await dakArtifactValidationService.validateComponent(
+      const validationReport = await service.validateComponent(
         owner,
         repo,
         branch,
