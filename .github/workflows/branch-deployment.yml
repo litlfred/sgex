@@ -90,6 +90,9 @@ jobs:
       - name: Log workflow event metadata
         id: log_event
         continue-on-error: true
+        env:
+          GITHUB_EVENT_JSON: ${{ toJSON(github.event) }}
+          GITHUB_CONTEXT_JSON: ${{ toJSON(github) }}
         run: |
           echo "📋 Logging GitHub Actions event metadata..."
           echo "=================================================="
@@ -108,11 +111,9 @@ jobs:
           # Create artifacts directory
           mkdir -p artifacts
           
-          # Log complete event payload and GitHub context
+          # Log complete event payload and GitHub context (JSON passed via env vars to avoid bash escaping issues)
           python3 scripts/log_workflow_event.py \
             --event-name "${{ github.event_name }}" \
-            --event-json '${{ toJSON(github.event) }}' \
-            --github-json '${{ toJSON(github) }}' \
             --output-file "artifacts/workflow-event.log"
           
           echo "✅ Event metadata logged to artifacts/workflow-event.log"
