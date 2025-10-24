@@ -38,7 +38,7 @@ export interface UseValidationReturn {
   /** Error state */
   error: Error | null;
   /** Trigger validation */
-  validate: () => Promise<void>;
+  validate: (options?: ComponentValidationOptions) => Promise<void>;
   /** Clear current report */
   clear: () => void;
 }
@@ -55,7 +55,7 @@ export function useValidation(options: UseValidationOptions = {}): UseValidation
   
   const debounceTimer = useRef<NodeJS.Timeout | undefined>(undefined);
   
-  const validate = useCallback(async () => {
+  const validate = useCallback(async (validationOptions?: ComponentValidationOptions) => {
     if (!owner || !repo) {
       setError(new Error('Repository owner and name required'));
       return;
@@ -69,7 +69,8 @@ export function useValidation(options: UseValidationOptions = {}): UseValidation
       const validationReport = await dakArtifactValidationService.validateRepository(
         owner,
         repo,
-        branch
+        branch,
+        validationOptions
       );
       setReport(validationReport);
     } catch (err) {
