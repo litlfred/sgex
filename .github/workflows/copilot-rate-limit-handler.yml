@@ -1,8 +1,14 @@
 name: Copilot Rate Limit Handler
 
 on:
-  issue_comment:
-    types: [created]
+  # Poll for rate limit events every 5 minutes
+  schedule:
+    - cron: '*/5 * * * *'
+  # Also trigger on PR events for immediate response
+  pull_request:
+    types: [synchronize, opened, reopened, ready_for_review]
+  # Allow manual triggering for testing
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -12,8 +18,6 @@ permissions:
 jobs:
   detect-and-handle-rate-limit:
     runs-on: ubuntu-latest
-    # Only run on PR comments
-    if: github.event.issue.pull_request != null
     
     steps:
       - name: Checkout repository
@@ -28,18 +32,32 @@ jobs:
         run: |
           pip install requests
 
-      - name: Check for Copilot rate limit error
+      - name: Check for Copilot rate limit error in timeline events
         id: check_rate_limit
         uses: actions/github-script@v8
         with:
           script: |
-            const comment = context.payload.comment;
-            const commentBody = comment.body.toLowerCase();
-            const commentAuthor = comment.user.login;
+            // Determine which PRs to check
+            let prsToCheck = [];
             
-            // Check if comment is from Copilot and contains rate limit error
-            // Copilot appears as the comment author when rate limited
-            const isCopilotComment = commentAuthor.includes('copilot') || commentAuthor === 'github-actions[bot]';
+            if (context.eventName === 'pull_request') {
+              // If triggered by PR event, check only that PR
+              prsToCheck.push({
+                number: context.payload.pull_request.number,
+                html_url: context.payload.pull_request.html_url
+              });
+            } else {
+              // If triggered by schedule or workflow_dispatch, check all open PRs
+              const { data: openPRs } = await github.rest.pulls.list({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                per_page: 100
+              });
+              prsToCheck = openPRs.map(pr => ({ number: pr.number, html_url: pr.html_url }));
+            }
+            
+            console.log(`Checking ${prsToCheck.length} PR(s) for Copilot rate limit events`);
             
             // Common rate limit error patterns
             const rateLimitPatterns = [
@@ -53,62 +71,118 @@ jobs:
               'requests per'
             ];
             
-            const hasRateLimitError = rateLimitPatterns.some(pattern => {
-              const regex = new RegExp(pattern, 'i');
-              return regex.test(commentBody);
-            });
-            
-            console.log(`Comment author: ${commentAuthor}`);
-            console.log(`Is Copilot comment: ${isCopilotComment}`);
-            console.log(`Has rate limit error: ${hasRateLimitError}`);
-            console.log(`Comment preview: ${commentBody.substring(0, 200)}`);
-            
-            if (hasRateLimitError) {
-              // Try to extract wait time from comment
-              // Look for patterns like "retry after 30 minutes", "wait 2 hours", "90 seconds"
-              const retryAfterMatch = commentBody.match(/retry\s+after\s+(\d+)\s*(minute|hour|second)/i);
-              const waitMatch = commentBody.match(/wait\s+(\d+)\s*(minute|hour|second)/i);
-              const timeMatch = commentBody.match(/(\d+)\s*(hour|minute|second)s?\s+before/i) || 
-                                commentBody.match(/(\d+)\s*(hour|minute|second)s?$/i);
-              
-              const match = retryAfterMatch || waitMatch || timeMatch;
-              let waitMinutes = 60; // Default to 60 minutes if not specified
-              
-              if (match) {
-                const time = parseInt(match[1]);
-                const unit = match[2].toLowerCase();
+            // Check each PR for rate limit events
+            for (const pr of prsToCheck) {
+              try {
+                // Fetch timeline events for this PR
+                const { data: timeline } = await github.rest.issues.listEventsForTimeline({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: pr.number,
+                  per_page: 50  // Check last 50 events
+                });
                 
-                if (unit.includes('hour')) {
-                  waitMinutes = time * 60;
-                } else if (unit.includes('second')) {
-                  waitMinutes = Math.ceil(time / 60);
-                } else {
-                  waitMinutes = time;
+                console.log(`PR #${pr.number}: Checking ${timeline.length} timeline events`);
+                
+                // Look for recent Copilot error events (within last 10 minutes)
+                const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+                
+                for (const event of timeline) {
+                  const eventDate = new Date(event.created_at);
+                  
+                  // Skip old events
+                  if (eventDate < tenMinutesAgo) continue;
+                  
+                  // Check if this is a Copilot-related event
+                  const isCopilotEvent = 
+                    (event.actor && (
+                      event.actor.login.toLowerCase().includes('copilot') ||
+                      event.actor.login === 'github-actions[bot]'
+                    )) ||
+                    (event.event === 'commented' && event.body && 
+                     event.body.toLowerCase().includes('copilot'));
+                  
+                  if (!isCopilotEvent) continue;
+                  
+                  // Get event content - could be in body, message, or other fields
+                  let eventContent = '';
+                  if (event.body) eventContent += event.body;
+                  if (event.message) eventContent += ' ' + event.message;
+                  if (event.commit_message) eventContent += ' ' + event.commit_message;
+                  
+                  const eventContentLower = eventContent.toLowerCase();
+                  
+                  // Check for rate limit patterns
+                  const hasRateLimitError = rateLimitPatterns.some(pattern => {
+                    const regex = new RegExp(pattern, 'i');
+                    return regex.test(eventContentLower);
+                  });
+                  
+                  if (hasRateLimitError) {
+                    console.log(`✓ Rate limit detected in PR #${pr.number}, event ID: ${event.id}`);
+                    console.log(`  Event type: ${event.event}`);
+                    console.log(`  Event date: ${event.created_at}`);
+                    console.log(`  Content preview: ${eventContent.substring(0, 200)}`);
+                    
+                    // Try to extract wait time from event content
+                    const retryAfterMatch = eventContentLower.match(/retry\s+(?:again\s+)?in\s+(\d+)\s*(minute|hour|second)/i) ||
+                                           eventContentLower.match(/try\s+again\s+in\s+(\d+)\s*(minute|hour|second)/i);
+                    const waitMatch = eventContentLower.match(/wait\s+(\d+)\s*(minute|hour|second)/i);
+                    const timeMatch = eventContentLower.match(/(\d+)\s*(hour|minute|second)s?\s+before/i) || 
+                                     eventContentLower.match(/(\d+)\s*(hour|minute|second)s?$/i);
+                    
+                    const match = retryAfterMatch || waitMatch || timeMatch;
+                    let waitMinutes = 60; // Default to 60 minutes if not specified
+                    
+                    if (match) {
+                      const time = parseInt(match[1]);
+                      const unit = match[2].toLowerCase();
+                      
+                      if (unit.includes('hour')) {
+                        waitMinutes = time * 60;
+                      } else if (unit.includes('second')) {
+                        waitMinutes = Math.ceil(time / 60);
+                      } else {
+                        waitMinutes = time;
+                      }
+                      console.log(`  Extracted wait time: ${waitMinutes} minutes`);
+                    } else {
+                      console.log(`  No explicit wait time found, using default: ${waitMinutes} minutes`);
+                    }
+                    
+                    // Cap at 360 minutes (6 hours - GitHub Actions timeout)
+                    waitMinutes = Math.min(waitMinutes, 360);
+                    
+                    core.setOutput('rate_limit_detected', 'true');
+                    core.setOutput('wait_minutes', waitMinutes.toString());
+                    core.setOutput('pr_number', pr.number.toString());
+                    core.setOutput('pr_url', pr.html_url);
+                    core.setOutput('event_id', event.id.toString());
+                    
+                    return {
+                      detected: true,
+                      waitMinutes,
+                      prNumber: pr.number,
+                      prUrl: pr.html_url,
+                      eventId: event.id
+                    };
+                  }
                 }
+              } catch (error) {
+                console.error(`Error checking PR #${pr.number}:`, error.message);
               }
-              
-              // Cap at 360 minutes (6 hours - GitHub Actions timeout)
-              waitMinutes = Math.min(waitMinutes, 360);
-              
-              core.setOutput('rate_limit_detected', 'true');
-              core.setOutput('wait_minutes', waitMinutes.toString());
-              core.setOutput('original_comment_id', comment.id.toString());
-              
-              return {
-                detected: true,
-                waitMinutes,
-                commentId: comment.id
-              };
-            } else {
-              core.setOutput('rate_limit_detected', 'false');
-              return { detected: false };
             }
+            
+            // No rate limit detected in any PR
+            console.log('✗ No rate limit events detected');
+            core.setOutput('rate_limit_detected', 'false');
+            return { detected: false };
 
       - name: Create initial notification comment
         if: steps.check_rate_limit.outputs.rate_limit_detected == 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.issue.number }}
+          PR_NUMBER: ${{ steps.check_rate_limit.outputs.pr_number }}
           WAIT_MINUTES: ${{ steps.check_rate_limit.outputs.wait_minutes }}
         run: |
           python scripts/manage-pr-comment.py \
@@ -120,11 +194,11 @@ jobs:
             --event-name "${{ github.event_name }}" \
             --stage rate-limit-waiting \
             --data "{
-              \"commit_sha\": \"${{ github.event.issue.pull_request.head.sha || 'unknown' }}\",
+              \"commit_sha\": \"unknown\",
               \"branch_name\": \"rate-limit-handler\",
-              \"commit_url\": \"${{ github.event.issue.pull_request.html_url || github.event.issue.html_url }}\",
+              \"commit_url\": \"${{ steps.check_rate_limit.outputs.pr_url }}\",
               \"workflow_url\": \"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\",
-              \"branch_url\": \"${{ github.event.issue.pull_request.html_url || github.event.issue.html_url }}\",
+              \"branch_url\": \"${{ steps.check_rate_limit.outputs.pr_url }}\",
               \"error_message\": \"Copilot rate limit detected. Waiting ${WAIT_MINUTES} minutes before retrying.\",
               \"remaining_minutes\": \"${WAIT_MINUTES}\"
             }"
@@ -135,7 +209,7 @@ jobs:
         if: steps.check_rate_limit.outputs.rate_limit_detected == 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.issue.number }}
+          PR_NUMBER: ${{ steps.check_rate_limit.outputs.pr_number }}
           WAIT_MINUTES: ${{ steps.check_rate_limit.outputs.wait_minutes }}
         run: |
           total_wait=$((WAIT_MINUTES * 60))  # Convert to seconds
@@ -167,11 +241,11 @@ jobs:
                 --event-name "${{ github.event_name }}" \
                 --stage rate-limit-waiting \
                 --data "{
-                  \"commit_sha\": \"${{ github.event.issue.pull_request.head.sha || 'unknown' }}\",
+                  \"commit_sha\": \"unknown\",
                   \"branch_name\": \"rate-limit-handler\",
-                  \"commit_url\": \"${{ github.event.issue.pull_request.html_url || github.event.issue.html_url }}\",
+                  \"commit_url\": \"${{ steps.check_rate_limit.outputs.pr_url }}\",
                   \"workflow_url\": \"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\",
-                  \"branch_url\": \"${{ github.event.issue.pull_request.html_url || github.event.issue.html_url }}\",
+                  \"branch_url\": \"${{ steps.check_rate_limit.outputs.pr_url }}\",
                   \"error_message\": \"Yep, still here waiting. Will retry in ${remaining_minutes} minutes.\",
                   \"remaining_minutes\": \"${remaining_minutes}\"
                 }"
@@ -184,7 +258,7 @@ jobs:
         if: steps.check_rate_limit.outputs.rate_limit_detected == 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.issue.number }}
+          PR_NUMBER: ${{ steps.check_rate_limit.outputs.pr_number }}
         run: |
           python scripts/manage-pr-comment.py \
             --token "$GITHUB_TOKEN" \
@@ -195,11 +269,11 @@ jobs:
             --event-name "${{ github.event_name }}" \
             --stage rate-limit-complete \
             --data "{
-              \"commit_sha\": \"${{ github.event.issue.pull_request.head.sha || 'unknown' }}\",
+              \"commit_sha\": \"unknown\",
               \"branch_name\": \"rate-limit-handler\",
-              \"commit_url\": \"${{ github.event.issue.pull_request.html_url || github.event.issue.html_url }}\",
+              \"commit_url\": \"${{ steps.check_rate_limit.outputs.pr_url }}\",
               \"workflow_url\": \"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\",
-              \"branch_url\": \"${{ github.event.issue.pull_request.html_url || github.event.issue.html_url }}\",
+              \"branch_url\": \"${{ steps.check_rate_limit.outputs.pr_url }}\",
               \"error_message\": \"Done waiting! Now triggering Copilot retry.\"
             }"
 
@@ -208,7 +282,7 @@ jobs:
         uses: actions/github-script@v8
         with:
           script: |
-            const prNumber = context.issue.number;
+            const prNumber = parseInt('${{ steps.check_rate_limit.outputs.pr_number }}');
             
             await github.rest.issues.createComment({
               owner: context.repo.owner,
@@ -224,7 +298,7 @@ jobs:
         uses: actions/github-script@v8
         with:
           script: |
-            const prNumber = context.issue.number;
+            const prNumber = parseInt('${{ steps.check_rate_limit.outputs.pr_number }}');
             
             await github.rest.issues.createComment({
               owner: context.repo.owner,
@@ -240,15 +314,24 @@ jobs:
         uses: actions/github-script@v8
         with:
           script: |
-            const prNumber = context.issue.number;
+            // Try to get PR number from check_rate_limit output, or from context
+            let prNumber = '${{ steps.check_rate_limit.outputs.pr_number }}';
             
-            try {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: prNumber,
-                body: `❌ **Copilot Rate Limit Handler Error**: The automated rate limit handler encountered an error. Please check the [workflow logs](${context.payload.repository.html_url}/actions/runs/${context.runId}) for details.\n\nYou may need to manually trigger Copilot after the rate limit resets:\n\`@copilot review previous comments and try again.\``
-              });
-            } catch (error) {
-              console.error('Failed to post error comment:', error);
+            if (!prNumber && context.eventName === 'pull_request') {
+              prNumber = context.payload.pull_request.number;
+            }
+            
+            if (prNumber) {
+              try {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: parseInt(prNumber),
+                  body: `❌ **Copilot Rate Limit Handler Error**: The automated rate limit handler encountered an error. Please check the [workflow logs](${context.payload.repository.html_url}/actions/runs/${context.runId}) for details.\n\nYou may need to manually trigger Copilot after the rate limit resets:\n\`@copilot review previous comments and try again.\``
+                });
+              } catch (error) {
+                console.error('Failed to post error comment:', error);
+              }
+            } else {
+              console.log('No PR number available to post error comment');
             }
