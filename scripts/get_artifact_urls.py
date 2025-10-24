@@ -24,7 +24,7 @@ def get_artifact_urls(token, repo, run_id, artifact_names, max_retries=3, retry_
         retry_delay: Delay in seconds between retries
     
     Returns:
-        Dictionary mapping artifact names to their URLs
+        Dictionary mapping artifact names to their URLs (with artifact IDs)
     """
     headers = {
         'Authorization': f'token {token}',
@@ -43,21 +43,35 @@ def get_artifact_urls(token, repo, run_id, artifact_names, max_retries=3, retry_
             data = response.json()
             artifacts = data.get('artifacts', [])
             
+            print(f"Attempt {attempt + 1}/{max_retries}: Found {len(artifacts)} total artifacts", file=sys.stderr)
+            
             # Match artifacts by name
             for artifact in artifacts:
                 artifact_name = artifact.get('name', '')
                 if artifact_name in artifact_names:
-                    # Use the canonical download URL provided by the API
-                    artifact_url = artifact.get('archive_download_url')
-                    artifact_urls[artifact_name] = artifact_url
+                    # Get artifact ID and construct direct URL
+                    artifact_id = artifact.get('id')
+                    if artifact_id:
+                        # Construct direct artifact URL with artifact ID
+                        artifact_url = f'https://github.com/{repo}/actions/runs/{run_id}/artifacts/{artifact_id}'
+                        artifact_urls[artifact_name] = artifact_url
+                        print(f"  Found {artifact_name}: {artifact_url}", file=sys.stderr)
+                    else:
+                        print(f"  Warning: {artifact_name} found but has no ID", file=sys.stderr)
             
             # If we found all requested artifacts, we're done
             if len(artifact_urls) == len(artifact_names):
+                print(f"✅ Successfully retrieved all {len(artifact_urls)} artifact URLs", file=sys.stderr)
                 break
             
             # Otherwise, wait and retry (artifacts might still be uploading)
             if attempt < max_retries - 1:
+                missing = set(artifact_names) - set(artifact_urls.keys())
+                print(f"  Missing artifacts: {', '.join(missing)}. Retrying in {retry_delay}s...", file=sys.stderr)
                 time.sleep(retry_delay)
+            else:
+                missing = set(artifact_names) - set(artifact_urls.keys())
+                print(f"⚠️  Could not find all artifacts after {max_retries} attempts. Missing: {', '.join(missing)}", file=sys.stderr)
         
         except requests.exceptions.RequestException as e:
             print(f"Attempt {attempt + 1}/{max_retries} failed: {e}", file=sys.stderr)
