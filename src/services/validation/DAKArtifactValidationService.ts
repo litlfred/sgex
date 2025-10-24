@@ -11,6 +11,7 @@
  */
 
 import {
+  ValidationRule,
   FileValidationResult,
   DAKValidationReport,
   ValidationViolation,
@@ -218,81 +219,28 @@ export class DAKArtifactValidationService {
     owner: string,
     repo: string,
     branch: string,
-    options?: ComponentValidationOptions & { files?: Array<{ path: string; content: string; }> }
+    options?: ComponentValidationOptions
   ): Promise<DAKValidationReport> {
     const startTime = Date.now();
 
     // Set repository context
     this.context.setRepositoryContext({ owner, repo, branch });
 
-    try {
-      // Files should be provided by caller to avoid importing githubService here
-      if (!options?.files || options.files.length === 0) {
-        console.warn('No files provided for validation. Caller must fetch files using githubService.');
-        return {
-          repository: { owner, repo, branch },
-          timestamp: new Date(),
-          summary: {
-            totalFiles: 0,
-            validFiles: 0,
-            filesWithErrors: 0,
-            filesWithWarnings: 0,
-            totalErrors: 0,
-            totalWarnings: 0,
-            totalInfo: 0
-          },
-          fileResults: [],
-          canSave: true,
-          duration: Date.now() - startTime
-        };
-      }
-      
-      // Filter files based on component if specified
-      const filesToValidate = options?.component
-        ? options.files.filter(file => this.isComponentFile(file.path, options.component))
-        : options.files;
+    // TODO: Integrate with githubService to list all files
+    // For now, return empty report as placeholder
+    const fileResults: FileValidationResult[] = [];
 
-      // Validate all files
-      const fileResults = await this.validateFiles(
-        filesToValidate.map(file => ({
-          path: file.path,
-          content: file.content,
-          fileType: this.getFileType(file.path),
-          component: this.getComponentFromPath(file.path)
-        }))
-      );
+    // Calculate summary
+    const summary = this.calculateSummary(fileResults);
 
-      // Calculate summary
-      const summary = this.calculateSummary(fileResults);
-
-      return {
-        repository: { owner, repo, branch },
-        timestamp: new Date(),
-        summary,
-        fileResults,
-        canSave: summary.filesWithErrors === 0,
-        duration: Date.now() - startTime
-      };
-    } catch (error) {
-      // If validation fails, return report with error
-      console.error('Repository validation failed:', error);
-      return {
-        repository: { owner, repo, branch },
-        timestamp: new Date(),
-        summary: {
-          totalFiles: 0,
-          validFiles: 0,
-          filesWithErrors: 0,
-          filesWithWarnings: 0,
-          totalErrors: 0,
-          totalWarnings: 0,
-          totalInfo: 0
-        },
-        fileResults: [],
-        canSave: false,
-        duration: Date.now() - startTime
-      };
-    }
+    return {
+      repository: { owner, repo, branch },
+      timestamp: new Date(),
+      summary,
+      fileResults,
+      canSave: summary.filesWithErrors === 0,
+      duration: Date.now() - startTime
+    };
   }
 
   /**
@@ -310,36 +258,17 @@ export class DAKArtifactValidationService {
     repo: string,
     branch: string,
     component: string,
-    options?: Omit<ComponentValidationOptions, 'component'> & { files?: Array<{ path: string; content: string; }> }
+    options?: Omit<ComponentValidationOptions, 'component'>
   ): Promise<FileValidationResult[]> {
     // Set repository context
     this.context.setRepositoryContext({ owner, repo, branch });
 
-    try {
-      // Files should be provided by caller to avoid importing githubService here
-      if (!options?.files || options.files.length === 0) {
-        console.warn('No files provided for validation. Caller must fetch files using githubService.');
-        return [];
-      }
-      
-      // Filter to only component files
-      const componentFiles = options.files.filter(file => this.isComponentFile(file.path, component));
+    // Get rules for this component
+    const componentRules = this.registry.getRulesByComponent(component);
 
-      // Validate component files
-      const fileResults = await this.validateFiles(
-        componentFiles.map(file => ({
-          path: file.path,
-          content: file.content,
-          fileType: this.getFileType(file.path),
-          component: component
-        }))
-      );
-
-      return fileResults;
-    } catch (error) {
-      console.error('Component validation failed:', error);
-      return [];
-    }
+    // TODO: Integrate with githubService to list component files
+    // For now, return empty array as placeholder
+    return [];
   }
 
   /**
@@ -444,68 +373,6 @@ export class DAKArtifactValidationService {
    */
   canSave(report: DAKValidationReport): boolean {
     return report.canSave;
-  }
-
-  /**
-   * Get file type from file path
-   * 
-   * @param filePath - File path
-   * @returns File type/extension
-   */
-  private getFileType(filePath: string): string {
-    const extension = filePath.split('.').pop()?.toLowerCase();
-    return extension || 'unknown';
-  }
-
-  /**
-   * Get DAK component from file path
-   * 
-   * @param filePath - File path
-   * @returns DAK component type
-   */
-  private getComponentFromPath(filePath: string): string {
-    const path = filePath.toLowerCase();
-    
-    // Map directory patterns to DAK components
-    if (path.includes('/bpmn/') || path.endsWith('.bpmn')) {
-      return 'business-processes';
-    } else if (path.includes('/dmn/') || path.endsWith('.dmn')) {
-      return 'decision-logic';
-    } else if (path.includes('/fsh/') || path.endsWith('.fsh')) {
-      return 'fhir-profiles';
-    } else if (path.includes('/questionnaires/') || path.includes('/forms/')) {
-      return 'data-entry-forms';
-    } else if (path.includes('/valuesets/') || path.includes('/codesystems/')) {
-      return 'terminology';
-    } else if (path.includes('sushi-config.yaml') || path.includes('dak.json')) {
-      return 'dak-config';
-    }
-    
-    return 'unknown';
-  }
-
-  /**
-   * Check if file belongs to specified component
-   * 
-   * @param filePath - File path
-   * @param component - DAK component type
-   * @returns true if file belongs to component
-   */
-  private isComponentFile(filePath: string, component: string): boolean {
-    const fileComponent = this.getComponentFromPath(filePath);
-    
-    // Map component names to patterns
-    const componentMap: Record<string, string[]> = {
-      'business-processes': ['business-processes'],
-      'decision-logic': ['decision-logic'],
-      'fhir-profiles': ['fhir-profiles'],
-      'dak-config': ['dak-config'],
-      'data-entry-forms': ['data-entry-forms'],
-      'terminology': ['terminology']
-    };
-    
-    const validComponents = componentMap[component] || [component];
-    return validComponents.includes(fileComponent);
   }
 
   /**

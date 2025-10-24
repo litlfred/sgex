@@ -6,10 +6,6 @@
  * @module validation
  */
 
-import { ValidationRuleRegistry } from './ValidationRuleRegistry';
-import { validationContext } from './ValidationContext';
-import { createDAKArtifactValidationService } from './DAKArtifactValidationService';
-
 // Export types
 export * from './types';
 
@@ -28,6 +24,11 @@ export * from './rules';
 // Export integration functions
 export * from './integration';
 
+// Create and export default validation service instance
+import { ValidationRuleRegistry } from './ValidationRuleRegistry';
+import { validationContext } from './ValidationContext';
+import { createDAKArtifactValidationService } from './DAKArtifactValidationService';
+
 // Create singleton registry
 export const validationRegistry = new ValidationRuleRegistry({
   enableCache: true,
@@ -40,14 +41,3 @@ export const dakArtifactValidationService = createDAKArtifactValidationService(
   validationRegistry,
   validationContext
 );
-
-// Lazy load validation rules - only register when first validation is triggered
-let rulesRegistered = false;
-export async function ensureRulesRegistered(): Promise<void> {
-  if (rulesRegistered) return;
-  
-  // Dynamic import to defer loading of all validation rules
-  const { registerAllRules } = await import('./rules');
-  registerAllRules(validationRegistry);
-  rulesRegistered = true;
-}
