@@ -288,6 +288,13 @@ def main():
         event_json_str = args.event_json or os.environ.get('GITHUB_EVENT_JSON', '{}')
         github_json_str = args.github_json or os.environ.get('GITHUB_CONTEXT_JSON', '{}')
         
+        # Debug logging
+        if args.output_file:
+            print(f"📝 Output file: {args.output_file}", file=sys.stderr)
+            print(f"📝 Event name: {args.event_name}", file=sys.stderr)
+            print(f"📝 Event JSON length: {len(event_json_str)} chars", file=sys.stderr)
+            print(f"📝 GitHub JSON length: {len(github_json_str)} chars", file=sys.stderr)
+        
         try:
             event = json.loads(event_json_str)
         except json.JSONDecodeError as e:
@@ -321,12 +328,15 @@ def main():
         print(f"❌ Error processing arguments: {e}", file=sys.stderr)
         # Create minimal output file to avoid workflow failure
         if args.output_file:
-            args.output_file.parent.mkdir(parents=True, exist_ok=True)
-            with open(args.output_file, 'w', encoding='utf-8') as f:
-                f.write(f"Error logging event: {e}\n")
-                f.write(f"Event: {args.event_name}\n")
-                f.write(f"Timestamp: {datetime.now(timezone.utc).isoformat()}\n")
-            print(f"⚠️  Minimal log file created at: {args.output_file}")
+            try:
+                args.output_file.parent.mkdir(parents=True, exist_ok=True)
+                with open(args.output_file, 'w', encoding='utf-8') as f:
+                    f.write(f"Error logging event: {e}\n")
+                    f.write(f"Event: {args.event_name}\n")
+                    f.write(f"Timestamp: {datetime.now(timezone.utc).isoformat()}\n")
+                print(f"⚠️  Minimal log file created at: {args.output_file}", file=sys.stderr)
+            except Exception as write_error:
+                print(f"❌ Failed to create minimal log file: {write_error}", file=sys.stderr)
         sys.exit(0)  # Don't fail the workflow
 
     # Create logger and log event
@@ -337,18 +347,21 @@ def main():
         print(f"⚠️  Error logging event details: {e}", file=sys.stderr)
         # Create minimal output
         if args.output_file:
-            args.output_file.parent.mkdir(parents=True, exist_ok=True)
-            with open(args.output_file, 'w', encoding='utf-8') as f:
-                f.write(f"Workflow Event Log (Fallback Mode)\n")
-                f.write(f"=" * 80 + "\n")
-                f.write(f"Event: {args.event_name}\n")
-                f.write(f"Actor: {github.get('actor', 'unknown')}\n")
-                f.write(f"SHA: {github.get('sha', 'unknown')}\n")
-                f.write(f"Ref: {github.get('ref', 'unknown')}\n")
-                f.write(f"Run ID: {github.get('run_id', 'unknown')}\n")
-                f.write(f"Timestamp: {datetime.now(timezone.utc).isoformat()}\n")
-                f.write(f"\nError: {e}\n")
-            print(f"⚠️  Fallback log file created at: {args.output_file}")
+            try:
+                args.output_file.parent.mkdir(parents=True, exist_ok=True)
+                with open(args.output_file, 'w', encoding='utf-8') as f:
+                    f.write(f"Workflow Event Log (Fallback Mode)\n")
+                    f.write(f"=" * 80 + "\n")
+                    f.write(f"Event: {args.event_name}\n")
+                    f.write(f"Actor: {github.get('actor', 'unknown')}\n")
+                    f.write(f"SHA: {github.get('sha', 'unknown')}\n")
+                    f.write(f"Ref: {github.get('ref', 'unknown')}\n")
+                    f.write(f"Run ID: {github.get('run_id', 'unknown')}\n")
+                    f.write(f"Timestamp: {datetime.now(timezone.utc).isoformat()}\n")
+                    f.write(f"\nError: {e}\n")
+                print(f"⚠️  Fallback log file created at: {args.output_file}", file=sys.stderr)
+            except Exception as write_error:
+                print(f"❌ Failed to create fallback log file: {write_error}", file=sys.stderr)
         sys.exit(0)  # Don't fail the workflow
 
     # Print summary to console
