@@ -7,6 +7,7 @@
  * Usage: Import and use these helper functions in components that need FHIR resources.
  */
 
+import React from 'react';
 import {
   loadFHIRResource,
   loadMultipleFHIRResources,
@@ -335,6 +336,3 @@ export function FHIRResourceProvider({ children }: { children: React.ReactNode }
 export function useFHIRResourceLoader() {
   return React.useContext(FHIRResourceContext);
 }
-
-// Add React import at the top
-import React from 'react';
