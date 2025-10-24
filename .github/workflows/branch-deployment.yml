@@ -307,6 +307,7 @@ jobs:
       - name: Build branch-specific React app with enhanced logging
         id: build_app
         continue-on-error: false
+        shell: bash  # Explicitly set shell to bash for PIPESTATUS support
         run: |
           echo "🔧 Starting enhanced build with comprehensive logging..."
           echo "📍 PUBLIC_URL: ${{ steps.public_url.outputs.public_url }}"
@@ -322,6 +323,7 @@ jobs:
             --branch-name "${{ steps.branch_info.outputs.branch_name }}" \
             --artifacts-dir "artifacts" 2>&1 | tee -a artifacts/build-step.log
           
+          # PIPESTATUS[0] captures the exit code of the Python script (before tee)
           build_exit_code=${PIPESTATUS[0]}
           
           if [ $build_exit_code -ne 0 ]; then
