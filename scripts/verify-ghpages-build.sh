@@ -154,6 +154,8 @@ echo ""
 # Execute build with timestamp logging
 START_TIME=$(date +%s)
 
+# The following pipeline preserves the exit code of the build command because 'set -o pipefail' is set above.
+# Do not remove or change 'set -o pipefail' if you want to ensure build failures are detected correctly.
 if $BUILD_COMMAND 2>&1 | tee "$ARTIFACTS_DIR/build-verification.log"; then
     END_TIME=$(date +%s)
     DURATION=$((END_TIME - START_TIME))
