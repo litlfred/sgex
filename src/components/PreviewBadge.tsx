@@ -167,9 +167,9 @@ const PreviewBadge: React.FC = () => {
         }
 
         setLoading(false);
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error detecting branch:', err);
-        setError(err.message);
+        setError(err?.message || 'Unknown error');
         setLoading(false);
       }
     };
