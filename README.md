@@ -235,6 +235,11 @@ npm run build:check
 - `npm run check-bundle-size` - Enforce bundle size budgets and catch regressions
 - `npm run analyze` - Generate interactive treemap visualization and detailed statistics
 - `npm run build:check` - Build and verify bundle sizes in one command
+- `npm run bundle-report:json` - Generate JSON-formatted bundle analysis report
+- `npm run build:report` - Build and generate JSON bundle report
+
+**CI/CD Integration:**
+The bundle analyzer automatically generates JSON reports during CI/CD builds. Reports are uploaded as artifacts with the naming pattern `bundle-report.{run_id}.json` for easy identification and download.
 
 **Size Budgets:**
 - Main bundle: 300 KB maximum (currently 532 KB ❌)

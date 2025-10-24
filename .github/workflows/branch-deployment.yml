@@ -251,6 +251,25 @@ jobs:
           GITHUB_REF_NAME: ${{ steps.branch_info.outputs.branch_name }}
           REACT_APP_GITHUB_REF_NAME: ${{ steps.branch_info.outputs.branch_name }}
 
+      - name: Generate Bundle Analysis Report (JSON)
+        continue-on-error: true
+        run: |
+          echo "📊 Generating bundle analysis report..."
+          
+          # Generate JSON report with run ID in filename
+          node scripts/generate-bundle-report-json.js bundle-report.${{ github.run_id }}.json
+          
+          echo "✅ Bundle report generated: bundle-report.${{ github.run_id }}.json"
+
+      - name: Upload Bundle Analysis Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        continue-on-error: true
+        with:
+          name: bundle-report-${{ github.run_id }}
+          path: bundle-report.${{ github.run_id }}.json
+          retention-days: 30
+
       - name: Validate branch directory safety
         id: validate_branch
         shell: bash
@@ -779,6 +798,7 @@ jobs:
         run: |
           target_subdir="${{ steps.validate_branch.outputs.target_subdir }}"
           branch_url="https://${{ github.repository_owner }}.github.io/sgex/$target_subdir/"
+          bundle_report_url="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts"
           python3 /tmp/sgex-scripts/manage-pr-comment.py \
             --token "${{ secrets.GITHUB_TOKEN }}" \
             --repo "${{ github.repository }}" \
@@ -788,7 +808,7 @@ jobs:
             --workflow-name "Deploy Feature Branch" \
             --event-name "${{ github.event_name }}" \
             --stage "success" \
-            --data "{\"commit_sha\":\"${{ github.sha }}\",\"branch_name\":\"${{ steps.branch_info.outputs.branch_name }}\",\"commit_url\":\"https://github.com/${{ github.repository }}/commit/${{ github.sha }}\",\"workflow_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\",\"branch_url\":\"$branch_url\"}"
+            --data "{\"commit_sha\":\"${{ github.sha }}\",\"branch_name\":\"${{ steps.branch_info.outputs.branch_name }}\",\"commit_url\":\"https://github.com/${{ github.repository }}/commit/${{ github.sha }}\",\"workflow_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\",\"branch_url\":\"$branch_url\",\"bundle_report_url\":\"$bundle_report_url\",\"bundle_report_file\":\"bundle-report.${{ github.run_id }}.json\"}"
 
       - name: Comment on associated PR (Failure)
         if: always() && failure() && steps.find_pr.outputs.result != ''
