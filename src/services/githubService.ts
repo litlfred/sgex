@@ -268,6 +268,26 @@ class GitHubService {
   }
 
   /**
+   * Get user's organizations
+   */
+  async getUserOrganizations(): Promise<any[]> {
+    if (!this.isAuthenticated || !this.octokit) {
+      throw new Error('Not authenticated');
+    }
+
+    try {
+      const { data } = await this.octokit.rest.orgs.listForAuthenticatedUser({
+        per_page: 100
+      });
+      return data;
+    } catch (error) {
+      this.logger.error('Failed to get user organizations', { error });
+      // Return empty array instead of throwing to allow graceful degradation
+      return [];
+    }
+  }
+
+  /**
    * Check token permissions
    */
   async checkTokenPermissions(): Promise<void> {
