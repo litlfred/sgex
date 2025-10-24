@@ -268,6 +268,54 @@ class GitHubService {
   }
 
   /**
+   * Check token permissions
+   */
+  async checkTokenPermissions(): Promise<void> {
+    if (!this.isAuthenticated || !this.octokit) {
+      throw new Error('Not authenticated');
+    }
+
+    try {
+      // Validate the token to check permissions
+      const validation = await this.validateToken();
+      if (!validation.isValid) {
+        throw new Error('Token validation failed');
+      }
+      // Token is valid - permissions are already checked during validation
+    } catch (error) {
+      this.logger.error('Failed to check token permissions', { error });
+      throw error;
+    }
+  }
+
+  /**
+   * Get WHO organization information
+   */
+  async getWHOOrganization(): Promise<any> {
+    if (!this.isAuthenticated || !this.octokit) {
+      throw new Error('Not authenticated');
+    }
+
+    try {
+      const { data } = await this.octokit.rest.orgs.get({
+        org: 'WorldHealthOrganization'
+      });
+      return data;
+    } catch (error) {
+      this.logger.debug('Failed to get WHO organization, user may not have access', { error });
+      // Return a fallback object instead of throwing
+      return {
+        login: 'WorldHealthOrganization',
+        id: null,
+        name: 'World Health Organization',
+        description: 'WHO SMART Guidelines',
+        avatar_url: 'https://avatars.githubusercontent.com/u/7936796',
+        html_url: 'https://github.com/WorldHealthOrganization'
+      };
+    }
+  }
+
+  /**
    * Get issue details
    */
   async getIssue(owner: string, repo: string, issue_number: number): Promise<any> {
@@ -305,6 +353,30 @@ class GitHubService {
       return data;
     } catch (error) {
       this.logger.error('Failed to get pull request', { owner, repo, pull_number, error });
+      throw error;
+    }
+  }
+
+  /**
+   * Get all pull requests for a specific branch
+   */
+  async getPullRequestsForBranch(owner: string, repo: string, branch: string): Promise<any[]> {
+    if (!this.isAuthenticated || !this.octokit) {
+      throw new Error('Not authenticated');
+    }
+
+    try {
+      const { data } = await this.octokit.rest.pulls.list({
+        owner,
+        repo,
+        head: `${owner}:${branch}`,
+        state: 'all',
+        sort: 'updated',
+        direction: 'desc'
+      });
+      return data;
+    } catch (error) {
+      this.logger.error('Failed to get pull requests for branch', { owner, repo, branch, error });
       throw error;
     }
   }
@@ -514,6 +586,13 @@ class GitHubService {
     this.permissions = null;
     this.tokenType = null;
     secureTokenStorage.clearToken();
+  }
+
+  /**
+   * Logout - alias for signOut() for backward compatibility
+   */
+  logout(): void {
+    this.signOut();
   }
 
   /**
