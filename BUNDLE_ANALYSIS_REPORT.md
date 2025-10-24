@@ -157,8 +157,11 @@ A FHIR Resource Loader Service has been implemented to dynamically load FHIR res
 - Supports any FHIR IG, not just DAKs
 - Configurable timeout and caching behavior
 
-**Implementation**: `src/services/fhirResourceLoaderService.ts`
-**Documentation**: `docs/fhir-resource-loader.md`
+**Implementation**: 
+- Service: `src/services/fhirResourceLoaderService.ts`
+- Integration helpers: `src/utils/fhirResourceIntegration.tsx`
+- Documentation: `docs/fhir-resource-loader.md`
+- Integration guide: `docs/fhir-resource-integration-guide.md`
 
 **Usage Example**:
 ```typescript
@@ -169,10 +172,18 @@ const valueSet = await loadFHIRResource(
 );
 ```
 
+**React Hook Example**:
+```typescript
+import { useFHIRValueSet } from './utils/fhirResourceIntegration';
+
+const { valueSet, loading, error } = useFHIRValueSet(canonicalUrl);
+```
+
 **Next Steps**:
-- Integrate into components that use FHIR resources
+- Integrate into components that use FHIR resources (see integration guide)
 - Replace static FHIR imports with dynamic loading
 - Add preloading for commonly used resources
+- Measure actual bundle size reduction
 
 **Expected Impact**: Reduce bundle by ~3 MB once fully integrated
 

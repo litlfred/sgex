@@ -245,6 +245,7 @@ npm run build:check
 - [Bundle Analysis Guide](docs/bundle-analysis-guide.md) - How to use the analyzer
 - [Bundle Analysis Report](BUNDLE_ANALYSIS_REPORT.md) - Current findings and recommendations
 - [FHIR Resource Loader](docs/fhir-resource-loader.md) - Dynamic FHIR resource loading service
+- [FHIR Integration Guide](docs/fhir-resource-integration-guide.md) - How to integrate FHIR loader into components
 
 **Key Findings:**
 - Main bundle: 532 KB (exceeds 300 KB limit by 231 KB)
@@ -256,6 +257,7 @@ npm run build:check
 - ✅ Bundle analyzer for identifying large dependencies
 - ✅ Bundle size checker for enforcing budgets
 - ✅ FHIR Resource Loader for dynamic resource loading (~3 MB reduction potential)
+- ✅ Integration helpers and comprehensive migration guide
 
 The bundle analyzer helps identify:
 - Large dependencies that can be lazy-loaded
