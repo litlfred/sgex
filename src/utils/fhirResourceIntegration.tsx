@@ -106,7 +106,7 @@ export async function loadQuestionnaireValueSets(
   // Extract all answerValueSet URLs from questionnaire items
   const valueSetUrls: string[] = [];
   
-  function extractValueSets(items: any[]) {
+  const extractValueSets = (items: any[]): void => {
     items.forEach(item => {
       if (item.answerValueSet) {
         valueSetUrls.push(item.answerValueSet);
@@ -115,12 +115,12 @@ export async function loadQuestionnaireValueSets(
         extractValueSets(item.item);
       }
     });
-  }
+  };
 
   extractValueSets(questionnaire.item);
 
   // Remove duplicates
-  const uniqueUrls = [...new Set(valueSetUrls)];
+  const uniqueUrls = Array.from(new Set(valueSetUrls));
 
   // Load all value sets in parallel
   const resources = await loadMultipleFHIRResources(uniqueUrls, options);
@@ -156,7 +156,7 @@ export async function validateCode(
   }
 
   // Check if code exists in concepts
-  function findCode(concepts: any[]): boolean {
+  const findCode = (concepts: any[]): boolean => {
     for (const concept of concepts) {
       if (concept.code === code) {
         return true;
@@ -167,7 +167,7 @@ export async function validateCode(
       }
     }
     return false;
-  }
+  };
 
   return findCode(codeSystem.concept);
 }
@@ -196,7 +196,7 @@ export async function getCodeDisplay(
   }
 
   // Find the concept with matching code
-  function findDisplay(concepts: any[]): string | null {
+  const findDisplay = (concepts: any[]): string | null => {
     for (const concept of concepts) {
       if (concept.code === code) {
         return concept.display || null;
@@ -208,7 +208,7 @@ export async function getCodeDisplay(
       }
     }
     return null;
-  }
+  };
 
   return findDisplay(codeSystem.concept);
 }
@@ -254,7 +254,7 @@ export async function expandValueSet(
         // Include all codes from a system - would need to load the CodeSystem
         const codeSystem = await loadFHIRResource(include.system, options);
         if (codeSystem?.concept) {
-          function extractCodes(concepts: any[]) {
+          const extractCodes = (concepts: any[]): void => {
             concepts.forEach(concept => {
               codes.push({
                 code: concept.code,
@@ -265,7 +265,7 @@ export async function expandValueSet(
                 extractCodes(concept.concept);
               }
             });
-          }
+          };
           extractCodes(codeSystem.concept);
         }
       }
