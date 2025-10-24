@@ -475,9 +475,6 @@ jobs:
         id: all_artifact_urls
         continue-on-error: true
         run: |
-          # Wait for all artifacts to be available
-          sleep 5
-          
           # Retrieve all artifact URLs
           python3 scripts/get_artifact_urls.py \
             --token "${{ secrets.GITHUB_TOKEN }}" \
