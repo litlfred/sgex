@@ -71,3 +71,4 @@ The validation section should now be visible and functional.
 - Backward compatible with existing code that doesn't pass options
 - Properly typed with TypeScript interfaces
 - Follows existing code patterns in the validation framework
+# Fix applied for validation visibility issue
