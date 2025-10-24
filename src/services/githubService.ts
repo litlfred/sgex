@@ -455,6 +455,32 @@ class GitHubService {
   }
 
   /**
+   * Get pull requests for a specific branch
+   * 
+   * @param owner - Repository owner
+   * @param repo - Repository name
+   * @param branchName - Branch name to filter PRs
+   * @returns Promise<any[]> Array of pull requests
+   */
+  async getPullRequestsForBranch(owner: string, repo: string, branchName: string): Promise<any[]> {
+    try {
+      const octokit = this.isAuthenticated && this.octokit ? this.octokit : await this.createOctokitInstance();
+      const { data } = await octokit.rest.pulls.list({
+        owner,
+        repo,
+        head: `${owner}:${branchName}`,
+        state: 'all',
+        per_page: 100
+      });
+      return data;
+    } catch (error: any) {
+      this.logger.error('Failed to get pull requests for branch', { owner, repo, branchName, error });
+      // Return empty array instead of throwing to allow graceful degradation
+      return [];
+    }
+  }
+
+  /**
    * Get commits for a repository
    * 
    * @param owner - Repository owner
