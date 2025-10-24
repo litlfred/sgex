@@ -126,7 +126,7 @@ const PreviewBadge: React.FC = () => {
 
   // Custom markdown components to make links open in new tabs
   const markdownComponents = {
-    a: ({ href, children, ...props }) => (
+    a: ({ href, children, ...props }: { href?: string; children?: React.ReactNode; [key: string]: any }) => (
       <a href={href} target="_blank" rel="noopener noreferrer" {...props}>
         {children}
       </a>
