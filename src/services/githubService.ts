@@ -381,12 +381,13 @@ class GitHubService {
    * Get all pull requests for a specific branch
    */
   async getPullRequestsForBranch(owner: string, repo: string, branch: string): Promise<any[]> {
-    if (!this.isAuthenticated || !this.octokit) {
-      throw new Error('Not authenticated');
-    }
-
     try {
-      const { data } = await this.octokit.rest.pulls.list({
+      // Use authenticated octokit if available, otherwise create unauthenticated one
+      const octokitToUse = this.isAuthenticated && this.octokit 
+        ? this.octokit 
+        : await this.createOctokitInstance();
+      
+      const { data } = await octokitToUse.rest.pulls.list({
         owner,
         repo,
         head: `${owner}:${branch}`,
@@ -397,7 +398,8 @@ class GitHubService {
       return data;
     } catch (error) {
       this.logger.error('Failed to get pull requests for branch', { owner, repo, branch, error });
-      throw error;
+      // Return empty array instead of throwing to allow graceful degradation
+      return [];
     }
   }
 
@@ -613,6 +615,34 @@ class GitHubService {
    */
   logout(): void {
     this.signOut();
+  }
+
+  /**
+   * Check if API calls should be skipped (rate limit check)
+   */
+  async shouldSkipApiCalls(): Promise<boolean> {
+    if (!this.isAuthenticated || !this.octokit) {
+      return true; // Skip if not authenticated
+    }
+
+    try {
+      const { data: rateLimit } = await this.octokit.rest.rateLimit.get();
+      const remaining = rateLimit.resources.core?.remaining || rateLimit.rate?.remaining || 0;
+      const limit = rateLimit.resources.core?.limit || rateLimit.rate?.limit || 5000;
+      
+      // Skip if we have less than 10% of rate limit remaining
+      const shouldSkip = remaining < (limit * 0.1);
+      
+      if (shouldSkip) {
+        this.logger.warn('Rate limit low, skipping API calls', { remaining, limit });
+      }
+      
+      return shouldSkip;
+    } catch (error) {
+      this.logger.error('Failed to check rate limit', { error });
+      // On error, don't skip - let the actual API calls fail with proper errors
+      return false;
+    }
   }
 
   /**
