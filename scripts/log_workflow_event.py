@@ -281,7 +281,27 @@ Examples:
 
 def main():
     """Main entry point."""
-    args = parse_arguments()
+    try:
+        args = parse_arguments()
+    except SystemExit as e:
+        # argparse calls sys.exit() on error, catch it to ensure we don't exit with code 2
+        if e.code != 0:
+            print(f"❌ Error parsing arguments", file=sys.stderr)
+            # Try to create a minimal log file if possible
+            try:
+                from pathlib import Path
+                output_file = Path("artifacts/workflow-event.log")
+                output_file.parent.mkdir(parents=True, exist_ok=True)
+                with open(output_file, 'w', encoding='utf-8') as f:
+                    f.write(f"Error: Could not parse command line arguments\n")
+                    f.write(f"Timestamp: {datetime.now(timezone.utc).isoformat()}\n")
+                print(f"⚠️  Minimal log file created at: {output_file}")
+            except Exception:
+                pass  # Silently fail if we can't create the file
+        sys.exit(0)  # Don't fail the workflow
+    except Exception as e:
+        print(f"❌ Unexpected error during argument parsing: {e}", file=sys.stderr)
+        sys.exit(0)  # Don't fail the workflow
 
     try:
         # Parse JSON arguments - try from args first, then environment variables
@@ -369,4 +389,11 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except Exception as e:
+        # Final safety net - catch any unexpected errors
+        print(f"❌ Unexpected error in main: {e}", file=sys.stderr)
+        import traceback
+        traceback.print_exc(file=sys.stderr)
+        sys.exit(0)  # Don't fail the workflow even on unexpected errors

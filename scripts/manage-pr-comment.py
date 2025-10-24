@@ -383,6 +383,7 @@ class PRCommentManager:
         analysis_step_link_url = analysis_step_url if analysis_step_url else "bundle-analysis-step-log"
         
         # Determine if artifacts are available (have URLs) or pending
+        # Event artifact is pending until we successfully retrieve its URL
         event_status = "🟢 **Available**" if event_artifact_url else "🟡 Pending"
         build_logs_status = "🟣 **Available**" if build_logs_url else "🟡 Pending"
         webpack_stats_status = "🟢 **Available**" if webpack_stats_url else "🟡 Pending"
@@ -396,14 +397,14 @@ class PRCommentManager:
 
 | Artifact | Status | Description | Type |
 |----------|--------|-------------|------|
-| [workflow-event-log]({event_log_link}) | {event_status} | GitHub event metadata with links | .log |
+| {"[workflow-event-log](" + event_log_link + ")" if event_artifact_url else "workflow-event-log"} | {event_status} | GitHub event metadata with links | .log |
 | {"[build-logs](" + build_logs_link + ")" if build_logs_url else "build-logs"} | {build_logs_status} | Complete timestamped build output | .txt |
 | {"[webpack-stats](" + webpack_stats_link + ")" if webpack_stats_url else "webpack-stats"} | {webpack_stats_status} | Webpack compilation statistics | .json |
 | {"[bundle-report](" + bundle_report_link + ")" if bundle_report_url else "bundle-report"} | {bundle_report_status} | Bundle size analysis | .txt |
 | {"[build-step-log](" + build_step_link_url + ")" if build_step_url else "build-step-log"} | {build_step_status} | Build step console output | .log |
 | {"[bundle-analysis-step-log](" + analysis_step_link_url + ")" if analysis_step_url else "bundle-analysis-step-log"} | {analysis_step_status} | Bundle analysis console output | .log |
 
-**Note**: workflow-event-log is available immediately. Other artifacts will be uploaded as steps complete.
+**Note**: Artifacts show as Pending until uploaded and URLs are retrieved. Click artifact names to download.
 """
         
         # Stage-specific content with HTML headers for consistent styling
@@ -457,14 +458,14 @@ class PRCommentManager:
 
 | Artifact | Status | Description | Type |
 |----------|--------|-------------|------|
-| [workflow-event-log]({event_log_link}) | {event_status} | GitHub event metadata with links | .log |
-| [build-logs]({build_logs_link}) | {build_logs_status} | Complete timestamped build output | .txt |
-| [webpack-stats]({webpack_stats_link}) | {webpack_stats_status} | Webpack compilation statistics | .json |
-| [bundle-report]({bundle_report_link}) | {bundle_report_status} | Bundle size analysis | .txt |
-| [build-step-log]({build_step_link_url}) | {build_step_status} | Build step console output | .log |
-| [bundle-analysis-step-log]({analysis_step_link_url}) | {analysis_step_status} | Bundle analysis console output | .log |
+| {"[workflow-event-log](" + event_log_link + ")" if event_artifact_url else "workflow-event-log"} | {event_status} | GitHub event metadata with links | .log |
+| {"[build-logs](" + build_logs_link + ")" if build_logs_url else "build-logs"} | {build_logs_status} | Complete timestamped build output | .txt |
+| {"[webpack-stats](" + webpack_stats_link + ")" if webpack_stats_url else "webpack-stats"} | {webpack_stats_status} | Webpack compilation statistics | .json |
+| {"[bundle-report](" + bundle_report_link + ")" if bundle_report_url else "bundle-report"} | {bundle_report_status} | Bundle size analysis | .txt |
+| {"[build-step-log](" + build_step_link_url + ")" if build_step_url else "build-step-log"} | {build_step_status} | Build step console output | .log |
+| {"[bundle-analysis-step-log](" + analysis_step_link_url + ")" if analysis_step_url else "bundle-analysis-step-log"} | {analysis_step_status} | Bundle analysis console output | .log |
 
-**🟢 All artifacts now available!** Click artifact names above or visit [workflow artifacts section]({workflow_url}#artifacts).
+**Build artifacts uploaded!** Links will appear as they become available. Visit [workflow artifacts section]({workflow_url}#artifacts) to download.
 """
             
             timeline_entry = f"- **{timestamp}** - 🟠 {step_link} - In progress"
@@ -570,17 +571,17 @@ class PRCommentManager:
 
 | Artifact | Status | Description | Type |
 |----------|--------|-------------|------|
-| [workflow-event-log]({event_log_link}) | {event_status} | GitHub event metadata with links | .log |
-| [build-logs]({build_logs_link}) | {build_logs_status} | Complete timestamped build output | .txt |
-| [webpack-stats]({webpack_stats_link}) | {webpack_stats_status} | Webpack compilation statistics | .json |
-| [bundle-report]({bundle_report_link}) | {bundle_report_status} | Bundle size analysis and recommendations | .txt |
-| [build-step-log]({build_step_link_url}) | {build_step_status} | Build step console output | .log |
-| [bundle-analysis-step-log]({analysis_step_link_url}) | {analysis_step_status} | Bundle analysis console output | .log |
+| {"[workflow-event-log](" + event_log_link + ")" if event_artifact_url else "workflow-event-log"} | {event_status} | GitHub event metadata with links | .log |
+| {"[build-logs](" + build_logs_link + ")" if build_logs_url else "build-logs"} | {build_logs_status} | Complete timestamped build output | .txt |
+| {"[webpack-stats](" + webpack_stats_link + ")" if webpack_stats_url else "webpack-stats"} | {webpack_stats_status} | Webpack compilation statistics | .json |
+| {"[bundle-report](" + bundle_report_link + ")" if bundle_report_url else "bundle-report"} | {bundle_report_status} | Bundle size analysis and recommendations | .txt |
+| {"[build-step-log](" + build_step_link_url + ")" if build_step_url else "build-step-log"} | {build_step_status} | Build step console output | .log |
+| {"[bundle-analysis-step-log](" + analysis_step_link_url + ")" if analysis_step_url else "bundle-analysis-step-log"} | {analysis_step_status} | Bundle analysis console output | .log |
 
-**🟢 All artifacts available!** Click artifact names above or visit [workflow artifacts section]({workflow_url}#artifacts).
+**All build artifacts uploaded!** Click artifact names above or visit [workflow artifacts section]({workflow_url}#artifacts).
 
 **How to download:** 
-1. Click any artifact name in the table above
+1. Click any artifact name in the table above to download directly
 2. Or visit the [workflow run page]({workflow_url}) and scroll to "Artifacts"
 3. Each artifact contains a single log file (no zip extraction needed)
 """
