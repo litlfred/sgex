@@ -1,10 +1,27 @@
 # Image Optimization Guide
 
+## Table of Contents
+- [Overview](#overview)
+- [Summary](#summary)
+- [Generated Files](#generated-files)
+- [File Naming Convention](#file-naming-convention)
+- [Sample File Size Comparisons](#sample-file-size-comparisons)
+- [How It Works](#how-it-works)
+- [Regenerating Scaled Images](#regenerating-scaled-images)
+- [Technical Details](#technical-details)
+- [Performance Impact](#performance-impact)
+- [Original Files](#original-files)
+- [Browser Compatibility](#browser-compatibility)
+- [Testing](#testing)
+- [Troubleshooting](#troubleshooting)
+- [Future Improvements](#future-improvements)
+- [Related Files](#related-files)
+
 ## Overview
 This guide documents the image optimization system implemented for SGeX Workbench to reduce file sizes and improve loading performance.
 
 ## Summary
-Successfully generated scaled versions of 37 large PNG files (>200KB) in the project, resulting in:
+Successfully generated scaled versions of PNG files over 200KB in the project. The original 37 large files were identified, and for each file we created both desktop (600px) and mobile (300px) versions, plus their dark theme variants, resulting in:
 - **Mobile**: ~93% file size reduction
 - **Desktop**: ~74% file size reduction
 
@@ -57,10 +74,20 @@ Regenerate scaled images when:
 
 ### How to Regenerate
 
-1. **Install ImageMagick** (if not already installed):
+1. **Install ImageMagick**:
+   
+   **Ubuntu/Debian:**
    ```bash
    sudo apt-get install imagemagick
    ```
+   
+   **macOS (with Homebrew):**
+   ```bash
+   brew install imagemagick
+   ```
+   
+   **Windows:**
+   Download and install from [ImageMagick website](https://imagemagick.org/script/download.php)
 
 2. **Run the generation script**:
    ```bash
@@ -71,7 +98,12 @@ Regenerate scaled images when:
 
 4. **Commit the new scaled images**:
    ```bash
-   git add public/**/*_300.png public/**/*_600.png
+   # Using git add with find command (works on all shells)
+   find public -name '*_300.png' -o -name '*_600.png' | xargs git add
+   
+   # Or add all at once
+   git add public/
+   
    git commit -m "Regenerate scaled images"
    ```
 
