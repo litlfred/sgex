@@ -176,6 +176,9 @@ export interface DAKValidationReport {
   /** Individual file results */
   fileResults: FileValidationResult[];
   
+  /** Overall validation result - true if no errors found */
+  isValid: boolean;
+  
   /** Whether files can be saved (no error-level violations) */
   canSave: boolean;
   

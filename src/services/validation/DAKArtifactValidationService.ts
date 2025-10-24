@@ -226,21 +226,127 @@ export class DAKArtifactValidationService {
     // Set repository context
     this.context.setRepositoryContext({ owner, repo, branch });
 
-    // TODO: Integrate with githubService to list all files
-    // For now, return empty report as placeholder
-    const fileResults: FileValidationResult[] = [];
+    try {
+      // List all files in the repository
+      const allFiles = await this.context.listFiles('**/*');
+      
+      // Filter files to only those we can validate
+      const validatableFiles = allFiles.filter(path => {
+        const ext = path.split('.').pop()?.toLowerCase();
+        return ext && ['bpmn', 'dmn', 'xml', 'json', 'yaml', 'yml', 'fsh'].includes(ext);
+      });
 
-    // Calculate summary
-    const summary = this.calculateSummary(fileResults);
+      // Determine component and fileType for each file
+      const filesToValidate = validatableFiles.map(path => {
+        const ext = path.split('.').pop()?.toLowerCase() || '';
+        let component = 'general';
+        let fileType = ext;
 
-    return {
-      repository: { owner, repo, branch },
-      timestamp: new Date(),
-      summary,
-      fileResults,
-      canSave: summary.filesWithErrors === 0,
-      duration: Date.now() - startTime
-    };
+        // Determine component based on path
+        if (path.includes('/input/') || path.includes('\\input\\')) {
+          if (path.includes('/vocabulary/') || ext === 'fsh') {
+            component = 'terminology';
+            fileType = 'fsh';
+          } else if (path.includes('/profiles/')) {
+            component = 'fhir-profiles';
+          } else if (path.includes('/extensions/')) {
+            component = 'fhir-extensions';
+          }
+        } else if (path.includes('/business-processes/') || ext === 'bpmn') {
+          component = 'business-processes';
+          fileType = 'bpmn';
+        } else if (path.includes('/decision-logic/') || ext === 'dmn') {
+          component = 'decision-logic';
+          fileType = 'dmn';
+        }
+
+        // Check if we should skip this file based on component filter
+        if (options?.component && component !== options.component) {
+          return null;
+        }
+
+        return { path, fileType, component };
+      }).filter((file): file is { path: string; fileType: string; component: string } => file !== null);
+
+      // Fetch and validate files
+      const fileResults: FileValidationResult[] = [];
+      
+      for (const file of filesToValidate) {
+        try {
+          const content = await this.context.getFileContent(file.path);
+          const result = await this.validateFile(file.path, content, file.fileType, file.component);
+          fileResults.push(result);
+        } catch (error) {
+          console.error(`Error validating file ${file.path}:`, error);
+          // Add error as validation result
+          fileResults.push({
+            filePath: file.path,
+            fileType: file.fileType,
+            component: file.component,
+            violations: [{
+              ruleCode: 'FILE-ACCESS-ERROR',
+              level: 'error',
+              message: `Failed to access file: ${error instanceof Error ? error.message : String(error)}`,
+              filePath: file.path
+            }],
+            isValid: false,
+            errorCount: 1,
+            warningCount: 0,
+            infoCount: 0,
+            timestamp: new Date()
+          });
+        }
+      }
+
+      // Calculate summary
+      const summary = this.calculateSummary(fileResults);
+      const isValid = summary.filesWithErrors === 0;
+
+      return {
+        repository: { owner, repo, branch },
+        timestamp: new Date(),
+        summary,
+        fileResults,
+        isValid,
+        canSave: summary.filesWithErrors === 0,
+        duration: Date.now() - startTime
+      };
+    } catch (error) {
+      console.error('Error validating repository:', error);
+      // Return error report
+      return {
+        repository: { owner, repo, branch },
+        timestamp: new Date(),
+        summary: {
+          totalFiles: 0,
+          validFiles: 0,
+          filesWithErrors: 1,
+          filesWithWarnings: 0,
+          totalErrors: 1,
+          totalWarnings: 0,
+          totalInfo: 0
+        },
+        fileResults: [{
+          filePath: 'repository',
+          fileType: 'unknown',
+          component: 'general',
+          violations: [{
+            ruleCode: 'REPOSITORY-ACCESS-ERROR',
+            level: 'error',
+            message: `Failed to access repository: ${error instanceof Error ? error.message : String(error)}`,
+            filePath: 'repository'
+          }],
+          isValid: false,
+          errorCount: 1,
+          warningCount: 0,
+          infoCount: 0,
+          timestamp: new Date()
+        }],
+        isValid: false,
+        canSave: false,
+        duration: Date.now() - startTime
+      };
+    }
   }
 
   /**
@@ -292,6 +398,7 @@ export class DAKArtifactValidationService {
 
     // Calculate summary
     const summary = this.calculateSummary(fileResults);
+    const isValid = summary.filesWithErrors === 0;
 
     return {
       repository: {
@@ -302,6 +409,7 @@ export class DAKArtifactValidationService {
       timestamp: new Date(),
       summary,
       fileResults,
+      isValid,
       canSave: summary.filesWithErrors === 0,
       duration: Date.now() - startTime
     };

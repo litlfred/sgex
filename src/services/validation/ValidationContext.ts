@@ -8,6 +8,7 @@
  */
 
 import { ValidationContext as IValidationContext } from './types';
+import githubService from '../githubService';
 
 /**
  * Validation Context Implementation
@@ -71,12 +72,24 @@ export class ValidationContext implements IValidationContext {
       return this.fileContentCache.get(filePath)!;
     }
 
-    // In a real implementation, this would fetch from GitHub or staging ground
-    // For now, return empty string as placeholder
-    // TODO: Integrate with githubService and stagingGroundService
-    const content = '';
-    this.fileContentCache.set(filePath, content);
-    return content;
+    // Fetch from GitHub if repository context is available
+    if (this.repositoryContext) {
+      try {
+        const content = await githubService.getFileContent(
+          this.repositoryContext.owner,
+          this.repositoryContext.repo,
+          filePath,
+          this.repositoryContext.branch
+        );
+        this.fileContentCache.set(filePath, content);
+        return content;
+      } catch (error) {
+        console.error(`Error fetching file ${filePath}:`, error);
+        throw new Error(`Failed to fetch file: ${filePath}`);
+      }
+    }
+
+    throw new Error('No repository context set');
   }
 
   /**
@@ -86,9 +99,62 @@ export class ValidationContext implements IValidationContext {
    * @returns Array of file paths
    */
   async listFiles(pattern: string): Promise<string[]> {
-    // TODO: Integrate with githubService and stagingGroundService
-    // to list files matching the pattern
-    return [];
+    if (!this.repositoryContext) {
+      throw new Error('No repository context set');
+    }
+
+    try {
+      // For now, do a simple implementation that lists all files recursively
+      // In production, this should support actual glob patterns
+      const allFiles: string[] = [];
+      await this.listFilesRecursive('', allFiles);
+      
+      // Simple pattern matching - convert glob to regex
+      // This is a basic implementation, in production use a proper glob library
+      if (pattern && pattern !== '**/*') {
+        const regexPattern = pattern
+          .replace(/\./g, '\\.')
+          .replace(/\*/g, '.*')
+          .replace(/\?/g, '.');
+        const regex = new RegExp(`^${regexPattern}$`);
+        return allFiles.filter(file => regex.test(file));
+      }
+      
+      return allFiles;
+    } catch (error) {
+      console.error('Error listing files:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Recursively list all files in a directory
+   * 
+   * @param path - Directory path
+   * @param allFiles - Accumulator for file paths
+   */
+  private async listFilesRecursive(path: string, allFiles: string[]): Promise<void> {
+    if (!this.repositoryContext) return;
+
+    try {
+      const contents = await githubService.getDirectoryContents(
+        this.repositoryContext.owner,
+        this.repositoryContext.repo,
+        path,
+        this.repositoryContext.branch
+      );
+
+      for (const item of contents) {
+        if (item.type === 'file') {
+          allFiles.push(item.path);
+        } else if (item.type === 'dir') {
+          // Recursively list subdirectory
+          await this.listFilesRecursive(item.path, allFiles);
+        }
+      }
+    } catch (error) {
+      console.error(`Error listing directory ${path}:`, error);
+    }
   }
 
   /**
