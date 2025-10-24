@@ -62,8 +62,14 @@ const SelectProfilePage = () => {
         await githubService.checkTokenPermissions();
         
         // Fetch user data using GitHub service
-        userData = await githubService.getCurrentUser();
-        setUser(userData);
+        const userResponse = await githubService.getCurrentUser();
+        if (userResponse.success && userResponse.data) {
+          userData = userResponse.data;
+          setUser(userData);
+        } else {
+          console.error('Failed to fetch user data:', userResponse.error);
+          setUser(null);
+        }
       } else {
         // For unauthenticated users, don't create a user profile
         userData = null;
