@@ -318,6 +318,75 @@ class GitHubService {
   }
 
   /**
+   * Get pull request review comments
+   */
+  async getPullRequestComments(owner: string, repo: string, pull_number: number, page: number = 1, per_page: number = 30): Promise<any[]> {
+    if (!this.isAuthenticated || !this.octokit) {
+      throw new Error('Not authenticated');
+    }
+
+    try {
+      const { data } = await this.octokit.rest.pulls.listReviewComments({
+        owner,
+        repo,
+        pull_number,
+        page,
+        per_page
+      });
+      return data;
+    } catch (error: any) {
+      this.logger.error('Failed to get pull request review comments', { owner, repo, pull_number, error });
+      return [];
+    }
+  }
+
+  /**
+   * Get pull request issue comments
+   */
+  async getPullRequestIssueComments(owner: string, repo: string, pull_number: number, page: number = 1, per_page: number = 30): Promise<any[]> {
+    if (!this.isAuthenticated || !this.octokit) {
+      throw new Error('Not authenticated');
+    }
+
+    try {
+      const { data } = await this.octokit.rest.issues.listComments({
+        owner,
+        repo,
+        issue_number: pull_number,
+        page,
+        per_page
+      });
+      return data;
+    } catch (error: any) {
+      this.logger.error('Failed to get pull request issue comments', { owner, repo, pull_number, error });
+      return [];
+    }
+  }
+
+  /**
+   * Get pull request timeline events
+   */
+  async getPullRequestTimeline(owner: string, repo: string, pull_number: number, page: number = 1, per_page: number = 30): Promise<any[]> {
+    if (!this.isAuthenticated || !this.octokit) {
+      throw new Error('Not authenticated');
+    }
+
+    try {
+      const { data } = await this.octokit.rest.issues.listEventsForTimeline({
+        owner,
+        repo,
+        issue_number: pull_number,
+        page,
+        per_page
+      });
+      return data;
+    } catch (error: any) {
+      this.logger.error('Failed to get pull request timeline', { owner, repo, pull_number, error });
+      return [];
+    }
+  }
+
+  /**
    * Create a new issue
    */
   async createIssue(owner: string, repo: string, issueData: any): Promise<any> {
