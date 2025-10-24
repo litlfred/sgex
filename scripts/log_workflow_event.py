@@ -327,7 +327,8 @@ def main():
                 f.write(f"Event: {args.event_name}\n")
                 f.write(f"Timestamp: {datetime.now(timezone.utc).isoformat()}\n")
             print(f"⚠️  Minimal log file created at: {args.output_file}")
-        sys.exit(0)  # Don't fail the workflow
+        print("::warning::Workflow event logging encountered errors. Check the log file for details.")
+        sys.exit(2)  # Exit with warning code to indicate partial failure
 
     # Create logger and log event
     logger = WorkflowEventLogger(output_file=args.output_file)
@@ -349,7 +350,8 @@ def main():
                 f.write(f"Timestamp: {datetime.now(timezone.utc).isoformat()}\n")
                 f.write(f"\nError: {e}\n")
             print(f"⚠️  Fallback log file created at: {args.output_file}")
-        sys.exit(0)  # Don't fail the workflow
+        print("::warning::Workflow event logging encountered errors during log generation. Check the log file for details.")
+        sys.exit(2)  # Exit with warning code to indicate partial failure
 
     # Print summary to console
     print("\n📋 Workflow Event Summary")
