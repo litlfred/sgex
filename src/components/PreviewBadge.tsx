@@ -179,8 +179,8 @@ const PreviewBadge: React.FC = () => {
 
   // Handle clicks outside the expanded panel to close it (only if not sticky)
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (expandedRef.current && !expandedRef.current.contains(event.target)) {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      if (expandedRef.current && !expandedRef.current.contains(event.target as Node)) {
         if (isSticky) {
           setIsSticky(false);
         }
