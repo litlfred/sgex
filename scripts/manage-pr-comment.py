@@ -383,7 +383,7 @@ class PRCommentManager:
         analysis_step_link_url = analysis_step_url if analysis_step_url else "bundle-analysis-step-log"
         
         # Determine if artifacts are available (have URLs) or pending
-        event_status = "🟢 **Available**" if event_artifact_url else "🟢 **Available**"  # Always available early
+        event_status = "🟢 **Available**" if event_artifact_url else "🟡 Pending"
         build_logs_status = "🟣 **Available**" if build_logs_url else "🟡 Pending"
         webpack_stats_status = "🟢 **Available**" if webpack_stats_url else "🟡 Pending"
         bundle_report_status = "🟢 **Available**" if bundle_report_url else "🟡 Pending"
