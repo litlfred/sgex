@@ -263,7 +263,7 @@ const PreviewBadge: React.FC = () => {
     return null;
   };
 
-  const fetchPRsForBranch = async (branchName) => {
+  const fetchPRsForBranch = async (branchName: string) => {
     try {
       // Get current repository context if available
       // For now, we'll use the main repository
@@ -274,7 +274,7 @@ const PreviewBadge: React.FC = () => {
       
       return prs;
 
-    } catch (error) {
+    } catch (error: any) {
       console.debug('Failed to fetch PR info:', error);
       return [];
     }
