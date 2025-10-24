@@ -280,7 +280,7 @@ const PreviewBadge: React.FC = () => {
     }
   };
 
-  const fetchCommentsForPR = async (owner, repo, prNumber, page = 1, append = false, showLoading = true) => {
+  const fetchCommentsForPR = async (owner: string, repo: string, prNumber: number, page: number = 1, append: boolean = false, showLoading: boolean = true) => {
     try {
       if (showLoading) {
         setCommentsLoading(true);
