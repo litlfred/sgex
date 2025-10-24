@@ -122,9 +122,9 @@ const PreviewBadge: React.FC = () => {
   const [hasMoreComments, setHasMoreComments] = useState(false);
   const [displayedCommentsCount, setDisplayedCommentsCount] = useState(5);
   const [showStatusUpdates, setShowStatusUpdates] = useState(true);
-  const expandedRef = useRef(null);
-  const commentRefreshIntervalRef = useRef(null);
-  const workflowRefreshIntervalRef = useRef(null);
+  const expandedRef = useRef<HTMLDivElement>(null);
+  const commentRefreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const workflowRefreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Custom markdown components to make links open in new tabs
   const markdownComponents = {
