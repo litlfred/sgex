@@ -23,6 +23,45 @@ async function getValidationService() {
 }
 
 /**
+ * Fetch all files from repository recursively
+ * Helper function to fetch files using githubService without importing it at module level
+ */
+async function fetchRepositoryFiles(
+  githubService: any,
+  owner: string,
+  repo: string,
+  branch: string,
+  path: string = ''
+): Promise<Array<{ path: string; content: string; }>> {
+  const files: Array<{ path: string; content: string; }> = [];
+  
+  try {
+    const contents = await githubService.getDirectoryContents(owner, repo, path, branch);
+    
+    for (const item of contents) {
+      if (item.type === 'file') {
+        try {
+          const content = await githubService.getFileContent(owner, repo, item.path, branch);
+          files.push({
+            path: item.path,
+            content: typeof content === 'string' ? content : JSON.stringify(content)
+          });
+        } catch (error) {
+          console.warn(`Failed to fetch file ${item.path}:`, error);
+        }
+      } else if (item.type === 'dir') {
+        const subFiles = await fetchRepositoryFiles(githubService, owner, repo, branch, item.path);
+        files.push(...subFiles);
+      }
+    }
+  } catch (error) {
+    console.error(`Failed to fetch repository contents at ${path}:`, error);
+  }
+  
+  return files;
+}
+
+/**
  * Hook options for validation
  */
 export interface UseValidationOptions {
@@ -49,7 +88,7 @@ export interface UseValidationReturn {
   /** Error state */
   error: Error | null;
   /** Trigger validation */
-  validate: () => Promise<void>;
+  validate: (options?: ComponentValidationOptions) => Promise<void>;
   /** Clear current report */
   clear: () => void;
 }
@@ -66,7 +105,7 @@ export function useValidation(options: UseValidationOptions = {}): UseValidation
   
   const debounceTimer = useRef<NodeJS.Timeout | undefined>(undefined);
   
-  const validate = useCallback(async () => {
+  const validate = useCallback(async (validateOptions?: ComponentValidationOptions) => {
     if (!owner || !repo) {
       setError(new Error('Repository owner and name required'));
       return;
@@ -81,10 +120,19 @@ export function useValidation(options: UseValidationOptions = {}): UseValidation
       const { service, ensureRulesRegistered } = await getValidationService();
       await ensureRulesRegistered();
       
+      // Dynamically import githubService to fetch files
+      const githubServiceModule = await import('../../services/githubService');
+      const githubService = githubServiceModule.default;
+      
+      // Fetch all files from repository
+      const files = await fetchRepositoryFiles(githubService, owner, repo, branch);
+      
+      // Pass files to validation service
       const validationReport = await service.validateRepository(
         owner,
         repo,
-        branch
+        branch,
+        { ...validateOptions, files }
       );
       setReport(validationReport);
     } catch (err) {

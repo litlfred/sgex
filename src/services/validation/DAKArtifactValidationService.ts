@@ -218,7 +218,7 @@ export class DAKArtifactValidationService {
     owner: string,
     repo: string,
     branch: string,
-    options?: ComponentValidationOptions
+    options?: ComponentValidationOptions & { files?: Array<{ path: string; content: string; }> }
   ): Promise<DAKValidationReport> {
     const startTime = Date.now();
 
@@ -226,13 +226,31 @@ export class DAKArtifactValidationService {
     this.context.setRepositoryContext({ owner, repo, branch });
 
     try {
-      // Get all files from repository
-      const files = await this.context.getRepositoryFiles(owner, repo, branch);
+      // Files should be provided by caller to avoid importing githubService here
+      if (!options?.files || options.files.length === 0) {
+        console.warn('No files provided for validation. Caller must fetch files using githubService.');
+        return {
+          repository: { owner, repo, branch },
+          timestamp: new Date(),
+          summary: {
+            totalFiles: 0,
+            validFiles: 0,
+            filesWithErrors: 0,
+            filesWithWarnings: 0,
+            totalErrors: 0,
+            totalWarnings: 0,
+            totalInfo: 0
+          },
+          fileResults: [],
+          canSave: true,
+          duration: Date.now() - startTime
+        };
+      }
       
       // Filter files based on component if specified
       const filesToValidate = options?.component
-        ? files.filter(file => this.isComponentFile(file.path, options.component))
-        : files;
+        ? options.files.filter(file => this.isComponentFile(file.path, options.component))
+        : options.files;
 
       // Validate all files
       const fileResults = await this.validateFiles(
@@ -256,7 +274,7 @@ export class DAKArtifactValidationService {
         duration: Date.now() - startTime
       };
     } catch (error) {
-      // If repository access fails, return report with error
+      // If validation fails, return report with error
       console.error('Repository validation failed:', error);
       return {
         repository: { owner, repo, branch },
@@ -292,17 +310,20 @@ export class DAKArtifactValidationService {
     repo: string,
     branch: string,
     component: string,
-    options?: Omit<ComponentValidationOptions, 'component'>
+    options?: Omit<ComponentValidationOptions, 'component'> & { files?: Array<{ path: string; content: string; }> }
   ): Promise<FileValidationResult[]> {
     // Set repository context
     this.context.setRepositoryContext({ owner, repo, branch });
 
     try {
-      // Get all files from repository
-      const files = await this.context.getRepositoryFiles(owner, repo, branch);
+      // Files should be provided by caller to avoid importing githubService here
+      if (!options?.files || options.files.length === 0) {
+        console.warn('No files provided for validation. Caller must fetch files using githubService.');
+        return [];
+      }
       
       // Filter to only component files
-      const componentFiles = files.filter(file => this.isComponentFile(file.path, component));
+      const componentFiles = options.files.filter(file => this.isComponentFile(file.path, component));
 
       // Validate component files
       const fileResults = await this.validateFiles(
