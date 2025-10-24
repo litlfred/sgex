@@ -365,6 +365,47 @@ class PRCommentManager:
 **Workflow Step:** {step_link}
 """
         
+        # Get artifact URLs if provided
+        event_artifact_url = data.get('event_artifact_url', '')
+        build_logs_url = data.get('build_logs_url', '')
+        webpack_stats_url = data.get('webpack_stats_url', '')
+        bundle_report_url = data.get('bundle_report_url', '')
+        build_step_url = data.get('build_step_url', '')
+        analysis_step_url = data.get('analysis_step_url', '')
+        
+        # Build artifacts tracking section (shown in all stages)
+        # Use actual artifact URLs (with artifact IDs) when available
+        event_log_link = event_artifact_url if event_artifact_url else f"{workflow_url}#artifacts"
+        build_logs_link = build_logs_url if build_logs_url else "build-logs"
+        webpack_stats_link = webpack_stats_url if webpack_stats_url else "webpack-stats"
+        bundle_report_link = bundle_report_url if bundle_report_url else "bundle-report"
+        build_step_link_url = build_step_url if build_step_url else "build-step-log"
+        analysis_step_link_url = analysis_step_url if analysis_step_url else "bundle-analysis-step-log"
+        
+        # Determine if artifacts are available (have URLs) or pending
+        event_status = "🟢 **Available**" if event_artifact_url else "🟡 Pending"
+        build_logs_status = "🟢 **Available**" if build_logs_url else "🟡 Pending"
+        webpack_stats_status = "🟢 **Available**" if webpack_stats_url else "🟡 Pending"
+        bundle_report_status = "🟢 **Available**" if bundle_report_url else "🟡 Pending"
+        build_step_status = "🟢 **Available**" if build_step_url else "🟡 Pending"
+        analysis_step_status = "🟢 **Available**" if analysis_step_url else "🟡 Pending"
+        
+        artifacts_section = f"""
+
+<h3>📦 Build Artifacts Status</h3>
+
+| Artifact | Status | Description | Type |
+|----------|--------|-------------|------|
+| [workflow-event-log]({event_log_link}) | {event_status} | GitHub event metadata with links | .log |
+| {"[build-logs](" + build_logs_link + ")" if build_logs_url else "build-logs"} | {build_logs_status} | Complete timestamped build output | .txt |
+| {"[webpack-stats](" + webpack_stats_link + ")" if webpack_stats_url else "webpack-stats"} | {webpack_stats_status} | Webpack compilation statistics | .json |
+| {"[bundle-report](" + bundle_report_link + ")" if bundle_report_url else "bundle-report"} | {bundle_report_status} | Bundle size analysis | .txt |
+| {"[build-step-log](" + build_step_link_url + ")" if build_step_url else "build-step-log"} | {build_step_status} | Build step console output | .log |
+| {"[bundle-analysis-step-log](" + analysis_step_link_url + ")" if analysis_step_url else "bundle-analysis-step-log"} | {analysis_step_status} | Bundle analysis console output | .log |
+
+**Note**: workflow-event-log is available immediately. Other artifacts will be uploaded as steps complete.
+"""
+        
         # Stage-specific content with HTML headers for consistent styling
         if stage == 'started':
             status_line = "<h2>🚀 Deployment Status: Build Started</h2>"
@@ -377,6 +418,7 @@ class PRCommentManager:
             if branch_url:
                 actions += f"""
 <a href="{branch_url}"><img src="https://img.shields.io/badge/Preview_URL-orange?style=for-the-badge&logo=github&label=%F0%9F%8C%90&labelColor=gray" alt="Expected Deployment URL"/></a> _(will be live after deployment)_"""
+            
             timeline_entry = f"- **{timestamp}** - 🟠 {step_link} - Initializing"
         
         elif stage == 'setup':
@@ -407,6 +449,23 @@ class PRCommentManager:
             if branch_url:
                 actions += f"""
 <a href="{branch_url}"><img src="https://img.shields.io/badge/Preview_URL-orange?style=for-the-badge&logo=github&label=%F0%9F%8C%90&labelColor=gray" alt="Expected Deployment URL"/></a> _(will be live after deployment)_"""
+            
+            # Override artifacts section for building stage - some artifacts are now available
+            artifacts_section = f"""
+
+<h3>📦 Build Artifacts Status</h3>
+
+| Artifact | Status | Description | Type |
+|----------|--------|-------------|------|
+| [workflow-event-log]({event_log_link}) | {event_status} | GitHub event metadata with links | .log |
+| [build-logs]({build_logs_link}) | {build_logs_status} | Complete timestamped build output | .txt |
+| [webpack-stats]({webpack_stats_link}) | {webpack_stats_status} | Webpack compilation statistics | .json |
+| [bundle-report]({bundle_report_link}) | {bundle_report_status} | Bundle size analysis | .txt |
+| [build-step-log]({build_step_link_url}) | {build_step_status} | Build step console output | .log |
+| [bundle-analysis-step-log]({analysis_step_link_url}) | {analysis_step_status} | Bundle analysis console output | .log |
+
+**🟢 All artifacts now available!** Click artifact names above or visit [workflow artifacts section]({workflow_url}#artifacts).
+"""
             
             timeline_entry = f"- **{timestamp}** - 🟠 {step_link} - In progress"
         
@@ -491,6 +550,11 @@ class PRCommentManager:
             status_icon = "🟢"
             status_text = "Live and accessible"
             next_step = "**Status:** Deployment complete - site is ready for testing"
+            
+            # Extract build artifacts information if provided
+            artifacts_url = data.get('artifacts_url', '')
+            build_logs_available = data.get('build_logs_available', False)
+            
             actions = f"""<h3>🌐 Preview URLs</h3>
 
 <a href="{branch_url}"><img src="https://img.shields.io/badge/Open_Branch_Preview-brightgreen?style=for-the-badge&logo=github&label=%F0%9F%8C%90&labelColor=gray" alt="Open Branch Preview"/></a>
@@ -498,6 +562,29 @@ class PRCommentManager:
 <h3>🔗 Quick Actions</h3>
 
 <a href="{workflow_url}"><img src="https://img.shields.io/badge/Build_Logs-gray?style=for-the-badge&logo=github" alt="Build Logs"/></a>"""
+            
+            # Override artifacts section for success - all green
+            artifacts_section = f"""
+
+<h3>📦 Build Artifacts Status</h3>
+
+| Artifact | Status | Description | Type |
+|----------|--------|-------------|------|
+| [workflow-event-log]({event_log_link}) | {event_status} | GitHub event metadata with links | .log |
+| [build-logs]({build_logs_link}) | {build_logs_status} | Complete timestamped build output | .txt |
+| [webpack-stats]({webpack_stats_link}) | {webpack_stats_status} | Webpack compilation statistics | .json |
+| [bundle-report]({bundle_report_link}) | {bundle_report_status} | Bundle size analysis and recommendations | .txt |
+| [build-step-log]({build_step_link_url}) | {build_step_status} | Build step console output | .log |
+| [bundle-analysis-step-log]({analysis_step_link_url}) | {analysis_step_status} | Bundle analysis console output | .log |
+
+**🟢 All artifacts available!** Click artifact names above or visit [workflow artifacts section]({workflow_url}#artifacts).
+
+**How to download:** 
+1. Click any artifact name in the table above
+2. Or visit the [workflow run page]({workflow_url}) and scroll to "Artifacts"
+3. Each artifact contains a single log file (no zip extraction needed)
+"""
+            
             timeline_entry = f"- **{timestamp}** - 🟢 {step_link} - Site is live"
         
         elif stage == 'failure':
@@ -566,6 +653,8 @@ class PRCommentManager:
 {preamble}
 
 {actions}
+
+{artifacts_section}
 
 ---
 
