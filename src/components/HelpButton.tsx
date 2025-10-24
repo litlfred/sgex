@@ -50,8 +50,10 @@ const HelpButton: React.FC<HelpButtonProps> = ({ helpTopic, contextData = {} }) 
       {showHelp && (
         <HelpModal
           topic={helpTopic}
+          helpTopic={helpTopic}
           contextData={contextData}
           onClose={handleCloseHelp}
+          tutorialId={undefined}
         />
       )}
     </>
