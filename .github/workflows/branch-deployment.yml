@@ -139,9 +139,6 @@ jobs:
         id: event_artifact_url
         continue-on-error: true
         run: |
-          # Wait a moment for artifact to be available
-          sleep 3
-          
           # Retrieve artifact URL
           python3 scripts/get_artifact_urls.py \
             --token "${{ secrets.GITHUB_TOKEN }}" \
