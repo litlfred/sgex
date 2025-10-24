@@ -12,9 +12,11 @@ import './PreviewBadge.css';
 const MDEditor = lazy(() => import('@uiw/react-md-editor'));
 
 interface BranchInfo {
-  branch: string;
-  repo: string;
-  owner: string;
+  name: string;
+  safeName?: string;
+  branch?: string;
+  repo?: string;
+  owner?: string;
 }
 
 interface PRInfo {
