@@ -291,7 +291,13 @@ def main():
         try:
             event = json.loads(event_json_str)
         except json.JSONDecodeError as e:
-            print(f"⚠️  Warning: Could not parse event JSON ({e}), using empty dict", file=sys.stderr)
+            print(
+                f"⚠️  Warning: Could not parse event JSON ({e}). "
+                f"Event details will be missing from the output log file"
+                f"{f' ({args.output_file})' if args.output_file else ''}. "
+                "Check your --event-json argument or GITHUB_EVENT_JSON environment variable.",
+                file=sys.stderr
+            )
             event = {}
         
         try:
