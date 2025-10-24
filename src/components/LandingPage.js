@@ -61,8 +61,13 @@ const LandingPage = () => {
       await githubService.checkTokenPermissions();
       
       // Fetch user data using GitHub service
-      const userData = await githubService.getCurrentUser();
-      setUser(userData);
+      const userResponse = await githubService.getCurrentUser();
+      if (userResponse.success && userResponse.data) {
+        setUser(userResponse.data);
+      } else {
+        console.error('Failed to fetch user data:', userResponse.error);
+        setUser(null);
+      }
       
       // Fetch organizations inline
       let orgsData = [];
