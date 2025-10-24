@@ -47,9 +47,13 @@ def get_artifact_urls(token, repo, run_id, artifact_names, max_retries=3, retry_
             for artifact in artifacts:
                 artifact_name = artifact.get('name', '')
                 if artifact_name in artifact_names:
-                    # Use the canonical download URL provided by the API
-                    artifact_url = artifact.get('archive_download_url')
-                    artifact_urls[artifact_name] = artifact_url
+                    # Construct browser-friendly URL instead of API URL
+                    # API URL format: https://api.github.com/repos/{repo}/actions/artifacts/{id}/zip
+                    # Browser URL format: https://github.com/{repo}/actions/runs/{run_id}/artifacts/{id}
+                    artifact_id = artifact.get('id')
+                    if artifact_id:
+                        artifact_url = f'https://github.com/{repo}/actions/runs/{run_id}/artifacts/{artifact_id}'
+                        artifact_urls[artifact_name] = artifact_url
             
             # If we found all requested artifacts, we're done
             if len(artifact_urls) == len(artifact_names):
