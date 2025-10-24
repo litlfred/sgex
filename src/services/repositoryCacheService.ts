@@ -11,6 +11,20 @@ import type {
 } from '../types/core';
 import logger from '../utils/logger';
 
+/**
+ * Cache information
+ */
+export interface CacheInfo {
+  /** Whether data is cached */
+  cached: boolean;
+  /** Last update timestamp */
+  lastUpdated: Date | null;
+  /** Cache age in milliseconds */
+  age: number;
+  /** Whether cache is still valid */
+  valid?: boolean;
+}
+
 export class RepositoryCacheService {
   private readonly CACHE_KEY_PREFIX = 'sgex_repo_cache_';
   private readonly CACHE_EXPIRY_HOURS = 24; // Cache expires after 24 hours
@@ -227,6 +241,48 @@ export class RepositoryCacheService {
       return result.age || null;
     } catch (error) {
       return null;
+    }
+  }
+
+  /**
+   * Get cache information for a user/organization
+   */
+  getCacheInfo(owner: string, type: 'user' | 'org' = 'user'): CacheInfo {
+    try {
+      const cacheKey = this.getCacheKey(owner, type);
+      const cachedData = localStorage.getItem(cacheKey);
+      
+      if (!cachedData) {
+        return {
+          cached: false,
+          lastUpdated: null,
+          age: 0,
+          valid: false
+        };
+      }
+
+      const parsed: RepositoryCacheData = JSON.parse(cachedData);
+      const age = Date.now() - parsed.timestamp;
+      const valid = !this.isStale(parsed.timestamp);
+
+      return {
+        cached: true,
+        lastUpdated: new Date(parsed.timestamp),
+        age: age,
+        valid: valid
+      };
+    } catch (error) {
+      this.logger.error('Error getting cache info', {
+        owner,
+        type,
+        error: error instanceof Error ? error.message : String(error)
+      });
+      return {
+        cached: false,
+        lastUpdated: null,
+        age: 0,
+        valid: false
+      };
     }
   }
 }
