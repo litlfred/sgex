@@ -384,7 +384,7 @@ class PRCommentManager:
         
         # Determine if artifacts are available (have URLs) or pending
         event_status = "🟢 **Available**" if event_artifact_url else "🟡 Pending"
-        build_logs_status = "🟣 **Available**" if build_logs_url else "🟡 Pending"
+        build_logs_status = "🟢 **Available**" if build_logs_url else "🟡 Pending"
         webpack_stats_status = "🟢 **Available**" if webpack_stats_url else "🟡 Pending"
         bundle_report_status = "🟢 **Available**" if bundle_report_url else "🟡 Pending"
         build_step_status = "🟢 **Available**" if build_step_url else "🟡 Pending"

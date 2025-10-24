@@ -48,7 +48,10 @@ class BuildLogger:
         'CI',
         'ESLINT_NO_DEV_ERRORS',
         'GENERATE_SOURCEMAP',
-        'NODE_ENV'
+        'NODE_ENV',
+        'VERBOSE',
+        'npm_config_loglevel',
+        'WEBPACK_VERBOSE'
     }
 
     # Pattern for safe values (alphanumeric, slash, dash, underscore, period)
@@ -160,7 +163,9 @@ class BuildLogger:
             'CI': 'false',
             'ESLINT_NO_DEV_ERRORS': 'true',
             'GENERATE_SOURCEMAP': 'false',
-            'NODE_ENV': 'production'
+            'NODE_ENV': 'production',
+            'VERBOSE': 'true',  # Enable verbose npm/webpack output
+            'npm_config_loglevel': 'verbose'  # Enable verbose npm logging
         }
 
         print(f"🔧 Starting build for branch: {branch_name}")
