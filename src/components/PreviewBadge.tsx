@@ -355,9 +355,9 @@ const PreviewBadge: React.FC = () => {
 
       if (append) {
         // Append to existing comments (for load more)
-        const existingIds = new Set(allComments.map(c => c.id));
-        const uniqueNewComments = newComments.filter(c => !existingIds.has(c.id));
-        const uniqueNewEvents = relevantTimelineEvents.filter(e => !existingIds.has(e.id));
+        const existingIds = new Set(allComments.map((c: any) => c.id));
+        const uniqueNewComments = newComments.filter((c: any) => !existingIds.has(c.id));
+        const uniqueNewEvents = relevantTimelineEvents.filter((e: any) => !existingIds.has(e.id));
         
         const allNewItems = [...uniqueNewComments, ...uniqueNewEvents]
           .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
