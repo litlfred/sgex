@@ -373,13 +373,15 @@ const DAKSelectionContent = () => {
           }
         }
 
-        if (cachedData && !forceRescan) {
+        if (cachedData && cachedData.data && !forceRescan) {
           // Use cached data - show immediately
           console.log('Using cached repository data', repositoryCacheService.getCacheInfo(effectiveProfile.login, effectiveProfile.type === 'org' ? 'org' : 'user'));
-          repos = cachedData.repositories;
+          repos = cachedData.data.repositories || [];
           setUsingCachedData(true);
           // Sort cached repositories alphabetically
-          repos.sort((a, b) => a.name.localeCompare(b.name));
+          if (repos && Array.isArray(repos)) {
+            repos.sort((a, b) => a.name.localeCompare(b.name));
+          }
           setRepositories(repos);
         } else {
           // No cached data or forcing rescan - initiate progressive scanning
