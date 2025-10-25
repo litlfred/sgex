@@ -395,7 +395,7 @@ const PreviewBadge: React.FC = () => {
   };
 
   // Format timeline events into readable status updates
-  const formatTimelineEvent = (event) => {
+  const formatTimelineEvent = (event: any) => {
     switch (event.event) {
       case 'committed':
         return `📦 Pushed ${event.sha ? event.sha.substring(0, 7) : 'commit'}: ${event.message || 'No commit message'}`;
