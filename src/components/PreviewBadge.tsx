@@ -118,7 +118,7 @@ const PreviewBadge: React.FC = () => {
   const [approvalStatus, setApprovalStatus] = useState<'success' | 'error' | null>(null); // 'success', 'error'
   const [approvalMessage, setApprovalMessage] = useState('');
   const [commentsPage, setCommentsPage] = useState(1);
-  const [allComments, setAllComments] = useState([]);
+  const [allComments, setAllComments] = useState<any[]>([]);
   const [hasMoreComments, setHasMoreComments] = useState(false);
   const [displayedCommentsCount, setDisplayedCommentsCount] = useState(5);
   const [showStatusUpdates, setShowStatusUpdates] = useState(true);
