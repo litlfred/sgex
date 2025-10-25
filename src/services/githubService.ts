@@ -318,7 +318,7 @@ class GitHubService {
   }
 
   /**
-   * Get pull request review comments
+   * Get pull request review comments with pagination support
    */
   async getPullRequestComments(owner: string, repo: string, pull_number: number, page: number = 1, per_page: number = 30): Promise<any[]> {
     if (!this.isAuthenticated || !this.octokit) {
