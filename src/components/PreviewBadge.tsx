@@ -299,7 +299,7 @@ const PreviewBadge: React.FC = () => {
       const newComments = [
         ...reviewComments.map(comment => ({ ...comment, type: 'review' })),
         ...issueComments.map(comment => ({ ...comment, type: 'issue' }))
-      ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
       // Debug: Log comment details to understand what's being fetched
       console.debug('Comments fetched for PR discussion:', {
@@ -360,7 +360,7 @@ const PreviewBadge: React.FC = () => {
         const uniqueNewEvents = relevantTimelineEvents.filter(e => !existingIds.has(e.id));
         
         const allNewItems = [...uniqueNewComments, ...uniqueNewEvents]
-          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
         
         const updatedAllComments = [...allComments, ...allNewItems];
         setAllComments(updatedAllComments);
@@ -372,7 +372,7 @@ const PreviewBadge: React.FC = () => {
       } else {
         // Replace comments (for initial load or refresh)
         const allItems = [...newComments, ...relevantTimelineEvents]
-          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
         
         setAllComments(allItems);
         const initialDisplayCount = Math.min(5, allItems.length);
