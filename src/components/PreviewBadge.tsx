@@ -328,7 +328,7 @@ const PreviewBadge: React.FC = () => {
           type: c.type,
           bodyPreview: c.body?.substring(0, 100) + '...'
         })),
-        allUsernames: [...new Set(newComments.map(c => c.user?.login).filter(Boolean))]
+        allUsernames: Array.from(new Set(newComments.map(c => c.user?.login).filter(Boolean)))
       });
 
       // Process timeline events for status updates
