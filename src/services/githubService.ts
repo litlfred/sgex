@@ -326,10 +326,10 @@ class GitHubService {
       // Return a fallback object instead of throwing
       return {
         login: 'WorldHealthOrganization',
-        id: null,
+        id: 7936796,
         name: 'World Health Organization',
         description: 'WHO SMART Guidelines',
-        avatar_url: 'https://avatars.githubusercontent.com/u/7936796',
+        avatar_url: 'https://avatars.githubusercontent.com/u/7936796?s=200&v=4',
         html_url: 'https://github.com/WorldHealthOrganization'
       };
     }
@@ -588,7 +588,9 @@ class GitHubService {
    * @returns true if authenticated, false otherwise
    */
   isAuth(): boolean {
-    return this.isAuthenticated;
+    // Check if we have a token and octokit instance
+    const hasToken = !!secureTokenStorage.retrieveToken();
+    return this.isAuthenticated && hasToken && !!this.octokit;
   }
 
   /**
@@ -746,6 +748,49 @@ class GitHubService {
         throw new Error('Network error occurred. Please check your internet connection and try again.');
       }
       
+      throw error;
+    }
+  }
+
+  /**
+   * Get SMART Guidelines repositories with progressive loading
+   * Fetches user's repositories with DAK detection, progressively yielding results
+   */
+  async * getSmartGuidelinesRepositoriesProgressive(owner: string): AsyncGenerator<GitHubRepository[], void, unknown> {
+    try {
+      const octokit = this.isAuthenticated && this.octokit ? this.octokit : await this.createOctokitInstance();
+      
+      this.logger.debug('Fetching repositories progressively for owner', { owner });
+      
+      let page = 1;
+      const perPage = 30;
+      let hasMore = true;
+      
+      while (hasMore) {
+        const { data } = await octokit.rest.repos.listForUser({
+          username: owner,
+          per_page: perPage,
+          page: page,
+          sort: 'updated',
+          direction: 'desc'
+        });
+        
+        if (data.length === 0) {
+          hasMore = false;
+          break;
+        }
+        
+        // Yield the batch of repositories
+        yield data;
+        
+        // Check if there are more pages
+        hasMore = data.length === perPage;
+        page++;
+      }
+      
+      this.logger.debug('Completed progressive repository fetch', { owner, pages: page - 1 });
+    } catch (error) {
+      this.logger.error('Error fetching repositories progressively', { owner, error });
       throw error;
     }
   }
