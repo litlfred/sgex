@@ -373,13 +373,15 @@ const DAKSelectionContent = () => {
           }
         }
 
-        if (cachedData && !forceRescan) {
+        if (cachedData && cachedData.data && !forceRescan) {
           // Use cached data - show immediately
           console.log('Using cached repository data', repositoryCacheService.getCacheInfo(effectiveProfile.login, effectiveProfile.type === 'org' ? 'org' : 'user'));
-          repos = cachedData.repositories;
+          repos = cachedData.data.repositories || [];
           setUsingCachedData(true);
           // Sort cached repositories alphabetically
-          repos.sort((a, b) => a.name.localeCompare(b.name));
+          if (repos && Array.isArray(repos)) {
+            repos.sort((a, b) => a.name.localeCompare(b.name));
+          }
           setRepositories(repos);
         } else {
           // No cached data or forcing rescan - initiate progressive scanning
@@ -623,13 +625,9 @@ const DAKSelectionContent = () => {
                 repos.sort((a, b) => a.name.localeCompare(b.name));
                 setRepositories(repos);
               } catch (publicApiError) {
-                console.warn('Public API failed, falling back to demo data:', publicApiError);
-                // Only fall back to mock data if public API fails AND it's not WHO
-                await simulateEnhancedScanning();
-                repos = getMockRepositories();
-                // Sort mock repositories alphabetically
-                repos.sort((a, b) => a.name.localeCompare(b.name));
-                setRepositories(repos);
+                console.error('Failed to fetch repositories:', publicApiError);
+                setError(`Failed to fetch repositories: ${publicApiError.message}`);
+                setRepositories([]);
               }
             }
           }
@@ -638,10 +636,7 @@ const DAKSelectionContent = () => {
     } catch (error) {
       console.error('Error fetching repositories:', error);
       setError('Failed to fetch repositories. Please check your connection and try again.');
-      // Fallback to mock data for demonstration
-      const mockRepos = getMockRepositories();
-      mockRepos.sort((a, b) => a.name.localeCompare(b.name));
-      setRepositories(mockRepos);
+      setRepositories([]);
       // Make sure to stop scanning on error
       setIsScanning(false);
       setScanProgress(null);

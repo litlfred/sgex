@@ -334,6 +334,30 @@ class IssueTrackingService {
       throw error;
     }
   }
+
+  /**
+   * Get tracked item counts
+   */
+  getTrackedCounts(): { issues: number; pullRequests: number; total: number } {
+    const data = this._getStoredData();
+    const items = Object.values(data.trackedItems);
+    const issues = items.filter(item => item.type === 'issue').length;
+    const pullRequests = items.filter(item => item.type === 'pull_request').length;
+    return {
+      issues,
+      pullRequests,
+      total: items.length
+    };
+  }
+
+  /**
+   * Start background sync (stub - no-op for now)
+   */
+  startBackgroundSync(): void {
+    // Background sync functionality can be implemented later
+    // For now, this is a no-op to prevent errors
+    this.logger.debug('Background sync requested (not yet implemented)');
+  }
 }
 
 // Export singleton instance

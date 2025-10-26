@@ -13,7 +13,20 @@ const useThemeImage = (baseImagePath) => {
       const isDarkMode = document.body.classList.contains('theme-dark');
       
       // Get the correct base path for the deployment environment
-      const publicUrl = process.env.PUBLIC_URL || '';
+      // For branch deployments, extract the base path from current URL
+      let publicUrl = process.env.PUBLIC_URL || '';
+      
+      // If we're in a branch deployment (URL contains branch path), use dynamic path
+      if (typeof window !== 'undefined') {
+        const pathname = window.location.pathname;
+        // Match pattern like /sgex/branch-name/ or /sgex/copilot-branch-name/
+        const branchMatch = pathname.match(/^(\/sgex\/[^/]+)/);
+        if (branchMatch) {
+          publicUrl = branchMatch[1];
+        } else if (pathname.startsWith('/sgex')) {
+          publicUrl = '/sgex';
+        }
+      }
       
       // Normalize the base image path (remove leading slash if present)
       const normalizedPath = baseImagePath.startsWith('/') ? baseImagePath.slice(1) : baseImagePath;

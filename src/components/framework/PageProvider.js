@@ -289,9 +289,9 @@ export const PageProvider = ({ children, pageName }) => {
         // Handle profile subscriptions asynchronously
         const handleSubscriptions = async () => {
           try {
-            const currentUser = await githubService.getCurrentUser();
-            if (currentUser) {
-              profileSubscriptionService.ensureCurrentUserSubscribed(currentUser);
+            const userResponse = await githubService.getCurrentUser();
+            if (userResponse.success && userResponse.data) {
+              profileSubscriptionService.ensureCurrentUserSubscribed(userResponse.data);
             }
           } catch (error) {
             // Current user fetch failed, but continue with visited profile logic

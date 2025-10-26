@@ -268,6 +268,74 @@ class GitHubService {
   }
 
   /**
+   * Get user's organizations
+   */
+  async getUserOrganizations(): Promise<any[]> {
+    if (!this.isAuthenticated || !this.octokit) {
+      throw new Error('Not authenticated');
+    }
+
+    try {
+      const { data } = await this.octokit.rest.orgs.listForAuthenticatedUser({
+        per_page: 100
+      });
+      return data;
+    } catch (error) {
+      this.logger.error('Failed to get user organizations', { error });
+      // Return empty array instead of throwing to allow graceful degradation
+      return [];
+    }
+  }
+
+  /**
+   * Check token permissions
+   */
+  async checkTokenPermissions(): Promise<void> {
+    if (!this.isAuthenticated || !this.octokit) {
+      throw new Error('Not authenticated');
+    }
+
+    try {
+      // Validate the token to check permissions
+      const validation = await this.validateToken();
+      if (!validation.isValid) {
+        throw new Error('Token validation failed');
+      }
+      // Token is valid - permissions are already checked during validation
+    } catch (error) {
+      this.logger.error('Failed to check token permissions', { error });
+      throw error;
+    }
+  }
+
+  /**
+   * Get WHO organization information
+   */
+  async getWHOOrganization(): Promise<any> {
+    if (!this.isAuthenticated || !this.octokit) {
+      throw new Error('Not authenticated');
+    }
+
+    try {
+      const { data } = await this.octokit.rest.orgs.get({
+        org: 'WorldHealthOrganization'
+      });
+      return data;
+    } catch (error) {
+      this.logger.debug('Failed to get WHO organization, user may not have access', { error });
+      // Return a fallback object instead of throwing
+      return {
+        login: 'WorldHealthOrganization',
+        id: 7936796,
+        name: 'World Health Organization',
+        description: 'WHO SMART Guidelines',
+        avatar_url: 'https://avatars.githubusercontent.com/u/7936796?s=200&v=4',
+        html_url: 'https://github.com/WorldHealthOrganization'
+      };
+    }
+  }
+
+  /**
    * Get issue details
    */
   async getIssue(owner: string, repo: string, issue_number: number): Promise<any> {
@@ -306,6 +374,32 @@ class GitHubService {
     } catch (error) {
       this.logger.error('Failed to get pull request', { owner, repo, pull_number, error });
       throw error;
+    }
+  }
+
+  /**
+   * Get all pull requests for a specific branch
+   */
+  async getPullRequestsForBranch(owner: string, repo: string, branch: string): Promise<any[]> {
+    try {
+      // Use authenticated octokit if available, otherwise create unauthenticated one
+      const octokitToUse = this.isAuthenticated && this.octokit 
+        ? this.octokit 
+        : await this.createOctokitInstance();
+      
+      const { data } = await octokitToUse.rest.pulls.list({
+        owner,
+        repo,
+        head: `${owner}:${branch}`,
+        state: 'all',
+        sort: 'updated',
+        direction: 'desc'
+      });
+      return data;
+    } catch (error) {
+      this.logger.error('Failed to get pull requests for branch', { owner, repo, branch, error });
+      // Return empty array instead of throwing to allow graceful degradation
+      return [];
     }
   }
 
@@ -494,7 +588,9 @@ class GitHubService {
    * @returns true if authenticated, false otherwise
    */
   isAuth(): boolean {
-    return this.isAuthenticated;
+    // Check if we have a token and octokit instance
+    const hasToken = !!secureTokenStorage.retrieveToken();
+    return this.isAuthenticated && hasToken && !!this.octokit;
   }
 
   /**
@@ -514,6 +610,41 @@ class GitHubService {
     this.permissions = null;
     this.tokenType = null;
     secureTokenStorage.clearToken();
+  }
+
+  /**
+   * Logout - alias for signOut() for backward compatibility
+   */
+  logout(): void {
+    this.signOut();
+  }
+
+  /**
+   * Check if API calls should be skipped (rate limit check)
+   */
+  async shouldSkipApiCalls(): Promise<boolean> {
+    if (!this.isAuthenticated || !this.octokit) {
+      return true; // Skip if not authenticated
+    }
+
+    try {
+      const { data: rateLimit } = await this.octokit.rest.rateLimit.get();
+      const remaining = rateLimit.resources.core?.remaining || rateLimit.rate?.remaining || 0;
+      const limit = rateLimit.resources.core?.limit || rateLimit.rate?.limit || 5000;
+      
+      // Skip if we have less than 10% of rate limit remaining
+      const shouldSkip = remaining < (limit * 0.1);
+      
+      if (shouldSkip) {
+        this.logger.warn('Rate limit low, skipping API calls', { remaining, limit });
+      }
+      
+      return shouldSkip;
+    } catch (error) {
+      this.logger.error('Failed to check rate limit', { error });
+      // On error, don't skip - let the actual API calls fail with proper errors
+      return false;
+    }
   }
 
   /**
@@ -617,6 +748,136 @@ class GitHubService {
         throw new Error('Network error occurred. Please check your internet connection and try again.');
       }
       
+      throw error;
+    }
+  }
+
+  /**
+   * Get SMART Guidelines repositories (non-progressive)
+   * Fetches all user's repositories with DAK detection
+   */
+  async getSmartGuidelinesRepositories(
+    owner: string, 
+    ownerType: 'user' | 'org' = 'user',
+    skipCompatibilityChecks: boolean = false
+  ): Promise<GitHubRepository[]> {
+    try {
+      const octokit = this.isAuthenticated && this.octokit ? this.octokit : await this.createOctokitInstance();
+      
+      this.logger.debug('Fetching all repositories for owner', { owner, ownerType });
+      
+      const allRepos: GitHubRepository[] = [];
+      let page = 1;
+      const perPage = 100;
+      let hasMore = true;
+      
+      while (hasMore) {
+        const listMethod = ownerType === 'org' 
+          ? octokit.rest.repos.listForOrg 
+          : octokit.rest.repos.listForUser;
+        
+        const params: any = {
+          per_page: perPage,
+          page: page,
+          sort: 'updated',
+          direction: 'desc'
+        };
+        
+        if (ownerType === 'org') {
+          params.org = owner;
+        } else {
+          params.username = owner;
+        }
+        
+        const { data } = await listMethod(params);
+        
+        if (data.length === 0) {
+          hasMore = false;
+          break;
+        }
+        
+        allRepos.push(...data);
+        
+        // Check if there are more pages
+        hasMore = data.length === perPage;
+        page++;
+      }
+      
+      this.logger.debug('Fetched repositories', { owner, count: allRepos.length });
+      
+      // If skipCompatibilityChecks is true, return all repos without DAK checking
+      if (skipCompatibilityChecks) {
+        return allRepos;
+      }
+      
+      // Check each repository for DAK compatibility (sushi-config.yaml with smart.who.int.base)
+      const reposWithCompatibility = await Promise.all(
+        allRepos.map(async (repo) => {
+          try {
+            const isCompatible = await this.checkRepositoryCompatibility(owner, repo.name);
+            return {
+              ...repo,
+              smart_guidelines_compatible: isCompatible
+            };
+          } catch (error) {
+            // If we can't check, assume not compatible
+            this.logger.debug('Could not check compatibility', { repo: repo.name, error });
+            return {
+              ...repo,
+              smart_guidelines_compatible: false
+            };
+          }
+        })
+      );
+      
+      // Filter to only return DAK-compatible repositories
+      return reposWithCompatibility.filter(repo => repo.smart_guidelines_compatible);
+      
+    } catch (error) {
+      this.logger.error('Error fetching repositories', { owner, error });
+      throw error;
+    }
+  }
+
+  /**
+   * Get SMART Guidelines repositories with progressive loading
+   * Fetches user's repositories with DAK detection, progressively yielding results
+   */
+  async * getSmartGuidelinesRepositoriesProgressive(owner: string): AsyncGenerator<GitHubRepository[], void, unknown> {
+    try {
+      const octokit = this.isAuthenticated && this.octokit ? this.octokit : await this.createOctokitInstance();
+      
+      this.logger.debug('Fetching repositories progressively for owner', { owner });
+      
+      let page = 1;
+      const perPage = 30;
+      let hasMore = true;
+      
+      while (hasMore) {
+        const { data } = await octokit.rest.repos.listForUser({
+          username: owner,
+          per_page: perPage,
+          page: page,
+          sort: 'updated',
+          direction: 'desc'
+        });
+        
+        if (data.length === 0) {
+          hasMore = false;
+          break;
+        }
+        
+        // Yield the batch of repositories
+        yield data;
+        
+        // Check if there are more pages
+        hasMore = data.length === perPage;
+        page++;
+      }
+      
+      this.logger.debug('Completed progressive repository fetch', { owner, pages: page - 1 });
+    } catch (error) {
+      this.logger.error('Error fetching repositories progressively', { owner, error });
       throw error;
     }
   }

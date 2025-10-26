@@ -302,6 +302,39 @@ class GitHubActionsService {
   }
 
   /**
+   * Get all workflows for a branch
+   * Returns workflow runs with additional computed properties for display
+   */
+  async getAllWorkflowsForBranch(branch: string): Promise<any[]> {
+    try {
+      const workflowId = await this.getWorkflowId();
+      if (!workflowId) {
+        console.debug('No workflow ID found, returning empty array');
+        return [];
+      }
+
+      const runs = await this.getWorkflowRuns(workflowId, branch, 10);
+      
+      // Transform runs to include workflow details and display properties
+      return runs.map(run => ({
+        ...run,
+        workflow: {
+          id: run.workflow_id,
+          name: run.name,
+          path: '', // Not available in run data
+          state: 'active'
+        },
+        displayStatus: run.status === 'completed' ? run.conclusion : run.status,
+        createdAt: run.created_at,
+        updatedAt: run.updated_at
+      }));
+    } catch (error) {
+      console.error('Error fetching workflows for branch:', error);
+      return [];
+    }
+  }
+
+  /**
    * Check if workflow is running
    */
   isWorkflowRunning(run: WorkflowRun): boolean {
