@@ -974,6 +974,90 @@ class GitHubService {
       throw error;
     }
   }
+
+  /**
+   * Approve a pull request
+   */
+  async approvePullRequest(
+    owner: string,
+    repo: string,
+    pullNumber: number,
+    body?: string
+  ): Promise<any> {
+    this.logger.debug('Approving pull request', { owner, repo, pullNumber });
+    
+    if (!this.octokit) {
+      throw new Error('Not authenticated. Please authenticate first.');
+    }
+
+    try {
+      const response = await this.octokit.rest.pulls.createReview({
+        owner,
+        repo,
+        pull_number: pullNumber,
+        event: 'APPROVE',
+        body: body || ''
+      });
+
+      this.logger.debug('Pull request approved successfully', {
+        owner,
+        repo,
+        pullNumber
+      });
+
+      return response.data;
+    } catch (error: any) {
+      this.logger.error('Failed to approve pull request', {
+        owner,
+        repo,
+        pullNumber,
+        error: error instanceof Error ? error.message : String(error)
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Request changes on a pull request
+   */
+  async requestChanges(
+    owner: string,
+    repo: string,
+    pullNumber: number,
+    body: string
+  ): Promise<any> {
+    this.logger.debug('Requesting changes on pull request', { owner, repo, pullNumber });
+    
+    if (!this.octokit) {
+      throw new Error('Not authenticated. Please authenticate first.');
+    }
+
+    try {
+      const response = await this.octokit.rest.pulls.createReview({
+        owner,
+        repo,
+        pull_number: pullNumber,
+        event: 'REQUEST_CHANGES',
+        body
+      });
+
+      this.logger.debug('Changes requested successfully', {
+        owner,
+        repo,
+        pullNumber
+      });
+
+      return response.data;
+    } catch (error: any) {
+      this.logger.error('Failed to request changes', {
+        owner,
+        repo,
+        pullNumber,
+        error: error instanceof Error ? error.message : String(error)
+      });
+      throw error;
+    }
+  }
 }
 
 // Export singleton instance to maintain backward compatibility
