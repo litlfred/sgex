@@ -321,6 +321,24 @@ class GitHubActionsService {
   isWorkflowFailed(run: WorkflowRun): boolean {
     return run.status === 'completed' && (run.conclusion === 'failure' || run.conclusion === 'cancelled');
   }
+
+  /**
+   * Check if user has permission to trigger workflows
+   */
+  async checkWorkflowTriggerPermissions(): Promise<boolean> {
+    // For now, return true if authenticated
+    // In a real implementation, this would check actual permissions
+    return this.token !== null;
+  }
+
+  /**
+   * Check if user has permission to approve workflow runs
+   */
+  async checkWorkflowApprovalPermissions(): Promise<boolean> {
+    // For now, return true if authenticated
+    // In a real implementation, this would check actual permissions
+    return this.token !== null;
+  }
 }
 
 // Export singleton instance

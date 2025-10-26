@@ -879,9 +879,11 @@ const PreviewBadge: React.FC = () => {
       // Refresh the PR info to reflect the new review status
       setTimeout(async () => {
         try {
-          const refreshedPRs = await fetchPRsForBranch(branchInfo?.name);
-          if (refreshedPRs && refreshedPRs.length > 0) {
-            setPrInfo(refreshedPRs);
+          if (branchInfo?.name) {
+            const refreshedPRs = await fetchPRsForBranch(branchInfo.name);
+            if (refreshedPRs && refreshedPRs.length > 0) {
+              setPrInfo(refreshedPRs);
+            }
           }
         } catch (error) {
           console.debug('Could not refresh PR status after approval:', error);
@@ -889,7 +891,7 @@ const PreviewBadge: React.FC = () => {
       }, 2000);
 
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to approve PR:', error);
       console.log('Error details:', {
         status: error.status,
@@ -949,9 +951,11 @@ const PreviewBadge: React.FC = () => {
       // Refresh the PR info to reflect the new review status
       setTimeout(async () => {
         try {
-          const refreshedPRs = await fetchPRsForBranch(branchInfo?.name);
-          if (refreshedPRs && refreshedPRs.length > 0) {
-            setPrInfo(refreshedPRs);
+          if (branchInfo?.name) {
+            const refreshedPRs = await fetchPRsForBranch(branchInfo.name);
+            if (refreshedPRs && refreshedPRs.length > 0) {
+              setPrInfo(refreshedPRs);
+            }
           }
         } catch (error) {
           console.debug('Could not refresh PR status after requesting changes:', error);
@@ -959,7 +963,7 @@ const PreviewBadge: React.FC = () => {
       }, 2000);
 
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to request changes:', error);
       
       // Provide user-friendly error messages
@@ -979,7 +983,7 @@ const PreviewBadge: React.FC = () => {
     }
   };
 
-  const handleMarkReadyForReview = async (owner, repo, prNumber) => {
+  const handleMarkReadyForReview = async (owner: string, repo: string, prNumber: number) => {
     if (!githubService.isAuth() || isMarkingReadyForReview || !canMergePR) {
       return false;
     }
@@ -1000,9 +1004,11 @@ const PreviewBadge: React.FC = () => {
       // Refresh the PR info to reflect the new draft status
       setTimeout(async () => {
         try {
-          const refreshedPRs = await fetchPRsForBranch(branchInfo?.name);
-          if (refreshedPRs && refreshedPRs.length > 0) {
-            setPrInfo(refreshedPRs);
+          if (branchInfo?.name) {
+            const refreshedPRs = await fetchPRsForBranch(branchInfo.name);
+            if (refreshedPRs && refreshedPRs.length > 0) {
+              setPrInfo(refreshedPRs);
+            }
           }
         } catch (error) {
           console.debug('Could not refresh PR status after marking ready for review:', error);
@@ -1010,7 +1016,7 @@ const PreviewBadge: React.FC = () => {
       }, 2000);
 
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to mark PR as ready for review:', error);
       
       // Provide user-friendly error messages
@@ -1034,7 +1040,7 @@ const PreviewBadge: React.FC = () => {
     }
   };
 
-  const checkPermissions = async (owner, repo) => {
+  const checkPermissions = async (owner: string, repo: string) => {
     if (!githubService.isAuth()) {
       setCanComment(false);
       setCanTriggerWorkflows(false);
@@ -1091,7 +1097,7 @@ const PreviewBadge: React.FC = () => {
     }
   };
 
-  const setupCommentAutoRefresh = (owner, repo, prNumber) => {
+  const setupCommentAutoRefresh = (owner: string, repo: string, prNumber: number) => {
     // Clear any existing interval
     if (commentRefreshIntervalRef.current) {
       clearInterval(commentRefreshIntervalRef.current);
@@ -1138,7 +1144,7 @@ const PreviewBadge: React.FC = () => {
     }
   };
 
-  const setupWorkflowAutoRefresh = (branchName) => {
+  const setupWorkflowAutoRefresh = (branchName: string) => {
     // Clear any existing interval
     if (workflowRefreshIntervalRef.current) {
       clearInterval(workflowRefreshIntervalRef.current);
@@ -1215,7 +1221,7 @@ const PreviewBadge: React.FC = () => {
     }
   };
 
-  const handleCommentToggle = (commentId) => {
+  const handleCommentToggle = (commentId: number) => {
     const newExpanded = new Set(expandedComments);
     if (newExpanded.has(commentId)) {
       newExpanded.delete(commentId);
@@ -1279,7 +1285,7 @@ const PreviewBadge: React.FC = () => {
           
           // Clear success status after 3 seconds
           setTimeout(() => setCommentSubmissionStatus(null), 3000);
-        } catch (submitError) {
+        } catch (submitError: any) {
           console.error('GitHub API comment submission error:', {
             error: submitError,
             message: submitError.message,
@@ -1303,25 +1309,25 @@ const PreviewBadge: React.FC = () => {
             errorMessage += 'Please try again.';
           }
           
-          setCommentSubmissionStatus({ type: 'error', message: errorMessage });
+          setCommentSubmissionStatus('error');
           // Clear error status after 7 seconds for longer messages
           setTimeout(() => setCommentSubmissionStatus(null), 7000);
         }
       } else {
         console.warn('No PR info available for comment submission');
-        setCommentSubmissionStatus({ type: 'error', message: 'No pull request found to comment on.' });
+        setCommentSubmissionStatus('error');
         setTimeout(() => setCommentSubmissionStatus(null), 5000);
       }
     } catch (error) {
       console.error('Unexpected error during comment submission:', error);
-      setCommentSubmissionStatus({ type: 'error', message: 'Unexpected error occurred. Please try again.' });
+      setCommentSubmissionStatus('error');
       setTimeout(() => setCommentSubmissionStatus(null), 5000);
     } finally {
       setSubmittingComment(false);
     }
   };
 
-  const truncateDescription = (text, maxLines = 6) => {
+  const truncateDescription = (text: string, maxLines: number = 6) => {
     if (!text) return '';
     const lines = text.split('\n');
     if (lines.length <= maxLines) return text;
@@ -1332,7 +1338,7 @@ const PreviewBadge: React.FC = () => {
     setExpandedDescription(!expandedDescription);
   };
 
-  const convertGitHubNotationToLinks = (content) => {
+  const convertGitHubNotationToLinks = (content: string) => {
     if (!content || typeof content !== 'string') return content || '';
     
     // Get current repository context
@@ -1405,7 +1411,7 @@ const PreviewBadge: React.FC = () => {
     return processedContent;
   };
 
-  const processMarkdownContent = (content) => {
+  const processMarkdownContent = (content: string | null) => {
     if (!content || typeof content !== 'string') return content || '';
     
     // Convert GitHub notation to markdown links
@@ -1413,7 +1419,7 @@ const PreviewBadge: React.FC = () => {
     return convertGitHubNotationToLinks(content);
   };
 
-  const convertGitHubNotationToHtml = (content) => {
+  const convertGitHubNotationToHtml = (content: string) => {
     if (!content || typeof content !== 'string') return content || '';
     
     // Get current repository context
