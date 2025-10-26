@@ -810,9 +810,28 @@ class GitHubService {
         return allRepos;
       }
       
-      // Otherwise, filter for DAK-compatible repos (check for sushi-config.yaml)
-      // This would require additional API calls, so for now return all and let caller filter
-      return allRepos;
+      // Check each repository for DAK compatibility (sushi-config.yaml with smart.who.int.base)
+      const reposWithCompatibility = await Promise.all(
+        allRepos.map(async (repo) => {
+          try {
+            const isCompatible = await this.checkRepositoryCompatibility(owner, repo.name);
+            return {
+              ...repo,
+              smart_guidelines_compatible: isCompatible
+            };
+          } catch (error) {
+            // If we can't check, assume not compatible
+            this.logger.debug('Could not check compatibility', { repo: repo.name, error });
+            return {
+              ...repo,
+              smart_guidelines_compatible: false
+            };
+          }
+        })
+      );
+      
+      // Filter to only return DAK-compatible repositories
+      return reposWithCompatibility.filter(repo => repo.smart_guidelines_compatible);
       
     } catch (error) {
       this.logger.error('Error fetching repositories', { owner, error });
