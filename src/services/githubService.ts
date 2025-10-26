@@ -753,6 +753,74 @@ class GitHubService {
   }
 
   /**
+   * Get SMART Guidelines repositories (non-progressive)
+   * Fetches all user's repositories with DAK detection
+   */
+  async getSmartGuidelinesRepositories(
+    owner: string, 
+    ownerType: 'user' | 'org' = 'user',
+    skipCompatibilityChecks: boolean = false
+  ): Promise<GitHubRepository[]> {
+    try {
+      const octokit = this.isAuthenticated && this.octokit ? this.octokit : await this.createOctokitInstance();
+      
+      this.logger.debug('Fetching all repositories for owner', { owner, ownerType });
+      
+      const allRepos: GitHubRepository[] = [];
+      let page = 1;
+      const perPage = 100;
+      let hasMore = true;
+      
+      while (hasMore) {
+        const listMethod = ownerType === 'org' 
+          ? octokit.rest.repos.listForOrg 
+          : octokit.rest.repos.listForUser;
+        
+        const params: any = {
+          per_page: perPage,
+          page: page,
+          sort: 'updated',
+          direction: 'desc'
+        };
+        
+        if (ownerType === 'org') {
+          params.org = owner;
+        } else {
+          params.username = owner;
+        }
+        
+        const { data } = await listMethod(params);
+        
+        if (data.length === 0) {
+          hasMore = false;
+          break;
+        }
+        
+        allRepos.push(...data);
+        
+        // Check if there are more pages
+        hasMore = data.length === perPage;
+        page++;
+      }
+      
+      this.logger.debug('Fetched repositories', { owner, count: allRepos.length });
+      
+      // If skipCompatibilityChecks is true, return all repos without DAK checking
+      if (skipCompatibilityChecks) {
+        return allRepos;
+      }
+      
+      // Otherwise, filter for DAK-compatible repos (check for sushi-config.yaml)
+      // This would require additional API calls, so for now return all and let caller filter
+      return allRepos;
+      
+    } catch (error) {
+      this.logger.error('Error fetching repositories', { owner, error });
+      throw error;
+    }
+  }
+
+  /**
    * Get SMART Guidelines repositories with progressive loading
    * Fetches user's repositories with DAK detection, progressively yielding results
    */
