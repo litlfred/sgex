@@ -345,19 +345,35 @@ jobs:
         run: |
           echo "📊 Analyzing webpack bundle..."
           
-          # Generate bundle analysis report
+          # Generate bundle analysis report in JSON format with run ID
           python3 scripts/analyze_webpack_stats.py \
             --build-dir "build" \
-            --output-file "artifacts/bundle-report.txt" 2>&1 | tee -a artifacts/bundle-analysis-step.log
+            --format json \
+            --output-file "artifacts/bundle-report.${{ github.run_id }}.json" 2>&1 | tee -a artifacts/bundle-analysis-step.${{ github.run_id }}.log
           
           # Display summary
-          if [ -f "artifacts/bundle-report.txt" ]; then
+          if [ -f "artifacts/bundle-report.${{ github.run_id }}.json" ]; then
             echo "✅ Bundle analysis complete"
             echo ""
-            echo "=== Bundle Summary (First 30 lines) ==="
-            head -30 artifacts/bundle-report.txt
+            echo "=== Bundle Summary ==="
+            # Extract key info from JSON for quick display
+            python3 -c "
+import json
+import sys
+try:
+    with open('artifacts/bundle-report.${{ github.run_id }}.json') as f:
+        data = json.load(f)
+    if 'build_files' in data:
+        print(f\"Total files: {data['build_files']['total_count']}\")
+        print(f\"Total size: {data['build_files']['total_size_formatted']}\")
+        if 'javascript' in data:
+            print(f\"JavaScript files: {data['javascript']['count']}\")
+            print(f\"JavaScript size: {data['javascript']['total_size_formatted']}\")
+except Exception as e:
+    print(f'Error reading JSON: {e}', file=sys.stderr)
+"
             echo ""
-            echo "📦 Full report available in workflow artifacts"
+            echo "📦 Full JSON report available in workflow artifacts"
           else
             echo "⚠️  Bundle analysis report not generated"
           fi
@@ -394,13 +410,9 @@ jobs:
             echo "⚠️  Webpack stats not found"
           fi
           
-          if [ -f "artifacts/bundle-report.txt" ]; then
-            report_lines=$(wc -l < artifacts/bundle-report.txt)
-            report_size=$(du -h artifacts/bundle-report.txt | cut -f1)
-            echo "📦 Bundle Report: $report_lines lines, $report_size"
-            echo ""
-            echo "Top 5 Largest Files:"
-            grep -A 5 "Largest Files" artifacts/bundle-report.txt | tail -5 || echo "  (Not available)"
+          if [ -f "artifacts/bundle-report.${{ github.run_id }}.json" ]; then
+            report_size=$(du -h artifacts/bundle-report.${{ github.run_id }}.json | cut -f1)
+            echo "📦 Bundle Report (JSON): $report_size"
           else
             echo "⚠️  Bundle report not found"
           fi
@@ -410,21 +422,21 @@ jobs:
             echo "🔧 Build Step Log: $build_step_size"
           fi
           
-          if [ -f "artifacts/bundle-analysis-step.log" ]; then
-            analysis_step_size=$(du -h artifacts/bundle-analysis-step.log | cut -f1)
+          if [ -f "artifacts/bundle-analysis-step.${{ github.run_id }}.log" ]; then
+            analysis_step_size=$(du -h artifacts/bundle-analysis-step.${{ github.run_id }}.log | cut -f1)
             echo "📊 Analysis Step Log: $analysis_step_size"
           fi
           
           echo ""
           echo "=============================================================================="
           echo "🔗 Download artifacts from the Actions run page"
-          echo "   Each log file is available as a separate artifact:"
+          echo "   Each artifact includes run ID (${{ github.run_id }}) in filename/name:"
           echo "   - workflow-event-log (uploaded early, available immediately)"
           echo "   - build-logs"
           echo "   - webpack-stats"
-          echo "   - bundle-report"
+          echo "   - bundle-report-${{ github.run_id }} (JSON format)"
           echo "   - build-step-log"
-          echo "   - bundle-analysis-step-log"
+          echo "   - bundle-analysis-step-log-${{ github.run_id }}"
           echo "=============================================================================="
           echo ""
 
@@ -450,8 +462,8 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: bundle-report
-          path: artifacts/bundle-report.txt
+          name: bundle-report-${{ github.run_id }}
+          path: artifacts/bundle-report.${{ github.run_id }}.json
           retention-days: 90
           if-no-files-found: warn
 
@@ -468,8 +480,8 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: bundle-analysis-step-log
-          path: artifacts/bundle-analysis-step.log
+          name: bundle-analysis-step-log-${{ github.run_id }}
+          path: artifacts/bundle-analysis-step.${{ github.run_id }}.log
           retention-days: 90
           if-no-files-found: warn
 
@@ -483,7 +495,7 @@ jobs:
             --token "${{ secrets.GITHUB_TOKEN }}" \
             --repo "${{ github.repository }}" \
             --run-id "${{ github.run_id }}" \
-            --artifact-names "workflow-event-log,build-logs,webpack-stats,bundle-report,build-step-log,bundle-analysis-step-log" \
+            --artifact-names "workflow-event-log,build-logs,webpack-stats,bundle-report-${{ github.run_id }},build-step-log,bundle-analysis-step-log-${{ github.run_id }}" \
             --output-file "artifacts/all-artifact-urls.json" \
             --max-retries 5 \
             --retry-delay 3
@@ -496,21 +508,40 @@ jobs:
             EVENT_URL=$(python3 -c "import json; data=json.load(open('artifacts/all-artifact-urls.json')); print(data.get('artifact_urls', {}).get('workflow-event-log', ''))" 2>/dev/null || echo "")
             BUILD_LOGS_URL=$(python3 -c "import json; data=json.load(open('artifacts/all-artifact-urls.json')); print(data.get('artifact_urls', {}).get('build-logs', ''))" 2>/dev/null || echo "")
             WEBPACK_STATS_URL=$(python3 -c "import json; data=json.load(open('artifacts/all-artifact-urls.json')); print(data.get('artifact_urls', {}).get('webpack-stats', ''))" 2>/dev/null || echo "")
-            BUNDLE_REPORT_URL=$(python3 -c "import json; data=json.load(open('artifacts/all-artifact-urls.json')); print(data.get('artifact_urls', {}).get('bundle-report', ''))" 2>/dev/null || echo "")
-            BUILD_STEP_URL=$(python3 -c "import json; data=json.load(open('artifacts/all-artifact-urls.json')); print(data.get('artifact_urls', {}).get('build-step-log', ''))" 2>/dev/null || echo "")
-            ANALYSIS_STEP_URL=$(python3 -c "import json; data=json.load(open('artifacts/all-artifact-urls.json')); print(data.get('artifact_urls', {}).get('bundle-analysis-step-log', ''))" 2>/dev/null || echo "")
+            BUNDLE_REPORT_URL=$(python3 -c "import json; data=json.load(open('artifacts/all-artifact-urls.json')); print(data.get('artifact_urls', {}).get('bundle-report-${{ github.run_id }}', ''))" 2>/dev/null || echo "")
+            BUILD_STEP_LOG_URL=$(python3 -c "import json; data=json.load(open('artifacts/all-artifact-urls.json')); print(data.get('artifact_urls', {}).get('build-step-log', ''))" 2>/dev/null || echo "")
+            BUNDLE_ANALYSIS_STEP_LOG_URL=$(python3 -c "import json; data=json.load(open('artifacts/all-artifact-urls.json')); print(data.get('artifact_urls', {}).get('bundle-analysis-step-log-${{ github.run_id }}', ''))" 2>/dev/null || echo "")
             
             echo "event_artifact_url=$EVENT_URL" >> $GITHUB_OUTPUT
             echo "build_logs_url=$BUILD_LOGS_URL" >> $GITHUB_OUTPUT
             echo "webpack_stats_url=$WEBPACK_STATS_URL" >> $GITHUB_OUTPUT
             echo "bundle_report_url=$BUNDLE_REPORT_URL" >> $GITHUB_OUTPUT
-            echo "build_step_url=$BUILD_STEP_URL" >> $GITHUB_OUTPUT
-            echo "analysis_step_url=$ANALYSIS_STEP_URL" >> $GITHUB_OUTPUT
+            echo "build_step_log_url=$BUILD_STEP_LOG_URL" >> $GITHUB_OUTPUT
+            echo "bundle_analysis_step_log_url=$BUNDLE_ANALYSIS_STEP_LOG_URL" >> $GITHUB_OUTPUT
             
             echo "✅ Retrieved artifact URLs"
           else
             echo "⚠️  Failed to retrieve artifact URLs"
           fi
+
+      - name: Generate Bundle Analysis Report (JSON)
+        continue-on-error: true
+        run: |
+          echo "📊 Generating bundle analysis report..."
+          
+          # Generate JSON report with run ID in filename
+          node scripts/generate-bundle-report-json.js bundle-report.${{ github.run_id }}.json
+          
+          echo "✅ Bundle report generated: bundle-report.${{ github.run_id }}.json"
+
+      - name: Upload Bundle Analysis Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        continue-on-error: true
+        with:
+          name: bundle-report-${{ github.run_id }}
+          path: bundle-report.${{ github.run_id }}.json
+          retention-days: 30
 
       - name: Validate branch directory safety
         id: validate_branch
@@ -1040,6 +1071,7 @@ jobs:
         run: |
           target_subdir="${{ steps.validate_branch.outputs.target_subdir }}"
           branch_url="https://${{ github.repository_owner }}.github.io/sgex/$target_subdir/"
+          bundle_report_url="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts"
           python3 /tmp/sgex-scripts/manage-pr-comment.py \
             --token "${{ secrets.GITHUB_TOKEN }}" \
             --repo "${{ github.repository }}" \
@@ -1049,7 +1081,7 @@ jobs:
             --workflow-name "Deploy Feature Branch" \
             --event-name "${{ github.event_name }}" \
             --stage "success" \
-            --data "{\"commit_sha\":\"${{ github.sha }}\",\"branch_name\":\"${{ steps.branch_info.outputs.branch_name }}\",\"commit_url\":\"https://github.com/${{ github.repository }}/commit/${{ github.sha }}\",\"workflow_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\",\"branch_url\":\"$branch_url\",\"build_logs_available\":true,\"artifacts_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifacts\",\"event_artifact_url\":\"${{ steps.all_artifact_urls.outputs.event_artifact_url }}\",\"build_logs_url\":\"${{ steps.all_artifact_urls.outputs.build_logs_url }}\",\"webpack_stats_url\":\"${{ steps.all_artifact_urls.outputs.webpack_stats_url }}\",\"bundle_report_url\":\"${{ steps.all_artifact_urls.outputs.bundle_report_url }}\",\"build_step_url\":\"${{ steps.all_artifact_urls.outputs.build_step_url }}\",\"analysis_step_url\":\"${{ steps.all_artifact_urls.outputs.analysis_step_url }}\"}"
+            --data "{\"commit_sha\":\"${{ github.sha }}\",\"branch_name\":\"${{ steps.branch_info.outputs.branch_name }}\",\"commit_url\":\"https://github.com/${{ github.repository }}/commit/${{ github.sha }}\",\"workflow_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\",\"branch_url\":\"$branch_url\",\"build_logs_available\":true,\"artifacts_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifacts\",\"event_artifact_url\":\"${{ steps.all_artifact_urls.outputs.event_artifact_url }}\",\"build_logs_url\":\"${{ steps.all_artifact_urls.outputs.build_logs_url }}\",\"webpack_stats_url\":\"${{ steps.all_artifact_urls.outputs.webpack_stats_url }}\",\"bundle_report_url\":\"${{ steps.all_artifact_urls.outputs.bundle_report_url }}\",\"build_step_url\":\"${{ steps.all_artifact_urls.outputs.build_step_url }}\",\"analysis_step_url\":\"${{ steps.all_artifact_urls.outputs.analysis_step_url }}\",\"bundle_report_file\":\"bundle-report.${{ github.run_id }}.json\"}"
 
       - name: Comment on associated PR (Failure)
         if: always() && failure() && steps.find_pr.outputs.result != ''

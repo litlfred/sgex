@@ -38,6 +38,12 @@
     "configure:repo": "node scripts/configure-repository.js",
     "start": "npm run configure:repo && craco start",
     "build": "npm run configure:repo && craco build",
+    "build:analyze": "ANALYZE=true npm run build",
+    "analyze": "npm run build:analyze && echo '\n✅ Bundle analysis complete! Open bundle-report.html to view the interactive report.'",
+    "check-bundle-size": "node scripts/check-bundle-size.js",
+    "build:check": "npm run build && npm run check-bundle-size",
+    "bundle-report:json": "node scripts/generate-bundle-report-json.js",
+    "build:report": "npm run build && npm run bundle-report:json",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "serve": "npm run build && cd build && python3 -m http.server 3000",
@@ -116,6 +122,7 @@
     "process": "^0.11.10",
     "ts-json-schema-generator": "^2.4.0",
     "typescript": "^5.9.2",
-    "typescript-json-schema": "^0.65.1"
+    "typescript-json-schema": "^0.65.1",
+    "webpack-bundle-analyzer": "^4.10.2"
   }
 }

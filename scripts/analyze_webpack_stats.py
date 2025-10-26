@@ -303,6 +303,76 @@ class BundleAnalyzer:
 
         return report
 
+    def generate_json_report(
+        self,
+        build_dir: Optional[Path] = None
+    ) -> Dict:
+        """
+        Generate JSON bundle analysis report.
+
+        Args:
+            build_dir: Optional path to build directory for file analysis
+
+        Returns:
+            Dictionary with report data
+        """
+        timestamp = datetime.now(timezone.utc).isoformat()
+        
+        # Build analysis data
+        build_analysis = {}
+        if build_dir and build_dir.exists():
+            build_analysis = self.analyze_build_directory(build_dir)
+        
+        # Prepare JSON structure
+        report_data = {
+            'timestamp': timestamp,
+            'build_directory': str(build_dir) if build_dir else None,
+            'stats_loaded': self.stats is not None,
+        }
+        
+        # Add build files info if available
+        if build_analysis:
+            files = build_analysis.get('files', [])
+            total_size = build_analysis.get('total_size', 0)
+            
+            report_data['build_files'] = {
+                'total_count': len(files),
+                'total_size': total_size,
+                'total_size_formatted': self.format_size(total_size),
+                'files': files[:50],  # Limit to top 50 files
+                'large_files': [
+                    f for f in files 
+                    if f['size'] > self.LARGE_MODULE_THRESHOLD
+                ],
+            }
+            
+            # Add JavaScript-specific analysis
+            js_files = [f for f in files if f['type'] == '.js']
+            if js_files:
+                js_total = sum(f['size'] for f in js_files)
+                report_data['javascript'] = {
+                    'count': len(js_files),
+                    'total_size': js_total,
+                    'total_size_formatted': self.format_size(js_total),
+                    'files': js_files,
+                }
+        
+        # Add stats info if available
+        if self.stats:
+            assets = self.stats.get('assets', [])
+            chunks = self.stats.get('chunks', [])
+            modules = self.stats.get('modules', [])
+            
+            report_data['webpack_stats'] = {
+                'asset_count': len(assets),
+                'chunk_count': len(chunks),
+                'module_count': len(modules),
+                'assets': assets[:50],  # Limit to top 50 assets
+                'chunks': chunks[:50],  # Limit to top 50 chunks
+            }
+        
+        return report_data
+
 
 def parse_arguments():
     """Parse command line arguments."""
@@ -352,6 +422,14 @@ Examples:
         help='Path to write report (default: print to stdout)'
     )
 
+    parser.add_argument(
+        '--format',
+        type=str,
+        choices=['text', 'json'],
+        default='text',
+        help='Output format: text or json (default: text)'
+    )
+
     return parser.parse_args()
 
 
@@ -366,16 +444,33 @@ def main():
     if args.stats_file:
         analyzer.load_stats(args.stats_file)
 
-    # Generate report
-    report = analyzer.generate_report(
-        build_dir=args.build_dir,
-        output_file=args.output_file
-    )
+    # Generate report based on format
+    if args.format == 'json':
+        report_data = analyzer.generate_json_report(build_dir=args.build_dir)
+        report = json.dumps(report_data, indent=2)
+        
+        # Write to file if requested
+        if args.output_file:
+            try:
+                args.output_file.parent.mkdir(parents=True, exist_ok=True)
+                with open(args.output_file, 'w', encoding='utf-8') as f:
+                    f.write(report)
+                print(f"✅ JSON report written to: {args.output_file}")
+            except Exception as e:
+                print(f"❌ Error writing JSON report: {e}", file=sys.stderr)
+        else:
+            print(report)
+    else:
+        # Generate text report
+        report = analyzer.generate_report(
+            build_dir=args.build_dir,
+            output_file=args.output_file
+        )
 
-    # Print to stdout if no output file specified
-    if not args.output_file:
-        print()
-        print(report)
+        # Print to stdout if no output file specified
+        if not args.output_file:
+            print()
+            print(report)
 
     sys.exit(0)
 

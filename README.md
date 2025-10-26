@@ -206,6 +206,7 @@ sgex/
 - `npm start` - Runs the app in development mode
 - `npm test` - Launches the test runner in interactive watch mode
 - `npm run build` - Builds the app for production (includes TypeScript type checking and schema generation)
+- `npm run analyze` - Generates bundle analysis report for optimization (see [Bundle Analysis](#bundle-analysis))
 - `npm run type-check` - Runs TypeScript type checking without compilation
 - `npm run type-check:watch` - Runs TypeScript type checking in watch mode
 - `npm run generate-schemas` - Generates JSON schemas from TypeScript types
@@ -213,6 +214,61 @@ sgex/
 - `npm run lint:a11y` - Shows only accessibility (jsx-a11y) warnings
 - `npm run lint:fix` - Automatically fixes linting issues where possible
 - `npm run eject` - **Note: This is a one-way operation. Don't do this unless you're sure!**
+
+### Bundle Analysis
+
+SGEX Workbench includes webpack-bundle-analyzer for monitoring and optimizing bundle size. This helps maintain fast load times as required by REQ-PERF-001.
+
+**Quick Start:**
+```bash
+# Check if bundles exceed size limits
+npm run check-bundle-size
+
+# Analyze bundle composition
+npm run analyze
+
+# Build and check in one command
+npm run build:check
+```
+
+**Tools:**
+- `npm run check-bundle-size` - Enforce bundle size budgets and catch regressions
+- `npm run analyze` - Generate interactive treemap visualization and detailed statistics
+- `npm run build:check` - Build and verify bundle sizes in one command
+- `npm run bundle-report:json` - Generate JSON-formatted bundle analysis report
+- `npm run build:report` - Build and generate JSON bundle report
+
+**CI/CD Integration:**
+The bundle analyzer automatically generates JSON reports during CI/CD builds. Reports are uploaded as artifacts with the naming pattern `bundle-report.{run_id}.json` for easy identification and download.
+
+**Size Budgets:**
+- Main bundle: 300 KB maximum (currently 532 KB ❌)
+- Individual chunks: 1 MB maximum (2 chunks exceed ❌)
+- Total JS: 10 MB maximum (currently 10.43 MB ❌)
+
+**Documentation:**
+- [Bundle Analysis Guide](docs/bundle-analysis-guide.md) - How to use the analyzer
+- [Bundle Analysis Report](BUNDLE_ANALYSIS_REPORT.md) - Current findings and recommendations
+- [FHIR Resource Loader](docs/fhir-resource-loader.md) - Dynamic FHIR resource loading service
+- [FHIR Integration Guide](docs/fhir-resource-integration-guide.md) - How to integrate FHIR loader into components
+
+**Key Findings:**
+- Main bundle: 532 KB (exceeds 300 KB limit by 231 KB)
+- Largest chunk: 5.64 MB (exceeds 1 MB limit by 4.64 MB)
+- Second largest: 1.38 MB (exceeds 1 MB limit by 385 KB)
+- Optimization potential: 33% reduction in main bundle, 65% in largest chunks
+
+**Optimizations Implemented:**
+- ✅ Bundle analyzer for identifying large dependencies
+- ✅ Bundle size checker for enforcing budgets
+- ✅ FHIR Resource Loader for dynamic resource loading (~3 MB reduction potential)
+- ✅ Integration helpers and comprehensive migration guide
+
+The bundle analyzer helps identify:
+- Large dependencies that can be lazy-loaded
+- Duplicate code across chunks
+- Opportunities for code splitting
+- Unused exports and dead code
 
 ### TypeScript Migration
 

@@ -68,6 +68,24 @@ module.exports = {
         miniCssExtractPlugin.options.ignoreOrder = true;
       }
       
+      // Add webpack-bundle-analyzer plugin if ANALYZE environment variable is set
+      // This generates an interactive HTML report showing bundle composition
+      if (process.env.ANALYZE === 'true') {
+        const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
+        webpackConfig.plugins.push(
+          new BundleAnalyzerPlugin({
+            analyzerMode: 'static',
+            reportFilename: '../bundle-report.html',
+            openAnalyzer: false,
+            generateStatsFile: true,
+            statsFilename: '../bundle-stats.json',
+            statsOptions: {
+              source: false, // Exclude source code from stats to reduce file size
+            },
+          })
+        );
+      }
+      
       // Add comprehensive fallbacks for Node.js modules used by fsh-sushi
       // These are required for dynamic imports of fsh-sushi to work in browser
       

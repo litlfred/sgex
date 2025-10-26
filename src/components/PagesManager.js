@@ -1,11 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
 import stagingGroundService from '../services/stagingGroundService';
 import { PageLayout } from './framework';
 import PageViewModal from './PageViewModal';
-import PageEditModal from './PageEditModal';
 import DAKStatusBox from './DAKStatusBox';
+
+// Lazy load PageEditModal to reduce initial bundle size
+// This modal contains the markdown editor which is ~2.4 MB
+const PageEditModal = lazy(() => import('./PageEditModal'));
 
 const PagesManager = () => {
   const location = useLocation();
@@ -570,11 +573,22 @@ const PagesManager = () => {
 
       {/* Edit Modal */}
       {editModalPage && (
-        <PageEditModal
-          page={editModalPage}
-          onClose={() => setEditModalPage(null)}
-          onSave={handleSavePage}
-        />
+        <Suspense fallback={<div style={{ 
+          position: 'fixed', 
+          top: '50%', 
+          left: '50%', 
+          transform: 'translate(-50%, -50%)',
+          padding: '20px',
+          background: 'white',
+          borderRadius: '8px',
+          boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+        }}>Loading editor...</div>}>
+          <PageEditModal
+            page={editModalPage}
+            onClose={() => setEditModalPage(null)}
+            onSave={handleSavePage}
+          />
+        </Suspense>
       )}
       </div>
     </PageLayout>
