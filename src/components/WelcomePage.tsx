@@ -316,9 +316,11 @@ const WelcomePage: React.FC = () => {
         {/* PAT Help Modal */}
         {showPATHelp && (
           <HelpModal
+            topic={undefined}
             helpTopic={helpContentService.getHelpTopic('github-pat-setup')}
             contextData={{ pageId: 'welcome' }}
             onClose={() => setShowPATHelp(false)}
+            tutorialId={undefined}
           />
         )}
       </div>

@@ -5,9 +5,9 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { createDashboard } from '../framework';
-import dataAccessLayer from '../../services/dataAccessLayer';
-import userAccessService from '../../services/userAccessService';
+import { createDashboard } from './framework/ToolDefinition';
+import dataAccessLayer from '../services/dataAccessLayer';
+import userAccessService from '../services/userAccessService';
 
 interface Repository {
   name: string;
@@ -85,7 +85,7 @@ const RepositoryStatsDashboard: React.FC<DashboardProps> = ({
       
       // In a real implementation, this would gather statistics
       // For demo purposes, we'll create mock statistics
-      const mockStats = {
+      const mockStats: Stats = {
         totalAssets: 15,
         valuesSets: 8,
         actors: 3,
@@ -94,9 +94,9 @@ const RepositoryStatsDashboard: React.FC<DashboardProps> = ({
         contributors: ['user1', 'user2', 'user3'],
         branches: ['main', 'develop', 'feature/new-guidelines'],
         recentChanges: [
-          { file: 'input/vocabulary/ValueSet-anc-care-codes.json', type: 'modified', date: '2024-01-20' },
-          { file: 'input/actors/Patient.json', type: 'added', date: '2024-01-19' },
-          { file: 'input/bpmn/anc-workflow.bpmn', type: 'modified', date: '2024-01-18' }
+          { file: 'input/vocabulary/ValueSet-anc-care-codes.json', type: 'modified' as const, date: '2024-01-20' },
+          { file: 'input/actors/Patient.json', type: 'added' as const, date: '2024-01-19' },
+          { file: 'input/bpmn/anc-workflow.bpmn', type: 'modified' as const, date: '2024-01-18' }
         ]
       };
 
@@ -115,9 +115,9 @@ const RepositoryStatsDashboard: React.FC<DashboardProps> = ({
     const userType = userAccessService.getUserType();
     const currentUser = userAccessService.getCurrentUser();
     const accessInfo = await dataAccessLayer.getAccessInfo(
-      pageParams.repository?.owner?.login,
-      pageParams.repository?.name,
-      pageParams.branch
+      pageParams.repository?.owner?.login || '',
+      pageParams.repository?.name || '',
+      pageParams.branch || ''
     );
 
     setUserInfo({
@@ -132,6 +132,15 @@ const RepositoryStatsDashboard: React.FC<DashboardProps> = ({
       <div className="dashboard-loading">
         <h2>Loading Repository Statistics...</h2>
         <p>Analyzing {pageParams.repository?.name}...</p>
+      </div>
+    );
+  }
+
+  if (!stats) {
+    return (
+      <div className="dashboard-error">
+        <h2>No Statistics Available</h2>
+        <p>Unable to load statistics for {pageParams.repository?.name}</p>
       </div>
     );
   }
@@ -220,7 +229,7 @@ const RepositoryStatsDashboard: React.FC<DashboardProps> = ({
         </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .repository-stats-dashboard {
           padding: 1rem;
           max-width: 1200px;
@@ -394,11 +403,11 @@ const RepositoryStatsDashboard_Tool = createDashboard({
   supportsDemo: true,
   
   // Hooks
-  onInit: async (context) => {
+  onInit: async (context: any) => {
     console.log('Repository Stats Dashboard initialized', context);
   },
   
-  onError: (error, context) => {
+  onError: (error: any, context: any) => {
     console.error('Repository Stats Dashboard error:', error, context);
   }
 });

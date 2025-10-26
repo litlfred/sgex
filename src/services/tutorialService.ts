@@ -305,6 +305,104 @@ class TutorialService {
     const currentStep = tutorial.steps.find(s => s.id === currentStepId);
     return currentStep ? !currentStep.nextSteps || currentStep.nextSteps.length === 0 : false;
   }
+
+  /**
+   * Load tutorial progress from localStorage
+   * @param tutorialId - Tutorial ID
+   * @param contextData - Context data (currently unused but kept for API compatibility)
+   * @returns Saved progress or null
+   */
+  loadTutorialProgress(tutorialId: string, contextData?: any): { state: { currentStepIndex: number; context: any } } | null {
+    try {
+      const key = `tutorial-progress-${tutorialId}`;
+      const saved = localStorage.getItem(key);
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (error) {
+      console.error('Failed to load tutorial progress:', error);
+    }
+    return null;
+  }
+
+  /**
+   * Save tutorial progress to localStorage
+   * @param tutorialId - Tutorial ID
+   * @param state - State object with currentStepIndex and context
+   * @param contextData - Context data (currently unused but kept for API compatibility)
+   */
+  saveTutorialProgress(tutorialId: string, state: { currentStepIndex: number; context: any }, contextData?: any): void {
+    try {
+      const key = `tutorial-progress-${tutorialId}`;
+      const progress = {
+        state: state,
+        savedAt: new Date().toISOString()
+      };
+      localStorage.setItem(key, JSON.stringify(progress));
+    } catch (error) {
+      console.error('Failed to save tutorial progress:', error);
+    }
+  }
+
+  /**
+   * Clear tutorial progress from localStorage
+   * @param tutorialId - Tutorial ID
+   */
+  clearTutorialProgress(tutorialId: string): void {
+    try {
+      const key = `tutorial-progress-${tutorialId}`;
+      localStorage.removeItem(key);
+    } catch (error) {
+      console.error('Failed to clear tutorial progress:', error);
+    }
+  }
+
+  /**
+   * Process a tutorial step and determine next step
+   * @param tutorial - Tutorial definition (can be any object with steps array)
+   * @param currentStepIndex - Current step index
+   * @param userChoice - User's choice (for branching)
+   * @param tutorialState - Current tutorial state
+   * @returns Step result with completion status and next index
+   */
+  processStep(
+    tutorial: any, 
+    currentStepIndex: number, 
+    userChoice: string | null, 
+    tutorialState: Record<string, any>
+  ): { isComplete: boolean; stepIndex?: number; context?: Record<string, any> } {
+    const currentStep = tutorial.steps[currentStepIndex];
+    
+    if (!currentStep) {
+      return { isComplete: true };
+    }
+
+    // Check if this is the last step
+    if (!currentStep.nextSteps || currentStep.nextSteps.length === 0) {
+      return { isComplete: true };
+    }
+
+    // Determine next step based on user choice or default
+    let nextStepId: string;
+    if (userChoice && currentStep.nextSteps.includes(userChoice)) {
+      nextStepId = userChoice;
+    } else {
+      nextStepId = currentStep.nextSteps[0];
+    }
+
+    // Find the index of the next step
+    const nextStepIndex = tutorial.steps.findIndex(s => s.id === nextStepId);
+    
+    if (nextStepIndex === -1) {
+      return { isComplete: true };
+    }
+
+    return {
+      isComplete: false,
+      stepIndex: nextStepIndex - 1, // Subtract 1 because the caller will add 1
+      context: tutorialState
+    };
+  }
 }
 
 // Export singleton instance

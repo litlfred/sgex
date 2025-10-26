@@ -94,6 +94,7 @@ const PATSetupInstructions: React.FC = () => {
       
       <ContextualHelpMascot 
         pageId="pat-setup-instructions"
+        helpContent={null}
         position="bottom-right"
       />
     </div>

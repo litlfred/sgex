@@ -318,6 +318,75 @@ class GitHubService {
   }
 
   /**
+   * Get pull request review comments with pagination support
+   */
+  async getPullRequestComments(owner: string, repo: string, pull_number: number, page: number = 1, per_page: number = 30): Promise<any[]> {
+    if (!this.isAuthenticated || !this.octokit) {
+      throw new Error('Not authenticated');
+    }
+
+    try {
+      const { data } = await this.octokit.rest.pulls.listReviewComments({
+        owner,
+        repo,
+        pull_number,
+        page,
+        per_page
+      });
+      return data;
+    } catch (error: any) {
+      this.logger.error('Failed to get pull request review comments', { owner, repo, pull_number, error });
+      return [];
+    }
+  }
+
+  /**
+   * Get pull request issue comments
+   */
+  async getPullRequestIssueComments(owner: string, repo: string, pull_number: number, page: number = 1, per_page: number = 30): Promise<any[]> {
+    if (!this.isAuthenticated || !this.octokit) {
+      throw new Error('Not authenticated');
+    }
+
+    try {
+      const { data } = await this.octokit.rest.issues.listComments({
+        owner,
+        repo,
+        issue_number: pull_number,
+        page,
+        per_page
+      });
+      return data;
+    } catch (error: any) {
+      this.logger.error('Failed to get pull request issue comments', { owner, repo, pull_number, error });
+      return [];
+    }
+  }
+
+  /**
+   * Get pull request timeline events
+   */
+  async getPullRequestTimeline(owner: string, repo: string, pull_number: number, page: number = 1, per_page: number = 30): Promise<any[]> {
+    if (!this.isAuthenticated || !this.octokit) {
+      throw new Error('Not authenticated');
+    }
+
+    try {
+      const { data } = await this.octokit.rest.issues.listEventsForTimeline({
+        owner,
+        repo,
+        issue_number: pull_number,
+        page,
+        per_page
+      });
+      return data;
+    } catch (error: any) {
+      this.logger.error('Failed to get pull request timeline', { owner, repo, pull_number, error });
+      return [];
+    }
+  }
+
+  /**
    * Create a new issue
    */
   async createIssue(owner: string, repo: string, issueData: any): Promise<any> {
@@ -359,6 +428,59 @@ class GitHubService {
   }
 
   /**
+   * Get repository statistics including recent commits, PRs, and issues
+   * @param owner - Repository owner
+   * @param repo - Repository name
+   * @param branch - Branch name (optional)
+   * @returns Promise resolving to repository statistics
+   */
+  async getRepositoryStats(owner: string, repo: string, branch?: string): Promise<{
+    recentCommits: any[];
+    openPullRequestsCount: number;
+    openIssuesCount: number;
+  }> {
+    try {
+      const octokit = this.isAuthenticated && this.octokit ? this.octokit : await this.createOctokitInstance();
+      
+      // Get recent commits
+      const commitsOptions: any = {
+        owner,
+        repo,
+        per_page: 5
+      };
+      if (branch) {
+        commitsOptions.sha = branch;
+      }
+      const { data: recentCommits } = await octokit.rest.repos.listCommits(commitsOptions);
+
+      // Get open PRs count
+      const { data: pullRequests } = await octokit.rest.pulls.list({
+        owner,
+        repo,
+        state: 'open',
+        per_page: 1
+      });
+
+      // Get open issues count
+      const { data: issues } = await octokit.rest.issues.listForRepo({
+        owner,
+        repo,
+        state: 'open',
+        per_page: 1
+      });
+
+      return {
+        recentCommits,
+        openPullRequestsCount: pullRequests.length,
+        openIssuesCount: issues.length
+      };
+    } catch (error) {
+      this.logger.error('Failed to get repository stats', { owner, repo, branch, error });
+      throw error;
+    }
+  }
+
+  /**
    * Check if user has write access to repository
    */
   async hasRepositoryWriteAccess(owner: string, repo: string): Promise<boolean> {
@@ -377,6 +499,53 @@ class GitHubService {
     } catch (error) {
       this.logger.debug('Failed to check write access', { owner, repo, error });
       return false;
+    }
+  }
+
+  /**
+   * Get repository forks
+   * @param owner - Repository owner
+   * @param repo - Repository name
+   * @returns Promise resolving to array of fork repositories
+   */
+  async getRepositoryForks(owner: string, repo: string): Promise<any[]> {
+    try {
+      const octokit = this.isAuthenticated && this.octokit ? this.octokit : await this.createOctokitInstance();
+      const { data } = await octokit.rest.repos.listForks({
+        owner,
+        repo,
+        per_page: 100
+      });
+      return data;
+    } catch (error) {
+      this.logger.error('Failed to get repository forks', { owner, repo, error });
+      throw error;
+    }
+  }
+
+  /**
+   * Get pull requests for a specific branch
+   * 
+   * @param owner - Repository owner
+   * @param repo - Repository name
+   * @param branchName - Branch name to filter PRs
+   * @returns Promise<any[]> Array of pull requests
+   */
+  async getPullRequestsForBranch(owner: string, repo: string, branchName: string): Promise<any[]> {
+    try {
+      const octokit = this.isAuthenticated && this.octokit ? this.octokit : await this.createOctokitInstance();
+      const { data } = await octokit.rest.pulls.list({
+        owner,
+        repo,
+        head: `${owner}:${branchName}`,
+        state: 'all',
+        per_page: 100
+      });
+      return data;
+    } catch (error: any) {
+      this.logger.error('Failed to get pull requests for branch', { owner, repo, branchName, error });
+      // Return empty array instead of throwing to allow graceful degradation
+      return [];
     }
   }
 
@@ -406,6 +575,28 @@ class GitHubService {
       return data;
     } catch (error) {
       this.logger.error('Failed to get commits', { owner, repo, options, error });
+      throw error;
+    }
+  }
+
+  /**
+   * Get a single commit with its details
+   * @param owner - Repository owner
+   * @param repo - Repository name
+   * @param ref - Commit SHA or ref
+   * @returns Promise resolving to commit data
+   */
+  async getCommit(owner: string, repo: string, ref: string): Promise<any> {
+    try {
+      const octokit = this.isAuthenticated && this.octokit ? this.octokit : await this.createOctokitInstance();
+      const { data } = await octokit.rest.repos.getCommit({
+        owner,
+        repo,
+        ref
+      });
+      return data;
+    } catch (error) {
+      this.logger.error('Failed to get commit', { owner, repo, ref, error });
       throw error;
     }
   }

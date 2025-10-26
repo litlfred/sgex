@@ -28,7 +28,7 @@ const PersonaViewer: React.FC = () => {
 };
 
 const PersonaViewerContent: React.FC = () => {
-  const pageContext = usePage();
+  const pageContext = usePage() as any;
   
   // All hooks must be called before any early returns
   const [actors, setActors] = useState<Actor[]>([]);
@@ -246,9 +246,9 @@ const PersonaViewerContent: React.FC = () => {
       setActors(allActors);
       setError(null);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error scanning for actors:', error);
-      setError(`Failed to scan repository: ${error.message}`);
+      setError(`Failed to scan repository: ${error?.message || 'Unknown error'}`);
       setScanStatus('Scan failed');
     } finally {
       setLoading(false);

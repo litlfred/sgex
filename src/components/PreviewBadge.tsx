@@ -12,9 +12,11 @@ import './PreviewBadge.css';
 const MDEditor = lazy(() => import('@uiw/react-md-editor'));
 
 interface BranchInfo {
-  branch: string;
-  repo: string;
-  owner: string;
+  name: string;
+  safeName?: string;
+  branch?: string;
+  repo?: string;
+  owner?: string;
 }
 
 interface PRInfo {
@@ -116,17 +118,17 @@ const PreviewBadge: React.FC = () => {
   const [approvalStatus, setApprovalStatus] = useState<'success' | 'error' | null>(null); // 'success', 'error'
   const [approvalMessage, setApprovalMessage] = useState('');
   const [commentsPage, setCommentsPage] = useState(1);
-  const [allComments, setAllComments] = useState([]);
+  const [allComments, setAllComments] = useState<any[]>([]);
   const [hasMoreComments, setHasMoreComments] = useState(false);
   const [displayedCommentsCount, setDisplayedCommentsCount] = useState(5);
   const [showStatusUpdates, setShowStatusUpdates] = useState(true);
-  const expandedRef = useRef(null);
-  const commentRefreshIntervalRef = useRef(null);
-  const workflowRefreshIntervalRef = useRef(null);
+  const expandedRef = useRef<HTMLDivElement>(null);
+  const commentRefreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const workflowRefreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Custom markdown components to make links open in new tabs
   const markdownComponents = {
-    a: ({ href, children, ...props }) => (
+    a: ({ href, children, ...props }: { href?: string; children?: React.ReactNode; [key: string]: any }) => (
       <a href={href} target="_blank" rel="noopener noreferrer" {...props}>
         {children}
       </a>
@@ -165,9 +167,9 @@ const PreviewBadge: React.FC = () => {
         }
 
         setLoading(false);
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error detecting branch:', err);
-        setError(err.message);
+        setError(err?.message || 'Unknown error');
         setLoading(false);
       }
     };
@@ -177,8 +179,8 @@ const PreviewBadge: React.FC = () => {
 
   // Handle clicks outside the expanded panel to close it (only if not sticky)
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (expandedRef.current && !expandedRef.current.contains(event.target)) {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      if (expandedRef.current && !expandedRef.current.contains(event.target as Node)) {
         if (isSticky) {
           setIsSticky(false);
         }
@@ -261,7 +263,7 @@ const PreviewBadge: React.FC = () => {
     return null;
   };
 
-  const fetchPRsForBranch = async (branchName) => {
+  const fetchPRsForBranch = async (branchName: string) => {
     try {
       // Get current repository context if available
       // For now, we'll use the main repository
@@ -272,13 +274,13 @@ const PreviewBadge: React.FC = () => {
       
       return prs;
 
-    } catch (error) {
+    } catch (error: any) {
       console.debug('Failed to fetch PR info:', error);
       return [];
     }
   };
 
-  const fetchCommentsForPR = async (owner, repo, prNumber, page = 1, append = false, showLoading = true) => {
+  const fetchCommentsForPR = async (owner: string, repo: string, prNumber: number, page: number = 1, append: boolean = false, showLoading: boolean = true) => {
     try {
       if (showLoading) {
         setCommentsLoading(true);
@@ -297,7 +299,7 @@ const PreviewBadge: React.FC = () => {
       const newComments = [
         ...reviewComments.map(comment => ({ ...comment, type: 'review' })),
         ...issueComments.map(comment => ({ ...comment, type: 'issue' }))
-      ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
       // Debug: Log comment details to understand what's being fetched
       console.debug('Comments fetched for PR discussion:', {
@@ -326,7 +328,7 @@ const PreviewBadge: React.FC = () => {
           type: c.type,
           bodyPreview: c.body?.substring(0, 100) + '...'
         })),
-        allUsernames: [...new Set(newComments.map(c => c.user?.login).filter(Boolean))]
+        allUsernames: Array.from(new Set(newComments.map(c => c.user?.login).filter(Boolean)))
       });
 
       // Process timeline events for status updates
@@ -353,12 +355,12 @@ const PreviewBadge: React.FC = () => {
 
       if (append) {
         // Append to existing comments (for load more)
-        const existingIds = new Set(allComments.map(c => c.id));
-        const uniqueNewComments = newComments.filter(c => !existingIds.has(c.id));
-        const uniqueNewEvents = relevantTimelineEvents.filter(e => !existingIds.has(e.id));
+        const existingIds = new Set(allComments.map((c: any) => c.id));
+        const uniqueNewComments = newComments.filter((c: any) => !existingIds.has(c.id));
+        const uniqueNewEvents = relevantTimelineEvents.filter((e: any) => !existingIds.has(e.id));
         
         const allNewItems = [...uniqueNewComments, ...uniqueNewEvents]
-          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
         
         const updatedAllComments = [...allComments, ...allNewItems];
         setAllComments(updatedAllComments);
@@ -370,7 +372,7 @@ const PreviewBadge: React.FC = () => {
       } else {
         // Replace comments (for initial load or refresh)
         const allItems = [...newComments, ...relevantTimelineEvents]
-          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
         
         setAllComments(allItems);
         const initialDisplayCount = Math.min(5, allItems.length);
@@ -393,7 +395,7 @@ const PreviewBadge: React.FC = () => {
   };
 
   // Format timeline events into readable status updates
-  const formatTimelineEvent = (event) => {
+  const formatTimelineEvent = (event: any) => {
     switch (event.event) {
       case 'committed':
         return `📦 Pushed ${event.sha ? event.sha.substring(0, 7) : 'commit'}: ${event.message || 'No commit message'}`;

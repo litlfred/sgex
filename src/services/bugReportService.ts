@@ -22,20 +22,48 @@ const ensureHtml2Canvas = async () => {
 };
 
 /**
+ * Template body field
+ */
+export interface TemplateField {
+  /** Field type (markdown, textarea, input, dropdown, checkboxes) */
+  type: string;
+  /** Field ID */
+  id?: string;
+  /** Field attributes */
+  attributes?: {
+    label?: string;
+    description?: string;
+    placeholder?: string;
+    value?: string;
+    options?: Array<{ label: string; value: string } | string>;
+  };
+  /** Field validations */
+  validations?: {
+    required?: boolean;
+  };
+}
+
+/**
  * Issue template
- * @example { "name": "Bug Report", "about": "Create a bug report", "title": "Bug: ", "labels": ["bug"] }
+ * @example { "name": "Bug Report", "description": "Create a bug report", "title": "Bug: ", "labels": ["bug"] }
  */
 export interface IssueTemplate {
+  /** Template ID */
+  id?: string;
   /** Template name */
   name: string;
   /** Template description */
-  about: string;
+  description?: string;
+  /** Template about (legacy) */
+  about?: string;
+  /** Template type (bug, feature, etc.) */
+  type?: string;
   /** Default title prefix */
   title?: string;
   /** Default labels */
   labels?: string[];
   /** Template body */
-  body?: string;
+  body?: TemplateField[] | string;
   /** Assignees */
   assignees?: string[];
 }
@@ -190,14 +218,29 @@ class BugReportService {
 
       const yaml = await lazyLoadYaml();
       const frontMatter = yaml.load(frontMatterMatch[1]) as any;
-      const body = frontMatterMatch[2];
+      const bodyContent = frontMatterMatch[2];
+
+      // Determine template type based on labels
+      let templateType = 'general';
+      if (frontMatter.labels) {
+        if (frontMatter.labels.includes('bug')) templateType = 'bug';
+        else if (frontMatter.labels.includes('enhancement') || frontMatter.labels.includes('feature')) templateType = 'feature';
+        else if (frontMatter.labels.includes('question')) templateType = 'question';
+        else if (frontMatter.labels.includes('documentation')) templateType = 'documentation';
+      }
+
+      // Generate ID from name
+      const id = (frontMatter.name || 'unnamed').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 
       return {
+        id,
         name: frontMatter.name || 'Unnamed Template',
-        about: frontMatter.about || '',
+        description: frontMatter.about || frontMatter.description || '',
+        about: frontMatter.about || frontMatter.description || '',
+        type: templateType,
         title: frontMatter.title || '',
         labels: frontMatter.labels || [],
-        body: body.trim(),
+        body: bodyContent.trim(),
         assignees: frontMatter.assignees || []
       };
     } catch (error) {
@@ -214,12 +257,27 @@ class BugReportService {
       const yaml = await lazyLoadYaml();
       const data = yaml.load(content) as any;
 
+      // Determine template type based on labels
+      let templateType = 'general';
+      if (data.labels) {
+        if (data.labels.includes('bug')) templateType = 'bug';
+        else if (data.labels.includes('enhancement') || data.labels.includes('feature')) templateType = 'feature';
+        else if (data.labels.includes('question')) templateType = 'question';
+        else if (data.labels.includes('documentation')) templateType = 'documentation';
+      }
+
+      // Generate ID from name
+      const id = (data.name || 'unnamed').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+
       return {
+        id,
         name: data.name || 'Unnamed Template',
+        description: data.description || data.about || '',
         about: data.about || data.description || '',
+        type: templateType,
         title: data.title || '',
         labels: data.labels || [],
-        body: data.body || '',
+        body: data.body || [],
         assignees: data.assignees || []
       };
     } catch (error) {
@@ -234,18 +292,139 @@ class BugReportService {
   _getDefaultTemplates(): IssueTemplate[] {
     return [
       {
+        id: 'bug-report',
         name: 'Bug Report',
+        description: 'Create a report to help us improve',
         about: 'Create a report to help us improve',
+        type: 'bug',
         title: 'Bug: ',
         labels: ['bug'],
-        body: `## Bug Description\n\n## Steps to Reproduce\n\n## Expected Behavior\n\n## Actual Behavior\n\n## Environment\n- Browser:\n- OS:\n`
+        body: [
+          {
+            type: 'markdown',
+            attributes: {
+              value: 'Thanks for taking the time to fill out this bug report!'
+            }
+          },
+          {
+            type: 'textarea',
+            id: 'description',
+            attributes: {
+              label: 'Bug Description',
+              description: 'A clear and concise description of what the bug is.',
+              placeholder: 'Describe the bug...'
+            },
+            validations: {
+              required: true
+            }
+          },
+          {
+            type: 'textarea',
+            id: 'steps',
+            attributes: {
+              label: 'Steps to Reproduce',
+              description: 'Steps to reproduce the behavior',
+              placeholder: '1. Go to...\n2. Click on...\n3. See error...'
+            },
+            validations: {
+              required: true
+            }
+          },
+          {
+            type: 'textarea',
+            id: 'expected',
+            attributes: {
+              label: 'Expected Behavior',
+              description: 'What did you expect to happen?'
+            },
+            validations: {
+              required: true
+            }
+          },
+          {
+            type: 'textarea',
+            id: 'actual',
+            attributes: {
+              label: 'Actual Behavior',
+              description: 'What actually happened?'
+            },
+            validations: {
+              required: true
+            }
+          },
+          {
+            type: 'input',
+            id: 'browser',
+            attributes: {
+              label: 'Browser',
+              placeholder: 'e.g. Chrome 120, Firefox 121, Safari 17'
+            }
+          },
+          {
+            type: 'input',
+            id: 'os',
+            attributes: {
+              label: 'Operating System',
+              placeholder: 'e.g. Windows 11, macOS 14, Ubuntu 22.04'
+            }
+          }
+        ]
       },
       {
+        id: 'feature-request',
         name: 'Feature Request',
+        description: 'Suggest an idea for this project',
         about: 'Suggest an idea for this project',
+        type: 'feature',
         title: 'Feature: ',
         labels: ['enhancement'],
-        body: `## Feature Description\n\n## Use Case\n\n## Proposed Solution\n\n## Alternatives Considered\n`
+        body: [
+          {
+            type: 'markdown',
+            attributes: {
+              value: 'Thanks for suggesting a new feature!'
+            }
+          },
+          {
+            type: 'textarea',
+            id: 'description',
+            attributes: {
+              label: 'Feature Description',
+              description: 'A clear and concise description of the feature you\'d like to see.',
+              placeholder: 'Describe the feature...'
+            },
+            validations: {
+              required: true
+            }
+          },
+          {
+            type: 'textarea',
+            id: 'use-case',
+            attributes: {
+              label: 'Use Case',
+              description: 'Explain how this feature would be used and who would benefit from it.'
+            },
+            validations: {
+              required: true
+            }
+          },
+          {
+            type: 'textarea',
+            id: 'solution',
+            attributes: {
+              label: 'Proposed Solution',
+              description: 'How do you envision this feature working?'
+            }
+          },
+          {
+            type: 'textarea',
+            id: 'alternatives',
+            attributes: {
+              label: 'Alternatives Considered',
+              description: 'Are there alternative solutions or workarounds you\'ve considered?'
+            }
+          }
+        ]
       }
     ];
   }
@@ -390,6 +569,218 @@ class BugReportService {
 
     // Fetch fresh templates
     return await this.fetchIssueTemplates(repoOwner, repoName);
+  }
+
+  /**
+   * Get default templates (public method)
+   * @returns Array of default issue templates
+   */
+  getDefaultTemplates(): IssueTemplate[] {
+    return this._getDefaultTemplates();
+  }
+
+  /**
+   * Take a screenshot of the current page
+   * @returns Promise resolving to a Blob of the screenshot, or null if capture fails
+   */
+  async takeScreenshot(): Promise<Blob | null> {
+    try {
+      const html2canvasModule = await ensureHtml2Canvas();
+      const canvas = await html2canvasModule(document.body, {
+        allowTaint: true,
+        useCORS: true,
+        logging: false
+      });
+      
+      return new Promise<Blob | null>((resolve) => {
+        canvas.toBlob((blob) => {
+          resolve(blob);
+        }, 'image/png');
+      });
+    } catch (error) {
+      console.error('Error taking screenshot:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Generate a GitHub issue URL with pre-filled data
+   * @param owner - Repository owner
+   * @param repo - Repository name
+   * @param template - Issue template
+   * @param formData - Form field values
+   * @param includeConsole - Whether to include console output
+   * @param consoleOutput - Console output logs
+   * @param contextData - Additional context data
+   * @param screenshot - Screenshot blob (will be noted but not embedded)
+   * @returns GitHub issue creation URL
+   */
+  generateIssueUrl(
+    owner: string,
+    repo: string,
+    template: IssueTemplate,
+    formData: Record<string, any>,
+    includeConsole: boolean,
+    consoleOutput: string[] | string,
+    contextData?: Record<string, any>,
+    screenshot?: Blob | null
+  ): string {
+    const baseUrl = `https://github.com/${owner}/${repo}/issues/new`;
+    const params = new URLSearchParams();
+
+    // Add template if it has an ID
+    if (template.id) {
+      params.append('template', `${template.id}.yml`);
+    }
+
+    // Add title
+    const title = template.title || '';
+    params.append('title', title);
+
+    // Add labels
+    if (template.labels && template.labels.length > 0) {
+      params.append('labels', template.labels.join(','));
+    }
+
+    // Build body from form data
+    let body = '';
+    
+    // Add form field values
+    if (Array.isArray(template.body)) {
+      for (const field of template.body) {
+        if (field.type === 'markdown') continue;
+        
+        const fieldId = field.id;
+        if (fieldId && formData[fieldId]) {
+          const label = field.attributes?.label || fieldId;
+          body += `### ${label}\n${formData[fieldId]}\n\n`;
+        }
+      }
+    }
+
+    // Add context information
+    if (contextData) {
+      body += '\n---\n\n### Context Information\n';
+      if (contextData.pageId) body += `**Page:** ${contextData.pageId}\n`;
+      if (contextData.repository) body += `**Repository:** ${contextData.repository.name || contextData.repository}\n`;
+      if (contextData.branch) body += `**Branch:** ${contextData.branch}\n`;
+      body += `**URL:** ${window.location.href}\n`;
+      body += `**User Agent:** ${navigator.userAgent}\n`;
+    }
+
+    // Add console output if included
+    if (includeConsole && consoleOutput) {
+      const logs = Array.isArray(consoleOutput) ? consoleOutput.join('\n') : consoleOutput;
+      if (logs.length > 0) {
+        body += '\n---\n\n### Console Output\n```\n';
+        // Limit console output to avoid URL length issues
+        const truncated = logs.length > 5000 ? logs.substring(0, 5000) + '\n... (truncated)' : logs;
+        body += truncated;
+        body += '\n```\n';
+      }
+    }
+
+    // Note about screenshot if included
+    if (screenshot) {
+      body += '\n---\n\n_Note: A screenshot was captured but cannot be automatically attached via URL. Please paste it manually after creating the issue._\n';
+    }
+
+    params.append('body', body);
+
+    return `${baseUrl}?${params.toString()}`;
+  }
+
+  /**
+   * Submit an issue directly via GitHub API
+   * @param owner - Repository owner
+   * @param repo - Repository name
+   * @param template - Issue template
+   * @param formData - Form field values
+   * @param includeConsole - Whether to include console output
+   * @param consoleOutput - Console output logs
+   * @param contextData - Additional context data
+   * @param screenshot - Screenshot blob
+   * @returns Promise resolving to submission result
+   */
+  async submitIssue(
+    owner: string,
+    repo: string,
+    template: IssueTemplate,
+    formData: Record<string, any>,
+    includeConsole: boolean,
+    consoleOutput: string[] | string,
+    contextData?: Record<string, any>,
+    screenshot?: Blob | null
+  ): Promise<{ success: boolean; issue?: any; error?: any }> {
+    try {
+      // Build title
+      const title = (template.title || '') + (formData.title || formData.description?.substring(0, 50) || 'New Issue');
+
+      // Build body
+      let body = '';
+      
+      // Add form field values
+      if (Array.isArray(template.body)) {
+        for (const field of template.body) {
+          if (field.type === 'markdown') continue;
+          
+          const fieldId = field.id;
+          if (fieldId && formData[fieldId]) {
+            const label = field.attributes?.label || fieldId;
+            body += `### ${label}\n${formData[fieldId]}\n\n`;
+          }
+        }
+      }
+
+      // Add context information
+      if (contextData) {
+        body += '\n---\n\n### Context Information\n';
+        if (contextData.pageId) body += `**Page:** ${contextData.pageId}\n`;
+        if (contextData.repository) body += `**Repository:** ${contextData.repository.name || contextData.repository}\n`;
+        if (contextData.branch) body += `**Branch:** ${contextData.branch}\n`;
+        body += `**URL:** ${window.location.href}\n`;
+        body += `**User Agent:** ${navigator.userAgent}\n`;
+      }
+
+      // Add console output if included
+      if (includeConsole && consoleOutput) {
+        const logs = Array.isArray(consoleOutput) ? consoleOutput.join('\n') : consoleOutput;
+        if (logs.length > 0) {
+          body += '\n---\n\n### Console Output\n```\n' + logs + '\n```\n';
+        }
+      }
+
+      // Create issue via issueTrackingService
+      const issue = await issueTrackingService.createIssue(owner, repo, {
+        title,
+        body,
+        labels: template.labels || []
+      });
+
+      if (!issue) {
+        return {
+          success: false,
+          error: { message: 'Failed to create issue' }
+        };
+      }
+
+      // TODO: Upload screenshot as comment if provided
+      // This would require additional API call to add a comment with the image
+
+      return {
+        success: true,
+        issue
+      };
+    } catch (error: any) {
+      console.error('Error submitting issue:', error);
+      return {
+        success: false,
+        error: {
+          message: error.message || 'Failed to submit issue',
+          details: error
+        }
+      };
+    }
   }
 }
 
