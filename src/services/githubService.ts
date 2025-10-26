@@ -803,6 +803,13 @@ class GitHubService {
   }
 
   /**
+   * Get the stored token
+   */
+  get token(): string | null {
+    return secureTokenStorage.retrieveToken();
+  }
+
+  /**
    * Sign out and clear authentication
    */
   signOut(): void {
@@ -915,6 +922,55 @@ class GitHubService {
         throw new Error('Network error occurred. Please check your internet connection and try again.');
       }
       
+      throw error;
+    }
+  }
+
+  /**
+   * Merge a pull request
+   */
+  async mergePullRequest(
+    owner: string,
+    repo: string,
+    pullNumber: number,
+    options?: {
+      commit_title?: string;
+      commit_message?: string;
+      merge_method?: 'merge' | 'squash' | 'rebase';
+    }
+  ): Promise<any> {
+    this.logger.debug('Merging pull request', { owner, repo, pullNumber, options });
+    
+    if (!this.octokit) {
+      throw new Error('Not authenticated. Please authenticate first.');
+    }
+
+    try {
+      const response = await this.octokit.rest.pulls.merge({
+        owner,
+        repo,
+        pull_number: pullNumber,
+        commit_title: options?.commit_title,
+        commit_message: options?.commit_message,
+        merge_method: options?.merge_method || 'merge'
+      });
+
+      this.logger.debug('Pull request merged successfully', {
+        owner,
+        repo,
+        pullNumber,
+        sha: response.data.sha
+      });
+
+      return response.data;
+    } catch (error: any) {
+      this.logger.error('Failed to merge pull request', {
+        owner,
+        repo,
+        pullNumber,
+        error: error instanceof Error ? error.message : String(error),
+        status: error.status
+      });
       throw error;
     }
   }
