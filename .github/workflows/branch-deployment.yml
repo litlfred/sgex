@@ -128,7 +128,7 @@ jobs:
       - name: Upload workflow event log (early upload)
         if: always()
         id: upload_event_log
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: workflow-event-log
           path: artifacts/workflow-event.log
@@ -430,7 +430,7 @@ jobs:
 
       - name: Upload build logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: build-logs
           path: artifacts/build-logs.txt
@@ -439,7 +439,7 @@ jobs:
 
       - name: Upload webpack stats
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: webpack-stats
           path: artifacts/webpack-stats.json
@@ -448,7 +448,7 @@ jobs:
 
       - name: Upload bundle report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: bundle-report
           path: artifacts/bundle-report.txt
@@ -457,7 +457,7 @@ jobs:
 
       - name: Upload build step log
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: build-step-log
           path: artifacts/build-step.log
@@ -466,7 +466,7 @@ jobs:
 
       - name: Upload bundle analysis step log
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: bundle-analysis-step-log
           path: artifacts/bundle-analysis-step.log
