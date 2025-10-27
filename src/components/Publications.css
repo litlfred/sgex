@@ -245,6 +245,81 @@
   font-style: italic;
 }
 
+/* DAK Validation Section */
+.dak-validation-section {
+  margin: 30px 0;
+  padding: 25px;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1px solid #edebe9;
+}
+
+.dak-validation-section .section-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #323130;
+  margin-bottom: 8px;
+}
+
+.dak-validation-section .section-description {
+  font-size: 14px;
+  color: #605e5c;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+.validation-controls {
+  display: flex;
+  gap: 15px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.component-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-width: 250px;
+}
+
+.component-filter label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #323130;
+}
+
+.component-select {
+  padding: 8px 12px;
+  border: 1px solid #8a8886;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #323130;
+  background: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.component-select:hover {
+  border-color: #0078d4;
+}
+
+.component-select:focus {
+  outline: none;
+  border-color: #0078d4;
+  box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.1);
+}
+
+.validation-results {
+  margin-top: 15px;
+  padding: 15px;
+  background: #faf9f8;
+  border-radius: 6px;
+  border: 1px solid #edebe9;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
   .publications-grid {
@@ -268,5 +343,14 @@
   .publication-link {
     font-size: 12px;
     padding: 6px 10px;
+  }
+
+  .validation-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .component-filter {
+    min-width: 100%;
   }
 }

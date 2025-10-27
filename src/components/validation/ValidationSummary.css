@@ -1,0 +1,190 @@
+/**
+ * ValidationSummary Component Styles
+ * Button-style status indicators following GitHub Pages deployment workflow
+ */
+
+.validation-summary {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background-color: #f6f8fa;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.validation-summary[role="button"] {
+  cursor: pointer;
+}
+
+.validation-summary[role="button"]:hover {
+  background-color: #f3f4f6;
+  border-color: #8c959f;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.validation-summary[role="button"]:focus {
+  outline: 2px solid #0969da;
+  outline-offset: 2px;
+}
+
+/* Compact mode */
+.validation-summary--compact {
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+/* Inline mode */
+.validation-summary--inline {
+  display: inline-flex;
+  flex-direction: row;
+}
+
+/* Status variants */
+.validation-summary--error {
+  border-left: 4px solid #d1242f;
+}
+
+.validation-summary--warning {
+  border-left: 4px solid #bf8700;
+}
+
+.validation-summary--success {
+  border-left: 4px solid #1a7f37;
+}
+
+/* Status section */
+.validation-summary__status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+}
+
+.validation-summary__indicator {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.validation-summary__indicator--error {
+  background-color: #d1242f;
+  color: white;
+}
+
+.validation-summary__indicator--warning {
+  background-color: #bf8700;
+  color: white;
+}
+
+.validation-summary__indicator--success {
+  background-color: #1a7f37;
+  color: white;
+}
+
+.validation-summary__text {
+  color: #24292f;
+}
+
+/* Counts section */
+.validation-summary__counts {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.validation-summary__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.validation-summary__badge--error {
+  background-color: #ffebe9;
+  color: #d1242f;
+  border: 1px solid #ff818266;
+}
+
+.validation-summary__badge--warning {
+  background-color: #fff8c5;
+  color: #7d4e00;
+  border: 1px solid #d4a72c66;
+}
+
+.validation-summary__badge--info {
+  background-color: #ddf4ff;
+  color: #0969da;
+  border: 1px solid #54aeff66;
+}
+
+.validation-summary__badge-label {
+  font-weight: 400;
+}
+
+.validation-summary__badge-count {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .validation-summary {
+    background-color: #161b22;
+    border-color: #30363d;
+  }
+
+  .validation-summary[role="button"]:hover {
+    background-color: #1c2128;
+    border-color: #484f58;
+  }
+
+  .validation-summary[role="button"]:focus {
+    outline-color: #58a6ff;
+  }
+
+  .validation-summary__text {
+    color: #c9d1d9;
+  }
+
+  .validation-summary__badge--error {
+    background-color: #490b0e;
+    color: #ff7b72;
+    border-color: #d1242f66;
+  }
+
+  .validation-summary__badge--warning {
+    background-color: #3d2b00;
+    color: #e0a100;
+    border-color: #bf870066;
+  }
+
+  .validation-summary__badge--info {
+    background-color: #0c2d6b;
+    color: #79c0ff;
+    border-color: #0969da66;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .validation-summary {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .validation-summary__counts {
+    flex-wrap: wrap;
+  }
+}

@@ -275,6 +275,13 @@ class IssueTrackingService {
   }
 
   /**
+   * Alias for stopAutoSync for backward compatibility
+   */
+  stopBackgroundSync(): void {
+    return this.stopAutoSync();
+  }
+
+  /**
    * Enable repository filter
    */
   enableRepositoryFilter(owner: string, repo: string): void {
