@@ -803,6 +803,13 @@ class GitHubService {
   }
 
   /**
+   * Get the stored token
+   */
+  get token(): string | null {
+    return secureTokenStorage.retrieveToken();
+  }
+
+  /**
    * Sign out and clear authentication
    */
   signOut(): void {
@@ -915,6 +922,334 @@ class GitHubService {
         throw new Error('Network error occurred. Please check your internet connection and try again.');
       }
       
+      throw error;
+    }
+  }
+
+  /**
+   * Merge a pull request
+   */
+  async mergePullRequest(
+    owner: string,
+    repo: string,
+    pullNumber: number,
+    options?: {
+      commit_title?: string;
+      commit_message?: string;
+      merge_method?: 'merge' | 'squash' | 'rebase';
+    }
+  ): Promise<any> {
+    this.logger.debug('Merging pull request', { owner, repo, pullNumber, options });
+    
+    if (!this.octokit) {
+      throw new Error('Not authenticated. Please authenticate first.');
+    }
+
+    try {
+      const response = await this.octokit.rest.pulls.merge({
+        owner,
+        repo,
+        pull_number: pullNumber,
+        commit_title: options?.commit_title,
+        commit_message: options?.commit_message,
+        merge_method: options?.merge_method || 'merge'
+      });
+
+      this.logger.debug('Pull request merged successfully', {
+        owner,
+        repo,
+        pullNumber,
+        sha: response.data.sha
+      });
+
+      return response.data;
+    } catch (error: any) {
+      this.logger.error('Failed to merge pull request', {
+        owner,
+        repo,
+        pullNumber,
+        error: error instanceof Error ? error.message : String(error),
+        status: error.status
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Approve a pull request
+   */
+  async approvePullRequest(
+    owner: string,
+    repo: string,
+    pullNumber: number,
+    body?: string
+  ): Promise<any> {
+    this.logger.debug('Approving pull request', { owner, repo, pullNumber });
+    
+    if (!this.octokit) {
+      throw new Error('Not authenticated. Please authenticate first.');
+    }
+
+    try {
+      const response = await this.octokit.rest.pulls.createReview({
+        owner,
+        repo,
+        pull_number: pullNumber,
+        event: 'APPROVE',
+        body: body || ''
+      });
+
+      this.logger.debug('Pull request approved successfully', {
+        owner,
+        repo,
+        pullNumber
+      });
+
+      return response.data;
+    } catch (error: any) {
+      this.logger.error('Failed to approve pull request', {
+        owner,
+        repo,
+        pullNumber,
+        error: error instanceof Error ? error.message : String(error)
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Request changes on a pull request
+   */
+  async requestPullRequestChanges(
+    owner: string,
+    repo: string,
+    pullNumber: number,
+    body: string
+  ): Promise<any> {
+    this.logger.debug('Requesting changes on pull request', { owner, repo, pullNumber });
+    
+    if (!this.octokit) {
+      throw new Error('Not authenticated. Please authenticate first.');
+    }
+
+    try {
+      const response = await this.octokit.rest.pulls.createReview({
+        owner,
+        repo,
+        pull_number: pullNumber,
+        event: 'REQUEST_CHANGES',
+        body
+      });
+
+      this.logger.debug('Changes requested successfully', {
+        owner,
+        repo,
+        pullNumber
+      });
+
+      return response.data;
+    } catch (error: any) {
+      this.logger.error('Failed to request changes', {
+        owner,
+        repo,
+        pullNumber,
+        error: error instanceof Error ? error.message : String(error)
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Mark a pull request as ready for review
+   */
+  async markPullRequestReadyForReview(
+    owner: string,
+    repo: string,
+    pullNumber: number
+  ): Promise<any> {
+    this.logger.debug('Marking pull request as ready for review', { owner, repo, pullNumber });
+    
+    if (!this.octokit) {
+      throw new Error('Not authenticated. Please authenticate first.');
+    }
+
+    try {
+      const response = await this.octokit.rest.pulls.update({
+        owner,
+        repo,
+        pull_number: pullNumber,
+        draft: false
+      });
+
+      this.logger.debug('Pull request marked as ready for review', {
+        owner,
+        repo,
+        pullNumber
+      });
+
+      return response.data;
+    } catch (error: any) {
+      this.logger.error('Failed to mark pull request as ready for review', {
+        owner,
+        repo,
+        pullNumber,
+        error: error instanceof Error ? error.message : String(error)
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Check if user has permission to comment on issues/PRs
+   */
+  async checkCommentPermissions(owner: string, repo: string): Promise<boolean> {
+    this.logger.debug('Checking comment permissions', { owner, repo });
+    
+    if (!this.octokit) {
+      return false;
+    }
+
+    try {
+      // Check repository permissions
+      const { data: repoData } = await this.octokit.rest.repos.get({
+        owner,
+        repo
+      });
+
+      // If repo is public or user has push access, they can comment
+      return !repoData.private || repoData.permissions?.push || repoData.permissions?.admin || false;
+    } catch (error: any) {
+      this.logger.debug('Failed to check comment permissions', {
+        owner,
+        repo,
+        error: error instanceof Error ? error.message : String(error)
+      });
+      return false;
+    }
+  }
+
+  /**
+   * Check if user has permission to merge PRs
+   */
+  async checkPullRequestMergePermissions(owner: string, repo: string, pullNumber: number): Promise<boolean> {
+    this.logger.debug('Checking PR merge permissions', { owner, repo, pullNumber });
+    
+    if (!this.octokit) {
+      return false;
+    }
+
+    try {
+      const { data: repoData } = await this.octokit.rest.repos.get({
+        owner,
+        repo
+      });
+
+      return repoData.permissions?.push || repoData.permissions?.admin || false;
+    } catch (error: any) {
+      this.logger.debug('Failed to check PR merge permissions', {
+        owner,
+        repo,
+        pullNumber,
+        error: error instanceof Error ? error.message : String(error)
+      });
+      return false;
+    }
+  }
+
+  /**
+   * Check if user has permission to review PRs
+   */
+  async checkPullRequestReviewPermissions(owner: string, repo: string, pullNumber: number): Promise<boolean> {
+    this.logger.debug('Checking PR review permissions', { owner, repo, pullNumber });
+    
+    if (!this.octokit) {
+      return false;
+    }
+
+    try {
+      const { data: repoData } = await this.octokit.rest.repos.get({
+        owner,
+        repo
+      });
+
+      // Can review if has push or admin access
+      return repoData.permissions?.push || repoData.permissions?.admin || false;
+    } catch (error: any) {
+      this.logger.debug('Failed to check PR review permissions', {
+        owner,
+        repo,
+        pullNumber,
+        error: error instanceof Error ? error.message : String(error)
+      });
+      return false;
+    }
+  }
+
+  /**
+   * Check if user has write permissions on repository
+   */
+  async checkRepositoryWritePermissions(owner: string, repo: string): Promise<boolean> {
+    this.logger.debug('Checking repository write permissions', { owner, repo });
+    
+    if (!this.octokit) {
+      return false;
+    }
+
+    try {
+      const { data: repoData } = await this.octokit.rest.repos.get({
+        owner,
+        repo
+      });
+
+      return repoData.permissions?.push || repoData.permissions?.admin || false;
+    } catch (error: any) {
+      this.logger.debug('Failed to check repository write permissions', {
+        owner,
+        repo,
+        error: error instanceof Error ? error.message : String(error)
+      });
+      return false;
+    }
+  }
+
+  /**
+   * Create a comment on a pull request
+   */
+  async createPullRequestComment(
+    owner: string,
+    repo: string,
+    pullNumber: number,
+    body: string
+  ): Promise<any> {
+    this.logger.debug('Creating PR comment', { owner, repo, pullNumber });
+    
+    if (!this.octokit) {
+      throw new Error('Not authenticated. Please authenticate first.');
+    }
+
+    try {
+      const response = await this.octokit.rest.issues.createComment({
+        owner,
+        repo,
+        issue_number: pullNumber,
+        body
+      });
+
+      this.logger.debug('PR comment created successfully', {
+        owner,
+        repo,
+        pullNumber,
+        commentId: response.data.id
+      });
+
+      return response.data;
+    } catch (error: any) {
+      this.logger.error('Failed to create PR comment', {
+        owner,
+        repo,
+        pullNumber,
+        error: error instanceof Error ? error.message : String(error)
+      });
       throw error;
     }
   }
