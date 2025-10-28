@@ -29,9 +29,11 @@ interface PRInfo {
   user: {
     login: string;
     avatar_url: string;
+    html_url?: string;
   };
   head: {
     ref: string;
+    sha?: string;
   };
   base: {
     ref: string;
@@ -1492,7 +1494,7 @@ const PreviewBadge: React.FC = () => {
     return processedContent;
   };
 
-  const sanitizeHtmlContent = (content) => {
+  const sanitizeHtmlContent = (content: string | null) => {
     if (!content || !DOMPurify || typeof content !== 'string') return content || '';
     
     // Check if DOMPurify has the sanitize method
@@ -1525,12 +1527,12 @@ const PreviewBadge: React.FC = () => {
     return sanitizedContent;
   };
 
-  const truncateComment = (text, maxLength = 200) => {
+  const truncateComment = (text: string, maxLength: number = 200) => {
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength) + '...';
   };
 
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -1539,7 +1541,7 @@ const PreviewBadge: React.FC = () => {
     });
   };
 
-  const handleBadgeClick = async (pr, event) => {
+  const handleBadgeClick = async (pr: PRInfo, event: React.MouseEvent) => {
     if (event) {
       event.stopPropagation();
       event.preventDefault();
@@ -1611,7 +1613,7 @@ const PreviewBadge: React.FC = () => {
     }
   };
 
-  const handleBadgeToggle = async (event) => {
+  const handleBadgeToggle = async (event: React.MouseEvent) => {
     // Only allow toggle for branch-only badges (no PRs)
     if (prInfo && prInfo.length > 0) return;
     
@@ -1637,7 +1639,7 @@ const PreviewBadge: React.FC = () => {
     }
   };
 
-  const truncateTitle = (title, maxLength = 30) => {
+  const truncateTitle = (title: string, maxLength: number = 30) => {
     if (title.length <= maxLength) return title;
     return title.substring(0, maxLength) + '...';
   };
@@ -1655,7 +1657,7 @@ const PreviewBadge: React.FC = () => {
         <>
           {prInfo.map((pr, index) => (
             <div 
-              key={pr.id}
+              key={pr.number}
               className={`preview-badge clickable ${isExpanded ? 'expanded' : ''} ${isSticky ? 'sticky' : ''}`}
               onClick={(event) => handleBadgeClick(pr, event)}
               title={isExpanded ? `Click to view PR: ${pr.title}` : `Click to expand for comments: ${pr.title}`}
@@ -1753,17 +1755,10 @@ const PreviewBadge: React.FC = () => {
                     </div>
                   )}
                   {commentSubmissionStatus && (
-                    <div className={`comment-status comment-status-${typeof commentSubmissionStatus === 'string' ? commentSubmissionStatus : commentSubmissionStatus.type}`}>
-                      {typeof commentSubmissionStatus === 'string' ? (
-                        <>
-                          {commentSubmissionStatus === 'submitting' && '⏳ Submitting comment...'}
-                          {commentSubmissionStatus === 'success' && '✅ Comment submitted successfully!'}
-                        </>
-                      ) : (
-                        <>
-                          {commentSubmissionStatus.type === 'error' && `❌ ${commentSubmissionStatus.message}`}
-                        </>
-                      )}
+                    <div className={`comment-status comment-status-${commentSubmissionStatus}`}>
+                      {commentSubmissionStatus === 'submitting' && '⏳ Submitting comment...'}
+                      {commentSubmissionStatus === 'success' && '✅ Comment submitted successfully!'}
+                      {commentSubmissionStatus === 'error' && '❌ Error submitting comment. Please try again.'}
                     </div>
                   )}
                   {!showMarkdownEditor ? (
@@ -1801,7 +1796,7 @@ const PreviewBadge: React.FC = () => {
                             onChange={(val) => setNewComment(val || '')}
                             preview="edit"
                             height={300}
-                            visibleDragBar={false}
+                            visibleDragbar={false}
                             data-color-mode="light"
                             hideToolbar={submittingComment || !canComment}
                           />
