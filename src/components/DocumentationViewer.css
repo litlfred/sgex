@@ -440,6 +440,11 @@ body.theme-dark .doc-article p {
   margin-bottom: 0.25rem;
 }
 
+/* Dark theme list adjustments */
+body.theme-dark .doc-article li {
+  color: var(--who-text-secondary);
+}
+
 .doc-article code {
   background: rgba(255, 255, 255, 0.2);
   padding: 0.125rem 0.25rem;
@@ -458,14 +463,36 @@ body.theme-dark .doc-article p {
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
+/* Dark theme code adjustments */
+body.theme-dark .doc-article code {
+  background: var(--who-secondary-bg);
+  color: var(--who-text-primary);
+  border: 1px solid var(--who-border-color);
+}
+
+body.theme-dark .doc-article pre {
+  background: var(--who-secondary-bg);
+  border: 1px solid var(--who-border-color);
+  color: var(--who-text-primary);
+}
+
 .doc-article a {
-  color: #90caf9;
+  color: var(--who-blue-light);
   text-decoration: none;
 }
 
 .doc-article a:hover {
-  color: white;
+  color: var(--who-text-on-primary);
   text-decoration: underline;
+}
+
+/* Dark theme link adjustments */
+body.theme-dark .doc-article a {
+  color: var(--who-light-blue);
+}
+
+body.theme-dark .doc-article a:hover {
+  color: var(--who-text-primary);
 }
 
 .doc-article img {
@@ -480,14 +507,15 @@ body.theme-dark .doc-article p {
   width: 100%;
   border-collapse: collapse;
   margin: 1.5rem 0;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 3px var(--who-shadow-light);
   border-radius: 4px;
   overflow: hidden;
+  border: 1px solid var(--who-border-color);
 }
 
 .doc-table th {
-  background: #005eb8;
-  color: white;
+  background: var(--who-blue);
+  color: var(--who-text-on-primary);
   padding: 0.75rem 1rem;
   text-align: left;
   font-weight: 600;
@@ -496,18 +524,39 @@ body.theme-dark .doc-article p {
 
 .doc-table td {
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid #e9ecef;
-  color: #333;
+  border-bottom: 1px solid var(--who-border-color);
+  color: var(--who-text-primary);
   font-size: 0.9rem;
   vertical-align: top;
+  background: var(--who-card-bg);
 }
 
-.doc-table tr:nth-child(even) {
-  background: #f8f9fa;
+.doc-table tr:nth-child(even) td {
+  background: var(--who-hover-bg);
 }
 
-.doc-table tr:hover {
-  background: #e3f2fd;
+.doc-table tr:hover td {
+  background: var(--who-selected-bg);
+}
+
+/* Dark theme table adjustments */
+body.theme-dark .doc-table th {
+  background: var(--who-blue);
+  color: var(--who-text-on-primary);
+}
+
+body.theme-dark .doc-table td {
+  background: var(--who-card-bg);
+  color: var(--who-text-primary);
+  border-bottom-color: var(--who-border-color);
+}
+
+body.theme-dark .doc-table tr:nth-child(even) td {
+  background: var(--who-hover-bg);
+}
+
+body.theme-dark .doc-table tr:hover td {
+  background: var(--who-selected-bg);
 }
 
 .loading, .error-state {
