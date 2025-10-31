@@ -7,6 +7,7 @@ import cacheManagementService from '../services/cacheManagementService';
 import issueTrackingService from '../services/issueTrackingService';
 import githubService from '../services/githubService';
 import HelpModal from './HelpModal';
+import BugReportForm from './BugReportForm';
 import TrackedItemsViewer from './TrackedItemsViewer';
 import LanguageSelector from './LanguageSelector';
 import useThemeImage from '../hooks/useThemeImage';
@@ -48,6 +49,7 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
   const [trackedItemsCount, setTrackedItemsCount] = useState(0);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [helpState, setHelpState] = useState(() => getSavedHelpState()); // 0: hidden, 1: non-sticky, 2: sticky
+  const [showBugReportForm, setShowBugReportForm] = useState(false);
 
   // Theme-aware mascot image
   const mascotImage = useThemeImage('sgex-mascot.png');
@@ -136,6 +138,28 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
       issueTrackingService.stopBackgroundSync();
     };
   }, [isAuthenticated]);
+
+  // Set up global bug report handler
+  useEffect(() => {
+    // Store original handler if it exists
+    const originalHandler = window.helpModalInstance;
+    
+    // Create new handler that can trigger bug report form at this level
+    window.helpModalInstance = {
+      ...originalHandler,
+      showBugReportForm: () => {
+        console.log('[ContextualHelpMascot] Showing bug report form from global handler');
+        setShowBugReportForm(true);
+      }
+    };
+    
+    return () => {
+      // Restore original handler on unmount
+      if (originalHandler) {
+        window.helpModalInstance = originalHandler;
+      }
+    };
+  }, []);
 
   // Auto-enable DAK repository filter when visiting a DAK page
   useEffect(() => {
@@ -446,6 +470,20 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
         <TrackedItemsViewer
           onClose={() => setShowTrackedItems(false)}
         />
+      )}
+
+      {/* Bug Report Form Modal */}
+      {showBugReportForm && (
+        <div className="help-modal-overlay bug-report-overlay" onClick={(e) => {
+          if (e.target === e.currentTarget) {
+            setShowBugReportForm(false);
+          }
+        }}>
+          <BugReportForm 
+            onClose={() => setShowBugReportForm(false)}
+            contextData={contextData}
+          />
+        </div>
       )}
     </>
   );
