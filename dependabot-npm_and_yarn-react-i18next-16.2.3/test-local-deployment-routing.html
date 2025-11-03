@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>SGEX Local Deployment URL Routing Test</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            max-width: 1000px; 
+            margin: 50px auto; 
+            padding: 20px;
+        }
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .result {
+            background: #f5f5f5;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .pass { color: green; font-weight: bold; }
+        .fail { color: red; font-weight: bold; }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            background: #007cba;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        button:hover { background: #005a9e; }
+        .error-page {
+            background: #fff5f5;
+            border: 1px solid #fed7d7;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>SGEX Local Deployment URL Routing Test</h1>
+    <p>This page tests the URL routing system for local deployments (npm install) with both root-level and /sgex/ prefixed patterns.</p>
+    
+    <div class="test-section">
+        <h2>Test Setup</h2>
+        <p>Testing branch-first routing for local deployments where hostnames are localhost:3000, 127.0.0.1, etc.</p>
+        <div id="setup-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 1: Local Root-Level Branch-First Routing</h2>
+        <p>Test: <code>http://localhost:3000/main/dashboard/demo-user/test-dak</code></p>
+        <button onclick="testLocalRootBranchFirst()">Run Test</button>
+        <div id="test1-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: Local /sgex/ Prefixed Branch-First Routing</h2>
+        <p>Test: <code>http://localhost:3000/sgex/main/dashboard/demo-user/test-dak</code></p>
+        <button onclick="testLocalSGEXBranchFirst()">Run Test</button>
+        <div id="test2-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: Local Component-First Routing (Legacy)</h2>
+        <p>Test: <code>http://localhost:3000/dashboard/demo-user/test-dak/main</code></p>
+        <button onclick="testLocalComponentFirst()">Run Test</button>
+        <div id="test3-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 4: Local Invalid Branch Handling</h2>
+        <p>Test: <code>http://localhost:3000/invalid-branch/dashboard/demo-user/test-dak</code></p>
+        <button onclick="testLocalInvalidBranch()">Run Test</button>
+        <div id="test4-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 5: Local Simple Path Routing</h2>
+        <p>Test: <code>http://localhost:3000/some-unknown-path</code></p>
+        <button onclick="testLocalSimplePath()">Run Test</button>
+        <div id="test5-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 6: Local Root Redirect</h2>
+        <p>Test: <code>http://localhost:3000/</code></p>
+        <button onclick="testLocalRoot()">Run Test</button>
+        <div id="test6-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 7: Local Asset Page Routing</h2>
+        <p>Test asset pages in local deployment: <code>/:branch/:component/:user/:repo/:branch/:asset</code></p>
+        <button onclick="testLocalAssetPages()">Run Test</button>
+        <div id="test7-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Run All Tests</h2>
+        <button onclick="runAllTests()">Run All Tests</button>
+        <div id="all-tests-result" class="result"></div>
+    </div>
+
+    <!-- Load SGEX route configuration -->
+    <script src="./routeConfig.js"></script>
+    
+    <script>
+        // Mock the 404.html routing logic for testing local deployment scenarios
+        function simulateRouting(testUrl) {
+            const url = new URL(testUrl);
+            const pathSegments = url.pathname.split('/').filter(Boolean);
+            
+            // Simulate the 404.html logic for local deployment
+            const isGitHubPages = url.hostname.endsWith('.github.io');
+            
+            if (isGitHubPages) {
+                return { error: 'This test is for local deployment, not GitHub Pages' };
+            }
+            
+            // Get route configuration
+            const routeConfig = window.getSGEXRouteConfig();
+            if (!routeConfig) {
+                return { error: 'Route configuration not available' };
+            }
+            
+            // Local deployment logic
+            const hasStandardPrefix = pathSegments.length > 0 && pathSegments[0] === 'sgex';
+            const basePath = hasStandardPrefix ? '/sgex/' : '/';
+            const relevantSegments = hasStandardPrefix ? pathSegments : ['sgex'].concat(pathSegments);
+
+            if (relevantSegments.length <= 1) {
+                // Root path - redirect to SPA root
+                return {
+                    redirect: basePath,
+                    type: 'root-redirect'
+                };
+            }
+
+            // Check if first meaningful segment is a deployed branch
+            const firstSegment = relevantSegments[1];
+            
+            if (routeConfig.isDeployedBranch && routeConfig.isDeployedBranch(firstSegment)) {
+                // Branch deployment pattern
+                if (relevantSegments.length < 3) {
+                    return {
+                        redirect: basePath + relevantSegments[1] + '/',
+                        type: 'branch-root-redirect'
+                    };
+                }
+
+                const branch = relevantSegments[1];
+                const component = relevantSegments[2];
+                
+                if (!routeConfig.isValidComponent(component)) {
+                    return {
+                        error: `Component "${component}" is not valid for branch "${branch}"`,
+                        type: 'invalid-component-for-branch'
+                    };
+                }
+
+                const branchPath = basePath + relevantSegments[1] + '/';
+                const routePath = relevantSegments.slice(2).join('/');
+                return {
+                    redirect: branchPath + '?/' + routePath,
+                    type: 'branch-first-routing',
+                    branch: branch,
+                    component: component
+                };
+            } else if (routeConfig.isValidComponent && routeConfig.isValidComponent(firstSegment)) {
+                // Component-first pattern
+                const routePath = relevantSegments.slice(1).join('/');
+                return {
+                    redirect: basePath + '?/' + routePath,
+                    type: 'component-first-routing',
+                    component: firstSegment
+                };
+            } else {
+                // Simple SPA routing for unknown patterns
+                const routePath = hasStandardPrefix ? pathSegments.slice(1).join('/') : pathSegments.join('/');
+                return {
+                    redirect: basePath + (routePath ? '?/' + routePath : ''),
+                    type: 'simple-spa-routing'
+                };
+            }
+        }
+
+        function testLocalRootBranchFirst() {
+            const result = simulateRouting('http://localhost:3000/main/dashboard/demo-user/test-dak');
+            const resultEl = document.getElementById('test1-result');
+            
+            if (result.error) {
+                resultEl.innerHTML = `<span class="fail">FAIL:</span> ${result.error}`;
+                return false;
+            }
+
+            const expected = '/main/?/dashboard/demo-user/test-dak';
+            if (result.redirect === expected && result.type === 'branch-first-routing') {
+                resultEl.innerHTML = `<span class="pass">PASS:</span> Correctly routed to ${result.redirect}\nType: ${result.type}\nBranch: ${result.branch}\nComponent: ${result.component}`;
+                return true;
+            } else {
+                resultEl.innerHTML = `<span class="fail">FAIL:</span> Expected ${expected}, got ${result.redirect}\nType: ${result.type}`;
+                return false;
+            }
+        }
+
+        function testLocalSGEXBranchFirst() {
+            const result = simulateRouting('http://localhost:3000/sgex/main/dashboard/demo-user/test-dak');
+            const resultEl = document.getElementById('test2-result');
+            
+            if (result.error) {
+                resultEl.innerHTML = `<span class="fail">FAIL:</span> ${result.error}`;
+                return false;
+            }
+
+            const expected = '/sgex/main/?/dashboard/demo-user/test-dak';
+            if (result.redirect === expected && result.type === 'branch-first-routing') {
+                resultEl.innerHTML = `<span class="pass">PASS:</span> Correctly routed to ${result.redirect}\nType: ${result.type}\nBranch: ${result.branch}\nComponent: ${result.component}`;
+                return true;
+            } else {
+                resultEl.innerHTML = `<span class="fail">FAIL:</span> Expected ${expected}, got ${result.redirect}\nType: ${result.type}`;
+                return false;
+            }
+        }
+
+        function testLocalComponentFirst() {
+            const result = simulateRouting('http://localhost:3000/dashboard/demo-user/test-dak/main');
+            const resultEl = document.getElementById('test3-result');
+            
+            if (result.error) {
+                resultEl.innerHTML = `<span class="fail">FAIL:</span> ${result.error}`;
+                return false;
+            }
+
+            const expected = '/?/dashboard/demo-user/test-dak/main';
+            if (result.redirect === expected && result.type === 'component-first-routing') {
+                resultEl.innerHTML = `<span class="pass">PASS:</span> Correctly routed to ${result.redirect}\nType: ${result.type}\nComponent: ${result.component}`;
+                return true;
+            } else {
+                resultEl.innerHTML = `<span class="fail">FAIL:</span> Expected ${expected}, got ${result.redirect}\nType: ${result.type}`;
+                return false;
+            }
+        }
+
+        function testLocalInvalidBranch() {
+            const result = simulateRouting('http://localhost:3000/invalid-branch/dashboard/demo-user/test-dak');
+            const resultEl = document.getElementById('test4-result');
+            
+            if (result.error && result.type === 'invalid-component-for-branch') {
+                resultEl.innerHTML = `<span class="fail">FAIL:</span> Should route as simple SPA, not error: ${result.error}`;
+                return false;
+            }
+
+            // Should fall back to simple SPA routing since 'invalid-branch' is not a deployed branch
+            const expected = '/?/invalid-branch/dashboard/demo-user/test-dak';
+            if (result.redirect === expected && result.type === 'simple-spa-routing') {
+                resultEl.innerHTML = `<span class="pass">PASS:</span> Correctly handled unknown branch as simple SPA routing to ${result.redirect}\nType: ${result.type}`;
+                return true;
+            } else {
+                resultEl.innerHTML = `<span class="fail">FAIL:</span> Expected ${expected}, got ${result.redirect}\nType: ${result.type}`;
+                return false;
+            }
+        }
+
+        function testLocalSimplePath() {
+            const result = simulateRouting('http://localhost:3000/some-unknown-path');
+            const resultEl = document.getElementById('test5-result');
+            
+            if (result.error) {
+                resultEl.innerHTML = `<span class="fail">FAIL:</span> ${result.error}`;
+                return false;
+            }
+
+            const expected = '/?/some-unknown-path';
+            if (result.redirect === expected && result.type === 'simple-spa-routing') {
+                resultEl.innerHTML = `<span class="pass">PASS:</span> Correctly routed to ${result.redirect}\nType: ${result.type}`;
+                return true;
+            } else {
+                resultEl.innerHTML = `<span class="fail">FAIL:</span> Expected ${expected}, got ${result.redirect}\nType: ${result.type}`;
+                return false;
+            }
+        }
+
+        function testLocalRoot() {
+            const result = simulateRouting('http://localhost:3000/');
+            const resultEl = document.getElementById('test6-result');
+            
+            if (result.error) {
+                resultEl.innerHTML = `<span class="fail">FAIL:</span> ${result.error}`;
+                return false;
+            }
+
+            const expected = '/';
+            if (result.redirect === expected && result.type === 'root-redirect') {
+                resultEl.innerHTML = `<span class="pass">PASS:</span> Correctly routed to ${result.redirect}\nType: ${result.type}`;
+                return true;
+            } else {
+                resultEl.innerHTML = `<span class="fail">FAIL:</span> Expected ${expected}, got ${result.redirect}\nType: ${result.type}`;
+                return false;
+            }
+        }
+
+        function testLocalAssetPages() {
+            const resultEl = document.getElementById('test7-result');
+            
+            // Test 1: Root-level branch-first asset page: /main/dashboard/demo-user/test-dak/main/schema.json
+            const result1 = simulateRouting('http://localhost:3000/main/dashboard/demo-user/test-dak/main/schema.json');
+            
+            // Test 2: /sgex/ prefixed branch-first asset page: /sgex/main/dashboard/demo-user/test-dak/main/documentation.md
+            const result2 = simulateRouting('http://localhost:3000/sgex/main/dashboard/demo-user/test-dak/main/documentation.md');
+            
+            // Check results
+            const expected1 = '/main/?/dashboard/demo-user/test-dak/main/schema.json';
+            const expected2 = '/sgex/main/?/dashboard/demo-user/test-dak/main/documentation.md';
+            
+            const pass1 = result1.redirect === expected1 && result1.type === 'branch-deployment';
+            const pass2 = result2.redirect === expected2 && result2.type === 'branch-deployment';
+            
+            if (pass1 && pass2) {
+                resultEl.innerHTML = `<span class="pass">PASS:</span> Asset page routing working correctly
+                
+Test 1 - Root-level asset: ${result1.redirect}
+Test 2 - /sgex/ prefixed asset: ${result2.redirect}
+Both tests preserve complete asset paths correctly`;
+                return true;
+            } else {
+                resultEl.innerHTML = `<span class="fail">FAIL:</span> Asset page routing issues detected
+                
+Test 1 - Expected: ${expected1}
+         Got: ${result1.redirect} (${result1.type})
+         Status: ${pass1 ? 'PASS' : 'FAIL'}
+         
+Test 2 - Expected: ${expected2}
+         Got: ${result2.redirect} (${result2.type})
+         Status: ${pass2 ? 'PASS' : 'FAIL'}`;
+                return false;
+            }
+        }
+
+        function runAllTests() {
+            const tests = [
+                testLocalRootBranchFirst,
+                testLocalSGEXBranchFirst,
+                testLocalComponentFirst,
+                testLocalInvalidBranch,
+                testLocalSimplePath,
+                testLocalRoot,
+                testLocalAssetPages
+            ];
+
+            let passed = 0;
+            let failed = 0;
+
+            tests.forEach(test => {
+                if (test()) {
+                    passed++;
+                } else {
+                    failed++;
+                }
+            });
+
+            const resultEl = document.getElementById('all-tests-result');
+            resultEl.innerHTML = `Tests completed: ${passed} passed, ${failed} failed\n\n${passed === tests.length ? '✅ All tests passed!' : '❌ Some tests failed'}`;
+        }
+
+        // Initialize with setup check
+        window.addEventListener('load', function() {
+            const routeConfig = window.getSGEXRouteConfig();
+            const setupEl = document.getElementById('setup-result');
+            
+            if (routeConfig) {
+                setupEl.innerHTML = `<span class="pass">✅ Route configuration loaded successfully</span>\nDeployment type: ${routeConfig.deployType}\nValid components: ${routeConfig.getAllComponentNames().slice(0, 5).join(', ')}...`;
+            } else {
+                setupEl.innerHTML = `<span class="fail">❌ Failed to load route configuration</span>`;
+            }
+        });
+    </script>
+</body>
+</html>
