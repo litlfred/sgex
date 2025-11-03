@@ -9,7 +9,7 @@
     "url": "https://github.com/litlfred/sgex.git"
   },
   "dependencies": {
-    "@octokit/rest": "^22.0.0",
+    "@octokit/rest": "^22.0.1",
     "@sgex/dak-core": "file:packages/dak-core",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
