@@ -76,19 +76,68 @@ function getDeploymentType() {
   return 'main';
 }
 
+// Get base path for the current deployment
+function getBasePath() {
+  if (typeof window === 'undefined') {
+    return '';
+  }
+  
+  var path = window.location.pathname;
+  
+  // For localhost development
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    return '/sgex';
+  }
+  
+  // Parse pathname to find base directory
+  // GitHub Pages URLs: /sgex/ (landing) or /sgex/main/ or /sgex/{branch}/
+  var pathParts = path.split('/').filter(Boolean);
+  
+  if (pathParts.length === 0) {
+    return '';
+  }
+  
+  // First part should be 'sgex'
+  if (pathParts[0] !== 'sgex') {
+    return '';
+  }
+  
+  // If we're at /sgex/ or /sgex (root), base is /sgex
+  if (pathParts.length === 1) {
+    return '/sgex';
+  }
+  
+  // For /sgex/main/ or /sgex/{branch}/, base is /sgex/{second-part}
+  return '/sgex/' + pathParts[1];
+}
+
 // Get appropriate config file name based on deployment type  
 function getConfigFileName(deployType) {
-  return deployType === 'deploy' ? './routes-config.deploy.json' : './routes-config.json';
+  return deployType === 'deploy' ? 'routes-config.deploy.json' : 'routes-config.json';
+}
+
+// Get full config file path with base path
+function getConfigFilePath(deployType) {
+  var basePath = getBasePath();
+  var fileName = getConfigFileName(deployType);
+  
+  // Construct absolute path
+  if (basePath) {
+    return basePath + '/' + fileName;
+  }
+  return './' + fileName;
 }
 
 // Synchronous configuration loading using XMLHttpRequest for 404.html compatibility
 function loadRouteConfigSync(deployType) {
   try {
     deployType = deployType || getDeploymentType();
-    var configFile = getConfigFileName(deployType);
+    var configFilePath = getConfigFilePath(deployType);
+    
+    console.log('Loading SGEX route config from:', configFilePath, 'for deployment type:', deployType);
     
     var xhr = new XMLHttpRequest();
-    xhr.open('GET', configFile, false); // Synchronous request
+    xhr.open('GET', configFilePath, false); // Synchronous request
     xhr.send();
     
     if (xhr.status === 200) {
@@ -220,7 +269,7 @@ function loadRouteConfigSync(deployType) {
       
       return window.SGEX_ROUTES_CONFIG;
     } else {
-      throw new Error('Failed to load ' + configFile + ': ' + xhr.status);
+      throw new Error('Failed to load ' + configFilePath + ': ' + xhr.status);
     }
   } catch (error) {
     console.error('Failed to load SGEX route configuration:', error);
@@ -237,13 +286,14 @@ function getSGEXRouteConfig(deployType) {
     // If still failed, provide helpful error message
     if (!window.SGEX_ROUTES_CONFIG) {
       deployType = deployType || getDeploymentType();
-      var configFile = getConfigFileName(deployType);
+      var configFilePath = getConfigFilePath(deployType);
       
       console.error(
         '❌ SGEX Route Configuration Failed to Load\n\n' +
-        'Configuration file: ' + configFile + '\n' +
+        'Configuration file: ' + configFilePath + '\n' +
         'Deployment type: ' + deployType + '\n' +
-        'Current URL: ' + (typeof window !== 'undefined' ? window.location.href : 'N/A') + '\n\n' +
+        'Current URL: ' + (typeof window !== 'undefined' ? window.location.href : 'N/A') + '\n' +
+        'Base path: ' + getBasePath() + '\n\n' +
         'Troubleshooting steps:\n' +
         '1. Verify the configuration file exists in the build output\n' +
         '2. Check that routeConfig.js is loaded with correct PUBLIC_URL\n' +
@@ -251,9 +301,9 @@ function getSGEXRouteConfig(deployType) {
         '4. Check browser console for any 404 errors\n' +
         '5. Verify GitHub Pages deployment completed successfully\n\n' +
         'Expected behavior:\n' +
-        '- Local (localhost): Uses routes-config.json\n' +
-        '- Landing page (/sgex/): Uses routes-config.deploy.json\n' +
-        '- Branch preview (/sgex/{branch}/): Uses routes-config.json\n'
+        '- Local (localhost): Uses routes-config.json at /sgex/routes-config.json\n' +
+        '- Landing page (/sgex/): Uses routes-config.deploy.json at /sgex/routes-config.deploy.json\n' +
+        '- Branch preview (/sgex/{branch}/): Uses routes-config.json at /sgex/{branch}/routes-config.json\n'
       );
       
       // Return null to indicate failure - no fallback
@@ -280,6 +330,8 @@ if (typeof window !== 'undefined') {
 // Make functions available globally
 window.loadSGEXRouteConfig = loadRouteConfigSync;
 window.getSGEXRouteConfig = getSGEXRouteConfig;
+window.getBasePath = getBasePath;
+window.getConfigFilePath = getConfigFilePath;
 
 // Structured context storage function for 404.html
 window.SGEX_storeStructuredContext = function(routePath, branch) {
