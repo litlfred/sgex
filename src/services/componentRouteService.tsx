@@ -41,8 +41,15 @@ export interface DAKComponentConfig {
 export interface StandardComponentConfig {
   /** Component name (optional - defaults to the key name if not specified) */
   component?: string;
-  /** Route path */
+  /** Route path (old format - single path) */
   path?: string;
+  /** Routes array (new format - multiple routes) */
+  routes?: Array<{
+    /** Route path */
+    path: string;
+    /** Whether this route requires exact match */
+    exact?: boolean;
+  }>;
 }
 
 /**
@@ -213,8 +220,20 @@ function generateStandardRoutes(componentName: string, componentConfig: Standard
   // Use componentName (the key) as the component to load, unless component is explicitly specified
   const actualComponentName = componentConfig.component || componentName;
   const Component = createLazyComponent(actualComponentName);
+  
+  // Check if the config has a routes array (new format)
+  if (componentConfig.routes && Array.isArray(componentConfig.routes)) {
+    return componentConfig.routes.map((routeConfig, index) => (
+      <Route 
+        key={`${componentName}-${index}`} 
+        path={routeConfig.path} 
+        element={<Component />} 
+      />
+    ));
+  }
+  
+  // Fallback to old format using path property
   const path = componentConfig.path || `/${componentName}`;
-
   return [
     <Route key={componentName} path={path} element={<Component />} />
   ];
