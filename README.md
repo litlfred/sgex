@@ -39,7 +39,7 @@ Browse and select from available DAK repositories with enhanced scanning display
 ![Repository Selection](https://github.com/user-attachments/assets/1c606285-519f-4985-91a1-52739069ae39)
 
 ### DAK Component Management
-Access and edit the 8 core DAK components organized according to the WHO SMART Guidelines framework, including Health Interventions, Generic Personas, User Scenarios, Business Processes, Core Data Elements, Decision-Support Logic, Program Indicators, and Requirements.
+Access and edit the 9 core DAK components organized according to the WHO SMART Guidelines framework, including Health Interventions, Generic Personas, User Scenarios, Business Processes, Core Data Elements, Decision-Support Logic, Program Indicators, Requirements, and Test Scenarios.
 
 ![DAK Components](https://github.com/user-attachments/assets/2b3c8e7d-cdd2-4a61-a482-a2c1bc6cb0cb)
 
@@ -50,12 +50,42 @@ The SGEX Workbench is a browser-based, static web application for collaborative 
 - All UI schemas are rendered using [JSON Forms](https://jsonforms.io/) for standards compliance and accessibility.
 - All schemas and documentation follow the terminology and branding of [WHO SMART Guidelines](https://www.who.int/teams/digital-health-and-innovation/smart-guidelines).
 
+## 📚 Documentation
+
+All project documentation is now organized in the `docs/` directory with clear categories:
+
+### 👤 User Documentation
+- **[📖 Documentation Index](docs/INDEX.md)** - Comprehensive documentation catalog
+- **[🚀 Getting Started](docs/01-getting-started/)** - Installation, authentication, and first steps
+- **[📘 User Guides](docs/02-user-guides/)** - How-to guides for using SGEX features
+
+### 🏗️ System Documentation
+- **[🏛️ Architecture](docs/03-architecture/)** - System design and architecture
+- **[💻 Development Guide](docs/04-development/)** - Development standards and practices
+- **[🚀 Deployment Guide](docs/05-deployment/)** - Deployment procedures and CI/CD
+- **[🔐 Security](docs/06-security/)** - Security practices and compliance
+- **[✨ Features](docs/07-features/)** - Feature-specific documentation
+
+### 📜 Development History
+- **[📜 Development History](docs/08-development-history/)** - Historical context, bug fixes, and implementation details
+  - 24 ticket fixes organized by category
+  - 27 implementation summaries
+  - 21 technical analysis documents
+  - Complete audit trail of development decisions
+
+### 📄 Public Documentation
+For public-facing documentation, see [public/docs/](public/docs/) including:
+- Project Plan
+- Requirements
+- Solution Architecture
+- DAK Components Guide
+
 ## Development Setup
 
 ### Prerequisites
 
-- **Node.js**: Version 16.x or higher (tested with Node.js 18.x and 20.x)
-- **npm**: Version 8.x or higher (comes with Node.js)
+- **Node.js**: Version 20.x or higher
+- **npm**: Version 10.x or higher
 
 ### Installation
 
@@ -120,7 +150,7 @@ npm run build:verify  # Build and verify in one command
 npm run verify-404    # Verify existing build
 ```
 
-For detailed implementation information, see [docs/404-implementation.md](docs/404-implementation.md).
+For detailed deployment information, see [docs/05-deployment/](docs/05-deployment/).
 
 ## MCP Services
 
@@ -149,10 +179,12 @@ npm start
 - **Fly.io Production**: Public HTTPS deployment with GitHub OAuth authentication
 
 #### Documentation
-Complete MCP documentation: [`public/docs/mcp/`](public/docs/mcp/)
-Deployment guide: [`services/dak-faq-mcp/DEPLOYMENT.md`](services/dak-faq-mcp/DEPLOYMENT.md)
+- Complete MCP documentation: [`public/docs/mcp/`](public/docs/mcp/)
+- Deployment guide: [`services/dak-faq-mcp/DEPLOYMENT.md`](services/dak-faq-mcp/DEPLOYMENT.md)
+- Architecture: [`docs/03-architecture/mcp-services/`](docs/03-architecture/mcp-services/)
 
 **Security**: Local development bypasses authentication. Production deployment requires GitHub OAuth and collaborator access to `litlfred/sgex`.
+
 ### Docker
 
 1. **Build the docker image**
@@ -187,34 +219,63 @@ For **classic tokens**:
 
 This authentication method is fully compatible with static deployments and requires no backend server.
 
-### Project Structure
+## Project Structure
 
 ```
 sgex/
-├── public/          # Static assets
-├── src/             # Source code
-│   ├── components/  # React components
-│   ├── App.js       # Main application component
-│   └── index.js     # Application entry point
-├── public/docs/     # Project documentation
-├── package.json     # Dependencies and scripts
-└── README.md        # This file
+├── docs/                # 📚 All documentation (organized by category)
+│   ├── INDEX.md         # Master documentation index
+│   ├── 01-getting-started/
+│   ├── 02-user-guides/
+│   ├── 03-architecture/
+│   ├── 04-development/
+│   ├── 05-deployment/
+│   ├── 06-security/
+│   ├── 07-features/
+│   └── 08-development-history/
+├── packages/            # Monorepo packages
+│   ├── dak-core/       # Core DAK business logic
+│   ├── storage-services/ # Caching and persistence
+│   ├── vcs-services/   # GitHub integration
+│   └── utils/          # Shared utilities
+├── services/           # MCP services
+│   ├── dak-faq-mcp/   # FAQ service
+│   └── dak-publication-api/ # Publication API
+├── src/                # Main application source
+│   ├── components/     # React components
+│   ├── services/       # Application services
+│   ├── hooks/          # Custom React hooks
+│   └── styles/         # Global styles
+├── public/             # Static assets
+│   └── docs/           # Public-facing documentation
+└── scripts/            # Build and utility scripts
 ```
 
-### Available Scripts
+## Available Scripts
 
+### Core Development
 - `npm start` - Runs the app in development mode
 - `npm test` - Launches the test runner in interactive watch mode
 - `npm run build` - Builds the app for production (includes TypeScript type checking and schema generation)
-- `npm run type-check` - Runs TypeScript type checking without compilation
-- `npm run type-check:watch` - Runs TypeScript type checking in watch mode
-- `npm run generate-schemas` - Generates JSON schemas from TypeScript types
+
+### Code Quality
 - `npm run lint` - Runs ESLint on all source files (supports JavaScript and TypeScript)
 - `npm run lint:a11y` - Shows only accessibility (jsx-a11y) warnings
 - `npm run lint:fix` - Automatically fixes linting issues where possible
-- `npm run eject` - **Note: This is a one-way operation. Don't do this unless you're sure!**
+- `npm run type-check` - Runs TypeScript type checking without compilation
+- `npm run type-check:watch` - Runs TypeScript type checking in watch mode
 
-### TypeScript Migration
+### Advanced
+- `npm run generate-schemas` - Generates JSON schemas from TypeScript types
+- `npm run check-framework-compliance` - Check framework compliance
+- `npm run generate-service-table` - Generate service documentation table
+
+### Testing
+- `npm run compliance:profile` - Test profile creation compliance
+- `npm run compliance:all` - Run all compliance tests
+- `npm run test:compliance` - Run compliance test suite
+
+## TypeScript Migration
 
 SGEX Workbench is currently undergoing a phased migration to TypeScript for improved type safety, better IDE support, and enhanced developer experience. The migration includes:
 
@@ -223,16 +284,16 @@ SGEX Workbench is currently undergoing a phased migration to TypeScript for impr
 - **Type Safety**: Gradual adoption of TypeScript across the codebase
 - **Documentation**: Generated type documentation and schemas
 
-For detailed information about the TypeScript migration, see [TYPESCRIPT_MIGRATION.md](TYPESCRIPT_MIGRATION.md).
+For detailed information about the TypeScript migration, see [docs/04-development/typescript-migration.md](docs/04-development/typescript-migration.md).
 
-#### Current TypeScript Features
+### Current TypeScript Features
 
 - **Core Types**: Comprehensive type definitions for GitHub API, DAK structures, and application state
 - **Runtime Validation**: Type-safe JSON validation using generated schemas
 - **Schema Publishing**: Automated schema generation and publishing to `public/docs/schemas/`
 - **Development Tools**: TypeScript-aware linting, type checking, and IDE support
 
-#### Using TypeScript Features
+### Using TypeScript Features
 
 ```typescript
 // Import types for better development experience
@@ -243,9 +304,11 @@ import { validateAndCast } from './services/runtimeValidationService';
 const user = validateAndCast<GitHubUser>('GitHubUser', userData);
 ```
 
+## Accessibility & Security
+
 ### Accessibility Linting
 
-The project uses `eslint-plugin-jsx-a11y` to enforce accessibility best practices. See [docs/accessibility-linting.md](docs/accessibility-linting.md) for detailed information about accessibility rules and how to fix common issues.
+The project uses `eslint-plugin-jsx-a11y` to enforce accessibility best practices. See [docs/04-development/accessibility.md](docs/04-development/accessibility.md) for detailed information about accessibility rules and how to fix common issues.
 
 ### Security Checks
 
@@ -259,20 +322,20 @@ The project includes comprehensive automated security checks that run on every P
 - **Secret Scanning** - Detects hardcoded secrets
 - **Framework Compliance** - Ensures security best practices
 
-See [docs/security-checks.md](docs/security-checks.md) for detailed information about security checks and how to interpret results.
+See [docs/06-security/](docs/06-security/) for comprehensive security documentation.
 
-### Troubleshooting
+## Troubleshooting
 
 If you encounter build or installation issues:
 
-- **eslint-scope module not found**: See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for detailed solutions
+- **eslint-scope module not found**: See [docs/01-getting-started/troubleshooting.md](docs/01-getting-started/troubleshooting.md) for detailed solutions
 - **Port 3000 already in use**: The development server will automatically try to use an alternative port (3001, 3002, etc.)
 - **Build issues**: Try deleting `node_modules/` and `package-lock.json`, then run `npm install` again
 - **Memory issues**: If you encounter JavaScript heap out of memory errors, try setting `NODE_OPTIONS=--max-old-space-size=4096` before running build commands
 
-For more detailed troubleshooting guidance, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
+For more detailed troubleshooting guidance, see [docs/01-getting-started/troubleshooting.md](docs/01-getting-started/troubleshooting.md).
 
-For more information about contributing, see [CONTRIBUTING.md](CONTRIBUTING.md).
+For information about contributing, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## WHO SMART Guidelines DAK Components
 
@@ -292,7 +355,7 @@ The SGEX Workbench supports editing of the **9 core Digital Adaptation Kit (DAK)
 ### Additional Components
 The SGEX Workbench also supports additional structured knowledge representations including Terminology, FHIR Profiles, FHIR Extensions, FHIR Questionnaires, and Test Data & Examples.
 
-For detailed information about each component, see the [DAK Components Documentation](public/docs/dak-components.md).
+For detailed information about each component, see the [public/docs/dak-components.md](public/docs/dak-components.md).
 
 *Note: Scheduling tables are considered a special case of decision tables and are included within the Decision Support Logic component.*
 
@@ -315,36 +378,6 @@ This separation ensures:
 - Manual control over landing page updates
 - Independent operation of each deployment type
 
-### Deploy Feature Branch
-
-**Workflow**: `Deploy Feature Branch` (`.github/workflows/branch-deployment.yml`)
-
-**Automatic Triggers**:
-- Push to any branch (except `gh-pages`)  
-- Pull request events
-- Excludes documentation-only changes
-
-**Process**:
-1. **Builds** branch-specific React app with correct base path
-2. **Deploys** to branch subdirectory (e.g., `/main/`, `/feature-branch/`)
-3. **Posts** deployment URLs to associated pull request comments
-4. **Preserves** existing branch directories and landing page
-
-### Landing Page Deployment
-
-**Workflow**: `Deploy Landing Page` (`.github/workflows/landing-page-deploy.yml`)
-
-**Manual Triggers**:
-- GitHub Actions manual trigger (`workflow_dispatch`)
-- Can be triggered from any branch
-- Uses build scripts from the triggering branch
-
-**Process**:
-1. **Builds** self-contained landing page with branch/PR selectors
-2. **Preserves** all existing branch deployments
-3. **Deploys** landing page to root of GitHub Pages
-4. **Maintains** independent assets (CSS, JS, images)
-
 ### URL Structure and Access
 
 #### Main Application
@@ -364,65 +397,7 @@ This separation ensures:
 - **Features**: Branch selector, pull request previews, contribution portal
 - **Deployment**: Manual via landing page deployment workflow
 
-### Branch Preview Workflow Details
-
-**Triggered by**: Push to any branch, pull request events
-
-1. **Build** → Installs dependencies, builds branch-specific React app
-2. **Deploy** → Updates branch subdirectory on GitHub Pages
-3. **Notify** → Posts deployment URLs to associated pull request comments
-4. **Complete** → Branch preview available within 2-3 minutes
-
-### Landing Page Update Process
-
-**Triggered by**: Manual workflow dispatch in GitHub Actions
-
-1. **Build** → Creates self-contained landing page with updated branch listings
-2. **Preserve** → Maintains all existing branch directories
-3. **Deploy** → Updates root landing page with independent assets
-4. **Complete** → Updated landing page available within 2-3 minutes
-
-#### How to Update the Landing Page
-
-To manually update the landing page:
-
-1. **Navigate to GitHub Actions** in the repository
-2. **Select "Deploy Landing Page"** workflow
-3. **Click "Run workflow"** 
-4. **Choose source branch** (optional - defaults to current branch)
-5. **Run** the workflow
-
-The landing page will be updated with latest branch listings, pull request previews, and self-contained assets.
-
-### Workflow Independence Benefits
-
-The compartmentalized approach provides several advantages:
-
-- **Isolated Updates**: Branch deployments don't trigger landing page rebuilds
-- **Selective Control**: Landing page can be updated independently when needed
-- **Asset Isolation**: Landing page has its own CSS, JS, and image assets
-- **Build Optimization**: Landing page build is ~83% smaller (only includes BranchListing component)
-- **Deployment Flexibility**: Landing page can use build scripts from any branch
-- **Reduced Complexity**: Each workflow has a single, clear responsibility
-
-### Pull Request Integration
-
-When you push to a branch with an associated pull request:
-
-- **Auto-detects** PR by branch name or commit SHA
-- **Posts comment** with deployment URLs in PR conversation
-- **Updates existing** comments instead of creating duplicates
-- **Includes** branch preview URL and deployment metadata
-- **Provides** direct access for reviewers to test changes
-
-## Documentation
-
-All project documentation is located in the `public/docs/` directory:
-
-- [Project Plan](public/docs/project-plan.md) - Overall project planning and milestones
-- [Requirements](public/docs/requirements.md) - Detailed functional and non-functional requirements
-- [Solution Architecture](public/docs/solution-architecture.md) - Technical architecture and design decisions
-- [DAK Components](public/docs/dak-components.md) - Comprehensive guide to the 8 WHO SMART Guidelines DAK components
+For detailed deployment documentation, see [docs/05-deployment/](docs/05-deployment/).
 
 ## License
 
